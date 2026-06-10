@@ -1,0 +1,42 @@
+PROJECT STRUCTURE CHECK
+
+ROOT FILES:
+
+Mode   Name                    
+----   ----                    
+d----- guidelines              
+d----- public                  
+d----- src                     
+-a---- .gitignore              
+-a---- ATTRIBUTIONS.md         
+-a---- default_shadcn_theme.css
+-a---- eslint.config.js        
+-a---- index.html              
+-a---- package-lock.json       
+-a---- package.json            
+-a---- README.md               
+-a---- structure_check.txt     
+-a---- vite.config.js          
+
+
+
+
+FRONTEND TOP LEVEL:
+
+
+FRONTEND SRC TREE:
+Folder PATH listing for volume Windows
+Volume serial number is EC5B-487E
+C:\USERS\ANILA\SCHOOL-WEBSITE\FRONTEND\FRONTEND\SRC
+Invalid path - \USERS\ANILA\SCHOOL-WEBSITE\FRONTEND\FRONTEND\SRC
+No subfolders exist 
+
+
+BACKEND TOP LEVEL:
+
+
+MAIN JSX:
+
+ROOT APP JSX:
+
+APP COMPONENT JSX:

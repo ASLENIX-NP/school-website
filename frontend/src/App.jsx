@@ -1,7 +1,7 @@
-import Contact from "./pages/Contact";
+import SchoolApp from "./app/components/App";
 
 function App() {
-  return <Contact />;
+  return <SchoolApp />;
 }
 
 export default App;
