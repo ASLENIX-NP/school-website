@@ -11,7 +11,6 @@ import {
   Monitor,
   FlaskConical,
   Library,
-  Music,
 } from "lucide-react";
 
 const palette = {
@@ -19,16 +18,15 @@ const palette = {
   gold: "#FACC15",
   violet: "#8B5CF6",
   green: "#22C55E",
-  rose: "#FB7185",
 };
 
 const heroData = {
   badge: "Admissions Open for New Academic Session",
-  titleTop: "A Future-Ready",
-  titleHighlight: "School Experience",
-  titleBottom: "in Hetauda",
+  titleLine1: "Baljagriti Secondary",
+  titleLine2: "English School",
+  titleLine3: "Hetauda-2, Makwanpur",
   description:
-    "Baljagriti Secondary English Boarding School blends academic discipline, digital learning, creativity, sports, and values for students from Play Group to Grade 10.",
+    "Baljagriti Secondary English School blends academic discipline, digital learning, creativity, sports, and values for students from Play Group to Grade 10.",
   image:
     "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1100&h=900&fit=crop&auto=format",
 };
@@ -76,84 +74,22 @@ function GlassStat({ icon: Icon, value, label, color, delay }) {
   );
 }
 
-function FloatingBadge({
-  icon: Icon,
-  title,
-  subtitle,
-  color,
-  className = "",
-  delay = 0,
-  reverse = false,
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24, scale: 0.92 }}
-      animate={{
-        opacity: 1,
-        y: reverse ? [0, 14, 0] : [0, -14, 0],
-        rotate: reverse ? [0, -1.5, 0] : [0, 1.5, 0],
-        scale: 1,
-      }}
-      transition={{
-        opacity: { duration: 0.55, delay },
-        scale: { duration: 0.55, delay },
-        y: { duration: 4.8, repeat: Infinity, ease: "easeInOut", delay },
-        rotate: { duration: 4.8, repeat: Infinity, ease: "easeInOut", delay },
-      }}
-      className={`absolute z-20 rounded-3xl px-4 py-3 ${className}`}
-      style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.20), rgba(255,255,255,0.07))",
-        border: "1px solid rgba(255,255,255,0.22)",
-        boxShadow:
-          "0 28px 70px rgba(0,0,0,0.36), inset 0 1px 0 rgba(255,255,255,0.16)",
-        backdropFilter: "blur(22px)",
-      }}
-    >
-      <div className="flex items-center gap-3">
-        <div
-          className="w-11 h-11 rounded-2xl flex items-center justify-center"
-          style={{
-            background: `${color}22`,
-            border: `1px solid ${color}42`,
-            boxShadow: `0 0 28px ${color}22`,
-          }}
-        >
-          <Icon className="w-5 h-5" style={{ color }} />
-        </div>
-
-        <div>
-          <div className="text-white text-sm font-bold whitespace-nowrap">
-            {title}
-          </div>
-          <div
-            className="text-xs whitespace-nowrap"
-            style={{ color: "rgba(255,255,255,0.65)" }}
-          >
-            {subtitle}
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 function HeroImageStage() {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9, y: 26 }}
+      initial={{ opacity: 0, scale: 0.92, y: 24 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.85, delay: 0.18 }}
-      className="relative min-h-[560px] flex items-center justify-center"
+      className="relative min-h-[430px] lg:min-h-[470px] flex items-center justify-center"
     >
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none hidden lg:block"
-        viewBox="0 0 720 560"
+        viewBox="0 0 720 520"
         fill="none"
       >
         <motion.path
-          d="M90 290 C130 90 560 90 630 285 C700 465 460 540 250 475 C120 435 60 365 90 290Z"
-          stroke="rgba(56,189,248,0.26)"
+          d="M90 270 C130 90 560 90 630 270 C700 435 480 500 260 455 C125 428 60 350 90 270Z"
+          stroke="rgba(56,189,248,0.22)"
           strokeWidth="2"
           strokeDasharray="8 10"
           initial={{ pathLength: 0, opacity: 0 }}
@@ -161,8 +97,8 @@ function HeroImageStage() {
           transition={{ duration: 1.4, delay: 0.4 }}
         />
         <motion.path
-          d="M125 360 C175 145 555 135 600 330 C625 455 475 515 310 490 C190 470 105 440 125 360Z"
-          stroke="rgba(250,204,21,0.22)"
+          d="M125 330 C175 135 555 130 600 305 C625 415 490 470 320 455 C195 442 110 405 125 330Z"
+          stroke="rgba(250,204,21,0.18)"
           strokeWidth="2"
           strokeDasharray="5 12"
           initial={{ pathLength: 0, opacity: 0 }}
@@ -172,7 +108,7 @@ function HeroImageStage() {
       </svg>
 
       <div
-        className="absolute w-[82%] h-[72%] rounded-[3rem]"
+        className="absolute w-[84%] h-[76%] rounded-[3rem]"
         style={{
           background:
             "linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.045))",
@@ -186,8 +122,8 @@ function HeroImageStage() {
 
       <motion.div
         animate={{
-          y: [0, -10, 0],
-          rotateY: [-3, -1, -3],
+          y: [0, -8, 0],
+          rotateY: [-2, -1, -2],
           rotateX: [2, 0, 2],
         }}
         transition={{
@@ -195,10 +131,10 @@ function HeroImageStage() {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="relative z-10 w-[82%] h-[410px] rounded-[2.5rem] overflow-hidden"
+        className="relative z-10 w-[84%] h-[350px] lg:h-[380px] rounded-[2.5rem] overflow-hidden"
         style={{
           boxShadow:
-            "0 42px 110px rgba(0,0,0,0.55), 0 0 70px rgba(56,189,248,0.18)",
+            "0 42px 110px rgba(0,0,0,0.55), 0 0 70px rgba(56,189,248,0.14)",
           border: "1px solid rgba(255,255,255,0.18)",
           transformStyle: "preserve-3d",
         }}
@@ -213,12 +149,12 @@ function HeroImageStage() {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to top, rgba(2,6,23,0.62) 0%, rgba(2,6,23,0.1) 45%, transparent 100%)",
+              "linear-gradient(to top, rgba(2,6,23,0.62) 0%, rgba(2,6,23,0.12) 45%, transparent 100%)",
           }}
         />
 
         <div
-          className="absolute top-5 left-5 px-4 py-3 rounded-2xl flex items-center gap-3"
+          className="absolute top-4 left-4 px-4 py-3 rounded-2xl flex items-center gap-3"
           style={{
             background: "rgba(2,6,23,0.42)",
             border: "1px solid rgba(255,255,255,0.16)",
@@ -244,6 +180,27 @@ function HeroImageStage() {
             </div>
           </div>
         </div>
+
+        <div
+          className="absolute bottom-4 left-4 right-4 px-4 py-3 rounded-2xl"
+          style={{
+            background: "rgba(2,6,23,0.38)",
+            border: "1px solid rgba(255,255,255,0.14)",
+            backdropFilter: "blur(14px)",
+          }}
+        >
+          <div className="flex items-center gap-2 text-white font-semibold text-sm">
+            <MapPin className="w-4 h-4" style={{ color: palette.gold }} />
+            Basudev Marga, Hetauda-2
+          </div>
+          <div
+            className="text-xs mt-1"
+            style={{ color: "rgba(255,255,255,0.64)" }}
+          >
+            A learning environment built for academics, values, creativity, and
+            student growth.
+          </div>
+        </div>
       </motion.div>
 
       <motion.div
@@ -253,7 +210,7 @@ function HeroImageStage() {
           opacity: { duration: 0.55, delay: 0.3 },
           y: { duration: 4.8, repeat: Infinity, ease: "easeInOut" },
         }}
-        className="absolute left-[6%] top-8 z-20 rounded-3xl px-4 py-3 hidden xl:block"
+        className="absolute left-[4%] top-6 z-20 rounded-3xl px-4 py-3 hidden xl:block"
         style={{
           background:
             "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07))",
@@ -291,7 +248,7 @@ function HeroImageStage() {
           opacity: { duration: 0.55, delay: 0.45 },
           y: { duration: 5, repeat: Infinity, ease: "easeInOut" },
         }}
-        className="absolute right-[4%] top-16 z-20 rounded-3xl px-4 py-3 hidden xl:block"
+        className="absolute right-[2%] top-16 z-20 rounded-3xl px-4 py-3 hidden xl:block"
         style={{
           background:
             "linear-gradient(145deg, rgba(56,189,248,0.2), rgba(255,255,255,0.07))",
@@ -329,7 +286,7 @@ function HeroImageStage() {
           opacity: { duration: 0.55, delay: 0.6 },
           y: { duration: 5.2, repeat: Infinity, ease: "easeInOut" },
         }}
-        className="absolute left-[9%] bottom-10 z-20 rounded-3xl px-4 py-3 hidden xl:block"
+        className="absolute left-[8%] bottom-1 z-20 rounded-3xl px-4 py-3 hidden xl:block"
         style={{
           background:
             "linear-gradient(145deg, rgba(139,92,246,0.2), rgba(255,255,255,0.07))",
@@ -367,7 +324,7 @@ function HeroImageStage() {
           opacity: { duration: 0.55, delay: 0.75 },
           y: { duration: 5.4, repeat: Infinity, ease: "easeInOut" },
         }}
-        className="absolute right-[7%] bottom-8 z-20 rounded-3xl px-4 py-3 hidden xl:block"
+        className="absolute right-[7%] bottom-0 z-20 rounded-3xl px-4 py-3 hidden xl:block"
         style={{
           background:
             "linear-gradient(145deg, rgba(34,197,94,0.2), rgba(255,255,255,0.07))",
@@ -400,14 +357,15 @@ function HeroImageStage() {
     </motion.div>
   );
 }
+
 function Hero() {
   return (
     <section
       id="home"
-      className="relative min-h-screen overflow-hidden pt-20"
+      className="relative overflow-hidden pt-20 pb-20 lg:pb-14"
       style={{
         background:
-          "radial-gradient(circle at 10% 18%, rgba(56,189,248,0.28), transparent 32%), radial-gradient(circle at 85% 12%, rgba(250,204,21,0.22), transparent 30%), radial-gradient(circle at 60% 78%, rgba(139,92,246,0.32), transparent 38%), linear-gradient(135deg, #020617 0%, #07111F 45%, #111827 100%)",
+          "radial-gradient(circle at 10% 18%, rgba(56,189,248,0.28), transparent 32%), radial-gradient(circle at 85% 12%, rgba(250,204,21,0.22), transparent 30%), radial-gradient(circle at 60% 78%, rgba(139,92,246,0.28), transparent 38%), linear-gradient(135deg, #020617 0%, #07111F 45%, #111827 100%)",
       }}
     >
       <style>{`
@@ -461,7 +419,7 @@ function Hero() {
         />
       </div>
 
-      <div className="max-w-[1450px] mx-auto px-8 py-10 lg:py-8 grid lg:grid-cols-[0.95fr_1.05fr] gap-10 items-center relative z-10">
+      <div className="max-w-[1450px] mx-auto px-8 py-8 lg:py-6 grid lg:grid-cols-[0.95fr_1.05fr] gap-8 items-center relative z-10">
         <div>
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -495,27 +453,32 @@ function Hero() {
             initial={{ opacity: 0, y: 36 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.75, delay: 0.08 }}
-            className="text-5xl md:text-6xl xl:text-7xl leading-[1.03] mb-5"
+            className="text-4xl md:text-5xl xl:text-6xl leading-[1.02] mb-5"
             style={{
               color: "#FFFFFF",
               fontFamily: "var(--font-display)",
               fontWeight: 850,
               letterSpacing: "-0.055em",
-              textShadow: "0 30px 80px rgba(0,0,0,0.55)",
+              textShadow: "0 22px 60px rgba(0,0,0,0.45)",
             }}
           >
-            {heroData.titleTop}{" "}
+            <span>{heroData.titleLine1}</span>
+            <br />
             <span
               style={{
+                display: "inline-block",
                 background:
-                  "linear-gradient(135deg, #38BDF8 0%, #FACC15 48%, #A78BFA 100%)",
+                  "linear-gradient(135deg, #6EE7B7 0%, #FACC15 50%, #C4B5FD 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
+                textShadow: "none",
+                filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.18))",
               }}
             >
-              {heroData.titleHighlight}
-            </span>{" "}
-            {heroData.titleBottom}
+              {heroData.titleLine2}
+            </span>
+            <br />
+            <span>{heroData.titleLine3}</span>
           </motion.h1>
 
           <motion.p

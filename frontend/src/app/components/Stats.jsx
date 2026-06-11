@@ -7,9 +7,6 @@ import {
   Trophy,
   Star,
   Sparkles,
-  Monitor,
-  FlaskConical,
-  Library,
   Award,
   GraduationCap,
   UserRoundCheck,
@@ -64,28 +61,18 @@ const statsData = {
     },
   ],
 
-  facilities: [
-    {
-      icon: Library,
-      label: "E-Library",
-      color: palette.gold,
-    },
-    {
-      icon: Monitor,
-      label: "Computer Lab",
-      color: palette.cyan,
-    },
-    {
-      icon: FlaskConical,
-      label: "Science Lab",
-      color: palette.violet,
-    },
-    {
-      icon: Trophy,
-      label: "Sports",
-      color: palette.green,
-    },
-  ],
+  story: {
+    badge: "About Baljagriti",
+    title: "Building Tomorrow's Leaders Today",
+    paragraphs: [
+      "Established with a vision to provide quality education in Makawanpur, Baljagriti Secondary English Boarding School has grown as one of Hetauda's respected academic institutions.",
+      "With students from Play Group to Grade 10, the school focuses on academic discipline, values, creativity, digital learning, and holistic student development.",
+    ],
+    buttonText: "Read Our Story",
+    buttonLink: "/about",
+    image:
+      "https://images.unsplash.com/photo-1588072432836-e10032774350?w=1000&h=800&fit=crop&auto=format",
+  },
 
   excellence: {
     title: "Academic Excellence",
@@ -246,7 +233,7 @@ function Stats() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-20">
           {statsData.stats.map((stat, i) => {
             const Icon = stat.icon;
 
@@ -300,47 +287,126 @@ function Stats() {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 22 }}
+          initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.55, delay: 0.15 }}
-          className="rounded-[1.6rem] p-4 mb-20"
-          style={{
-            background:
-              "linear-gradient(145deg, rgba(15,23,42,0.94), rgba(2,6,23,0.9))",
-            border: "1px solid rgba(255,255,255,0.12)",
-            boxShadow: "0 22px 60px rgba(15,23,42,0.18)",
-          }}
+          transition={{ duration: 0.6 }}
+          className="grid lg:grid-cols-2 gap-10 items-center mb-24"
         >
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {statsData.facilities.map((item) => {
-              const Icon = item.icon;
+          <div
+            className="relative rounded-[2rem] overflow-hidden min-h-[430px]"
+            style={{
+              background:
+                "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(2,6,23,0.92))",
+              border: "1px solid rgba(255,255,255,0.12)",
+              boxShadow:
+                "0 28px 80px rgba(15,23,42,0.22), inset 0 1px 0 rgba(255,255,255,0.1)",
+            }}
+          >
+            <img
+              src={statsData.story.image}
+              alt="Baljagriti school"
+              className="absolute inset-0 w-full h-full object-cover opacity-75"
+            />
 
-              return (
-                <div
-                  key={item.label}
-                  className="flex items-center gap-3 rounded-2xl px-4 py-3"
-                  style={{
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                  }}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(2,6,23,0.72), rgba(2,6,23,0.16) 45%, rgba(15,23,42,0.86))",
+              }}
+            />
+
+            <div
+              className="absolute top-6 left-6 rounded-2xl px-4 py-3"
+              style={{
+                background: "rgba(255,255,255,0.14)",
+                border: "1px solid rgba(255,255,255,0.18)",
+                backdropFilter: "blur(18px)",
+              }}
+            >
+              <div className="text-white text-sm font-bold">
+                Baljagriti School
+              </div>
+              <div
+                className="text-xs"
+                style={{ color: "rgba(255,255,255,0.68)" }}
+              >
+                Hetauda-2, Makwanpur
+              </div>
+            </div>
+
+            <div
+              className="absolute bottom-6 left-6 right-6 rounded-3xl p-5"
+              style={{
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07))",
+                border: "1px solid rgba(255,255,255,0.18)",
+                backdropFilter: "blur(20px)",
+                boxShadow: "0 22px 60px rgba(0,0,0,0.3)",
+              }}
+            >
+              <div className="text-white text-lg font-bold mb-1">
+                Quality Education Since 2046 BS
+              </div>
+              <div
+                className="text-sm"
+                style={{ color: "rgba(255,255,255,0.68)" }}
+              >
+                This image and text can later come from the admin dashboard.
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div
+              className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-5"
+              style={{
+                background: "rgba(215,25,32,0.06)",
+                border: "1px solid rgba(215,25,32,0.16)",
+                color: "#D71920",
+              }}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span className="text-sm font-bold">{statsData.story.badge}</span>
+            </div>
+
+            <h2
+              className="text-3xl md:text-5xl text-slate-950 mb-5"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 850,
+                letterSpacing: "-0.045em",
+                lineHeight: 1.05,
+              }}
+            >
+              {statsData.story.title}
+            </h2>
+
+            <div className="space-y-4 mb-7">
+              {statsData.story.paragraphs.map((text) => (
+                <p
+                  key={text}
+                  className="text-base md:text-lg leading-relaxed text-slate-500"
                 >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{
-                      background: `${item.color}18`,
-                      border: `1px solid ${item.color}30`,
-                    }}
-                  >
-                    <Icon className="w-5 h-5" style={{ color: item.color }} />
-                  </div>
+                  {text}
+                </p>
+              ))}
+            </div>
 
-                  <span className="text-sm font-semibold text-white">
-                    {item.label}
-                  </span>
-                </div>
-              );
-            })}
+            <Link
+              to={statsData.story.buttonLink}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 hover:gap-3 hover:-translate-y-0.5"
+              style={{
+                color: "#0F172A",
+                background: "#FFFFFF",
+                border: "1px solid rgba(15,23,42,0.12)",
+                boxShadow: "0 10px 28px rgba(15,23,42,0.08)",
+              }}
+            >
+              {statsData.story.buttonText}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </motion.div>
 
@@ -349,10 +415,10 @@ function Stats() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
-          className="text-center mb-12"
+          className="mb-12"
         >
           <h2
-            className="text-3xl md:text-4xl text-slate-950 mb-4"
+            className="text-3xl md:text-4xl text-slate-950 mb-3"
             style={{
               fontFamily: "var(--font-display)",
               fontWeight: 850,
@@ -362,7 +428,7 @@ function Stats() {
             {statsData.excellence.title}
           </h2>
 
-          <p className="max-w-2xl mx-auto text-base md:text-lg leading-relaxed text-slate-500">
+          <p className="max-w-2xl text-base md:text-lg leading-relaxed text-slate-500">
             {statsData.excellence.description}
           </p>
         </motion.div>
@@ -457,7 +523,7 @@ function Stats() {
                 }}
               >
                 <div
-                  className="w-13 h-13 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  className="rounded-2xl flex items-center justify-center flex-shrink-0"
                   style={{
                     width: "52px",
                     height: "52px",

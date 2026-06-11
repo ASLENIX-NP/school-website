@@ -22,7 +22,6 @@ const palette = {
   cyan: "#38BDF8",
   gold: "#FACC15",
   green: "#22C55E",
-  violet: "#8B5CF6",
 };
 
 export function Navbar() {
@@ -31,7 +30,10 @@ export function Navbar() {
   const location = useLocation();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
 
@@ -55,14 +57,12 @@ export function Navbar() {
           className="max-w-[1450px] mx-auto h-[76px] px-5 md:px-6 flex items-center justify-between rounded-[1.7rem] transition-all duration-300"
           style={{
             background: scrolled
-              ? "linear-gradient(145deg, rgba(2,6,23,0.92), rgba(15,23,42,0.78))"
-              : "linear-gradient(145deg, rgba(2,6,23,0.76), rgba(15,23,42,0.54))",
-            border: scrolled
-              ? "1px solid rgba(255,255,255,0.16)"
-              : "1px solid rgba(255,255,255,0.1)",
+              ? "linear-gradient(145deg, rgba(2,6,23,0.95), rgba(15,23,42,0.88))"
+              : "linear-gradient(145deg, rgba(2,6,23,0.9), rgba(15,23,42,0.78))",
+            border: "1px solid rgba(255,255,255,0.14)",
             boxShadow: scrolled
-              ? "0 24px 70px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.12)"
-              : "0 14px 44px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.08)",
+              ? "0 24px 70px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.12)"
+              : "0 18px 52px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.1)",
             backdropFilter: "blur(24px)",
           }}
         >
@@ -74,7 +74,7 @@ export function Navbar() {
                 height: "52px",
                 border: "1px solid rgba(255,255,255,0.7)",
                 boxShadow:
-                  "0 0 0 3px rgba(34,197,94,0.22), 0 14px 34px rgba(34,197,94,0.24)",
+                  "0 0 0 3px rgba(34,197,94,0.2), 0 14px 34px rgba(34,197,94,0.22)",
               }}
             >
               <img
@@ -86,8 +86,9 @@ export function Navbar() {
 
             <div className="hidden sm:block">
               <div
-                className="text-white font-bold text-lg leading-tight"
+                className="font-bold text-lg leading-tight"
                 style={{
+                  color: "#FFFFFF",
                   fontFamily: "var(--font-display)",
                   letterSpacing: "-0.02em",
                 }}
@@ -107,9 +108,9 @@ export function Navbar() {
           <div
             className="hidden xl:flex items-center gap-1 px-2 py-2 rounded-2xl"
             style={{
-              background: "rgba(255,255,255,0.045)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.055)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
             }}
           >
             {navLinks.map((link) => {
@@ -121,7 +122,7 @@ export function Navbar() {
                   to={link.href}
                   className="relative px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
                   style={{
-                    color: active ? "#020617" : "rgba(255,255,255,0.82)",
+                    color: active ? "#020617" : "rgba(255,255,255,0.84)",
                     background: active
                       ? `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`
                       : "transparent",
@@ -162,8 +163,9 @@ export function Navbar() {
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="xl:hidden text-white p-2 rounded-xl transition-colors"
+            className="xl:hidden p-2 rounded-xl transition-colors"
             style={{
+              color: "#FFFFFF",
               background: "rgba(255,255,255,0.08)",
               border: "1px solid rgba(255,255,255,0.12)",
             }}
@@ -191,9 +193,9 @@ export function Navbar() {
             className="fixed top-[96px] left-4 right-4 z-40 xl:hidden rounded-[1.7rem] overflow-hidden"
             style={{
               background:
-                "linear-gradient(145deg, rgba(2,6,23,0.96), rgba(15,23,42,0.86))",
+                "linear-gradient(145deg, rgba(2,6,23,0.97), rgba(15,23,42,0.9))",
               border: "1px solid rgba(255,255,255,0.14)",
-              boxShadow: "0 28px 80px rgba(0,0,0,0.42)",
+              boxShadow: "0 28px 80px rgba(0,0,0,0.36)",
               backdropFilter: "blur(24px)",
             }}
           >
