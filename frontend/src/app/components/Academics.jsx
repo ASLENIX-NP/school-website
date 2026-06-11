@@ -145,30 +145,39 @@ const ongoingAssessments = ["Monthly Tests", "Unit Tests", "Assignments", "Pract
 
 export function Academics() {
   return (
-    <div 
-      className="min-h-screen relative overflow-hidden"
-      style={{ background: `linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)` }}
-    >
-      {/* Background Ornaments */}
-      <div
-        className="absolute top-20 left-0 w-[420px] h-[420px] rounded-full pointer-events-none z-0"
-        style={{
-          background: "radial-gradient(circle, rgba(215,25,32,0.08), transparent 70%)",
-          filter: "blur(12px)",
-        }}
-      />
-      <div
-        className="absolute bottom-1/3 right-0 w-[520px] h-[520px] rounded-full pointer-events-none z-0"
-        style={{
-          background: "radial-gradient(circle, rgba(22,138,58,0.08), transparent 70%)",
-          filter: "blur(12px)",
-        }}
-      />
+<div
+  className="min-h-screen relative overflow-hidden"
+  
+  style={{
+    background: `
+      radial-gradient(circle at top right, rgba(124,92,196,0.18), transparent 34%),
+      radial-gradient(circle at bottom left, rgba(22,138,58,0.14), transparent 32%),
+      linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
+    `,
+  }}
+>
+<div
+  className="absolute top-0 right-0 w-[520px] h-[520px] rounded-full pointer-events-none"
+  style={{
+    background:
+      "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
+    filter: "blur(8px)",
+  }}
+/>
 
+<div
+  className="absolute bottom-0 left-0 w-[420px] h-[420px] rounded-full pointer-events-none"
+  style={{
+    background:
+      "radial-gradient(circle, rgba(22,138,58,0.11), transparent 70%)",
+    filter: "blur(8px)",
+  }}
+/>
+     
       {/* ==================== 1. ACADEMIC HERO SECTION ==================== */}
-      <section className="pt-40 pb-20 relative z-10">
+      <section className="pt-36 pb-28 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-12 gap-12 items-center">
+        <div className="grid lg:grid-cols-12 gap-16 items-center">
             <motion.div 
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
@@ -215,7 +224,22 @@ export function Academics() {
               className="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-5 justify-center"
             >
               <div 
-                className="p-6 rounded-3xl flex items-center gap-5 bg-white shadow-xl transition-all duration-300 hover:scale-102"
+                className="
+                p-6
+                rounded-3xl
+                flex
+                items-center
+                gap-5
+                bg-white/90
+                backdrop-blur-xl
+                border
+                border-white
+                shadow-[0_20px_50px_rgba(11,16,32,0.10)]
+                transition-all
+                duration-500
+                hover:-translate-y-2
+                hover:shadow-[0_35px_80px_rgba(11,16,32,0.15)]
+                "
                 style={{ borderLeft: `6px solid ${colors.green}` }}
               >
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-3xl" style={{ backgroundColor: colors.green }}>🏆</div>
@@ -226,7 +250,22 @@ export function Academics() {
               </div>
 
               <div 
-                className="p-6 rounded-3xl flex items-center gap-5 bg-white shadow-xl transition-all duration-300 hover:scale-102"
+                className="
+                p-6
+                rounded-3xl
+                flex
+                items-center
+                gap-5
+                bg-white/90
+                backdrop-blur-xl
+                border
+                border-white
+                shadow-[0_20px_50px_rgba(11,16,32,0.10)]
+                transition-all
+                duration-500
+                hover:-translate-y-2
+                hover:shadow-[0_35px_80px_rgba(11,16,32,0.15)]
+                "
                 style={{ borderLeft: `6px solid ${colors.purple}` }}
               >
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-3xl" style={{ backgroundColor: colors.purple }}>🌟</div>
@@ -254,15 +293,58 @@ export function Academics() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {programs.map((prog, i) => (
-              <motion.div
-                key={prog.level}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="p-6 rounded-3xl bg-white shadow-md border flex flex-col justify-between group transition-all duration-300 hover:shadow-xl"
-                style={{ borderColor: prog.border }}
-              >
+           <motion.div
+           key={prog.level}
+           initial={{ opacity: 0, y: 30 }}
+           whileInView={{ opacity: 1, y: 0 }}
+           viewport={{ once: true }}
+           transition={{ duration: 0.5, delay: i * 0.1 }}
+           className="
+             p-6
+             rounded-3xl
+             border
+             flex
+             flex-col
+             justify-between
+             group
+             relative
+             overflow-hidden
+             transition-all
+             duration-500
+             hover:-translate-y-4
+             hover:scale-[1.03]
+             hover:shadow-[0_35px_80px_rgba(0,0,0,0.15)]
+           "
+           style={{
+             borderColor: prog.border,
+             background: `
+               linear-gradient(
+                 145deg,
+                 rgba(255,255,255,0.96),
+                 rgba(255,255,255,0.82)
+               )
+             `,
+             backdropFilter: "blur(18px)",
+           }}
+         >
+          <div
+  className="
+    absolute
+    top-0
+    right-0
+    w-40
+    h-40
+    rounded-full
+    opacity-0
+    group-hover:opacity-100
+    transition-all
+    duration-700
+  "
+  style={{
+    background: `${prog.badgeColor}15`,
+    filter: "blur(60px)",
+  }}
+/>
                 <div>
                   <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md text-white mb-4 inline-block" style={{ backgroundColor: prog.badgeColor }}>
                     {prog.span}
@@ -308,9 +390,28 @@ export function Academics() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm flex gap-4 items-start transition-all duration-300 hover:shadow-md"
+                className="
+                group
+                p-6
+                rounded-3xl
+                bg-white/70
+                backdrop-blur-xl
+                border
+                transition-all
+                duration-500
+                hover:-translate-y-3
+                hover:scale-[1.03]
+                hover:shadow-2xl
+                "
               >
-                <div className="text-3xl p-3 bg-slate-50 rounded-xl">{feat.emoji}</div>
+                <motion.div
+whileHover={{
+rotate: 10,
+scale: 1.15,
+y: -5,
+}}
+className="text-3xl p-3 bg-slate-50 rounded-xl"
+></motion.div>
                 <div>
                   <h3 className="font-bold text-lg text-slate-900 mb-1" style={{ fontFamily: "var(--font-display)" }}>{feat.title}</h3>
                   <p className="text-sm text-slate-600 leading-relaxed">{feat.desc}</p>
@@ -334,7 +435,21 @@ export function Academics() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="space-y-2 flex flex-col items-center"
+                  className="
+group
+relative
+overflow-hidden
+p-8
+rounded-3xl
+bg-white/5
+backdrop-blur-md
+border
+border-white/10
+transition-all
+duration-500
+hover:-translate-y-3
+hover:bg-white/10
+"
                 >
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white mb-2" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
                     <IconComponent className="w-6 h-6" style={{ color: stat.color }} />
@@ -407,7 +522,19 @@ export function Academics() {
 
               <div className="grid sm:grid-cols-2 gap-4">
                 {methodologies.map((method) => (
-                  <div key={method.label} className="p-4 rounded-xl bg-white/70 border border-slate-100 shadow-sm space-y-1">
+                  <div key={method.label}className="
+                  group
+                  p-5
+                  rounded-2xl
+                  bg-white/80
+                  backdrop-blur-md
+                  border
+                  border-white
+                  transition-all
+                  duration-500
+                  hover:-translate-y-2
+                  hover:shadow-xl
+                  ">
                     <h4 className="font-bold text-slate-900 flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: colors.green }} />
                       {method.label}
@@ -442,7 +569,22 @@ export function Academics() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.05 }}
-                  className="flex gap-4 relative z-10 bg-white/60 p-4 rounded-2xl border border-slate-100 shadow-sm"
+                  className="
+                  group
+                  flex
+                  gap-4
+                  relative
+                  z-10
+                  bg-white/80
+                  backdrop-blur-xl
+                  p-5
+                  rounded-3xl
+                  border
+                  transition-all
+                  duration-500
+                  hover:-translate-x-2
+                  hover:shadow-xl
+                  "
                 >
                   <div className="w-4 h-4 rounded-full bg-white border-4 border-indigo-600 shrink-0 mt-1.5" />
                   <div>
