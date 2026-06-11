@@ -8,25 +8,25 @@ const contactInfo = [
   {
     icon: MapPin,
     label: "Address",
-    value: "42 Apex Boulevard, Education Quarter, Springfield, IL 62701",
+    value: "Basudev Marga, Hetauda Sub-Metropolitan City, Ward No. 2",
     color: "#f97316",
   },
   {
     icon: Phone,
     label: "Phone",
-    value: "+1 (555) 842-0011",
+    value: "057-590144, 057-590145, 057-590146",
     color: "#6b21a8",
   },
   {
     icon: Mail,
     label: "Email",
-    value: "admissions@apexacademy.edu",
+    value: "infobjess2046@gmail.com",
     color: "#f97316",
   },
   {
     icon: Clock,
-    label: "Office Hours",
-    value: "Mon–Fri: 8 AM – 5 PM · Sat: 9 AM – 1 PM",
+    label: "School",
+    value: "Baljagriti Secondary English Boarding School",
     color: "#6b21a8",
   },
 ];
@@ -104,7 +104,7 @@ function Contact() {
           </h2>
 
           <p className="max-w-xl mx-auto text-lg" style={{ color: "#64748b" }}>
-            Questions about admissions, curriculum, or campus life? Our team is
+            Questions about admissions, curriculum, or school life? Our team is
             here to help.
           </p>
         </motion.div>
@@ -164,13 +164,13 @@ function Contact() {
               <div className="text-center">
                 <div className="text-4xl mb-2">🗺️</div>
                 <div className="text-white font-semibold text-sm">
-                  Apex Academy Campus
+                  Baljagriti Campus
                 </div>
                 <div
                   className="text-xs mt-1"
                   style={{ color: "rgba(255,255,255,0.5)" }}
                 >
-                  42 Apex Blvd, Springfield, IL
+                  Basudev Marga, Hetauda, Makawanpur
                 </div>
                 <button
                   type="button"

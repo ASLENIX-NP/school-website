@@ -54,7 +54,7 @@ function SchoolApp() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<AboutPage />} />
-            <Route path="/academics" element={<AcademicsPage />} />
+            <Route path="/facilities" element={<AcademicsPage />} />
             <Route path="/admissions" element={<AdmissionsPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/gallery" element={<GalleryPage />} />

@@ -1,12 +1,13 @@
+import schoolLogo from "../../assets/school-logo.jpeg";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, GraduationCap } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
-  { label: "Academics", href: "/academics" },
+  { label: "Facilities", href: "/facilities" },
   { label: "Admissions", href: "/admissions" },
   { label: "Events", href: "/events" },
   { label: "Gallery", href: "/gallery" },
@@ -52,27 +53,26 @@ export function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-20">
           <Link to="/" className="flex items-center gap-3 group">
-            <div
-              className="w-11 h-11 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform"
-              style={{
-                background: "linear-gradient(135deg, #f97316, #fb923c)",
-              }}
-            >
-              <GraduationCap className="w-6 h-6 text-white" />
-            </div>
+            <div className="w-12 h-12 rounded-xl overflow-hidden bg-white flex items-center justify-center group-hover:scale-110 transition-transform">
+  <img
+    src={schoolLogo}
+    alt="Baljagriti School Logo"
+    className="w-full h-full object-contain p-1"
+  />
+</div>
 
             <div>
               <div
                 className="text-white font-semibold text-lg leading-tight"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                Apex Academy
+                Baljagriti
               </div>
               <div
                 className="text-xs"
                 style={{ color: "rgba(249,115,22,0.9)" }}
               >
-                Excellence in Education
+                Secondary English Boarding School
               </div>
             </div>
           </Link>
@@ -111,7 +111,7 @@ export function Navbar() {
                 background: "linear-gradient(135deg, #f97316, #ea580c)",
               }}
             >
-              Apply Now →
+              Admission →
             </Link>
           </div>
 
@@ -168,7 +168,7 @@ export function Navbar() {
                   background: "linear-gradient(135deg, #f97316, #ea580c)",
                 }}
               >
-                Apply Now →
+                Admission →
               </Link>
             </div>
           </motion.div>

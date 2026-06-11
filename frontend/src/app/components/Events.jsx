@@ -103,9 +103,9 @@ function Events() {
               }}
             >
               Life at{" "}
-              <span className="italic" style={{ color: "#6b21a8" }}>
-                Apex
-              </span>
+<span className="italic" style={{ color: "#6b21a8" }}>
+  Baljagriti
+</span>
             </h2>
           </div>
 
