@@ -10,6 +10,7 @@ import { Events } from "./Events";
 import { Gallery } from "./Gallery";
 import { Contact } from "./Contact";
 import { Footer } from "./Footer";
+
 import Messages from "../../pages/Messages";
 import Notices from "../../pages/Notices";
 import Staff from "../../pages/Staff";
@@ -25,6 +26,10 @@ function HomePage() {
 
 function AboutPage() {
   return <About />;
+}
+
+function AcademicsPage() {
+  return <Academics />;
 }
 
 function FacilitiesPage() {
@@ -49,24 +54,25 @@ function ContactPage() {
 
 function SchoolApp() {
   return (
-    <div
-      className="min-h-screen"
-      style={{ fontFamily: "var(--font-body)" }}
-    >
+    <div className="min-h-screen" style={{ fontFamily: "var(--font-body)" }}>
       <Navbar />
 
       <main>
         <Routes>
           <Route path="/" element={<HomePage />} />
+
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/facilities" element={<FacilitiesPage />} />
-          <Route path="/admissions" element={<AdmissionsPage />} />
           <Route path="/messages" element={<Messages />} />
-<Route path="/notices" element={<Notices />} />
-<Route path="/staff" element={<Staff />} />
+          <Route path="/academics" element={<AcademicsPage />} />
+          <Route path="/notices" element={<Notices />} />
+          <Route path="/facilities" element={<FacilitiesPage />} />
+          <Route path="/staff" element={<Staff />} />
+
+          <Route path="/admissions" element={<AdmissionsPage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/contact" element={<ContactPage />} />
+
           <Route path="*" element={<HomePage />} />
         </Routes>
       </main>

@@ -1,301 +1,164 @@
 import schoolLogo from "../../assets/school-logo.jpeg";
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  GraduationCap,
   Facebook,
-  Twitter,
   Instagram,
   Youtube,
-  Linkedin,
-  ArrowRight,
+  Mail,
+  Phone,
+  MapPin,
 } from "lucide-react";
 
-const quickLinks = [
-  { label: "About Us", href: "/about" },
+const navLinks = [
+  { label: "About", href: "/about" },
+  { label: "Academics", href: "/academics" },
   { label: "Facilities", href: "/facilities" },
-  { label: "Admissions", href: "/admissions" },
-  { label: "Events", href: "/events" },
   { label: "Gallery", href: "/gallery" },
   { label: "Contact", href: "/contact" },
 ];
 
-const studentLinks = [
-  "E-Library",
-  "Computer Lab",
-  "Science Lab",
-  "Auditorium",
-  "Sports",
-  "Campus Map",
-];
-
-const contactLines = [
-  "Basudev Marga, Hetauda Sub-Metropolitan City, Ward No. 2",
-  "Hetauda, Makawanpur, Nepal",
-  "057-590144, 057-590145, 057-590146",
-  "infobjess2046@gmail.com",
-];
-
 const socials = [
   { icon: Facebook, href: "#", label: "Facebook" },
-  { icon: Twitter, href: "#", label: "Twitter" },
   { icon: Instagram, href: "#", label: "Instagram" },
   { icon: Youtube, href: "#", label: "YouTube" },
-  { icon: Linkedin, href: "#", label: "LinkedIn" },
 ];
 
+const palette = {
+  cyan: "#38BDF8",
+  gold: "#FACC15",
+  green: "#22C55E",
+};
+
 export function Footer() {
-  const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
-
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-    if (email) {
-      setSubscribed(true);
-      setEmail("");
-    }
-  };
-
   return (
-    <footer style={{ background: "#070e21" }}>
-      {/* Top CTA bar */}
-      <div
-        className="py-12"
-        style={{
-          background: "linear-gradient(135deg, #0f1c3f, #1a0a3c)",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h3
-              className="text-2xl text-white mb-1"
-              style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
-            >
-              Ready to Join Baljagriti?
-            </h3>
-            <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>
-              Admissions are open for Play Group, LKG, and classes up to Class
-              IX.
-            </p>
-          </div>
+    <footer
+      className="relative overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(135deg, #020617 0%, #07111F 55%, #0F172A 100%)",
+        borderTop: "1px solid rgba(255,255,255,0.1)",
+      }}
+    >
+      <div className="absolute inset-0 pointer-events-none">
+        <div
+          className="absolute -left-24 -top-24 w-72 h-72 rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(56,189,248,0.18), transparent 70%)",
+          }}
+        />
 
-          <Link
-            to="/admissions"
-            className="flex-shrink-0 px-7 py-3.5 rounded-xl font-semibold text-white transition-all duration-300 hover:scale-105 hover:shadow-xl"
-            style={{
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
-              boxShadow: "0 8px 24px rgba(249,115,22,0.3)",
-            }}
-          >
-            Admission Details →
-          </Link>
-        </div>
+        <div
+          className="absolute -right-24 -bottom-24 w-72 h-72 rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(250,204,21,0.14), transparent 70%)",
+          }}
+        />
       </div>
 
-      {/* Main footer */}
-      <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
-          {/* Brand column */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-12 h-12 rounded-xl overflow-hidden bg-white flex items-center justify-center">
-  <img
-    src={schoolLogo}
-    alt="Baljagriti School Logo"
-    className="w-full h-full object-contain p-1"
-  />
-</div>
-
-              <div>
-                <div
-                  className="text-white font-semibold text-lg"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  Baljagriti
-                </div>
-                <div className="text-xs" style={{ color: "#f97316" }}>
-                  Secondary English Boarding School
-                </div>
-              </div>
-            </div>
-
-            <p
-              className="text-sm mb-6 leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.45)" }}
-            >
-              Baljagriti Secondary English Boarding School was established in
-              2046 BS with the motto of providing quality education.
-            </p>
-
-            {/* Social links */}
-            <div className="flex gap-2 flex-wrap">
-              {socials.map((s) => (
-                <a
-                  key={s.label}
-                  href={s.href}
-                  aria-label={s.label}
-                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
-                  style={{
-                    background: "rgba(255,255,255,0.07)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
-                >
-                  <s.icon
-                    className="w-4 h-4"
-                    style={{ color: "rgba(255,255,255,0.6)" }}
-                  />
-                </a>
-              ))}
-            </div>
-          </div>
-
-          {/* Quick links */}
-          <div>
+      <div className="relative z-10 max-w-[1450px] mx-auto px-6 py-8">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+          <div className="flex items-center gap-3">
             <div
-              className="text-sm font-semibold mb-5 uppercase tracking-widest"
-              style={{ color: "#f97316" }}
-            >
-              Quick Links
-            </div>
-
-            <ul className="space-y-2.5">
-              {quickLinks.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="text-sm flex items-center gap-2 transition-all duration-200 hover:gap-3"
-                    style={{ color: "rgba(255,255,255,0.5)" }}
-                  >
-                    <ArrowRight className="w-3 h-3 opacity-50" />
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Students */}
-          <div>
-            <div
-              className="text-sm font-semibold mb-5 uppercase tracking-widest"
-              style={{ color: "#f97316" }}
-            >
-              Student Resources
-            </div>
-
-            <ul className="space-y-2.5">
-              {studentLinks.map((link) => (
-                <li key={link}>
-                  <a
-                    href="#"
-                    className="text-sm flex items-center gap-2 transition-all duration-200 hover:gap-3"
-                    style={{ color: "rgba(255,255,255,0.5)" }}
-                  >
-                    <ArrowRight className="w-3 h-3 opacity-50" />
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact + newsletter */}
-          <div>
-            <div
-              className="text-sm font-semibold mb-5 uppercase tracking-widest"
-              style={{ color: "#f97316" }}
-            >
-              Contact
-            </div>
-
-            <ul className="space-y-2 mb-8">
-              {contactLines.map((line) => (
-                <li
-                  key={line}
-                  className="text-sm"
-                  style={{ color: "rgba(255,255,255,0.45)" }}
-                >
-                  {line}
-                </li>
-              ))}
-            </ul>
-
-            {/* Newsletter */}
-            <div
-              className="p-4 rounded-2xl"
+              className="w-12 h-12 rounded-2xl bg-white overflow-hidden flex items-center justify-center"
               style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                boxShadow:
+                  "0 0 0 3px rgba(34,197,94,0.2), 0 14px 34px rgba(34,197,94,0.22)",
               }}
             >
-              <div className="text-xs font-semibold mb-3 text-white">
-                Stay Updated
+              <img
+                src={schoolLogo}
+                alt="Baljagriti School Logo"
+                className="w-full h-full object-contain p-1"
+              />
+            </div>
+
+            <div>
+              <div
+                className="text-white text-lg font-bold leading-tight"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Baljagriti
               </div>
-
-              {subscribed ? (
-                <div
-                  className="text-sm text-center py-2"
-                  style={{ color: "#4ade80" }}
-                >
-                  ✓ You're subscribed!
-                </div>
-              ) : (
-                <form onSubmit={handleSubscribe} className="flex gap-2">
-                  <input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    type="email"
-                    placeholder="your@email.com"
-                    className="flex-1 px-3 py-2.5 rounded-lg text-xs outline-none min-w-0"
-                    style={{
-                      background: "rgba(255,255,255,0.08)",
-                      border: "1px solid rgba(255,255,255,0.12)",
-                      color: "#ffffff",
-                    }}
-                  />
-
-                  <button
-                    type="submit"
-                    className="px-3 py-2.5 rounded-lg text-white flex items-center gap-1 text-xs font-semibold flex-shrink-0"
-                    style={{
-                      background: "linear-gradient(135deg, #f97316, #ea580c)",
-                    }}
-                  >
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </form>
-              )}
+              <div className="text-xs" style={{ color: palette.green }}>
+                Secondary English Boarding School
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Bottom bar */}
-      <div
-        className="border-t py-6"
-        style={{ borderColor: "rgba(255,255,255,0.06)" }}
-      >
-        <div
-          className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs"
-          style={{ color: "rgba(255,255,255,0.3)" }}
-        >
-          <span>
-            © 2026 Baljagriti Secondary English Boarding School. All rights
-            reserved.
-          </span>
-
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-white transition-colors">
-              Privacy Policy
-            </a>
-            <a href="#" className="hover:text-white transition-colors">
-              Terms of Use
-            </a>
-            <a href="#" className="hover:text-white transition-colors">
-              Accessibility
-            </a>
+          <div className="flex flex-wrap gap-3">
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                to={link.href}
+                className="text-sm px-3 py-2 rounded-xl transition-all duration-200 hover:bg-white/10"
+                style={{ color: "rgba(226,232,240,0.72)" }}
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
+
+          <div className="flex gap-2">
+            {socials.map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                aria-label={s.label}
+                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-110"
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                }}
+              >
+                <s.icon
+                  className="w-4 h-4"
+                  style={{ color: "rgba(255,255,255,0.75)" }}
+                />
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div
+          className="mt-7 pt-6 border-t grid lg:grid-cols-3 gap-4 text-sm"
+          style={{
+            borderColor: "rgba(255,255,255,0.09)",
+            color: "rgba(226,232,240,0.58)",
+          }}
+        >
+          <div className="flex items-start gap-2">
+            <MapPin
+              className="w-4 h-4 mt-0.5 flex-shrink-0"
+              style={{ color: palette.cyan }}
+            />
+            <span>Basudev Marga, Hetauda-2, Makawanpur, Nepal</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Phone
+              className="w-4 h-4 flex-shrink-0"
+              style={{ color: palette.green }}
+            />
+            <span>057-590144, 057-590145, 057-590146</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Mail
+              className="w-4 h-4 flex-shrink-0"
+              style={{ color: palette.gold }}
+            />
+            <span className="break-all">infobjess2046@gmail.com</span>
+          </div>
+        </div>
+
+        <div
+          className="mt-6 text-xs text-center"
+          style={{ color: "rgba(226,232,240,0.38)" }}
+        >
+          © 2026 Baljagriti Secondary English Boarding School. All rights
+          reserved.
         </div>
       </div>
     </footer>

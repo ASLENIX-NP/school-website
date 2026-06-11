@@ -16,12 +16,13 @@ const navLinks = [
   { label: "Contact", href: "/contact" },
 ];
 
-const colors = {
-  red: "#D71920",
-  green: "#168A3A",
-  purple: "#4B2E83",
-  dark: "#0B1020",
-  cream: "#FFF8EE",
+const palette = {
+  navy: "#020617",
+  slate: "#0F172A",
+  cyan: "#38BDF8",
+  gold: "#FACC15",
+  green: "#22C55E",
+  violet: "#8B5CF6",
 };
 
 export function Navbar() {
@@ -38,40 +39,42 @@ export function Navbar() {
   }, []);
 
   const isActive = (href) => {
-    if (href === "/") {
-      return location.pathname === "/";
-    }
-
+    if (href === "/") return location.pathname === "/";
     return location.pathname === href;
   };
 
   return (
     <>
-      <motion.nav
+      <motion.header
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-        style={{
-          background: scrolled
-            ? "rgba(11,16,32,0.96)"
-            : "rgba(11,16,32,0.82)",
-          backdropFilter: "blur(22px)",
-          borderBottom: scrolled
-            ? "1px solid rgba(22,138,58,0.28)"
-            : "1px solid rgba(255,255,255,0.06)",
-          boxShadow: scrolled
-            ? "0 12px 40px rgba(11,16,32,0.38)"
-            : "none",
-        }}
+        transition={{ duration: 0.55, ease: "easeOut" }}
+        className="fixed top-0 left-0 right-0 z-50 px-4 pt-3"
       >
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-20">
-          <Link to="/" className="flex items-center gap-3 group">
+        <nav
+          className="max-w-[1450px] mx-auto h-[76px] px-5 md:px-6 flex items-center justify-between rounded-[1.7rem] transition-all duration-300"
+          style={{
+            background: scrolled
+              ? "linear-gradient(145deg, rgba(2,6,23,0.92), rgba(15,23,42,0.78))"
+              : "linear-gradient(145deg, rgba(2,6,23,0.76), rgba(15,23,42,0.54))",
+            border: scrolled
+              ? "1px solid rgba(255,255,255,0.16)"
+              : "1px solid rgba(255,255,255,0.1)",
+            boxShadow: scrolled
+              ? "0 24px 70px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.12)"
+              : "0 14px 44px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.08)",
+            backdropFilter: "blur(24px)",
+          }}
+        >
+          <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
             <div
-              className="w-12 h-12 rounded-xl overflow-hidden bg-white flex items-center justify-center group-hover:scale-110 transition-transform"
+              className="rounded-2xl overflow-hidden bg-white flex items-center justify-center transition-all duration-300 group-hover:scale-105"
               style={{
-                border: `2px solid ${colors.green}`,
-                boxShadow: "0 8px 24px rgba(22,138,58,0.28)",
+                width: "52px",
+                height: "52px",
+                border: "1px solid rgba(255,255,255,0.7)",
+                boxShadow:
+                  "0 0 0 3px rgba(34,197,94,0.22), 0 14px 34px rgba(34,197,94,0.24)",
               }}
             >
               <img
@@ -81,116 +84,151 @@ export function Navbar() {
               />
             </div>
 
-            <div>
+            <div className="hidden sm:block">
               <div
-                className="text-white font-semibold text-lg leading-tight"
-                style={{ fontFamily: "var(--font-display)" }}
+                className="text-white font-bold text-lg leading-tight"
+                style={{
+                  fontFamily: "var(--font-display)",
+                  letterSpacing: "-0.02em",
+                }}
               >
                 Baljagriti
               </div>
-              <div className="text-xs" style={{ color: colors.green }}>
+
+              <div
+                className="text-xs leading-tight"
+                style={{ color: palette.green }}
+              >
                 Secondary English Boarding School
               </div>
             </div>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                to={link.href}
-                className="relative px-4 py-2 text-sm transition-colors duration-200 group"
-                style={{
-                  color: isActive(link.href)
-                    ? colors.red
-                    : "rgba(255,255,255,0.84)",
-                }}
-              >
-                {link.label}
-                <span
-                  className="absolute bottom-0 left-4 right-4 h-0.5 rounded-full transition-all duration-200 origin-left"
+          <div
+            className="hidden xl:flex items-center gap-1 px-2 py-2 rounded-2xl"
+            style={{
+              background: "rgba(255,255,255,0.045)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+            }}
+          >
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+
+              return (
+                <Link
+                  key={link.label}
+                  to={link.href}
+                  className="relative px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
                   style={{
-                    background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
-                    transform: isActive(link.href)
-                      ? "scaleX(1)"
-                      : "scaleX(0)",
+                    color: active ? "#020617" : "rgba(255,255,255,0.82)",
+                    background: active
+                      ? `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`
+                      : "transparent",
+                    boxShadow: active
+                      ? "0 12px 28px rgba(56,189,248,0.22)"
+                      : "none",
                   }}
-                />
-              </Link>
-            ))}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </div>
 
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden xl:flex items-center gap-3 flex-shrink-0">
             <Link
-  to="/contact"
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
+              to="/admissions"
+              className="relative overflow-hidden px-6 py-3 rounded-2xl text-sm font-bold text-slate-950 transition-all duration-300 hover:scale-105"
               style={{
-                background: `linear-gradient(135deg, ${colors.red}, ${colors.green})`,
-                boxShadow: "0 10px 28px rgba(215,25,32,0.26)",
+                background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
+                boxShadow:
+                  "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.42)",
               }}
             >
-              Admission Open
+              <span className="relative z-10">Admission Open →</span>
+              <span
+                className="absolute top-0 bottom-0 w-16 opacity-40"
+                style={{
+                  left: 0,
+                  background:
+                    "linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent)",
+                  animation: "navShine 2.8s ease-in-out infinite",
+                }}
+              />
             </Link>
           </div>
 
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="lg:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="xl:hidden text-white p-2 rounded-xl transition-colors"
+            style={{
+              background: "rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.12)",
+            }}
             aria-label="Toggle navigation menu"
           >
             {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
-        </div>
-      </motion.nav>
+        </nav>
+      </motion.header>
+
+      <style>{`
+        @keyframes navShine {
+          0% { transform: translateX(-130%) rotate(18deg); }
+          100% { transform: translateX(190%) rotate(18deg); }
+        }
+      `}</style>
 
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -18, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -18, scale: 0.96 }}
             transition={{ duration: 0.25 }}
-            className="fixed top-20 left-0 right-0 z-40 lg:hidden"
+            className="fixed top-[96px] left-4 right-4 z-40 xl:hidden rounded-[1.7rem] overflow-hidden"
             style={{
-              background: "rgba(11,16,32,0.98)",
-              backdropFilter: "blur(22px)",
-              borderBottom: "1px solid rgba(22,138,58,0.25)",
+              background:
+                "linear-gradient(145deg, rgba(2,6,23,0.96), rgba(15,23,42,0.86))",
+              border: "1px solid rgba(255,255,255,0.14)",
+              boxShadow: "0 28px 80px rgba(0,0,0,0.42)",
+              backdropFilter: "blur(24px)",
             }}
           >
-            <div className="px-6 py-4 flex flex-col gap-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.label}
-                  to={link.href}
-                  onClick={() => setOpen(false)}
-                  className="px-4 py-3 rounded-lg text-sm transition-colors"
-                  style={{
-                    color: isActive(link.href)
-                      ? colors.red
-                      : "rgba(255,255,255,0.85)",
-                    background: isActive(link.href)
-                      ? "rgba(215,25,32,0.14)"
-                      : "transparent",
-                    border: isActive(link.href)
-                      ? "1px solid rgba(215,25,32,0.22)"
-                      : "1px solid transparent",
-                  }}
-                >
-                  {link.label}
-                </Link>
-              ))}
+            <div className="p-4 grid gap-1">
+              {navLinks.map((link) => {
+                const active = isActive(link.href);
+
+                return (
+                  <Link
+                    key={link.label}
+                    to={link.href}
+                    onClick={() => setOpen(false)}
+                    className="px-4 py-3 rounded-xl text-sm font-medium transition-all"
+                    style={{
+                      color: active ? "#020617" : "rgba(255,255,255,0.86)",
+                      background: active
+                        ? `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`
+                        : "transparent",
+                    }}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
 
               <Link
                 to="/admissions"
                 onClick={() => setOpen(false)}
-                className="mt-3 px-5 py-3 rounded-xl text-sm font-semibold text-white text-center"
+                className="mt-3 px-5 py-3 rounded-xl text-sm font-bold text-center text-slate-950"
                 style={{
-                  background: `linear-gradient(135deg, ${colors.red}, ${colors.green})`,
-                  boxShadow: "0 10px 28px rgba(215,25,32,0.24)",
+                  background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
+                  boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
                 }}
               >
-                Admission →
+                Admission Open →
               </Link>
             </div>
           </motion.div>
