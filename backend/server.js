@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { supabase } from "./config/supabase.js";
 import healthRoutes from "./routes/healthRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use(
 app.use(express.json());
 
 app.use("/api/health", healthRoutes);
+app.use("/api/upload", uploadRoutes);
 
 app.post("/api/contact", async (req, res) => {
   try {
