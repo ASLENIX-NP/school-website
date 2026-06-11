@@ -10,10 +10,10 @@ import { Events } from "./Events";
 import { Gallery } from "./Gallery";
 import { Contact } from "./Contact";
 import { Footer } from "./Footer";
-
 import Messages from "../../pages/Messages";
 import Notices from "../../pages/Notices";
 import Staff from "../../pages/Staff";
+import Facilities from "../../pages/Facilities";
 
 function HomePage() {
   return (
@@ -33,7 +33,7 @@ function AcademicsPage() {
 }
 
 function FacilitiesPage() {
-  return <Academics />;
+  return <Facilities />;
 }
 
 function AdmissionsPage() {
