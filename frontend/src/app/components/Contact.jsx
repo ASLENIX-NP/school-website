@@ -9,26 +9,26 @@ const contactInfo = [
     icon: MapPin,
     label: "Address",
     value: "42 Apex Boulevard, Education Quarter, Springfield, IL 62701",
-    color: "#f97316"
+    color: "#f97316",
   },
   {
     icon: Phone,
     label: "Phone",
     value: "+1 (555) 842-0011",
-    color: "#6b21a8"
+    color: "#6b21a8",
   },
   {
     icon: Mail,
     label: "Email",
     value: "admissions@apexacademy.edu",
-    color: "#f97316"
+    color: "#f97316",
   },
   {
     icon: Clock,
     label: "Office Hours",
     value: "Mon–Fri: 8 AM – 5 PM · Sat: 9 AM – 1 PM",
-    color: "#6b21a8"
-  }
+    color: "#6b21a8",
+  },
 ];
 
 function Contact() {
@@ -39,7 +39,7 @@ function Contact() {
     register,
     handleSubmit,
     formState: { isSubmitting },
-    reset
+    reset,
   } = useForm();
 
   const onSubmit = async (data) => {
@@ -60,22 +60,22 @@ function Contact() {
   return (
     <section
       id="contact"
-      className="py-28 relative overflow-hidden"
+      className="pt-36 pb-28 relative overflow-hidden min-h-screen"
       style={{ background: "#fdf8f3" }}
     >
       <div
         className="absolute -bottom-32 right-0 w-[500px] h-[500px] rounded-full pointer-events-none"
         style={{
           background:
-            "radial-gradient(circle, rgba(249,115,22,0.06), transparent 70%)"
+            "radial-gradient(circle, rgba(249,115,22,0.06), transparent 70%)",
         }}
       />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
           className="text-center mb-16"
         >
           <span
@@ -83,7 +83,7 @@ function Contact() {
             style={{
               background: "rgba(249,115,22,0.1)",
               color: "#ea580c",
-              border: "1px solid rgba(249,115,22,0.2)"
+              border: "1px solid rgba(249,115,22,0.2)",
             }}
           >
             Get In Touch
@@ -94,7 +94,7 @@ function Contact() {
             style={{
               fontFamily: "var(--font-display)",
               fontWeight: 700,
-              color: "#0f1c3f"
+              color: "#0f1c3f",
             }}
           >
             We'd Love to{" "}
@@ -112,8 +112,8 @@ function Contact() {
         <div className="grid lg:grid-cols-5 gap-10">
           <motion.div
             initial={{ opacity: 0, x: -40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7 }}
             className="lg:col-span-2 space-y-5"
           >
             {contactInfo.map((info) => {
@@ -126,7 +126,7 @@ function Contact() {
                   style={{
                     background: "#ffffff",
                     border: "1px solid rgba(15,28,63,0.08)",
-                    boxShadow: "0 4px 16px rgba(15,28,63,0.06)"
+                    boxShadow: "0 4px 16px rgba(15,28,63,0.06)",
                   }}
                 >
                   <div
@@ -158,7 +158,7 @@ function Contact() {
               className="rounded-2xl overflow-hidden h-48 relative flex items-center justify-center"
               style={{
                 background: "linear-gradient(135deg, #0f1c3f, #1a0a3c)",
-                border: "1px solid rgba(107,33,168,0.2)"
+                border: "1px solid rgba(107,33,168,0.2)",
               }}
             >
               <div className="text-center">
@@ -172,22 +172,21 @@ function Contact() {
                 >
                   42 Apex Blvd, Springfield, IL
                 </div>
-                <a
-                  href="#"
+                <button
+                  type="button"
                   className="mt-3 inline-block px-4 py-2 rounded-lg text-xs font-semibold text-white"
                   style={{ background: "rgba(249,115,22,0.8)" }}
                 >
                   Open in Maps
-                </a>
+                </button>
               </div>
             </div>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, x: 40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.15 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: 0.15 }}
             className="lg:col-span-3"
           >
             <div
@@ -195,7 +194,7 @@ function Contact() {
               style={{
                 background: "#ffffff",
                 border: "1px solid rgba(15,28,63,0.08)",
-                boxShadow: "0 8px 40px rgba(15,28,63,0.08)"
+                boxShadow: "0 8px 40px rgba(15,28,63,0.08)",
               }}
             >
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -203,7 +202,7 @@ function Contact() {
                   className="text-xl font-semibold mb-6"
                   style={{
                     fontFamily: "var(--font-display)",
-                    color: "#0f1c3f"
+                    color: "#0f1c3f",
                   }}
                 >
                   Send a Message
@@ -215,7 +214,7 @@ function Contact() {
                     style={{
                       background: "rgba(5,150,105,0.1)",
                       color: "#047857",
-                      border: "1px solid rgba(5,150,105,0.2)"
+                      border: "1px solid rgba(5,150,105,0.2)",
                     }}
                   >
                     {submitMessage}
@@ -228,7 +227,7 @@ function Contact() {
                     style={{
                       background: "rgba(220,38,38,0.1)",
                       color: "#dc2626",
-                      border: "1px solid rgba(220,38,38,0.2)"
+                      border: "1px solid rgba(220,38,38,0.2)",
                     }}
                   >
                     {submitError}
@@ -250,7 +249,7 @@ function Contact() {
                       style={{
                         background: "#f8f8fc",
                         border: "1px solid rgba(15,28,63,0.12)",
-                        color: "#0f1c3f"
+                        color: "#0f1c3f",
                       }}
                     />
                   </div>
@@ -270,7 +269,7 @@ function Contact() {
                       style={{
                         background: "#f8f8fc",
                         border: "1px solid rgba(15,28,63,0.12)",
-                        color: "#0f1c3f"
+                        color: "#0f1c3f",
                       }}
                     />
                   </div>
@@ -290,7 +289,7 @@ function Contact() {
                     style={{
                       background: "#f8f8fc",
                       border: "1px solid rgba(15,28,63,0.12)",
-                      color: "#0f1c3f"
+                      color: "#0f1c3f",
                     }}
                   />
                 </div>
@@ -310,7 +309,7 @@ function Contact() {
                     style={{
                       background: "#f8f8fc",
                       border: "1px solid rgba(15,28,63,0.12)",
-                      color: "#0f1c3f"
+                      color: "#0f1c3f",
                     }}
                   />
                 </div>
@@ -321,7 +320,7 @@ function Contact() {
                   className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-white transition-all duration-300 hover:scale-[1.02] hover:shadow-xl disabled:opacity-60"
                   style={{
                     background: "linear-gradient(135deg, #0f1c3f, #1a0a3c)",
-                    boxShadow: "0 8px 24px rgba(15,28,63,0.25)"
+                    boxShadow: "0 8px 24px rgba(15,28,63,0.25)",
                   }}
                 >
                   <Send className="w-4 h-4" />

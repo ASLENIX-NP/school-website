@@ -1,3 +1,5 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import { Navbar } from "./Navbar";
 import { Hero } from "./Hero";
 import { Stats } from "./Stats";
@@ -9,24 +11,61 @@ import { Gallery } from "./Gallery";
 import { Contact } from "./Contact";
 import { Footer } from "./Footer";
 
+function HomePage() {
+  return (
+    <>
+      <Hero />
+      <Stats />
+    </>
+  );
+}
+
+function AboutPage() {
+  return <About />;
+}
+
+function AcademicsPage() {
+  return <Academics />;
+}
+
+function AdmissionsPage() {
+  return <Admissions />;
+}
+
+function EventsPage() {
+  return <Events />;
+}
+
+function GalleryPage() {
+  return <Gallery />;
+}
+
+function ContactPage() {
+  return <Contact />;
+}
+
 function SchoolApp() {
   return (
-    <div className="min-h-screen" style={{ fontFamily: "var(--font-body)" }}>
-      <Navbar />
+    <BrowserRouter>
+      <div className="min-h-screen" style={{ fontFamily: "var(--font-body)" }}>
+        <Navbar />
 
-      <main>
-        <Hero />
-        <Stats />
-        <About />
-        <Academics />
-        <Admissions />
-        <Events />
-        <Gallery />
-        <Contact />
-      </main>
+        <main>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/academics" element={<AcademicsPage />} />
+            <Route path="/admissions" element={<AdmissionsPage />} />
+            <Route path="/events" element={<EventsPage />} />
+            <Route path="/gallery" element={<GalleryPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="*" element={<HomePage />} />
+          </Routes>
+        </main>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </BrowserRouter>
   );
 }
 

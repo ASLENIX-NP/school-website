@@ -12,7 +12,7 @@ const events = [
     desc: "Teams from 40+ schools compete in 23 events spanning biology, chemistry, earth science, and engineering.",
     image:
       "https://images.unsplash.com/photo-1643199121319-b3b5695e4acb?w=500&h=300&fit=crop&auto=format",
-    featured: true
+    featured: true,
   },
   {
     date: "Jun 25",
@@ -23,7 +23,7 @@ const events = [
     categoryColor: "#6b21a8",
     desc: "Celebrating the achievements of our 312 graduating seniors with guest speaker Dr. Amara Osei.",
     image:
-      "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=500&h=300&fit=crop&auto=format"
+      "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=500&h=300&fit=crop&auto=format",
   },
   {
     date: "Jul 5",
@@ -34,7 +34,7 @@ const events = [
     categoryColor: "#f97316",
     desc: "Prospective families are invited for tours, Q&A with faculty, and live student performances.",
     image:
-      "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=500&h=300&fit=crop&auto=format"
+      "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=500&h=300&fit=crop&auto=format",
   },
   {
     date: "Jul 14",
@@ -45,7 +45,7 @@ const events = [
     categoryColor: "#db2777",
     desc: "An evening showcase of student visual art, film shorts, live music, and drama performances.",
     image:
-      "https://images.unsplash.com/photo-1496469888073-80de7e952517?w=500&h=300&fit=crop&auto=format"
+      "https://images.unsplash.com/photo-1496469888073-80de7e952517?w=500&h=300&fit=crop&auto=format",
   },
   {
     date: "Aug 2",
@@ -56,30 +56,30 @@ const events = [
     categoryColor: "#059669",
     desc: "Track & field, swimming, and team sports finals across 18 disciplines at our Olympic complex.",
     image:
-      "https://images.unsplash.com/photo-1653990603052-17a7198a9a99?w=500&h=300&fit=crop&auto=format"
-  }
+      "https://images.unsplash.com/photo-1653990603052-17a7198a9a99?w=500&h=300&fit=crop&auto=format",
+  },
 ];
 
 function Events() {
   return (
     <section
       id="events"
-      className="py-28 relative overflow-hidden"
+      className="pt-36 pb-28 relative overflow-hidden min-h-screen"
       style={{ background: "#fdf8f3" }}
     >
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] rounded-full pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse, rgba(107,33,168,0.06), transparent 70%)"
+            "radial-gradient(ellipse, rgba(107,33,168,0.06), transparent 70%)",
         }}
       />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
           className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14"
         >
           <div>
@@ -88,7 +88,7 @@ function Events() {
               style={{
                 background: "rgba(249,115,22,0.1)",
                 color: "#ea580c",
-                border: "1px solid rgba(249,115,22,0.2)"
+                border: "1px solid rgba(249,115,22,0.2)",
               }}
             >
               Upcoming Events
@@ -99,7 +99,7 @@ function Events() {
               style={{
                 fontFamily: "var(--font-display)",
                 fontWeight: 700,
-                color: "#0f1c3f"
+                color: "#0f1c3f",
               }}
             >
               Life at{" "}
@@ -109,13 +109,13 @@ function Events() {
             </h2>
           </div>
 
-          <a
-            href="#"
+          <button
+            type="button"
             className="flex items-center gap-2 text-sm font-semibold transition-all hover:gap-3"
             style={{ color: "#f97316" }}
           >
             View All Events <ArrowRight className="w-4 h-4" />
-          </a>
+          </button>
         </motion.div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -123,8 +123,7 @@ function Events() {
             <motion.article
               key={ev.title}
               initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: i * 0.08 }}
               className={`group rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl ${
                 ev.featured ? "md:col-span-2 lg:col-span-1" : ""
@@ -132,7 +131,7 @@ function Events() {
               style={{
                 background: "#ffffff",
                 border: "1px solid rgba(15,28,63,0.08)",
-                boxShadow: "0 4px 20px rgba(15,28,63,0.06)"
+                boxShadow: "0 4px 20px rgba(15,28,63,0.06)",
               }}
             >
               <div className="relative h-48 overflow-hidden">
@@ -146,7 +145,7 @@ function Events() {
                   className="absolute inset-0"
                   style={{
                     background:
-                      "linear-gradient(to top, rgba(15,28,63,0.7) 0%, transparent 60%)"
+                      "linear-gradient(to top, rgba(15,28,63,0.7) 0%, transparent 60%)",
                   }}
                 />
 
@@ -155,7 +154,7 @@ function Events() {
                   style={{
                     background: "rgba(15,28,63,0.7)",
                     backdropFilter: "blur(8px)",
-                    border: "1px solid rgba(255,255,255,0.1)"
+                    border: "1px solid rgba(255,255,255,0.1)",
                   }}
                 >
                   {ev.date}
@@ -165,7 +164,7 @@ function Events() {
                   className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-semibold"
                   style={{
                     background: `${ev.categoryColor}cc`,
-                    backdropFilter: "blur(8px)"
+                    backdropFilter: "blur(8px)",
                   }}
                 >
                   <Tag className="w-3 h-3" />
@@ -194,7 +193,7 @@ function Events() {
                   style={{
                     fontFamily: "var(--font-display)",
                     fontWeight: 600,
-                    color: "#0f1c3f"
+                    color: "#0f1c3f",
                   }}
                 >
                   {ev.title}

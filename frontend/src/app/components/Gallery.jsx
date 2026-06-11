@@ -41,7 +41,7 @@ export function Gallery() {
   return (
     <section
       id="gallery"
-      className="py-28 relative"
+      className="pt-36 pb-28 relative min-h-screen"
       style={{
         background: "linear-gradient(180deg, #fdf8f3 0%, #f0e8ff 100%)",
       }}
@@ -49,8 +49,8 @@ export function Gallery() {
       <div className="max-w-7xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
           className="text-center mb-14"
         >
           <span
@@ -89,8 +89,7 @@ export function Gallery() {
             <motion.div
               key={img.src}
               initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
+              animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: i * 0.06 }}
               className={`relative rounded-2xl overflow-hidden cursor-pointer group ${img.span}`}
               onClick={() => setLightbox(img.src)}
@@ -122,8 +121,8 @@ export function Gallery() {
         </div>
 
         <div className="text-center mt-10">
-          <a
-            href="#"
+          <button
+            type="button"
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl"
             style={{
               background: "linear-gradient(135deg, #0f1c3f, #1a0a3c)",
@@ -132,7 +131,7 @@ export function Gallery() {
             }}
           >
             View Full Gallery →
-          </a>
+          </button>
         </div>
       </div>
 
@@ -142,7 +141,7 @@ export function Gallery() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[80] flex items-center justify-center p-4"
             style={{
               background: "rgba(0,0,0,0.9)",
               backdropFilter: "blur(12px)",

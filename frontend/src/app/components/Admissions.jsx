@@ -8,29 +8,29 @@ const steps = [
     step: "01",
     title: "Inquiry",
     desc: "Submit your initial inquiry online or visit our admissions office. Our counselors respond within 24 hours.",
-    color: "#f97316"
+    color: "#f97316",
   },
   {
     icon: MapPin,
     step: "02",
     title: "Campus Visit",
     desc: "Schedule a guided tour to experience our campus, labs, and sports facilities firsthand.",
-    color: "#6b21a8"
+    color: "#6b21a8",
   },
   {
     icon: FileText,
     step: "03",
     title: "Application",
     desc: "Complete the online application with academic records, recommendations, and a personal statement.",
-    color: "#2563eb"
+    color: "#2563eb",
   },
   {
     icon: CheckCircle,
     step: "04",
     title: "Enrollment",
     desc: "Receive your offer, pay the enrollment deposit, and join the Apex Academy family.",
-    color: "#059669"
-  }
+    color: "#059669",
+  },
 ];
 
 function Admissions() {
@@ -38,7 +38,7 @@ function Admissions() {
     register,
     handleSubmit,
     formState: { isSubmitting, isSubmitSuccessful },
-    reset
+    reset,
   } = useForm();
 
   const onSubmit = async (data) => {
@@ -50,14 +50,14 @@ function Admissions() {
   return (
     <section
       id="admissions"
-      className="py-28 relative overflow-hidden"
+      className="pt-36 pb-28 relative overflow-hidden min-h-screen"
       style={{ background: "#0f1c3f" }}
     >
       <div
         className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full pointer-events-none"
         style={{
           background:
-            "radial-gradient(circle, rgba(107,33,168,0.15), transparent 70%)"
+            "radial-gradient(circle, rgba(107,33,168,0.15), transparent 70%)",
         }}
       />
 
@@ -65,15 +65,15 @@ function Admissions() {
         className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full pointer-events-none"
         style={{
           background:
-            "radial-gradient(circle, rgba(249,115,22,0.1), transparent 70%)"
+            "radial-gradient(circle, rgba(249,115,22,0.1), transparent 70%)",
         }}
       />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
           className="text-center mb-20"
         >
           <span
@@ -81,7 +81,7 @@ function Admissions() {
             style={{
               background: "rgba(249,115,22,0.15)",
               color: "#fb923c",
-              border: "1px solid rgba(249,115,22,0.3)"
+              border: "1px solid rgba(249,115,22,0.3)",
             }}
           >
             Admissions 2026–27
@@ -115,8 +115,7 @@ function Admissions() {
               <motion.div
                 key={s.step}
                 initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: i * 0.12 }}
                 className="relative group"
               >
@@ -124,7 +123,7 @@ function Admissions() {
                   <div
                     className="hidden lg:block absolute top-12 left-full w-6 h-0.5 z-10"
                     style={{
-                      background: `linear-gradient(90deg, ${s.color}60, transparent)`
+                      background: `linear-gradient(90deg, ${s.color}60, transparent)`,
                     }}
                   />
                 )}
@@ -134,7 +133,7 @@ function Admissions() {
                   style={{
                     background: "rgba(255,255,255,0.05)",
                     border: `1px solid ${s.color}30`,
-                    backdropFilter: "blur(12px)"
+                    backdropFilter: "blur(12px)",
                   }}
                 >
                   <div className="flex items-center gap-3 mb-4">
@@ -142,7 +141,7 @@ function Admissions() {
                       className="w-12 h-12 rounded-2xl flex items-center justify-center"
                       style={{
                         background: `${s.color}20`,
-                        border: `1px solid ${s.color}40`
+                        border: `1px solid ${s.color}40`,
                       }}
                     >
                       <Icon className="w-6 h-6" style={{ color: s.color }} />
@@ -152,7 +151,7 @@ function Admissions() {
                       className="text-4xl font-bold opacity-20"
                       style={{
                         fontFamily: "var(--font-display)",
-                        color: s.color
+                        color: s.color,
                       }}
                     >
                       {s.step}
@@ -177,8 +176,8 @@ function Admissions() {
 
         <motion.div
           initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.35 }}
           className="max-w-2xl mx-auto"
         >
           <div
@@ -186,14 +185,14 @@ function Admissions() {
             style={{
               background: "rgba(255,255,255,0.06)",
               border: "1px solid rgba(255,255,255,0.12)",
-              backdropFilter: "blur(20px)"
+              backdropFilter: "blur(20px)",
             }}
           >
             <h3
               className="text-2xl text-white mb-2"
               style={{
                 fontFamily: "var(--font-display)",
-                fontWeight: 600
+                fontWeight: 600,
               }}
             >
               Start Your Application
@@ -212,7 +211,7 @@ function Admissions() {
                 className="py-8 text-center rounded-2xl"
                 style={{
                   background: "rgba(5,150,105,0.15)",
-                  border: "1px solid rgba(5,150,105,0.3)"
+                  border: "1px solid rgba(5,150,105,0.3)",
                 }}
               >
                 <div className="text-4xl mb-3">🎉</div>
@@ -244,7 +243,7 @@ function Admissions() {
                       style={{
                         background: "rgba(255,255,255,0.08)",
                         border: "1px solid rgba(255,255,255,0.15)",
-                        color: "#ffffff"
+                        color: "#ffffff",
                       }}
                     />
                   </div>
@@ -265,7 +264,7 @@ function Admissions() {
                       style={{
                         background: "rgba(255,255,255,0.08)",
                         border: "1px solid rgba(255,255,255,0.15)",
-                        color: "#ffffff"
+                        color: "#ffffff",
                       }}
                     />
                   </div>
@@ -287,7 +286,7 @@ function Admissions() {
                       style={{
                         background: "rgba(255,255,255,0.08)",
                         border: "1px solid rgba(255,255,255,0.15)",
-                        color: "#ffffff"
+                        color: "#ffffff",
                       }}
                     />
                   </div>
@@ -306,7 +305,7 @@ function Admissions() {
                       style={{
                         background: "rgba(255,255,255,0.08)",
                         border: "1px solid rgba(255,255,255,0.15)",
-                        color: "#ffffff"
+                        color: "#ffffff",
                       }}
                     >
                       <option value="" style={{ background: "#0f1c3f" }}>
@@ -332,7 +331,7 @@ function Admissions() {
                   className="w-full py-4 rounded-xl font-semibold text-white mt-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{
                     background: "linear-gradient(135deg, #f97316, #ea580c)",
-                    boxShadow: "0 8px 24px rgba(249,115,22,0.3)"
+                    boxShadow: "0 8px 24px rgba(249,115,22,0.3)",
                   }}
                 >
                   {isSubmitting ? "Submitting..." : "Submit Inquiry →"}
