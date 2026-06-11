@@ -1,6 +1,16 @@
 import { motion } from "motion/react";
 import { Calendar, Clock, ArrowRight, Tag } from "lucide-react";
 
+const colors = {
+  red: "#D71920",
+  green: "#168A3A",
+  purple: "#4B2E83",
+  softPurple: "#7C5CC4",
+  dark: "#0B1020",
+  cream: "#FFF8EE",
+  lightPurple: "#F1ECFF",
+};
+
 const events = [
   {
     date: "Jun 18",
@@ -8,7 +18,7 @@ const events = [
     title: "Annual Science Olympiad 2026",
     time: "9:00 AM – 4:00 PM",
     category: "Competition",
-    categoryColor: "#2563eb",
+    categoryColor: "#4B2E83",
     desc: "Teams from 40+ schools compete in 23 events spanning biology, chemistry, earth science, and engineering.",
     image:
       "https://images.unsplash.com/photo-1643199121319-b3b5695e4acb?w=500&h=300&fit=crop&auto=format",
@@ -20,7 +30,7 @@ const events = [
     title: "Graduation Ceremony — Class of 2026",
     time: "10:00 AM – 1:00 PM",
     category: "Ceremony",
-    categoryColor: "#6b21a8",
+    categoryColor: "#D71920",
     desc: "Celebrating the achievements of our 312 graduating seniors with guest speaker Dr. Amara Osei.",
     image:
       "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=500&h=300&fit=crop&auto=format",
@@ -31,7 +41,7 @@ const events = [
     title: "Open Campus Day — Admissions 2026–27",
     time: "10:00 AM – 3:00 PM",
     category: "Admissions",
-    categoryColor: "#f97316",
+    categoryColor: "#168A3A",
     desc: "Prospective families are invited for tours, Q&A with faculty, and live student performances.",
     image:
       "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=500&h=300&fit=crop&auto=format",
@@ -42,7 +52,7 @@ const events = [
     title: "Summer Arts & Culture Festival",
     time: "5:00 PM – 9:00 PM",
     category: "Arts",
-    categoryColor: "#db2777",
+    categoryColor: "#7C5CC4",
     desc: "An evening showcase of student visual art, film shorts, live music, and drama performances.",
     image:
       "https://images.unsplash.com/photo-1496469888073-80de7e952517?w=500&h=300&fit=crop&auto=format",
@@ -53,7 +63,7 @@ const events = [
     title: "Inter-School Athletics Championship",
     time: "8:00 AM – 6:00 PM",
     category: "Sports",
-    categoryColor: "#059669",
+    categoryColor: "#168A3A",
     desc: "Track & field, swimming, and team sports finals across 18 disciplines at our Olympic complex.",
     image:
       "https://images.unsplash.com/photo-1653990603052-17a7198a9a99?w=500&h=300&fit=crop&auto=format",
@@ -65,13 +75,30 @@ function Events() {
     <section
       id="events"
       className="pt-36 pb-28 relative overflow-hidden min-h-screen"
-      style={{ background: "#fdf8f3" }}
+      style={{
+        background: `
+          radial-gradient(circle at top center, rgba(75,46,131,0.16), transparent 34%),
+          radial-gradient(circle at bottom left, rgba(215,25,32,0.1), transparent 32%),
+          radial-gradient(circle at bottom right, rgba(22,138,58,0.12), transparent 34%),
+          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
+        `,
+      }}
     >
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] rounded-full pointer-events-none"
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[740px] h-[320px] rounded-full pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse, rgba(107,33,168,0.06), transparent 70%)",
+            "radial-gradient(ellipse, rgba(75,46,131,0.14), transparent 70%)",
+          filter: "blur(8px)",
+        }}
+      />
+
+      <div
+        className="absolute bottom-0 right-0 w-[460px] h-[460px] rounded-full pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(22,138,58,0.12), transparent 70%)",
+          filter: "blur(8px)",
         }}
       />
 
@@ -86,9 +113,10 @@ function Events() {
             <span
               className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold mb-4"
               style={{
-                background: "rgba(249,115,22,0.1)",
-                color: "#ea580c",
-                border: "1px solid rgba(249,115,22,0.2)",
+                background: "rgba(215,25,32,0.09)",
+                color: colors.red,
+                border: "1px solid rgba(215,25,32,0.22)",
+                boxShadow: "0 10px 28px rgba(215,25,32,0.08)",
               }}
             >
               Upcoming Events
@@ -99,20 +127,20 @@ function Events() {
               style={{
                 fontFamily: "var(--font-display)",
                 fontWeight: 700,
-                color: "#0f1c3f",
+                color: colors.dark,
               }}
             >
               Life at{" "}
-<span className="italic" style={{ color: "#6b21a8" }}>
-  Baljagriti
-</span>
+              <span className="italic" style={{ color: colors.purple }}>
+                Baljagriti
+              </span>
             </h2>
           </div>
 
           <button
             type="button"
             className="flex items-center gap-2 text-sm font-semibold transition-all hover:gap-3"
-            style={{ color: "#f97316" }}
+            style={{ color: colors.red }}
           >
             View All Events <ArrowRight className="w-4 h-4" />
           </button>
@@ -129,9 +157,12 @@ function Events() {
                 ev.featured ? "md:col-span-2 lg:col-span-1" : ""
               }`}
               style={{
-                background: "#ffffff",
-                border: "1px solid rgba(15,28,63,0.08)",
-                boxShadow: "0 4px 20px rgba(15,28,63,0.06)",
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.72))",
+                border: "1px solid rgba(75,46,131,0.14)",
+                boxShadow:
+                  "0 18px 46px rgba(11,16,32,0.09), 0 0 0 1px rgba(255,255,255,0.55)",
+                backdropFilter: "blur(16px)",
               }}
             >
               <div className="relative h-48 overflow-hidden">
@@ -145,16 +176,17 @@ function Events() {
                   className="absolute inset-0"
                   style={{
                     background:
-                      "linear-gradient(to top, rgba(15,28,63,0.7) 0%, transparent 60%)",
+                      "linear-gradient(to top, rgba(11,16,32,0.76) 0%, transparent 62%)",
                   }}
                 />
 
                 <div
                   className="absolute top-4 left-4 px-3 py-1.5 rounded-xl text-white text-sm font-bold"
                   style={{
-                    background: "rgba(15,28,63,0.7)",
-                    backdropFilter: "blur(8px)",
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: "rgba(11,16,32,0.74)",
+                    backdropFilter: "blur(10px)",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    boxShadow: "0 10px 24px rgba(0,0,0,0.24)",
                   }}
                 >
                   {ev.date}
@@ -163,8 +195,10 @@ function Events() {
                 <div
                   className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-semibold"
                   style={{
-                    background: `${ev.categoryColor}cc`,
-                    backdropFilter: "blur(8px)",
+                    background: `${ev.categoryColor}dd`,
+                    backdropFilter: "blur(10px)",
+                    border: "1px solid rgba(255,255,255,0.16)",
+                    boxShadow: `0 10px 24px ${ev.categoryColor}35`,
                   }}
                 >
                   <Tag className="w-3 h-3" />
@@ -175,15 +209,21 @@ function Events() {
               <div className="p-6">
                 <div
                   className="flex items-center gap-4 mb-3 text-xs"
-                  style={{ color: "#94a3b8" }}
+                  style={{ color: "#64748b" }}
                 >
                   <span className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5" />
+                    <Calendar
+                      className="w-3.5 h-3.5"
+                      style={{ color: colors.green }}
+                    />
                     {ev.day}
                   </span>
 
                   <span className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5" />
+                    <Clock
+                      className="w-3.5 h-3.5"
+                      style={{ color: colors.red }}
+                    />
                     {ev.time}
                   </span>
                 </div>
@@ -193,7 +233,7 @@ function Events() {
                   style={{
                     fontFamily: "var(--font-display)",
                     fontWeight: 600,
-                    color: "#0f1c3f",
+                    color: colors.dark,
                   }}
                 >
                   {ev.title}
@@ -208,7 +248,7 @@ function Events() {
 
                 <div
                   className="flex items-center gap-1.5 text-sm font-medium transition-all duration-200 group-hover:gap-2.5"
-                  style={{ color: "#f97316" }}
+                  style={{ color: colors.red }}
                 >
                   Learn More <ArrowRight className="w-4 h-4" />
                 </div>

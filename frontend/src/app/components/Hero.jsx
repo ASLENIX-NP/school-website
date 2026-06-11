@@ -2,6 +2,15 @@ import { motion } from "motion/react";
 import { Link } from "react-router-dom";
 import { Sparkles, Play } from "lucide-react";
 
+const colors = {
+  red: "#D71920",
+  green: "#168A3A",
+  purple: "#4B2E83",
+  softPurple: "#7C5CC4",
+  dark: "#0B1020",
+  cream: "#FFF8EE",
+};
+
 function FloatingCard({ className = "", delay = 0, children, style = {} }) {
   return (
     <motion.div
@@ -27,35 +36,44 @@ function Hero() {
       id="home"
       className="relative min-h-screen flex items-center overflow-hidden pt-20"
       style={{
-        background:
-          "linear-gradient(135deg, #0f1c3f 0%, #1a0a3c 40%, #2d1068 100%)",
+        background: `
+          radial-gradient(circle at 15% 25%, rgba(215,25,32,0.22), transparent 32%),
+          radial-gradient(circle at 85% 20%, rgba(22,138,58,0.22), transparent 34%),
+          radial-gradient(circle at 60% 75%, rgba(75,46,131,0.35), transparent 38%),
+          linear-gradient(135deg, #0B1020 0%, #1C1538 45%, #4B2E83 100%)
+        `,
       }}
     >
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div
-          className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full opacity-25"
+          className="absolute -top-32 -right-32 w-[620px] h-[620px] rounded-full opacity-30"
           style={{
-            background: "radial-gradient(circle, #6b21a8, transparent 70%)",
+            background: `radial-gradient(circle, ${colors.green}, transparent 70%)`,
+            filter: "blur(6px)",
           }}
         />
+
         <div
-          className="absolute bottom-0 -left-40 w-[500px] h-[500px] rounded-full opacity-20"
+          className="absolute bottom-0 -left-40 w-[520px] h-[520px] rounded-full opacity-28"
           style={{
-            background: "radial-gradient(circle, #f97316, transparent 70%)",
+            background: `radial-gradient(circle, ${colors.red}, transparent 70%)`,
+            filter: "blur(6px)",
           }}
         />
+
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-5"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[850px] rounded-full opacity-14"
           style={{
-            background: "radial-gradient(circle, #a855f7, transparent 70%)",
+            background: `radial-gradient(circle, ${colors.softPurple}, transparent 70%)`,
           }}
         />
+
         <div
-          className="absolute inset-0 opacity-5"
+          className="absolute inset-0 opacity-10"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
+              "linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px)",
+            backgroundSize: "64px 64px",
           }}
         />
       </div>
@@ -85,12 +103,14 @@ function Hero() {
             transition={{ duration: 0.6 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-6"
             style={{
-              background: "rgba(249,115,22,0.15)",
-              border: "1px solid rgba(249,115,22,0.3)",
-              color: "#fb923c",
+              background: "rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.18)",
+              color: colors.cream,
+              boxShadow: "0 12px 32px rgba(0,0,0,0.22)",
+              backdropFilter: "blur(16px)",
             }}
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4" style={{ color: colors.green }} />
             Admissions Open
           </motion.div>
 
@@ -105,10 +125,10 @@ function Hero() {
             <span
               className="italic"
               style={{
-                background:
-                  "linear-gradient(135deg, #f97316, #fb923c, #a855f7)",
+                background: `linear-gradient(135deg, ${colors.red}, ${colors.green}, ${colors.softPurple})`,
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 8px 22px rgba(215,25,32,0.2))",
               }}
             >
               Secondary School
@@ -120,7 +140,7 @@ function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
             className="text-lg md:text-xl mb-10 max-w-lg leading-relaxed"
-            style={{ color: "rgba(255,255,255,0.72)" }}
+            style={{ color: "rgba(255,248,238,0.76)" }}
           >
             A co-educational day school in Basudev Marga, Hetauda-2,
             Makwanpur, providing quality education from Play Group to Grade 10
@@ -137,8 +157,8 @@ function Hero() {
               to="/admissions"
               className="px-8 py-4 rounded-2xl font-semibold text-white transition-all duration-300 hover:scale-105 hover:shadow-2xl"
               style={{
-                background: "linear-gradient(135deg, #f97316, #ea580c)",
-                boxShadow: "0 8px 32px rgba(249,115,22,0.4)",
+                background: `linear-gradient(135deg, ${colors.red}, ${colors.green})`,
+                boxShadow: "0 18px 42px rgba(215,25,32,0.34)",
               }}
             >
               Admission Details
@@ -150,11 +170,15 @@ function Hero() {
               style={{
                 background: "rgba(255,255,255,0.1)",
                 border: "1px solid rgba(255,255,255,0.2)",
-                color: "rgba(255,255,255,0.9)",
-                backdropFilter: "blur(8px)",
+                color: "rgba(255,255,255,0.92)",
+                backdropFilter: "blur(14px)",
+                boxShadow: "0 12px 34px rgba(0,0,0,0.22)",
               }}
             >
-              <Play className="w-5 h-5 text-orange-400 group-hover:scale-110 transition-transform" />
+              <Play
+                className="w-5 h-5 group-hover:scale-110 transition-transform"
+                style={{ color: colors.green }}
+              />
               Learn About Us
             </Link>
           </motion.div>
@@ -168,8 +192,9 @@ function Hero() {
             className="relative w-72 h-72 md:w-96 md:h-96 rounded-3xl overflow-hidden"
             style={{
               boxShadow:
-                "0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)",
+                "0 36px 90px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.14), 0 0 70px rgba(22,138,58,0.22)",
               transform: "perspective(1000px) rotateY(-8deg) rotateX(4deg)",
+              border: "1px solid rgba(255,255,255,0.18)",
             }}
           >
             <img
@@ -177,11 +202,12 @@ function Hero() {
               alt="Students studying together"
               className="w-full h-full object-cover"
             />
+
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(to top, rgba(15,28,63,0.6) 0%, transparent 60%)",
+                  "linear-gradient(to top, rgba(11,16,32,0.7) 0%, transparent 62%)",
               }}
             />
           </motion.div>
@@ -190,10 +216,11 @@ function Hero() {
             delay={0.5}
             className="absolute -top-4 -left-8 px-4 py-3 rounded-2xl flex items-center gap-3"
             style={{
-              background: "rgba(255,255,255,0.12)",
+              background:
+                "linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08))",
               backdropFilter: "blur(20px)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+              border: "1px solid rgba(255,255,255,0.22)",
+              boxShadow: "0 18px 42px rgba(0,0,0,0.34)",
             }}
           >
             <span className="text-3xl">🏫</span>
@@ -203,7 +230,7 @@ function Hero() {
               </div>
               <div
                 className="text-xs"
-                style={{ color: "rgba(255,255,255,0.6)" }}
+                style={{ color: "rgba(255,255,255,0.62)" }}
               >
                 Established School
               </div>
@@ -214,10 +241,10 @@ function Hero() {
             delay={0.8}
             className="absolute -bottom-6 -right-6 px-4 py-3 rounded-2xl flex items-center gap-3"
             style={{
-              background: "rgba(249,115,22,0.15)",
+              background: "rgba(22,138,58,0.18)",
               backdropFilter: "blur(20px)",
-              border: "1px solid rgba(249,115,22,0.35)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+              border: "1px solid rgba(22,138,58,0.42)",
+              boxShadow: "0 18px 42px rgba(0,0,0,0.34)",
               animation: "float2 4s ease-in-out infinite alternate",
             }}
           >
@@ -228,7 +255,7 @@ function Hero() {
               </div>
               <div
                 className="text-xs"
-                style={{ color: "rgba(255,255,255,0.6)" }}
+                style={{ color: "rgba(255,255,255,0.62)" }}
               >
                 School Level
               </div>
@@ -239,10 +266,10 @@ function Hero() {
             delay={1}
             className="absolute top-1/2 -right-12 px-4 py-3 rounded-2xl"
             style={{
-              background: "rgba(107,33,168,0.25)",
+              background: "rgba(75,46,131,0.32)",
               backdropFilter: "blur(20px)",
-              border: "1px solid rgba(168,85,247,0.3)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+              border: "1px solid rgba(124,92,196,0.38)",
+              boxShadow: "0 18px 42px rgba(0,0,0,0.34)",
               animation: "float 5s ease-in-out infinite alternate",
             }}
           >
@@ -254,7 +281,7 @@ function Hero() {
                 </div>
                 <div
                   className="text-xs"
-                  style={{ color: "rgba(255,255,255,0.6)" }}
+                  style={{ color: "rgba(255,255,255,0.62)" }}
                 >
                   Makwanpur, Nepal
                 </div>
@@ -266,7 +293,7 @@ function Hero() {
             className="absolute top-8 right-8 text-4xl select-none"
             style={{
               animation: "float2 3.5s ease-in-out infinite alternate",
-              filter: "drop-shadow(0 4px 16px rgba(249,115,22,0.4))",
+              filter: "drop-shadow(0 6px 18px rgba(22,138,58,0.45))",
             }}
           >
             📚
@@ -276,7 +303,7 @@ function Hero() {
             className="absolute bottom-16 left-0 text-3xl select-none"
             style={{
               animation: "float 4.5s ease-in-out infinite alternate",
-              filter: "drop-shadow(0 4px 16px rgba(168,85,247,0.4))",
+              filter: "drop-shadow(0 6px 18px rgba(215,25,32,0.42))",
             }}
           >
             ✏️
@@ -286,7 +313,7 @@ function Hero() {
             className="absolute top-1/3 left-4 text-2xl select-none"
             style={{
               animation: "float2 5s ease-in-out infinite alternate",
-              filter: "drop-shadow(0 4px 12px rgba(255,255,255,0.2))",
+              filter: "drop-shadow(0 6px 16px rgba(255,255,255,0.28))",
             }}
           >
             💻
@@ -303,7 +330,7 @@ function Hero() {
         >
           <path
             d="M0 80L1440 80L1440 30C1200 70 960 10 720 30C480 50 240 0 0 30L0 80Z"
-            fill="#fdf8f3"
+            fill="#FFF8EE"
           />
         </svg>
       </div>
