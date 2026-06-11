@@ -63,11 +63,8 @@
     "react-resizable-panels": "2.1.7",
     "react-responsive-masonry": "2.7.1",
     "react-router": "7.13.0",
-<<<<<<< HEAD
+
     "react-router-dom": "^7.17.0",
-=======
-    "react-router-dom": "^7.13.0",
->>>>>>> 79bfd3b4f7730f341a0be9c1d4f460036537ab8b
     "react-slick": "0.31.0",
     "recharts": "2.15.2",
     "sonner": "2.0.3",

@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { Link } from "react-router-dom";
 import { Sparkles, Play } from "lucide-react";
 
 function FloatingCard({ className = "", delay = 0, children, style = {} }) {
@@ -12,7 +13,7 @@ function FloatingCard({ className = "", delay = 0, children, style = {} }) {
         ...style,
         animation:
           style.animation ||
-          `float ${3 + delay}s ease-in-out infinite alternate`
+          `float ${3 + delay}s ease-in-out infinite alternate`,
       }}
     >
       {children}
@@ -27,26 +28,26 @@ function Hero() {
       className="relative min-h-screen flex items-center overflow-hidden pt-20"
       style={{
         background:
-          "linear-gradient(135deg, #0f1c3f 0%, #1a0a3c 40%, #2d1068 100%)"
+          "linear-gradient(135deg, #0f1c3f 0%, #1a0a3c 40%, #2d1068 100%)",
       }}
     >
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div
           className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full opacity-25"
           style={{
-            background: "radial-gradient(circle, #6b21a8, transparent 70%)"
+            background: "radial-gradient(circle, #6b21a8, transparent 70%)",
           }}
         />
         <div
           className="absolute bottom-0 -left-40 w-[500px] h-[500px] rounded-full opacity-20"
           style={{
-            background: "radial-gradient(circle, #f97316, transparent 70%)"
+            background: "radial-gradient(circle, #f97316, transparent 70%)",
           }}
         />
         <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-5"
           style={{
-            background: "radial-gradient(circle, #a855f7, transparent 70%)"
+            background: "radial-gradient(circle, #a855f7, transparent 70%)",
           }}
         />
         <div
@@ -54,7 +55,7 @@ function Hero() {
           style={{
             backgroundImage:
               "linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)",
-            backgroundSize: "60px 60px"
+            backgroundSize: "60px 60px",
           }}
         />
       </div>
@@ -86,11 +87,11 @@ function Hero() {
             style={{
               background: "rgba(249,115,22,0.15)",
               border: "1px solid rgba(249,115,22,0.3)",
-              color: "#fb923c"
+              color: "#fb923c",
             }}
           >
             <Sparkles className="w-4 h-4" />
-            Admissions Open for 2026–27
+            Admissions Open
           </motion.div>
 
           <motion.h1
@@ -100,17 +101,17 @@ function Hero() {
             className="text-5xl md:text-6xl xl:text-7xl text-white mb-6 leading-tight"
             style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}
           >
-            Where Futures{" "}
+            Baljagriti English{" "}
             <span
               className="italic"
               style={{
                 background:
                   "linear-gradient(135deg, #f97316, #fb923c, #a855f7)",
                 WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent"
+                WebkitTextFillColor: "transparent",
               }}
             >
-              Are Built
+              Secondary School
             </span>
           </motion.h1>
 
@@ -121,9 +122,9 @@ function Hero() {
             className="text-lg md:text-xl mb-10 max-w-lg leading-relaxed"
             style={{ color: "rgba(255,255,255,0.72)" }}
           >
-            Apex Academy provides a world-class education that nurtures critical
-            thinkers, creative leaders, and compassionate global citizens — from
-            Primary through High School.
+            A co-educational day school in Basudev Marga, Hetauda-2,
+            Makwanpur, providing quality education from Play Group to Grade 10
+            with a focus on academics, values, and all-round development.
           </motion.p>
 
           <motion.div
@@ -132,30 +133,30 @@ function Hero() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-wrap gap-4"
           >
-            <a
-              href="#admissions"
+            <Link
+              to="/admissions"
               className="px-8 py-4 rounded-2xl font-semibold text-white transition-all duration-300 hover:scale-105 hover:shadow-2xl"
               style={{
                 background: "linear-gradient(135deg, #f97316, #ea580c)",
-                boxShadow: "0 8px 32px rgba(249,115,22,0.4)"
+                boxShadow: "0 8px 32px rgba(249,115,22,0.4)",
               }}
             >
-              Apply Now — Free
-            </a>
+              Admission Details
+            </Link>
 
-            <a
-              href="#about"
+            <Link
+              to="/about"
               className="px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 transition-all duration-300 hover:scale-105 group"
               style={{
                 background: "rgba(255,255,255,0.1)",
                 border: "1px solid rgba(255,255,255,0.2)",
                 color: "rgba(255,255,255,0.9)",
-                backdropFilter: "blur(8px)"
+                backdropFilter: "blur(8px)",
               }}
             >
               <Play className="w-5 h-5 text-orange-400 group-hover:scale-110 transition-transform" />
-              Watch Story
-            </a>
+              Learn About Us
+            </Link>
           </motion.div>
         </div>
 
@@ -168,7 +169,7 @@ function Hero() {
             style={{
               boxShadow:
                 "0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)",
-              transform: "perspective(1000px) rotateY(-8deg) rotateX(4deg)"
+              transform: "perspective(1000px) rotateY(-8deg) rotateX(4deg)",
             }}
           >
             <img
@@ -180,7 +181,7 @@ function Hero() {
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(to top, rgba(15,28,63,0.6) 0%, transparent 60%)"
+                  "linear-gradient(to top, rgba(15,28,63,0.6) 0%, transparent 60%)",
               }}
             />
           </motion.div>
@@ -192,17 +193,19 @@ function Hero() {
               background: "rgba(255,255,255,0.12)",
               backdropFilter: "blur(20px)",
               border: "1px solid rgba(255,255,255,0.2)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.3)"
+              boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
             }}
           >
-            <span className="text-3xl">🎓</span>
+            <span className="text-3xl">🏫</span>
             <div>
-              <div className="text-white text-sm font-semibold">98%</div>
+              <div className="text-white text-sm font-semibold">
+                Since 2046 BS
+              </div>
               <div
                 className="text-xs"
                 style={{ color: "rgba(255,255,255,0.6)" }}
               >
-                Success Rate
+                Established School
               </div>
             </div>
           </FloatingCard>
@@ -215,19 +218,19 @@ function Hero() {
               backdropFilter: "blur(20px)",
               border: "1px solid rgba(249,115,22,0.35)",
               boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-              animation: "float2 4s ease-in-out infinite alternate"
+              animation: "float2 4s ease-in-out infinite alternate",
             }}
           >
-            <span className="text-3xl">🌍</span>
+            <span className="text-3xl">📚</span>
             <div>
               <div className="text-white text-sm font-semibold">
-                40+ Nations
+                PG to Grade 10
               </div>
               <div
                 className="text-xs"
                 style={{ color: "rgba(255,255,255,0.6)" }}
               >
-                Student Body
+                School Level
               </div>
             </div>
           </FloatingCard>
@@ -240,20 +243,20 @@ function Hero() {
               backdropFilter: "blur(20px)",
               border: "1px solid rgba(168,85,247,0.3)",
               boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-              animation: "float 5s ease-in-out infinite alternate"
+              animation: "float 5s ease-in-out infinite alternate",
             }}
           >
             <div className="flex items-center gap-2">
-              <span className="text-2xl">⭐</span>
+              <span className="text-2xl">📍</span>
               <div>
                 <div className="text-white text-sm font-semibold">
-                  Top Ranked
+                  Hetauda-2
                 </div>
                 <div
                   className="text-xs"
                   style={{ color: "rgba(255,255,255,0.6)" }}
                 >
-                  Nationally
+                  Makwanpur, Nepal
                 </div>
               </div>
             </div>
@@ -263,7 +266,7 @@ function Hero() {
             className="absolute top-8 right-8 text-4xl select-none"
             style={{
               animation: "float2 3.5s ease-in-out infinite alternate",
-              filter: "drop-shadow(0 4px 16px rgba(249,115,22,0.4))"
+              filter: "drop-shadow(0 4px 16px rgba(249,115,22,0.4))",
             }}
           >
             📚
@@ -273,7 +276,7 @@ function Hero() {
             className="absolute bottom-16 left-0 text-3xl select-none"
             style={{
               animation: "float 4.5s ease-in-out infinite alternate",
-              filter: "drop-shadow(0 4px 16px rgba(168,85,247,0.4))"
+              filter: "drop-shadow(0 4px 16px rgba(168,85,247,0.4))",
             }}
           >
             ✏️
@@ -283,7 +286,7 @@ function Hero() {
             className="absolute top-1/3 left-4 text-2xl select-none"
             style={{
               animation: "float2 5s ease-in-out infinite alternate",
-              filter: "drop-shadow(0 4px 12px rgba(255,255,255,0.2))"
+              filter: "drop-shadow(0 4px 12px rgba(255,255,255,0.2))",
             }}
           >
             💻

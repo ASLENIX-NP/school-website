@@ -80,7 +80,7 @@ export function Gallery() {
 
           <p className="mt-4 max-w-xl mx-auto" style={{ color: "#64748b" }}>
             A glimpse into the daily life, events, and achievements that define
-            the Apex experience.
+the Baljagriti experience.
           </p>
         </motion.div>
 

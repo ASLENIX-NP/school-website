@@ -6,29 +6,29 @@ const steps = [
   {
     icon: MessageCircle,
     step: "01",
-    title: "Inquiry",
-    desc: "Submit your initial inquiry online or visit our admissions office. Our counselors respond within 24 hours.",
+    title: "Play Group Admission",
+    desc: "Admission opens for Play Group in the month of Magh. Parents can contact the school administration for details.",
     color: "#f97316",
   },
   {
     icon: MapPin,
     step: "02",
-    title: "Campus Visit",
-    desc: "Schedule a guided tour to experience our campus, labs, and sports facilities firsthand.",
+    title: "LKG to Class IX",
+    desc: "Admission for Lower Kindergarten to Class IX opens from the new academic year in Baishakh.",
     color: "#6b21a8",
   },
   {
     icon: FileText,
     step: "03",
-    title: "Application",
-    desc: "Complete the online application with academic records, recommendations, and a personal statement.",
+    title: "Written Examination",
+    desc: "Interested candidates are selected through a written examination followed by parents or guardians’ interview.",
     color: "#2563eb",
   },
   {
     icon: CheckCircle,
     step: "04",
     title: "Enrollment",
-    desc: "Receive your offer, pay the enrollment deposit, and join the Apex Academy family.",
+    desc: "Selected students complete enrollment by submitting required documents to the school administration.",
     color: "#059669",
   },
 ];
@@ -84,7 +84,7 @@ function Admissions() {
               border: "1px solid rgba(249,115,22,0.3)",
             }}
           >
-            Admissions 2026–27
+            Admissions
           </span>
 
           <h2
@@ -101,9 +101,9 @@ function Admissions() {
             className="max-w-xl mx-auto text-lg"
             style={{ color: "rgba(255,255,255,0.65)" }}
           >
-            Applying to Apex Academy is simple. Follow our four-step process and
-            join one of the most diverse, driven student communities in the
-            region.
+            Baljagriti Secondary English Boarding School welcomes students
+            through a clear admission process for Play Group, LKG, and classes
+            up to Class IX.
           </p>
         </motion.div>
 
@@ -195,15 +195,15 @@ function Admissions() {
                 fontWeight: 600,
               }}
             >
-              Start Your Application
+              Admission Inquiry
             </h3>
 
             <p
               className="text-sm mb-8"
               style={{ color: "rgba(255,255,255,0.5)" }}
             >
-              Fill in the form and our team will reach out within one business
-              day.
+              Fill in the form and the school administration will contact you
+              with admission details.
             </p>
 
             {isSubmitSuccessful ? (
@@ -312,13 +312,26 @@ function Admissions() {
                         Select grade
                       </option>
 
-                      {Array.from({ length: 12 }, (_, i) => (
+                      {[
+                        "Play Group",
+                        "LKG",
+                        "UKG",
+                        "Grade 1",
+                        "Grade 2",
+                        "Grade 3",
+                        "Grade 4",
+                        "Grade 5",
+                        "Grade 6",
+                        "Grade 7",
+                        "Grade 8",
+                        "Grade 9",
+                      ].map((grade) => (
                         <option
-                          key={i + 1}
-                          value={`Grade ${i + 1}`}
+                          key={grade}
+                          value={grade}
                           style={{ background: "#0f1c3f" }}
                         >
-                          Grade {i + 1}
+                          {grade}
                         </option>
                       ))}
                     </select>

@@ -6,27 +6,27 @@ const pillars = [
   {
     icon: Award,
     label: "Academic Excellence",
-    desc: "Rigorous curriculum aligned with international standards and board exams.",
+    desc: "Focused classroom learning that helps students build a strong academic foundation from early years to Grade 10.",
   },
   {
     icon: Heart,
     label: "Holistic Development",
-    desc: "Sports, arts, music, and leadership programs for every student.",
+    desc: "A nurturing and child-friendly environment where students grow academically, personally, socially, and morally.",
   },
   {
     icon: Lightbulb,
-    label: "Innovation Culture",
-    desc: "STEM labs, maker spaces, and design thinking workshops.",
+    label: "Creative & Practical Learning",
+    desc: "Extra-curricular activities, competitions, sports, arts, and school programs help students explore their talents.",
   },
 ];
 
 const highlights = [
-  "IB & Cambridge-aligned curriculum",
-  "1:14 teacher-to-student ratio",
-  "12 specialized science & tech labs",
-  "Award-winning sports facilities",
-  "Mental health & counseling center",
-  "Global exchange partnerships",
+  "Play Group to Grade 10",
+  "Co-educational day school",
+  "Located in Hetauda-2, Makwanpur",
+  "Child-friendly learning environment",
+  "Focus on academic and moral foundation",
+  "ECA, sports, arts, and competitions",
 ];
 
 export function About() {
@@ -59,7 +59,7 @@ export function About() {
               border: "1px solid rgba(249,115,22,0.2)",
             }}
           >
-            Our Story
+            About Baljagriti
           </span>
 
           <h2
@@ -70,16 +70,17 @@ export function About() {
               color: "#0f1c3f",
             }}
           >
-            More Than a School —{" "}
+            Quality Education with{" "}
             <span className="italic" style={{ color: "#6b21a8" }}>
-              A Community
+              Holistic Growth
             </span>
           </h2>
 
           <p className="max-w-2xl mx-auto text-lg" style={{ color: "#64748b" }}>
-            Founded in 1989, Apex Academy has shaped over 35,000 graduates who
-            lead in science, business, arts, and public service across 60
-            countries.
+            Baljagriti Secondary English Boarding School is a well-established
+            school in Basudev Marga, Hetauda, Makwanpur, committed to academic
+            excellence, discipline, creativity, and the overall development of
+            every student.
           </p>
         </motion.div>
 
@@ -117,12 +118,12 @@ export function About() {
                 width: "200px",
               }}
             >
-              <div className="text-4xl mb-2">🏆</div>
+              <div className="text-4xl mb-2">🏫</div>
               <div className="text-white font-semibold text-sm">
-                National School of the Year
+                Baljagriti Secondary English Boarding School
               </div>
               <div className="text-xs mt-1" style={{ color: "#f97316" }}>
-                2023 & 2024
+                Hetauda, Makwanpur
               </div>
             </div>
 
@@ -146,10 +147,10 @@ export function About() {
                     className="text-sm font-semibold"
                     style={{ color: "#0f1c3f" }}
                   >
-                    NEASC Accredited
+                    PG to Grade 10
                   </div>
                   <div className="text-xs" style={{ color: "#64748b" }}>
-                    Since 2001
+                    Co-educational day school
                   </div>
                 </div>
               </div>
@@ -209,14 +210,14 @@ export function About() {
 
             <div className="mt-10">
               <Link
-                to="/academics"
+                to="/facilities"
                 className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white transition-all duration-300 hover:scale-105 hover:shadow-xl"
                 style={{
                   background: "linear-gradient(135deg, #0f1c3f, #1a0a3c)",
                   boxShadow: "0 8px 24px rgba(15,28,63,0.3)",
                 }}
               >
-                Explore Our Programs →
+                Explore Our Facilities →
               </Link>
             </div>
           </motion.div>
