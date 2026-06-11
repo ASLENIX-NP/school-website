@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 import { Navbar } from "./Navbar";
 import { Hero } from "./Hero";
@@ -10,6 +10,9 @@ import { Events } from "./Events";
 import { Gallery } from "./Gallery";
 import { Contact } from "./Contact";
 import { Footer } from "./Footer";
+import Messages from "../../pages/Messages";
+import Notices from "../../pages/Notices";
+import Staff from "../../pages/Staff";
 
 function HomePage() {
   return (
@@ -24,7 +27,7 @@ function AboutPage() {
   return <About />;
 }
 
-function AcademicsPage() {
+function FacilitiesPage() {
   return <Academics />;
 }
 
@@ -46,26 +49,30 @@ function ContactPage() {
 
 function SchoolApp() {
   return (
-    <BrowserRouter>
-      <div className="min-h-screen" style={{ fontFamily: "var(--font-body)" }}>
-        <Navbar />
+    <div
+      className="min-h-screen"
+      style={{ fontFamily: "var(--font-body)" }}
+    >
+      <Navbar />
 
-        <main>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/facilities" element={<AcademicsPage />} />
-            <Route path="/admissions" element={<AdmissionsPage />} />
-            <Route path="/events" element={<EventsPage />} />
-            <Route path="/gallery" element={<GalleryPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="*" element={<HomePage />} />
-          </Routes>
-        </main>
+      <main>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/facilities" element={<FacilitiesPage />} />
+          <Route path="/admissions" element={<AdmissionsPage />} />
+          <Route path="/messages" element={<Messages />} />
+<Route path="/notices" element={<Notices />} />
+<Route path="/staff" element={<Staff />} />
+          <Route path="/events" element={<EventsPage />} />
+          <Route path="/gallery" element={<GalleryPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="*" element={<HomePage />} />
+        </Routes>
+      </main>
 
-        <Footer />
-      </div>
-    </BrowserRouter>
+      <Footer />
+    </div>
   );
 }
 

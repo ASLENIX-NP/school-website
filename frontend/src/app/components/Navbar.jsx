@@ -7,9 +7,11 @@ import { motion, AnimatePresence } from "motion/react";
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
+  { label: "Messages", href: "/messages" },
+  { label: "Academics", href: "/academics" },
+  { label: "Notices", href: "/notices" },
   { label: "Facilities", href: "/facilities" },
-  { label: "Admissions", href: "/admissions" },
-  { label: "Events", href: "/events" },
+  { label: "Staff", href: "/staff" },
   { label: "Gallery", href: "/gallery" },
   { label: "Contact", href: "/contact" },
 ];
@@ -120,14 +122,14 @@ export function Navbar() {
 
           <div className="hidden lg:flex items-center gap-3">
             <Link
-              to="/admissions"
+  to="/contact"
               className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
               style={{
                 background: `linear-gradient(135deg, ${colors.red}, ${colors.green})`,
                 boxShadow: "0 10px 28px rgba(215,25,32,0.26)",
               }}
             >
-              Admission →
+              Admission Open
             </Link>
           </div>
 
