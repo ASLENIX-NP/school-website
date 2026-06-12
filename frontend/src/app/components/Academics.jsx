@@ -616,36 +616,8 @@ hover:bg-white/10
         </div>
       </section>
 
-      {/* ==================== 8. SEE ACHIEVEMENT BANNER ==================== */}
-      <section className="py-4 relative z-10">
-        <div className="max-w-7xl mx-auto px-6">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="p-12 rounded-3xl text-white text-center relative overflow-hidden shadow-2xl"
-            style={{
-              background: `linear-gradient(135deg, ${colors.purple} 0%, ${colors.red} 50%, ${colors.dark} 100%)`
-            }}
-          >
-            <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-            <div className="relative z-10 space-y-4 max-w-3xl mx-auto">
-              <span className="inline-block bg-white/20 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
-                District Distinction Framework
-              </span>
-              <h2 className="text-3xl md:text-5xl font-black" style={{ fontFamily: "var(--font-display)" }}>
-                🏆 SEE GPA 4.0 – Best Results Under NEB
-              </h2>
-              <p className="text-base md:text-lg text-slate-200 font-light leading-relaxed">
-                "Our students consistently rank among the top performers in the district, pulling record-tier analytics year after year."
-              </p>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
       {/* ==================== 9. ADMISSION CTA ==================== */}
-      <section className="py-24 text-center relative z-10">
+      <section className="pt-10 pb-24 text-center relative z-10">
         <div className="max-w-4xl mx-auto px-6 space-y-6">
           <h2 className="text-4xl md:text-5xl font-black text-slate-900" style={{ fontFamily: "var(--font-display)" }}>
             Ready to Join Baljagriti?
@@ -656,12 +628,14 @@ hover:bg-white/10
           <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link
               to="/apply"
-              className="px-8 py-4 rounded-xl text-base font-bold text-white transition-all duration-300 hover:scale-105 shadow-lg w-full sm:w-auto"
+             className="px-8 py-4 rounded-xl text-base font-bold transition-all duration-300 hover:scale-105 shadow-lg w-full sm:w-auto"
               style={{
-                background: `linear-gradient(135deg, ${colors.green}, ${colors.purple})`,
-                boxShadow: "0 12px 32px rgba(22,138,58,0.2)"
+                background:
+                  "linear-gradient(135deg, #FACC15 0%, #A7F3D0 100%)",
+                color: "#111827",
+                boxShadow: "0 8px 20px rgba(250,204,21,0.18)"
               }}
-            >
+              >
               Apply Now
             </Link>
             <Link

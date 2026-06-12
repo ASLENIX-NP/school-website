@@ -157,28 +157,6 @@ export default function Staff() {
             </div>
           ))}
         </div>
-
-        {/* Bottom CTA */}
-        <div
-          className="mt-20 rounded-[32px] p-12 text-center text-white"
-          style={{
-            background:
-              "linear-gradient(135deg,#D71920,#4B2E83,#168A3A)",
-          }}
-        >
-          <h2 className="text-4xl font-bold mb-4">
-            Learn From The Best Educators
-          </h2>
-
-          <p className="text-lg opacity-90 mb-8">
-            Our experienced faculty members are committed to helping
-            every student achieve academic excellence and personal growth.
-          </p>
-
-          <button className="bg-white text-black px-8 py-3 rounded-2xl font-semibold hover:scale-105 transition">
-            Contact Administration
-          </button>
-        </div>
       </div>
     </section>
   );

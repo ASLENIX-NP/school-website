@@ -149,28 +149,6 @@ export default function Facilities() {
             </motion.div>
           ))}
         </div>
-
-        {/* CTA */}
-        <div
-          className="mt-24 rounded-[32px] p-12 text-center text-white"
-          style={{
-            background: "linear-gradient(135deg,#D71920,#4B2E83,#168A3A)",
-          }}
-        >
-          <h2 className="text-4xl font-bold mb-4">Explore Our Campus Facilities</h2>
-
-          <p className="text-lg opacity-90 mb-8 max-w-2xl mx-auto">
-            We provide students with the resources, environment, and infrastructure needed for academic excellence and
-            personal development.
-          </p>
-
-          <Link
-            to="/admissions"
-            className="inline-block bg-white text-black px-8 py-3 rounded-2xl font-semibold hover:scale-105 transition"
-          >
-            Admission Details
-          </Link>
-        </div>
       </div>
 
       {selectedFacility && (
