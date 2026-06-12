@@ -1,167 +1,205 @@
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
+import { UserRound, Quote, Sparkles } from "lucide-react";
 
-const founderImage =
-"https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=900&q=80";
+const colors = {
+  red: "#D71920",
+  green: "#168A3A",
+  purple: "#4B2E83",
+  dark: "#0B1020",
+  cream: "#FFF8EE",
+  lightPurple: "#F1ECFF",
+};
 
-const principalImage =
-"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80";
+/*
+  Later this can come from admin dashboard API.
+  Admin can update: name, role, title, message, image.
+*/
+const messagesData = [
+  {
+    name: "Principal",
+    role: "Principal",
+    title: "Principal’s Message",
+    message:
+      "Welcome to Baljagriti Secondary English School. We are committed to nurturing every child into a confident, capable, disciplined, and compassionate individual. Our goal is to provide quality education with strong values, creativity, and academic excellence.",
+    image: "",
+  },
+  {
+    name: "Vice Principal",
+    role: "Vice Principal",
+    title: "Vice Principal’s Message",
+    message:
+      "Our team works tirelessly to provide a safe, inspiring, and academically rigorous environment for every student. We believe every child deserves care, guidance, and opportunities to grow academically, socially, and personally.",
+    image: "",
+  },
+];
 
-export default function Messages() {
-return (
-<section
-className="min-h-screen py-28"
-style={{
-background: `
-radial-gradient(circle at top left,
-rgba(139,92,246,0.12),
-transparent 35%),
-
-      radial-gradient(circle at bottom right,
-      rgba(22,163,74,0.12),
-      transparent 35%),
-
-      #faf7f5
-    `,
-  }}
->
-  <div className="max-w-7xl mx-auto px-6">
-
-    {/* Header */}
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="text-center mb-20"
+function ProfileBox({ person }) {
+  return (
+    <div
+      className="w-full md:w-[280px] flex-shrink-0 flex flex-col items-center justify-center text-center p-8"
+      style={{
+        background:
+          "linear-gradient(145deg, rgba(255,248,238,0.96), rgba(241,236,255,0.8))",
+        borderRight: "1px solid rgba(11,16,32,0.08)",
+      }}
     >
-      <span
-        className="inline-block px-5 py-2 rounded-full text-sm font-semibold mb-6"
+      <div
+        className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden mb-6"
         style={{
-          background: "rgba(215,25,32,.08)",
-          color: "#D71920",
-          border: "1px solid rgba(215,25,32,.15)",
+          background: "rgba(255,255,255,0.8)",
+          border: "1px solid rgba(11,16,32,0.08)",
+          boxShadow:
+            "0 20px 48px rgba(11,16,32,0.12), inset 0 1px 0 rgba(255,255,255,0.9)",
         }}
       >
-        Leadership Messages
-      </span>
+        {person.image ? (
+          <img
+            src={person.image}
+            alt={person.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <UserRound className="w-12 h-12" style={{ color: "#9CA3AF" }} />
+        )}
+      </div>
 
-      <h1 className="text-5xl md:text-6xl font-bold text-slate-900">
-        Messages From
-        <span className="text-green-700"> Leadership</span>
-      </h1>
+      <h3
+        className="text-2xl mb-2"
+        style={{
+          fontFamily: "var(--font-display)",
+          fontWeight: 800,
+          color: colors.dark,
+          letterSpacing: "-0.025em",
+        }}
+      >
+        {person.name}
+      </h3>
 
-      <p className="mt-6 text-slate-600 max-w-2xl mx-auto text-lg">
-        Inspiring words from our Founder and Principal,
-        guiding students towards academic excellence,
-        leadership, and lifelong learning.
+      <p className="text-base font-semibold" style={{ color: colors.green }}>
+        {person.role}
       </p>
-    </motion.div>
+    </div>
+  );
+}
 
-    {/* Founder Section */}
+function MessageCard({ person, index }) {
+  return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 34 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="bg-white/80 backdrop-blur-xl rounded-[32px] shadow-xl p-8 lg:p-12 mb-16"
+      transition={{ duration: 0.6, delay: index * 0.12 }}
+      className="rounded-3xl overflow-hidden flex flex-col md:flex-row"
+      style={{
+        background:
+          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+        border: "1px solid rgba(11,16,32,0.08)",
+        boxShadow:
+          "0 22px 62px rgba(11,16,32,0.08), inset 0 1px 0 rgba(255,255,255,0.85)",
+        backdropFilter: "blur(18px)",
+      }}
     >
-      <h2 className="text-4xl font-bold mb-10 text-slate-900">
-        Founder’s Message
-      </h2>
+      <ProfileBox person={person} />
 
-      <div className="grid lg:grid-cols-2 gap-12 items-center">
-        <div>
-          <p className="text-slate-700 leading-9 text-lg">
-            After crossing a silver jubilee of the school,
-            Baljagriti has successfully established itself as
-            one of the leading educational institutions in the
-            region. Our commitment to academic excellence,
-            discipline, innovation, and character-building has
-            enabled thousands of students to achieve success
-            in their personal and professional lives.
-          </p>
+      <div className="relative flex-1 p-8 md:p-10 lg:p-12">
+        <Quote
+          className="absolute right-8 top-8 w-12 h-12 opacity-10"
+          style={{ color: colors.purple }}
+        />
 
-          <p className="text-slate-700 leading-9 text-lg mt-6">
-            We strive to create an environment where students
-            can discover their talents, develop confidence,
-            and become responsible global citizens capable of
-            contributing positively to society.
-          </p>
+        <h2
+          className="text-3xl md:text-4xl mb-6"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontWeight: 850,
+            color: colors.dark,
+            letterSpacing: "-0.035em",
+          }}
+        >
+          {person.title}
+        </h2>
 
-          <div className="mt-10">
-            <h3 className="text-3xl font-bold text-slate-900">
-              Dinesh Prasad Bhandari
-            </h3>
-
-            <p className="text-green-700 font-semibold text-lg">
-              Founder / Director
-            </p>
-          </div>
-        </div>
-
-        <div>
-          <img
-            src={founderImage}
-            alt="Founder"
-            className="w-full h-[550px] object-cover rounded-[28px] shadow-lg"
-          />
-        </div>
+        <p className="text-lg md:text-xl leading-relaxed text-slate-500 max-w-5xl">
+          {person.message}
+        </p>
       </div>
     </motion.div>
+  );
+}
 
-    {/* Principal Section */}
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="bg-white/80 backdrop-blur-xl rounded-[32px] shadow-xl p-8 lg:p-12"
+export default function Messages() {
+  return (
+    <section
+      className="min-h-screen pt-32 pb-24 relative overflow-hidden"
+      style={{
+        background: `
+          radial-gradient(circle at top right, rgba(124,92,196,0.16), transparent 34%),
+          radial-gradient(circle at bottom left, rgba(22,138,58,0.13), transparent 32%),
+          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
+        `,
+      }}
     >
-      <h2 className="text-4xl font-bold mb-10 text-slate-900">
-        Principal’s Message
-      </h2>
+      <div
+        className="absolute top-0 right-0 w-[520px] h-[520px] rounded-full pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
+          filter: "blur(8px)",
+        }}
+      />
 
-      <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <div
+        className="absolute bottom-0 left-0 w-[420px] h-[420px] rounded-full pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(22,138,58,0.11), transparent 70%)",
+          filter: "blur(8px)",
+        }}
+      />
 
-        <div>
-          <img
-            src={principalImage}
-            alt="Principal"
-            className="w-full h-[550px] object-cover rounded-[28px] shadow-lg"
-          />
-        </div>
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65 }}
+          className="text-center mb-14"
+        >
+          <span
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-5"
+            style={{
+              background: "rgba(215,25,32,0.08)",
+              color: colors.red,
+              border: "1px solid rgba(215,25,32,0.16)",
+            }}
+          >
+            <Sparkles className="w-4 h-4" />
+            Leadership Messages
+          </span>
 
-        <div>
-          <p className="text-slate-700 leading-9 text-lg">
-            Education is the strongest foundation for a
-            successful future. At Baljagriti Secondary English
-            Boarding School, we focus on nurturing not only
-            academic excellence but also creativity,
-            leadership, integrity, and critical thinking.
+          <h1
+            className="text-4xl md:text-6xl mb-4"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 850,
+              color: colors.dark,
+              letterSpacing: "-0.045em",
+            }}
+          >
+            Messages From Leadership
+          </h1>
+
+          <p className="max-w-2xl mx-auto text-base md:text-lg text-slate-500">
+            Words from school leadership guiding students toward academic
+            excellence, discipline, values, and lifelong learning.
           </p>
+        </motion.div>
 
-          <p className="text-slate-700 leading-9 text-lg mt-6">
-            Our dedicated team of educators works tirelessly
-            to ensure that every student receives individual
-            attention and opportunities to grow intellectually,
-            socially, and emotionally in a supportive
-            environment.
-          </p>
-
-          <div className="mt-10">
-            <h3 className="text-3xl font-bold text-slate-900">
-              Binod Subedi
-            </h3>
-
-            <p className="text-green-700 font-semibold text-lg">
-              Principal
-            </p>
-          </div>
+        <div className="space-y-10">
+          {messagesData.map((person, index) => (
+            <MessageCard key={person.title} person={person} index={index} />
+          ))}
         </div>
-
       </div>
-    </motion.div>
-
-  </div>
-</section>
-);
+    </section>
+  );
 }

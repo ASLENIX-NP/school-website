@@ -1,142 +1,361 @@
-import { Calendar, Download, Bell } from "lucide-react";
+import { motion } from "motion/react";
+import {
+  Calendar,
+  Download,
+  Bell,
+  FileText,
+  ArrowRight,
+  Clock,
+  Pin,
+} from "lucide-react";
 
-const notices = [
-  {
-    id: 1,
-    title: "First Terminal Examination Notice",
-    date: "2083-02-15",
-    description:
-      "Important notice regarding First Terminal Examination schedule, routines, and student guidelines.",
-    pdf: "#",
-  },
-  {
-    id: 2,
-    title: "School Reopening Notice",
-    date: "2083-02-08",
-    description:
-      "School will reopen after the scheduled break. Students are requested to attend regularly.",
-    pdf: "#",
-  },
-  {
-    id: 3,
-    title: "Parents Meeting Notice",
-    date: "2083-02-01",
-    description:
-      "Parents and guardians are requested to attend the upcoming school meeting.",
-    pdf: "#",
-  },
-];
+const colors = {
+  red: "#D71920",
+  green: "#168A3A",
+  purple: "#4B2E83",
+  dark: "#0B1020",
+  cream: "#FFF8EE",
+};
+
+/*
+  Later this whole object can come from backend/admin dashboard.
+  Admin can add:
+  - title
+  - date
+  - description
+  - category
+  - pdfUrl
+*/
+const noticeData = {
+  badge: "School Updates",
+  title: "School Notices",
+  description:
+    "Stay informed with examination schedules, admissions, holidays, events, and important announcements from Baljagriti Secondary English School.",
+  notices: [
+    {
+      id: 1,
+      title: "First Terminal Examination Notice",
+      date: "2083-02-15",
+      category: "Examination",
+      description:
+        "Important notice regarding First Terminal Examination schedule, routines, and student guidelines.",
+      pdfUrl: "#",
+      pinned: true,
+    },
+    {
+      id: 2,
+      title: "School Reopening Notice",
+      date: "2083-02-08",
+      category: "Academic",
+      description:
+        "School will reopen after the scheduled break. Students are requested to attend regularly.",
+      pdfUrl: "#",
+      pinned: false,
+    },
+    {
+      id: 3,
+      title: "Parents Meeting Notice",
+      date: "2083-02-01",
+      category: "Parents",
+      description:
+        "Parents and guardians are requested to attend the upcoming school meeting.",
+      pdfUrl: "#",
+      pinned: false,
+    },
+  ],
+};
+
+function NoticeCard({ notice, index }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.55, delay: index * 0.08 }}
+      className="group relative overflow-hidden rounded-3xl p-6 md:p-7 transition-all duration-300 hover:-translate-y-1"
+      style={{
+        background:
+          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+        border: "1px solid rgba(11,16,32,0.08)",
+        boxShadow:
+          "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
+        backdropFilter: "blur(16px)",
+      }}
+    >
+      <div
+        className="absolute top-0 left-0 right-0 h-1"
+        style={{
+          background: notice.pinned
+            ? `linear-gradient(90deg, ${colors.red}, ${colors.green})`
+            : "rgba(11,16,32,0.08)",
+        }}
+      />
+
+      <div className="flex flex-col md:flex-row md:items-start gap-5">
+        <div
+          className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+          style={{
+            background: notice.pinned
+              ? "rgba(215,25,32,0.1)"
+              : "rgba(75,46,131,0.09)",
+            border: notice.pinned
+              ? "1px solid rgba(215,25,32,0.18)"
+              : "1px solid rgba(75,46,131,0.16)",
+            boxShadow: notice.pinned
+              ? "0 14px 30px rgba(215,25,32,0.11)"
+              : "0 14px 30px rgba(75,46,131,0.09)",
+          }}
+        >
+          {notice.pinned ? (
+            <Pin className="w-6 h-6" style={{ color: colors.red }} />
+          ) : (
+            <FileText className="w-6 h-6" style={{ color: colors.purple }} />
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-3 mb-3">
+            <span
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+              style={{
+                background: "rgba(22,138,58,0.09)",
+                color: colors.green,
+                border: "1px solid rgba(22,138,58,0.16)",
+              }}
+            >
+              {notice.category}
+            </span>
+
+            <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
+              <Calendar className="w-4 h-4" />
+              {notice.date}
+            </span>
+          </div>
+
+          <h3
+            className="text-2xl md:text-3xl mb-3"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 850,
+              color: colors.dark,
+              letterSpacing: "-0.035em",
+            }}
+          >
+            {notice.title}
+          </h3>
+
+          <p className="text-base leading-relaxed text-slate-500 mb-6">
+            {notice.description}
+          </p>
+
+          <a
+            href={notice.pdfUrl}
+            download
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all duration-300 hover:scale-105"
+            style={{
+              color: "#FFFFFF",
+              background: `linear-gradient(135deg, ${colors.green}, ${colors.purple})`,
+              boxShadow: "0 14px 34px rgba(22,138,58,0.22)",
+            }}
+          >
+            <Download className="w-4 h-4" />
+            Download Notice
+          </a>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function Notices() {
   return (
     <section
-      className="min-h-screen pt-32 pb-24"
+      className="min-h-screen pt-32 pb-24 relative overflow-hidden"
       style={{
         background: `
-          radial-gradient(circle at top left, rgba(124,92,196,0.12), transparent 35%),
-          radial-gradient(circle at bottom right, rgba(22,138,58,0.10), transparent 35%),
-          linear-gradient(180deg, #FFF8EE 0%, #F8FAFC 100%)
+          radial-gradient(circle at top right, rgba(124,92,196,0.18), transparent 34%),
+          radial-gradient(circle at bottom left, rgba(22,138,58,0.14), transparent 32%),
+          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
         `,
       }}
     >
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <div
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-full mb-6"
+      <div
+        className="absolute top-0 right-0 w-[520px] h-[520px] rounded-full pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
+          filter: "blur(8px)",
+        }}
+      />
+
+      <div
+        className="absolute bottom-0 left-0 w-[420px] h-[420px] rounded-full pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(22,138,58,0.11), transparent 70%)",
+          filter: "blur(8px)",
+        }}
+      />
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65 }}
+          className="text-center mb-14"
+        >
+          <span
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-5"
             style={{
               background: "rgba(215,25,32,0.08)",
-              border: "1px solid rgba(215,25,32,0.18)",
-              color: "#D71920",
+              color: colors.red,
+              border: "1px solid rgba(215,25,32,0.16)",
             }}
           >
-            <Bell size={16} />
-            School Updates
-          </div>
+            <Bell className="w-4 h-4" />
+            {noticeData.badge}
+          </span>
 
-          <h1 className="text-5xl md:text-6xl font-bold text-slate-900">
-            School <span className="text-green-700">Notices</span>
+          <h1
+            className="text-4xl md:text-6xl mb-4"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 850,
+              color: colors.dark,
+              letterSpacing: "-0.045em",
+            }}
+          >
+            {noticeData.title}
           </h1>
 
-          <p className="mt-6 text-lg text-slate-600 max-w-3xl mx-auto">
-            Stay informed with examination schedules, admissions,
-            holidays, events, and important announcements from
-            Baljagriti Secondary English Boarding School.
+          <p className="max-w-3xl mx-auto text-base md:text-lg text-slate-500 leading-relaxed">
+            {noticeData.description}
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-10">
-          {/* Notices */}
-          <div className="lg:col-span-2 space-y-8">
-            {notices.map((notice) => (
-              <div
-                key={notice.id}
-                className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
-              >
-                <h3 className="text-2xl font-bold text-slate-900 mb-4">
-                  {notice.title}
-                </h3>
-
-                <div className="flex items-center gap-2 text-slate-500 mb-4">
-                  <Calendar size={18} />
-                  <span>{notice.date}</span>
-                </div>
-
-                <p className="text-slate-600 leading-relaxed mb-6">
-                  {notice.description}
-                </p>
-
-                <a
-                  href={notice.pdf}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-white font-medium transition hover:scale-105"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #168A3A, #0F9D58)",
-                  }}
-                >
-                  <Download size={18} />
-                  Download Notice
-                </a>
-              </div>
+        <div className="grid lg:grid-cols-[1fr_330px] gap-8 items-start">
+          <div className="space-y-6">
+            {noticeData.notices.map((notice, index) => (
+              <NoticeCard key={notice.id} notice={notice} index={index} />
             ))}
           </div>
 
-          {/* Calendar */}
-          <div>
-            <div className="bg-white rounded-3xl shadow-lg p-6 sticky top-28">
-              <h3 className="text-3xl font-bold text-slate-900 mb-6">
-                Nepali Calendar
-              </h3>
+          <motion.aside
+            initial={{ opacity: 0, x: 32 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="lg:sticky lg:top-28 rounded-3xl overflow-hidden"
+            style={{
+              background:
+                "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+              border: "1px solid rgba(11,16,32,0.08)",
+              boxShadow:
+                "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
+              backdropFilter: "blur(16px)",
+            }}
+          >
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-5">
+                <div
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background: "rgba(75,46,131,0.09)",
+                    border: "1px solid rgba(75,46,131,0.16)",
+                  }}
+                >
+                  <Calendar className="w-5 h-5" style={{ color: colors.purple }} />
+                </div>
 
-              <iframe
-                title="Nepali Calendar"
-                src="https://www.hamropatro.com/widgets/calender-small.php"
-                className="w-full h-[430px] rounded-2xl border-0"
-              ></iframe>
+                <div>
+                  <h3
+                    className="text-2xl leading-tight"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontWeight: 850,
+                      color: colors.dark,
+                      letterSpacing: "-0.03em",
+                    }}
+                  >
+                    Nepali Calendar
+                  </h3>
+
+                  <p className="text-xs text-slate-500 mt-1">
+                    Nepali date reference
+                  </p>
+                </div>
+              </div>
+
+              <div
+                className="rounded-2xl overflow-hidden flex justify-center items-start"
+                style={{
+                  background: "#FFFFFF",
+                  border: "1px solid rgba(11,16,32,0.08)",
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.8)",
+                  height: "345px",
+                  paddingTop: "10px",
+                }}
+              >
+                <iframe
+                  title="Nepali Calendar"
+                  src="https://www.hamropatro.com/widgets/calender-small.php"
+                  style={{
+                    width: "245px",
+                    height: "330px",
+                    border: "0",
+                    transform: "scale(1.03)",
+                    transformOrigin: "top center",
+                    background: "#FFFFFF",
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Bottom CTA */}
-        <div
-          className="mt-20 rounded-[32px] p-12 text-center text-white"
-          style={{
-            background:
-              "linear-gradient(135deg,#D71920,#4B2E83,#168A3A)",
-          }}
-        >
-          <h2 className="text-4xl font-bold mb-4">
-            Never Miss An Important Update
-          </h2>
+            <div
+              className="p-5"
+              style={{
+                background: `linear-gradient(135deg, ${colors.dark}, ${colors.purple})`,
+              }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{
+                    background: "rgba(255,255,255,0.12)",
+                    border: "1px solid rgba(255,255,255,0.18)",
+                  }}
+                >
+                  <Clock className="w-5 h-5 text-white" />
+                </div>
 
-          <p className="text-lg opacity-90 mb-8">
-            Stay connected with Baljagriti for notices,
-            examination schedules, and school announcements.
-          </p>
+                <div>
+                  <div className="text-white font-bold">Admin Ready</div>
+                  <div
+                    className="text-xs"
+                    style={{ color: "rgba(255,255,255,0.68)" }}
+                  >
+                    Notices can be added later
+                  </div>
+                </div>
+              </div>
 
-          <button className="bg-white text-black px-8 py-3 rounded-2xl font-semibold">
-            Contact School Office
-          </button>
+              <p
+                className="text-sm leading-relaxed mb-5"
+                style={{ color: "rgba(255,255,255,0.72)" }}
+              >
+                Notice title, date, category, description, and PDF file can later
+                come directly from the admin dashboard.
+              </p>
+
+              <a
+                href="/contact"
+                className="inline-flex items-center gap-2 text-sm font-bold text-white transition-all hover:gap-3"
+              >
+                Contact School Office
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+          </motion.aside>
         </div>
       </div>
     </section>

@@ -12,6 +12,8 @@ const colors = {
   dark: "#0B1020",
   cream: "#FFF8EE",
   lightPurple: "#F1ECFF",
+  cyan: "#38BDF8",
+  gold: "#FACC15",
 };
 
 const contactInfo = [
@@ -190,44 +192,79 @@ function Contact() {
             })}
 
             <div
-              className="rounded-2xl overflow-hidden h-48 relative flex items-center justify-center"
+              className="rounded-3xl overflow-hidden h-48 relative flex items-center justify-center"
               style={{
-                background: `linear-gradient(135deg, ${colors.dark}, ${colors.purple})`,
-                border: "1px solid rgba(255,255,255,0.12)",
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07)), linear-gradient(135deg, #020617, #1E1B4B)",
+                border: "1px solid rgba(255,255,255,0.18)",
                 boxShadow:
-                  "0 24px 64px rgba(11,16,32,0.34), 0 0 44px rgba(75,46,131,0.18)",
+                  "0 24px 64px rgba(11,16,32,0.28), 0 0 44px rgba(56,189,248,0.12)",
+                backdropFilter: "blur(18px)",
               }}
             >
               <div
                 className="absolute inset-0 opacity-15"
                 style={{
                   backgroundImage:
-                    "linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px)",
+                    "linear-gradient(rgba(255,255,255,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.16) 1px, transparent 1px)",
                   backgroundSize: "36px 36px",
                 }}
               />
 
-              <div className="text-center relative z-10">
-                <div className="text-4xl mb-2">🗺️</div>
-                <div className="text-white font-semibold text-sm">
+              <div
+                className="absolute -top-20 -right-20 w-52 h-52 rounded-full"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(56,189,248,0.32), transparent 70%)",
+                }}
+              />
+
+              <div
+                className="absolute -bottom-20 -left-20 w-52 h-52 rounded-full"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(250,204,21,0.24), transparent 70%)",
+                }}
+              />
+
+              <div className="text-center relative z-10 px-6">
+                <div
+                  className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center mb-3"
+                  style={{
+                    background: "rgba(255,255,255,0.12)",
+                    border: "1px solid rgba(255,255,255,0.18)",
+                    boxShadow: "0 16px 38px rgba(0,0,0,0.22)",
+                  }}
+                >
+                  <MapPin className="w-7 h-7" style={{ color: colors.gold }} />
+                </div>
+
+                <div className="text-white font-bold text-base">
                   Baljagriti Campus
                 </div>
+
                 <div
-                  className="text-xs mt-1"
-                  style={{ color: "rgba(255,255,255,0.62)" }}
+                  className="text-xs mt-1 mb-4"
+                  style={{ color: "rgba(255,255,255,0.64)" }}
                 >
                   Basudev Marga, Hetauda, Makawanpur
                 </div>
-                <button
-                  type="button"
-                  className="mt-3 inline-block px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:scale-105"
+
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=Basudev+Marga+Hetauda+Makwanpur+Nepal"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 hover:scale-105"
                   style={{
-                    background: `linear-gradient(135deg, ${colors.red}, ${colors.green})`,
-                    boxShadow: "0 12px 28px rgba(215,25,32,0.25)",
+                    color: "#020617",
+                    background:
+                      "linear-gradient(135deg, #FACC15 0%, #38BDF8 100%)",
+                    boxShadow:
+                      "0 16px 38px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
                   }}
                 >
                   Open in Maps
-                </button>
+                </a>
               </div>
             </div>
           </motion.div>
@@ -296,7 +333,7 @@ function Contact() {
                     </label>
                     <input
                       {...register("name", { required: true })}
-                      placeholder="Maria Johnson"
+                      placeholder="Your full name"
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
                       style={{
                         background: "rgba(255,255,255,0.82)",
@@ -317,7 +354,7 @@ function Contact() {
                     <input
                       {...register("email", { required: true })}
                       type="email"
-                      placeholder="maria@example.com"
+                      placeholder="your@email.com"
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
                       style={{
                         background: "rgba(255,255,255,0.82)",
@@ -338,7 +375,7 @@ function Contact() {
                   </label>
                   <input
                     {...register("subject", { required: true })}
-                    placeholder="Admissions inquiry for Grade 9"
+                    placeholder="Admissions inquiry"
                     className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
                     style={{
                       background: "rgba(255,255,255,0.82)",
@@ -373,10 +410,13 @@ function Contact() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-white transition-all duration-300 hover:scale-[1.02] hover:shadow-xl disabled:opacity-60"
+                  className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold transition-all duration-300 hover:scale-[1.01] disabled:opacity-60"
                   style={{
-                    background: `linear-gradient(135deg, ${colors.red}, ${colors.green})`,
-                    boxShadow: "0 16px 38px rgba(215,25,32,0.25)",
+                    color: "#020617",
+                    background:
+                      "linear-gradient(135deg, #FACC15 0%, #38BDF8 100%)",
+                    boxShadow:
+                      "0 22px 52px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
                   }}
                 >
                   <Send className="w-4 h-4" />
