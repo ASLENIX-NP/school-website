@@ -1,20 +1,29 @@
-import schoolLogo from "../../assets/school-logo.jpeg";
+import defaultSchoolLogo from "../../assets/school-logo.jpeg";
 import { useState, useEffect } from "react";
+import axios from "axios";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
-const navLinks = [
-  { label: "Home", href: "/" },
-  { label: "About", href: "/about" },
-  { label: "Messages", href: "/messages" },
-  { label: "Academics", href: "/academics" },
-  { label: "Notices", href: "/notices" },
-  { label: "Facilities", href: "/facilities" },
-  { label: "Staff", href: "/staff" },
-  { label: "Gallery", href: "/gallery" },
-  { label: "Contact", href: "/contact" },
-];
+const defaultNavbarContent = {
+  logoUrl: "",
+  schoolName: "Baljagriti",
+  schoolSubtitle: "Secondary English School",
+  admissionButtonText: "Admission Open",
+  admissionButtonLink: "/admissions",
+  showAdmissionButton: true,
+  links: [
+    { id: "home", label: "Home", href: "/", visible: true },
+    { id: "about", label: "About", href: "/about", visible: true },
+    { id: "messages", label: "Messages", href: "/messages", visible: true },
+    { id: "academics", label: "Academics", href: "/academics", visible: true },
+    { id: "notices", label: "Notices", href: "/notices", visible: true },
+    { id: "facilities", label: "Facilities", href: "/facilities", visible: true },
+    { id: "staff", label: "Staff", href: "/staff", visible: true },
+    { id: "gallery", label: "Gallery", href: "/gallery", visible: true },
+    { id: "contact", label: "Contact", href: "/contact", visible: true },
+  ],
+};
 
 const palette = {
   navy: "#020617",
@@ -24,10 +33,46 @@ const palette = {
   green: "#22C55E",
 };
 
+function mergeNavbarContent(saved = {}) {
+  const savedLinks = Array.isArray(saved.links) ? saved.links : [];
+
+  return {
+    ...defaultNavbarContent,
+    ...saved,
+    links: defaultNavbarContent.links.map((defaultLink) => {
+      const savedLink = savedLinks.find((link) => link.id === defaultLink.id);
+
+      return {
+        ...defaultLink,
+        ...(savedLink || {}),
+        visible: savedLink?.visible !== false,
+      };
+    }),
+  };
+}
+
 export function Navbar() {
+  const [navbarContent, setNavbarContent] = useState(defaultNavbarContent);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    const loadNavbarContent = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/site-content/navbar"
+        );
+
+        const savedContent = res.data?.data?.content || {};
+        setNavbarContent(mergeNavbarContent(savedContent));
+      } catch (error) {
+        console.error("Navbar content load error:", error);
+      }
+    };
+
+    loadNavbarContent();
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -44,6 +89,9 @@ export function Navbar() {
     if (href === "/") return location.pathname === "/";
     return location.pathname === href;
   };
+
+  const visibleLinks = navbarContent.links.filter((link) => link.visible);
+  const logoSrc = navbarContent.logoUrl || defaultSchoolLogo;
 
   return (
     <>
@@ -78,8 +126,8 @@ export function Navbar() {
               }}
             >
               <img
-                src={schoolLogo}
-                alt="Baljagriti School Logo"
+                src={logoSrc}
+                alt={`${navbarContent.schoolName} Logo`}
                 className="w-full h-full object-contain p-1"
               />
             </div>
@@ -93,14 +141,14 @@ export function Navbar() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                Baljagriti
+                {navbarContent.schoolName}
               </div>
 
               <div
                 className="text-xs leading-tight"
                 style={{ color: palette.green }}
               >
-                Secondary English Boarding School
+                {navbarContent.schoolSubtitle}
               </div>
             </div>
           </Link>
@@ -113,12 +161,12 @@ export function Navbar() {
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
             }}
           >
-            {navLinks.map((link) => {
+            {visibleLinks.map((link) => {
               const active = isActive(link.href);
 
               return (
                 <Link
-                  key={link.label}
+                  key={link.id}
                   to={link.href}
                   className="relative px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
                   style={{
@@ -137,28 +185,33 @@ export function Navbar() {
             })}
           </div>
 
-          <div className="hidden xl:flex items-center gap-3 flex-shrink-0">
-            <Link
-              to="/admissions"
-              className="relative overflow-hidden px-6 py-3 rounded-2xl text-sm font-bold text-slate-950 transition-all duration-300 hover:scale-105"
-              style={{
-                background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
-                boxShadow:
-                  "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.42)",
-              }}
-            >
-              <span className="relative z-10">Admission Open →</span>
-              <span
-                className="absolute top-0 bottom-0 w-16 opacity-40"
+          {navbarContent.showAdmissionButton && (
+            <div className="hidden xl:flex items-center gap-3 flex-shrink-0">
+              <Link
+                to={navbarContent.admissionButtonLink}
+                className="relative overflow-hidden px-6 py-3 rounded-2xl text-sm font-bold text-slate-950 transition-all duration-300 hover:scale-105"
                 style={{
-                  left: 0,
-                  background:
-                    "linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent)",
-                  animation: "navShine 2.8s ease-in-out infinite",
+                  background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
+                  boxShadow:
+                    "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.42)",
                 }}
-              />
-            </Link>
-          </div>
+              >
+                <span className="relative z-10">
+                  {navbarContent.admissionButtonText} →
+                </span>
+
+                <span
+                  className="absolute top-0 bottom-0 w-16 opacity-40"
+                  style={{
+                    left: 0,
+                    background:
+                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent)",
+                    animation: "navShine 2.8s ease-in-out infinite",
+                  }}
+                />
+              </Link>
+            </div>
+          )}
 
           <button
             type="button"
@@ -200,12 +253,12 @@ export function Navbar() {
             }}
           >
             <div className="p-4 grid gap-1">
-              {navLinks.map((link) => {
+              {visibleLinks.map((link) => {
                 const active = isActive(link.href);
 
                 return (
                   <Link
-                    key={link.label}
+                    key={link.id}
                     to={link.href}
                     onClick={() => setOpen(false)}
                     className="px-4 py-3 rounded-xl text-sm font-medium transition-all"
@@ -221,17 +274,19 @@ export function Navbar() {
                 );
               })}
 
-              <Link
-                to="/admissions"
-                onClick={() => setOpen(false)}
-                className="mt-3 px-5 py-3 rounded-xl text-sm font-bold text-center text-slate-950"
-                style={{
-                  background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
-                  boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
-                }}
-              >
-                Admission Open →
-              </Link>
+              {navbarContent.showAdmissionButton && (
+                <Link
+                  to={navbarContent.admissionButtonLink}
+                  onClick={() => setOpen(false)}
+                  className="mt-3 px-5 py-3 rounded-xl text-sm font-bold text-center text-slate-950"
+                  style={{
+                    background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
+                    boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
+                  }}
+                >
+                  {navbarContent.admissionButtonText} →
+                </Link>
+              )}
             </div>
           </motion.div>
         )}
@@ -239,3 +294,5 @@ export function Navbar() {
     </>
   );
 }
+
+export default Navbar;

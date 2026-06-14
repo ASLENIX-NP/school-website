@@ -19,6 +19,8 @@ import AdminLogin from "../../admin/AdminLogin";
 import AdminDashboard from "../../admin/AdminDashboard";
 import AdminHome from "../../admin/AdminHome";
 import AdminMessages from "../../admin/AdminMessages";
+import AdminNavbar from "../../admin/AdminNavbar";
+import AdminStaff from "../../admin/AdminStaff";
 import AdminComingSoon from "../../admin/AdminComingSoon";
 import ProtectedAdminRoute from "../../admin/ProtectedAdminRoute";
 
@@ -110,6 +112,15 @@ function SchoolApp() {
           />
 
           <Route
+            path="/admin/navbar"
+            element={
+              <ProtectedPage>
+                <AdminNavbar />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
             path="/admin/messages"
             element={
               <ProtectedPage>
@@ -118,19 +129,16 @@ function SchoolApp() {
             }
           />
 
-          {/* Admin Editors To Build Next */}
           <Route
-            path="/admin/navbar"
+            path="/admin/staff"
             element={
               <ProtectedPage>
-                <AdminComingSoon
-                  title="Manage Navbar"
-                  description="Navbar editor will control logo text, menu links, and admission button."
-                />
+                <AdminStaff />
               </ProtectedPage>
             }
           />
 
+          {/* Admin Editors To Build Next */}
           <Route
             path="/admin/about"
             element={
@@ -174,18 +182,6 @@ function SchoolApp() {
                 <AdminComingSoon
                   title="Manage Notices"
                   description="Notices editor will let admin add, edit, delete, and upload PDF notices."
-                />
-              </ProtectedPage>
-            }
-          />
-
-          <Route
-            path="/admin/staff"
-            element={
-              <ProtectedPage>
-                <AdminComingSoon
-                  title="Manage Staff"
-                  description="Staff editor will control teachers, roles, departments, and profile images."
                 />
               </ProtectedPage>
             }
