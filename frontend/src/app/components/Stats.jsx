@@ -169,6 +169,15 @@ function Counter({ target, suffix }) {
 }
 
 function Stats() {
+  const [notices, setNotices] = useState([]);
+  useEffect(() => {
+    fetch("http://localhost:5000/api/notices")
+      .then((res) => res.json())
+      .then((data) => {
+        setNotices(data.slice(0, 3));
+      })
+      .catch((err) => console.log(err));
+  }, []);
   return (
     <section
       className="relative overflow-hidden py-16"
@@ -508,7 +517,7 @@ function Stats() {
           </div>
 
           <div className="space-y-4">
-            {statsData.notices.items.map((notice, i) => (
+          {notices.map((notice, i) => (
               <motion.div
                 key={notice.title}
                 initial={{ opacity: 0, y: 24 }}
@@ -535,9 +544,13 @@ function Stats() {
                 </div>
 
                 <div className="min-w-0">
-                  <h3 className="text-lg md:text-xl font-semibold text-slate-900 mb-2">
-                    {notice.title}
-                  </h3>
+                <Link
+  to={`/notices/${notice._id}`}
+>
+  <h3 className="text-lg md:text-xl font-semibold text-slate-900 mb-2 hover:text-green-600 transition">
+    {notice.title}
+  </h3>
+</Link>
 
                   <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
                     <span>{notice.date}</span>
