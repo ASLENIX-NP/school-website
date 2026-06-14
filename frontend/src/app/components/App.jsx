@@ -18,6 +18,8 @@ import Staff from "../../pages/Staff";
 import AdminLogin from "../../admin/AdminLogin";
 import AdminDashboard from "../../admin/AdminDashboard";
 import AdminHome from "../../admin/AdminHome";
+import AdminMessages from "../../admin/AdminMessages";
+import AdminComingSoon from "../../admin/AdminComingSoon";
 import ProtectedAdminRoute from "../../admin/ProtectedAdminRoute";
 
 function HomePage() {
@@ -53,6 +55,10 @@ function ContactPage() {
   return <Contact />;
 }
 
+function ProtectedPage({ children }) {
+  return <ProtectedAdminRoute>{children}</ProtectedAdminRoute>;
+}
+
 function SchoolApp() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
@@ -76,7 +82,7 @@ function SchoolApp() {
           <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/contact" element={<ContactPage />} />
 
-          {/* Admin Routes */}
+          {/* Admin Auth */}
           <Route
             path="/admin"
             element={<Navigate to="/admin/dashboard" replace />}
@@ -87,23 +93,187 @@ function SchoolApp() {
           <Route
             path="/admin/dashboard"
             element={
-              <ProtectedAdminRoute>
+              <ProtectedPage>
                 <AdminDashboard />
-              </ProtectedAdminRoute>
+              </ProtectedPage>
+            }
+          />
+
+          {/* Built Admin Editors */}
+          <Route
+            path="/admin/home"
+            element={
+              <ProtectedPage>
+                <AdminHome />
+              </ProtectedPage>
             }
           />
 
           <Route
-            path="/admin/home"
+            path="/admin/messages"
             element={
-              <ProtectedAdminRoute>
-                <AdminHome />
-              </ProtectedAdminRoute>
+              <ProtectedPage>
+                <AdminMessages />
+              </ProtectedPage>
+            }
+          />
+
+          {/* Admin Editors To Build Next */}
+          <Route
+            path="/admin/navbar"
+            element={
+              <ProtectedPage>
+                <AdminComingSoon
+                  title="Manage Navbar"
+                  description="Navbar editor will control logo text, menu links, and admission button."
+                />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/about"
+            element={
+              <ProtectedPage>
+                <AdminComingSoon
+                  title="Manage About"
+                  description="About editor will control school intro, story, mission, vision, and journey timeline."
+                />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/academics"
+            element={
+              <ProtectedPage>
+                <AdminComingSoon
+                  title="Manage Academics"
+                  description="Academics editor will control academic programs, facilities, and learning sections."
+                />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/admissions"
+            element={
+              <ProtectedPage>
+                <AdminComingSoon
+                  title="Manage Admissions"
+                  description="Admissions editor will control admission process, dates, requirements, and scholarships."
+                />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/notices"
+            element={
+              <ProtectedPage>
+                <AdminComingSoon
+                  title="Manage Notices"
+                  description="Notices editor will let admin add, edit, delete, and upload PDF notices."
+                />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/staff"
+            element={
+              <ProtectedPage>
+                <AdminComingSoon
+                  title="Manage Staff"
+                  description="Staff editor will control teachers, roles, departments, and profile images."
+                />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/events"
+            element={
+              <ProtectedPage>
+                <AdminComingSoon
+                  title="Manage Events"
+                  description="Events editor will control school events, programs, dates, and activity details."
+                />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/gallery"
+            element={
+              <ProtectedPage>
+                <AdminComingSoon
+                  title="Manage Gallery"
+                  description="Gallery editor will control images, categories, titles, and activity photos."
+                />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/contact"
+            element={
+              <ProtectedPage>
+                <AdminComingSoon
+                  title="Manage Contact Page"
+                  description="Contact editor will control address, phone numbers, email, map text, and office details."
+                />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/contact-messages"
+            element={
+              <ProtectedPage>
+                <AdminComingSoon
+                  title="Contact Messages"
+                  description="This section will show messages submitted from the public contact form."
+                />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/footer"
+            element={
+              <ProtectedPage>
+                <AdminComingSoon
+                  title="Manage Footer"
+                  description="Footer editor will control footer logo text, links, contact details, and social links."
+                />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/settings"
+            element={
+              <ProtectedPage>
+                <AdminComingSoon
+                  title="Website Settings"
+                  description="Settings will control global school name, site defaults, and common information."
+                />
+              </ProtectedPage>
             }
           />
 
           {/* Fallback */}
-          <Route path="*" element={<HomePage />} />
+          <Route
+            path="*"
+            element={
+              isAdminRoute ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : (
+                <HomePage />
+              )
+            }
+          />
         </Routes>
       </main>
 

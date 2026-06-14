@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { motion } from "motion/react";
 import { UserRound, Quote, Sparkles } from "lucide-react";
 
@@ -6,32 +8,52 @@ const colors = {
   green: "#168A3A",
   purple: "#4B2E83",
   dark: "#0B1020",
-  cream: "#FFF8EE",
-  lightPurple: "#F1ECFF",
 };
 
-/*
-  Later this can come from admin dashboard API.
-  Admin can update: name, role, title, message, image.
-*/
-const messagesData = [
-  {
-    name: "Principal",
-    role: "Principal",
-    title: "Principal’s Message",
-    message:
-      "Welcome to Baljagriti Secondary English School. We are committed to nurturing every child into a confident, capable, disciplined, and compassionate individual. Our goal is to provide quality education with strong values, creativity, and academic excellence.",
-    image: "",
-  },
-  {
-    name: "Vice Principal",
-    role: "Vice Principal",
-    title: "Vice Principal’s Message",
-    message:
-      "Our team works tirelessly to provide a safe, inspiring, and academically rigorous environment for every student. We believe every child deserves care, guidance, and opportunities to grow academically, socially, and personally.",
-    image: "",
-  },
-];
+const defaultMessagesContent = {
+  badge: "Leadership Messages",
+  title: "Messages From Leadership",
+  description:
+    "Words from school leadership guiding students toward academic excellence, discipline, values, and lifelong learning.",
+  people: [
+    {
+      id: "principal",
+      name: "Principal",
+      role: "Principal",
+      title: "Principal’s Message",
+      message:
+        "Welcome to Baljagriti Secondary English School. We are committed to nurturing every child into a confident, capable, disciplined, and compassionate individual. Our goal is to provide quality education with strong values, creativity, and academic excellence.",
+      image: "",
+    },
+    {
+      id: "vice-principal",
+      name: "Vice Principal",
+      role: "Vice Principal",
+      title: "Vice Principal’s Message",
+      message:
+        "Our team works tirelessly to provide a safe, inspiring, and academically rigorous environment for every student. We believe every child deserves care, guidance, and opportunities to grow academically, socially, and personally.",
+      image: "",
+    },
+  ],
+};
+
+function mergeMessagesContent(saved = {}) {
+  return {
+    ...defaultMessagesContent,
+    ...saved,
+    people:
+      Array.isArray(saved.people) && saved.people.length > 0
+        ? saved.people.map((person, index) => ({
+            id: person.id || `leader-${index}`,
+            name: person.name || "",
+            role: person.role || "",
+            title: person.title || "",
+            message: person.message || "",
+            image: person.image || "",
+          }))
+        : defaultMessagesContent.people,
+  };
+}
 
 function ProfileBox({ person }) {
   return (
@@ -128,6 +150,25 @@ function MessageCard({ person, index }) {
 }
 
 export default function Messages() {
+  const [messagesContent, setMessagesContent] = useState(defaultMessagesContent);
+
+  useEffect(() => {
+    const loadMessagesContent = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/site-content/messages"
+        );
+
+        const savedContent = res.data?.data?.content || {};
+        setMessagesContent(mergeMessagesContent(savedContent));
+      } catch (error) {
+        console.error("Messages content load error:", error);
+      }
+    };
+
+    loadMessagesContent();
+  }, []);
+
   return (
     <section
       className="min-h-screen pt-32 pb-24 relative overflow-hidden"
@@ -173,7 +214,7 @@ export default function Messages() {
             }}
           >
             <Sparkles className="w-4 h-4" />
-            Leadership Messages
+            {messagesContent.badge}
           </span>
 
           <h1
@@ -185,18 +226,17 @@ export default function Messages() {
               letterSpacing: "-0.045em",
             }}
           >
-            Messages From Leadership
+            {messagesContent.title}
           </h1>
 
           <p className="max-w-2xl mx-auto text-base md:text-lg text-slate-500">
-            Words from school leadership guiding students toward academic
-            excellence, discipline, values, and lifelong learning.
+            {messagesContent.description}
           </p>
         </motion.div>
 
         <div className="space-y-10">
-          {messagesData.map((person, index) => (
-            <MessageCard key={person.title} person={person} index={index} />
+          {messagesContent.people.map((person, index) => (
+            <MessageCard key={person.id || index} person={person} index={index} />
           ))}
         </div>
       </div>
