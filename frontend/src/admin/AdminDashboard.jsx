@@ -1,14 +1,24 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import {
   LayoutDashboard,
+  Home,
+  Info,
+  MessageSquareText,
+  GraduationCap,
   Bell,
   Images,
-  MessageSquareText,
   Users,
-  Mail,
+  CalendarDays,
+  Phone,
+  Footprints,
   LogOut,
   ArrowRight,
+  Settings,
+  School,
+  Newspaper,
+  Mail,
 } from "lucide-react";
 
 const colors = {
@@ -20,46 +30,110 @@ const colors = {
   gold: "#FACC15",
 };
 
-const cards = [
+const adminSections = [
+  {
+    title: "Manage Home",
+    description: "Edit hero section, homepage stats, highlights, and main CTA.",
+    icon: Home,
+    color: "#38BDF8",
+    path: "/admin/home",
+  },
+  {
+    title: "Manage Navbar",
+    description: "Edit logo text, menu links, admission button, and navigation.",
+    icon: LayoutDashboard,
+    color: "#FACC15",
+    path: "/admin/navbar",
+  },
+  {
+    title: "Manage About",
+    description: "Edit school introduction, story, mission, vision, and timeline.",
+    icon: Info,
+    color: "#4B2E83",
+    path: "/admin/about",
+  },
+  {
+    title: "Manage Messages",
+    description: "Edit principal and vice principal messages.",
+    icon: MessageSquareText,
+    color: "#168A3A",
+    path: "/admin/messages",
+  },
+  {
+    title: "Manage Academics",
+    description: "Edit academic programs, facilities, classes, and learning sections.",
+    icon: GraduationCap,
+    color: "#D71920",
+    path: "/admin/academics",
+  },
+  {
+    title: "Manage Admissions",
+    description: "Edit admission process, requirements, dates, and scholarship info.",
+    icon: School,
+    color: "#38BDF8",
+    path: "/admin/admissions",
+  },
   {
     title: "Manage Notices",
-    description: "Add examination notices, school updates, and PDF files.",
+    description: "Add notices, examination updates, school alerts, and PDF files.",
     icon: Bell,
     color: "#D71920",
     path: "/admin/notices",
   },
   {
-    title: "Manage Gallery",
-    description: "Add school photos, categories, events, and activities.",
-    icon: Images,
+    title: "Manage Staff",
+    description: "Add teachers, departments, roles, and staff profile images.",
+    icon: Users,
     color: "#168A3A",
+    path: "/admin/staff",
+  },
+  {
+    title: "Manage Events",
+    description: "Add school events, programs, dates, and activity details.",
+    icon: CalendarDays,
+    color: "#4B2E83",
+    path: "/admin/events",
+  },
+  {
+    title: "Manage Gallery",
+    description: "Add gallery images, categories, titles, and activity photos.",
+    icon: Images,
+    color: "#FACC15",
     path: "/admin/gallery",
   },
   {
-    title: "Leadership Messages",
-    description: "Update principal and vice principal messages.",
-    icon: MessageSquareText,
-    color: "#4B2E83",
-    path: "/admin/messages",
-  },
-  {
-    title: "Manage Staff",
-    description: "Add teachers, departments, roles, and profile images.",
-    icon: Users,
+    title: "Manage Contact Page",
+    description: "Edit address, phone numbers, email, map text, and office details.",
+    icon: Phone,
     color: "#38BDF8",
-    path: "/admin/staff",
+    path: "/admin/contact",
   },
   {
     title: "Contact Messages",
     description: "View messages submitted from the public contact form.",
     icon: Mail,
-    color: "#FACC15",
+    color: "#D71920",
     path: "/admin/contact-messages",
+  },
+  {
+    title: "Manage Footer",
+    description: "Edit footer logo text, quick links, contact details, and social links.",
+    icon: Footprints,
+    color: "#168A3A",
+    path: "/admin/footer",
+  },
+  {
+    title: "Website Settings",
+    description: "Manage general school name, colors, contact defaults, and site settings.",
+    icon: Settings,
+    color: "#4B2E83",
+    path: "/admin/settings",
   },
 ];
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const [selectedSection, setSelectedSection] = useState(adminSections[0]);
 
   const adminUser = JSON.parse(localStorage.getItem("adminUser") || "{}");
 
@@ -143,8 +217,8 @@ export default function AdminDashboard() {
               border: "1px solid rgba(22,138,58,0.16)",
             }}
           >
-            <LayoutDashboard className="w-4 h-4" />
-            Admin Dashboard
+            <Newspaper className="w-4 h-4" />
+            Admin Control Panel
           </span>
 
           <h1
@@ -156,74 +230,165 @@ export default function AdminDashboard() {
               letterSpacing: "-0.045em",
             }}
           >
-            Manage Website Content
+            Manage Website Sections
           </h1>
 
-          <p className="text-slate-500 max-w-2xl text-lg">
-            Start by managing notices, gallery, leadership messages, staff, and
-            contact submissions.
+          <p className="text-slate-500 max-w-3xl text-lg">
+            Choose one website section below. We will build each admin editor
+            one by one, starting from the most important sections.
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {cards.map((card, index) => {
-            const Icon = card.icon;
+        <div className="grid xl:grid-cols-[1fr_360px] gap-8 items-start">
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {adminSections.map((section, index) => {
+              const Icon = section.icon;
+              const active = selectedSection.title === section.title;
 
-            return (
-              <motion.button
-                key={card.title}
-                type="button"
-                onClick={() => navigate(card.path)}
-                initial={{ opacity: 0, y: 26 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.08 }}
-                className="text-left rounded-3xl p-6 group transition-all duration-300 hover:-translate-y-1"
+              return (
+                <motion.button
+                  key={section.title}
+                  type="button"
+                  onClick={() => setSelectedSection(section)}
+                  initial={{ opacity: 0, y: 26 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: index * 0.035 }}
+                  className="text-left rounded-3xl p-5 group transition-all duration-300 hover:-translate-y-1"
+                  style={{
+                    background: active
+                      ? "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))"
+                      : "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.76))",
+                    border: active
+                      ? "1px solid rgba(255,255,255,0.14)"
+                      : "1px solid rgba(11,16,32,0.08)",
+                    boxShadow: active
+                      ? "0 22px 58px rgba(11,16,32,0.25)"
+                      : "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
+                    backdropFilter: "blur(16px)",
+                  }}
+                >
+                  <div
+                    className="w-13 h-13 rounded-2xl flex items-center justify-center mb-5"
+                    style={{
+                      width: "52px",
+                      height: "52px",
+                      background: `${section.color}16`,
+                      border: `1px solid ${section.color}28`,
+                      boxShadow: `0 14px 32px ${section.color}16`,
+                    }}
+                  >
+                    <Icon className="w-6 h-6" style={{ color: section.color }} />
+                  </div>
+
+                  <h3
+                    className="text-xl mb-2"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontWeight: 850,
+                      color: active ? "#FFFFFF" : colors.dark,
+                      letterSpacing: "-0.035em",
+                    }}
+                  >
+                    {section.title}
+                  </h3>
+
+                  <p
+                    className="text-sm leading-relaxed mb-4"
+                    style={{
+                      color: active
+                        ? "rgba(255,255,255,0.64)"
+                        : "rgb(100,116,139)",
+                    }}
+                  >
+                    {section.description}
+                  </p>
+
+                  <div
+                    className="inline-flex items-center gap-2 text-sm font-bold transition-all group-hover:gap-3"
+                    style={{ color: section.color }}
+                  >
+                    Select Section
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+
+          <motion.aside
+            key={selectedSection.title}
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.35 }}
+            className="xl:sticky xl:top-28 rounded-3xl overflow-hidden"
+            style={{
+              background:
+                "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.76))",
+              border: "1px solid rgba(11,16,32,0.08)",
+              boxShadow:
+                "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
+              backdropFilter: "blur(16px)",
+            }}
+          >
+            <div className="p-6">
+              <div
+                className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
                 style={{
-                  background:
-                    "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.76))",
-                  border: "1px solid rgba(11,16,32,0.08)",
-                  boxShadow:
-                    "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
-                  backdropFilter: "blur(16px)",
+                  background: `${selectedSection.color}16`,
+                  border: `1px solid ${selectedSection.color}28`,
+                  boxShadow: `0 14px 32px ${selectedSection.color}16`,
                 }}
               >
-                <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6"
-                  style={{
-                    background: `${card.color}14`,
-                    border: `1px solid ${card.color}24`,
-                    boxShadow: `0 14px 32px ${card.color}16`,
-                  }}
-                >
-                  <Icon className="w-7 h-7" style={{ color: card.color }} />
-                </div>
+                <selectedSection.icon
+                  className="w-8 h-8"
+                  style={{ color: selectedSection.color }}
+                />
+              </div>
 
-                <h3
-                  className="text-2xl mb-2"
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 850,
-                    color: colors.dark,
-                    letterSpacing: "-0.035em",
-                  }}
-                >
-                  {card.title}
-                </h3>
+              <h2
+                className="text-3xl mb-3"
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 850,
+                  color: colors.dark,
+                  letterSpacing: "-0.04em",
+                }}
+              >
+                {selectedSection.title}
+              </h2>
 
-                <p className="text-slate-500 leading-relaxed mb-5">
-                  {card.description}
-                </p>
+              <p className="text-slate-500 leading-relaxed mb-6">
+                {selectedSection.description}
+              </p>
 
-                <div
-                  className="inline-flex items-center gap-2 text-sm font-bold transition-all group-hover:gap-3"
-                  style={{ color: card.color }}
-                >
-                  Open Section
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </motion.button>
-            );
-          })}
+              <button
+                type="button"
+                onClick={() => navigate(selectedSection.path)}
+                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-bold transition-all duration-300 hover:scale-[1.01]"
+                style={{
+                  color: "#020617",
+                  background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                  boxShadow:
+                    "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
+                }}
+              >
+                Open Editor
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <div
+                className="mt-5 rounded-2xl p-4 text-sm"
+                style={{
+                  background: "rgba(15,23,42,0.04)",
+                  border: "1px solid rgba(15,23,42,0.08)",
+                  color: "#64748B",
+                }}
+              >
+                We will create this editor page next. For now, this dashboard
+                is the control menu for all editable website sections.
+              </div>
+            </div>
+          </motion.aside>
         </div>
       </main>
     </section>

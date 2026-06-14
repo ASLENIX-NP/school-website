@@ -5,6 +5,7 @@ import { supabase } from "./config/supabase.js";
 import healthRoutes from "./routes/healthRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import adminAuthRoutes from "./routes/adminAuthRoutes.js";
+import siteContentRoutes from "./routes/siteContentRoutes.js";
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use("/api/health", healthRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/admin/auth", adminAuthRoutes);
+app.use("/api/site-content", siteContentRoutes);
 
 app.post("/api/contact", async (req, res) => {
   try {

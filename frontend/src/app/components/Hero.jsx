@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
 import schoolLogo from "../../assets/school-logo.jpeg";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
@@ -20,7 +22,7 @@ const palette = {
   green: "#22C55E",
 };
 
-const heroData = {
+const defaultHeroData = {
   badge: "Admissions Open for New Academic Session",
   titleLine1: "Baljagriti Secondary",
   titleLine2: "English School",
@@ -29,6 +31,32 @@ const heroData = {
     "Baljagriti Secondary English School blends academic discipline, digital learning, creativity, sports, and values for students from Play Group to Grade 10.",
   image:
     "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1100&h=900&fit=crop&auto=format",
+
+  primaryButtonText: "Start Admission",
+  primaryButtonLink: "/admissions",
+  secondaryButtonText: "Explore Facilities",
+  secondaryButtonLink: "/facilities",
+
+  stat1Value: "2046 BS",
+  stat1Label: "Established",
+  stat2Value: "PG-10",
+  stat2Label: "Classes",
+  stat3Value: "Hetauda",
+  stat3Label: "Makwanpur",
+
+  imageLocation: "Hetauda-2, Makwanpur",
+  imageBottomTitle: "Basudev Marga, Hetauda-2",
+  imageBottomDescription:
+    "A learning environment built for academics, values, creativity, and student growth.",
+
+  floating1Title: "Quality Education",
+  floating1Subtitle: "Academics + Values",
+  floating2Title: "Computer Lab",
+  floating2Subtitle: "Digital Facility",
+  floating3Title: "Science Lab",
+  floating3Subtitle: "Practical Learning",
+  floating4Title: "E-Library",
+  floating4Subtitle: "Learning Resources",
 };
 
 function GlassStat({ icon: Icon, value, label, color, delay }) {
@@ -74,7 +102,7 @@ function GlassStat({ icon: Icon, value, label, color, delay }) {
   );
 }
 
-function HeroImageStage() {
+function HeroImageStage({ heroData }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.92, y: 24 }}
@@ -176,7 +204,7 @@ function HeroImageStage() {
               className="text-xs"
               style={{ color: "rgba(255,255,255,0.64)" }}
             >
-              Hetauda-2, Makwanpur
+              {heroData.imageLocation}
             </div>
           </div>
         </div>
@@ -191,174 +219,131 @@ function HeroImageStage() {
         >
           <div className="flex items-center gap-2 text-white font-semibold text-sm">
             <MapPin className="w-4 h-4" style={{ color: palette.gold }} />
-            Basudev Marga, Hetauda-2
+            {heroData.imageBottomTitle}
           </div>
           <div
             className="text-xs mt-1"
             style={{ color: "rgba(255,255,255,0.64)" }}
           >
-            A learning environment built for academics, values, creativity, and
-            student growth.
+            {heroData.imageBottomDescription}
           </div>
         </div>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: [0, -10, 0] }}
-        transition={{
-          opacity: { duration: 0.55, delay: 0.3 },
-          y: { duration: 4.8, repeat: Infinity, ease: "easeInOut" },
-        }}
-        className="absolute left-[4%] top-6 z-20 rounded-3xl px-4 py-3 hidden xl:block"
-        style={{
-          background:
-            "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07))",
-          border: "1px solid rgba(255,255,255,0.22)",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.32)",
-          backdropFilter: "blur(20px)",
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-11 h-11 rounded-2xl flex items-center justify-center"
-            style={{
-              background: `${palette.gold}22`,
-              border: `1px solid ${palette.gold}42`,
-            }}
-          >
-            <GraduationCap className="w-5 h-5" style={{ color: palette.gold }} />
-          </div>
-          <div>
-            <div className="text-white text-sm font-bold">Quality Education</div>
-            <div
-              className="text-xs"
-              style={{ color: "rgba(255,255,255,0.65)" }}
-            >
-              Academics + Values
-            </div>
-          </div>
-        </div>
-      </motion.div>
+      <FloatingBadge
+        className="absolute left-[4%] top-6 z-20 hidden xl:block"
+        icon={GraduationCap}
+        title={heroData.floating1Title}
+        subtitle={heroData.floating1Subtitle}
+        color={palette.gold}
+        delay={0.3}
+        direction="up"
+      />
 
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: [0, 10, 0] }}
-        transition={{
-          opacity: { duration: 0.55, delay: 0.45 },
-          y: { duration: 5, repeat: Infinity, ease: "easeInOut" },
-        }}
-        className="absolute right-[2%] top-16 z-20 rounded-3xl px-4 py-3 hidden xl:block"
-        style={{
-          background:
-            "linear-gradient(145deg, rgba(56,189,248,0.2), rgba(255,255,255,0.07))",
-          border: "1px solid rgba(56,189,248,0.3)",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.32)",
-          backdropFilter: "blur(20px)",
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-11 h-11 rounded-2xl flex items-center justify-center"
-            style={{
-              background: `${palette.cyan}22`,
-              border: `1px solid ${palette.cyan}42`,
-            }}
-          >
-            <Monitor className="w-5 h-5" style={{ color: palette.cyan }} />
-          </div>
-          <div>
-            <div className="text-white text-sm font-bold">Computer Lab</div>
-            <div
-              className="text-xs"
-              style={{ color: "rgba(255,255,255,0.65)" }}
-            >
-              Digital Facility
-            </div>
-          </div>
-        </div>
-      </motion.div>
+      <FloatingBadge
+        className="absolute right-[2%] top-16 z-20 hidden xl:block"
+        icon={Monitor}
+        title={heroData.floating2Title}
+        subtitle={heroData.floating2Subtitle}
+        color={palette.cyan}
+        delay={0.45}
+        direction="down"
+      />
 
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: [0, -10, 0] }}
-        transition={{
-          opacity: { duration: 0.55, delay: 0.6 },
-          y: { duration: 5.2, repeat: Infinity, ease: "easeInOut" },
-        }}
-        className="absolute left-[8%] bottom-1 z-20 rounded-3xl px-4 py-3 hidden xl:block"
-        style={{
-          background:
-            "linear-gradient(145deg, rgba(139,92,246,0.2), rgba(255,255,255,0.07))",
-          border: "1px solid rgba(139,92,246,0.3)",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.32)",
-          backdropFilter: "blur(20px)",
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-11 h-11 rounded-2xl flex items-center justify-center"
-            style={{
-              background: `${palette.violet}22`,
-              border: `1px solid ${palette.violet}42`,
-            }}
-          >
-            <FlaskConical className="w-5 h-5" style={{ color: palette.violet }} />
-          </div>
-          <div>
-            <div className="text-white text-sm font-bold">Science Lab</div>
-            <div
-              className="text-xs"
-              style={{ color: "rgba(255,255,255,0.65)" }}
-            >
-              Practical Learning
-            </div>
-          </div>
-        </div>
-      </motion.div>
+      <FloatingBadge
+        className="absolute left-[8%] bottom-1 z-20 hidden xl:block"
+        icon={FlaskConical}
+        title={heroData.floating3Title}
+        subtitle={heroData.floating3Subtitle}
+        color={palette.violet}
+        delay={0.6}
+        direction="up"
+      />
 
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: [0, 10, 0] }}
-        transition={{
-          opacity: { duration: 0.55, delay: 0.75 },
-          y: { duration: 5.4, repeat: Infinity, ease: "easeInOut" },
-        }}
-        className="absolute right-[7%] bottom-0 z-20 rounded-3xl px-4 py-3 hidden xl:block"
-        style={{
-          background:
-            "linear-gradient(145deg, rgba(34,197,94,0.2), rgba(255,255,255,0.07))",
-          border: "1px solid rgba(34,197,94,0.3)",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.32)",
-          backdropFilter: "blur(20px)",
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-11 h-11 rounded-2xl flex items-center justify-center"
-            style={{
-              background: `${palette.green}22`,
-              border: `1px solid ${palette.green}42`,
-            }}
-          >
-            <Library className="w-5 h-5" style={{ color: palette.green }} />
-          </div>
-          <div>
-            <div className="text-white text-sm font-bold">E-Library</div>
-            <div
-              className="text-xs"
-              style={{ color: "rgba(255,255,255,0.65)" }}
-            >
-              Learning Resources
-            </div>
+      <FloatingBadge
+        className="absolute right-[7%] bottom-0 z-20 hidden xl:block"
+        icon={Library}
+        title={heroData.floating4Title}
+        subtitle={heroData.floating4Subtitle}
+        color={palette.green}
+        delay={0.75}
+        direction="down"
+      />
+    </motion.div>
+  );
+}
+
+function FloatingBadge({
+  className,
+  icon: Icon,
+  title,
+  subtitle,
+  color,
+  delay,
+  direction,
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: direction === "up" ? [0, -10, 0] : [0, 10, 0] }}
+      transition={{
+        opacity: { duration: 0.55, delay },
+        y: { duration: 5, repeat: Infinity, ease: "easeInOut" },
+      }}
+      className={`rounded-3xl px-4 py-3 ${className}`}
+      style={{
+        background:
+          "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07))",
+        border: `1px solid ${color}4d`,
+        boxShadow: "0 24px 60px rgba(0,0,0,0.32)",
+        backdropFilter: "blur(20px)",
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className="w-11 h-11 rounded-2xl flex items-center justify-center"
+          style={{
+            background: `${color}22`,
+            border: `1px solid ${color}42`,
+          }}
+        >
+          <Icon className="w-5 h-5" style={{ color }} />
+        </div>
+        <div>
+          <div className="text-white text-sm font-bold">{title}</div>
+          <div className="text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
+            {subtitle}
           </div>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }
 
 function Hero() {
+  const [heroData, setHeroData] = useState(defaultHeroData);
+
+  useEffect(() => {
+    const loadHeroContent = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/site-content/home");
+
+        const savedHero = res.data?.data?.content?.hero;
+
+        if (savedHero) {
+          setHeroData({
+            ...defaultHeroData,
+            ...savedHero,
+          });
+        }
+      } catch (error) {
+        console.error("Hero content load error:", error);
+      }
+    };
+
+    loadHeroContent();
+  }, []);
+
   return (
     <section
       id="home"
@@ -498,7 +483,7 @@ function Hero() {
             className="flex flex-wrap gap-4 mb-8"
           >
             <Link
-              to="/admissions"
+              to={heroData.primaryButtonLink}
               className="relative overflow-hidden px-8 py-4 rounded-2xl font-bold text-slate-950 transition-all duration-300 hover:scale-105"
               style={{
                 background:
@@ -508,7 +493,7 @@ function Hero() {
               }}
             >
               <span className="relative z-10 flex items-center gap-2">
-                Start Admission <ArrowRight className="w-4 h-4" />
+                {heroData.primaryButtonText} <ArrowRight className="w-4 h-4" />
               </span>
               <span
                 className="absolute top-0 bottom-0 w-24 opacity-40"
@@ -522,7 +507,7 @@ function Hero() {
             </Link>
 
             <Link
-              to="/facilities"
+              to={heroData.secondaryButtonLink}
               className="px-8 py-4 rounded-2xl font-bold flex items-center gap-2 transition-all duration-300 hover:scale-105"
               style={{
                 color: "#FFFFFF",
@@ -533,36 +518,36 @@ function Hero() {
                 backdropFilter: "blur(18px)",
               }}
             >
-              Explore Facilities <ArrowRight className="w-4 h-4" />
+              {heroData.secondaryButtonText} <ArrowRight className="w-4 h-4" />
             </Link>
           </motion.div>
 
           <div className="grid grid-cols-3 gap-3 max-w-xl">
             <GlassStat
               icon={Trophy}
-              value="2046 BS"
-              label="Established"
+              value={heroData.stat1Value}
+              label={heroData.stat1Label}
               color={palette.gold}
               delay={0.3}
             />
             <GlassStat
               icon={BookOpen}
-              value="PG-10"
-              label="Classes"
+              value={heroData.stat2Value}
+              label={heroData.stat2Label}
               color={palette.cyan}
               delay={0.38}
             />
             <GlassStat
               icon={MapPin}
-              value="Hetauda"
-              label="Makwanpur"
+              value={heroData.stat3Value}
+              label={heroData.stat3Label}
               color={palette.green}
               delay={0.46}
             />
           </div>
         </div>
 
-        <HeroImageStage />
+        <HeroImageStage heroData={heroData} />
       </div>
 
       <div

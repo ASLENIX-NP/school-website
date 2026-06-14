@@ -17,6 +17,7 @@ import Staff from "../../pages/Staff";
 
 import AdminLogin from "../../admin/AdminLogin";
 import AdminDashboard from "../../admin/AdminDashboard";
+import AdminHome from "../../admin/AdminHome";
 import ProtectedAdminRoute from "../../admin/ProtectedAdminRoute";
 
 function HomePage() {
@@ -62,6 +63,7 @@ function SchoolApp() {
 
       <main>
         <Routes>
+          {/* Public Website Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/facilities" element={<FacilitiesPage />} />
@@ -74,8 +76,14 @@ function SchoolApp() {
           <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/contact" element={<ContactPage />} />
 
-          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          {/* Admin Routes */}
+          <Route
+            path="/admin"
+            element={<Navigate to="/admin/dashboard" replace />}
+          />
+
           <Route path="/admin/login" element={<AdminLogin />} />
+
           <Route
             path="/admin/dashboard"
             element={
@@ -85,6 +93,16 @@ function SchoolApp() {
             }
           />
 
+          <Route
+            path="/admin/home"
+            element={
+              <ProtectedAdminRoute>
+                <AdminHome />
+              </ProtectedAdminRoute>
+            }
+          />
+
+          {/* Fallback */}
           <Route path="*" element={<HomePage />} />
         </Routes>
       </main>
