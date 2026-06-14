@@ -13,44 +13,77 @@ const colors = {
   lightPurple: "#F1ECFF",
 };
 
-const programs = [
-  {
-    level: "Pre-Primary Level",
-    span: "Nursery – KG",
-    bgGradient: "linear-gradient(135deg, rgba(215,25,32,0.04), rgba(75,46,131,0.03))",
-    border: "rgba(215,25,32,0.15)",
-    badgeColor: colors.red,
-    classes: ["Nursery", "LKG", "UKG"],
-    highlight: "Early childhood development focused on social, emotional, and cognitive learning."
-  },
-  {
-    level: "Primary Level",
-    span: "Grade 1 – 5",
-    bgGradient: "linear-gradient(135deg, rgba(22,138,58,0.04), rgba(215,25,32,0.03))",
-    border: "rgba(22,138,58,0.15)",
-    badgeColor: colors.green,
-    classes: ["English", "Nepali", "Mathematics", "Science", "Social Studies"],
-    highlight: "Building deep core foundational understanding with regular continuous assessment."
-  },
-  {
-    level: "Lower Secondary Level",
-    span: "Grade 6 – 8",
-    bgGradient: "linear-gradient(135deg, rgba(75,46,131,0.04), rgba(124,92,196,0.03))",
-    border: "rgba(75,46,131,0.15)",
-    badgeColor: colors.purple,
-    classes: ["Science", "Computer", "Mathematics", "EPH", "Social Studies"],
-    highlight: "Transitioning into systematic academic paradigms, critical logic, and digital assets."
-  },
-  {
-    level: "Secondary Level",
-    span: "Grade 9 – 10",
-    bgGradient: "linear-gradient(135deg, rgba(11,16,32,0.04), rgba(215,25,32,0.03))",
-    border: "rgba(11,16,32,0.12)",
-    badgeColor: colors.dark,
-    classes: ["SEE Preparation", "Computer Education", "Science Lab Focus", "Career Guidance"],
-    highlight: "Rigorous academic performance pipelines optimizing for exceptional SEE results."
-  }
-];
+  const programs = [
+    {
+      level: "Pre-Primary Level",
+      span: "Nursery – KG",
+      bgGradient: "linear-gradient(135deg, rgba(215,25,32,0.04), rgba(75,46,131,0.03))",
+      border: "rgba(215,25,32,0.15)",
+      badgeColor: colors.red,
+      classes: [
+        "English Readiness",
+        "Nepali Readiness",
+        "Numbers & Counting",
+        "Creative Activities",
+        "Rhymes & Storytelling"
+      ],
+      highlight:
+        "Early childhood development focused on social, emotional, and cognitive learning."
+    },
+  
+    {
+      level: "Primary Level",
+      span: "Grade 1 – 5",
+      bgGradient: "linear-gradient(135deg, rgba(22,138,58,0.04), rgba(215,25,32,0.03))",
+      border: "rgba(22,138,58,0.15)",
+      badgeColor: colors.green,
+      classes: [
+        "English",
+        "Nepali",
+        "Mathematics",
+        "Science",
+        "Social Studies"
+      ],
+      highlight:
+        "Building deep core foundational understanding with regular continuous assessment."
+    },
+  
+    {
+      level: "Lower Secondary Level",
+      span: "Grade 6 – 8",
+      bgGradient: "linear-gradient(135deg, rgba(75,46,131,0.04), rgba(124,92,196,0.03))",
+      border: "rgba(75,46,131,0.15)",
+      badgeColor: colors.purple,
+      classes: [
+        "English",
+        "Nepali",
+        "Mathematics",
+        "Science",
+        "Computer Science",
+        "Social Studies"
+      ],
+      highlight:
+        "Transitioning into systematic academic paradigms, critical logic, and digital assets."
+    },
+  
+    {
+      level: "Secondary Level",
+      span: "Grade 9 – 10",
+      bgGradient: "linear-gradient(135deg, rgba(11,16,32,0.04), rgba(215,25,32,0.03))",
+      border: "rgba(11,16,32,0.12)",
+      badgeColor: colors.dark,
+      classes: [
+        "English",
+        "Nepali",
+        "Mathematics",
+        "Science",
+        "Computer Science",
+        "Optional Mathematics"
+      ],
+      highlight:
+        "Rigorous academic performance pipelines optimizing for exceptional SEE results."
+    }
+  ];
 
 const features = [
   { emoji: "📚", title: "NEB Curriculum", desc: "Rigorous alignment with National Education Board standards for universal academic mobility." },
@@ -175,121 +208,52 @@ export function Academics() {
 />
      
       {/* ==================== 1. ACADEMIC HERO SECTION ==================== */}
-      <section className="pt-36 pb-28 relative z-10">
-        <div className="max-w-7xl mx-auto px-6">
-        <div className="grid lg:grid-cols-12 gap-16 items-center">
-            <motion.div 
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.7 }}
-              className="lg:col-span-7 space-y-6"
-            >
-              <span
-                className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold"
-                style={{
-                  background: "rgba(215,25,32,0.08)",
-                  color: colors.red,
-                  border: "1px solid rgba(215,25,32,0.16)",
-                }}
-              >
-                Nurturing Excellence
-              </span>
-              <h1 
-                className="text-5xl md:text-6xl font-extrabold tracking-tight"
-                style={{ fontFamily: "var(--font-display)", color: colors.dark }}
-              >
-                Academics at <span style={{ color: colors.red }}>Baljagriti</span>
-              </h1>
-              <p className="text-xl leading-relaxed text-slate-600 max-w-2xl">
-                Comprehensive education from Play Group to Grade 10 under the national NEB Curriculum. 
-                We combine intellectual discipline with structural practical insights.
-              </p>
-              
-              <div className="pt-4 flex flex-wrap gap-4 items-center">
-                <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-100">
-                  <div className="w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: colors.green }} />
-                  <span className="text-sm font-medium text-slate-700">Students: <strong className="font-bold text-base">3800+</strong></span>
-                </div>
-                <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-100">
-                  <div className="w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: colors.purple }} />
-                  <span className="text-sm font-medium text-slate-700">Teachers: <strong className="font-bold text-base">240+</strong></span>
-                </div>
-              </div>
-            </motion.div>
+      <section className="pt-36 pb-16 relative z-10">
+        <div className="max-w-4xl mx-auto text-center">
+  <motion.div
+    initial={{ opacity: 0, y: 30 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.7 }}
+    className="space-y-8"
+  >
+    <span
+      className="inline-block px-5 py-2 rounded-full text-sm font-semibold"
+      style={{
+        background: "rgba(215,25,32,0.08)",
+        color: colors.red,
+        border: "1px solid rgba(215,25,32,0.16)",
+      }}
+    >
+      Nurturing Excellence
+    </span>
 
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.7, delay: 0.1 }}
-              className="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-5 justify-center"
-            >
-              <div 
-                className="
-                p-6
-                rounded-3xl
-                flex
-                items-center
-                gap-5
-                bg-white/90
-                backdrop-blur-xl
-                border
-                border-white
-                shadow-[0_20px_50px_rgba(11,16,32,0.10)]
-                transition-all
-                duration-500
-                hover:-translate-y-2
-                hover:shadow-[0_35px_80px_rgba(11,16,32,0.15)]
-                "
-                style={{ borderLeft: `6px solid ${colors.green}` }}
-              >
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-3xl" style={{ backgroundColor: colors.green }}>🏆</div>
-                <div>
-                  <h4 className="font-bold text-lg text-slate-900">SEE GPA 4.0</h4>
-                  <p className="text-sm text-slate-500">Highest Tier Achievement Badge</p>
-                </div>
-              </div>
+    <h1
+      className="text-5xl md:text-7xl font-extrabold tracking-tight"
+      style={{
+        fontFamily: "var(--font-display)",
+        color: colors.dark,
+      }}
+    >
+      Academics at{" "}
+      <span style={{ color: colors.red }}>
+        Baljagriti
+      </span>
+    </h1>
 
-              <div 
-                className="
-                p-6
-                rounded-3xl
-                flex
-                items-center
-                gap-5
-                bg-white/90
-                backdrop-blur-xl
-                border
-                border-white
-                shadow-[0_20px_50px_rgba(11,16,32,0.10)]
-                transition-all
-                duration-500
-                hover:-translate-y-2
-                hover:shadow-[0_35px_80px_rgba(11,16,32,0.15)]
-                "
-                style={{ borderLeft: `6px solid ${colors.purple}` }}
-              >
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-3xl" style={{ backgroundColor: colors.purple }}>🌟</div>
-                <div>
-                  <h4 className="font-bold text-lg text-slate-900">Academic Excellence</h4>
-                  <p className="text-sm text-slate-500">Certified Quality Framework Badge</p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
+    <p className="text-xl md:text-2xl leading-relaxed text-slate-600 max-w-3xl mx-auto">
+      Comprehensive education from Play Group to Grade 10 under the
+      National NEB Curriculum. We combine academic excellence,
+      practical learning, critical thinking, and character development
+      to prepare students for lifelong success.
+    </p>
+  </motion.div>
+</div>
       </section>
 
       {/* ==================== 2. ACADEMIC PROGRAMS ==================== */}
-      <section className="py-20 relative z-10">
+      <section className="pb-20 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ fontFamily: "var(--font-display)", color: colors.dark }}>
-              Our Academic Programs
-            </h2>
-            <p className="text-slate-600 max-w-2xl mx-auto">
-              Structured progressive development stages carefully fine-tuned to align with natural cognitive growth frameworks.
-            </p>
-          </div>
+        <div className="mb-6"></div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {programs.map((prog, i) => (
@@ -318,11 +282,14 @@ export function Academics() {
            style={{
              borderColor: prog.border,
              background: `
-               linear-gradient(
-                 145deg,
-                 rgba(255,255,255,0.96),
-                 rgba(255,255,255,0.82)
-               )
+             linear-gradient(
+             145deg,
+             rgba(255,255,255,0.98),
+             rgba(248,250,252,0.88)
+             )
+             `,
+             boxShadow: `
+             0 20px 40px rgba(0,0,0,0.08)
              `,
              backdropFilter: "blur(18px)",
            }}
@@ -355,7 +322,9 @@ export function Academics() {
                   <p className="text-xs text-slate-500 mb-5 leading-relaxed">{prog.highlight}</p>
                   
                   <div className="space-y-2.5 border-t pt-4 border-slate-100">
-                    <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wide">Core Structure:</span>
+                  <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wide">
+  Course Structure:
+</span>
                     {prog.classes.map((item) => (
                       <div key={item} className="flex items-center gap-2 text-sm text-slate-700">
                         <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: prog.badgeColor }} />
@@ -385,36 +354,79 @@ export function Academics() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feat, i) => (
               <motion.div
-                key={feat.title}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="
-                group
-                p-6
-                rounded-3xl
-                bg-white/70
-                backdrop-blur-xl
-                border
-                transition-all
-                duration-500
-                hover:-translate-y-3
-                hover:scale-[1.03]
-                hover:shadow-2xl
-                "
-              >
-                <motion.div
+              key={feat.title}
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: i * 0.05 }}
+              whileHover={{ y: -10 }}
+              className="
+              relative
+              overflow-hidden
+              p-7
+              rounded-[28px]
+              backdrop-blur-xl
+              border
+              transition-all
+              duration-500
+              shadow-lg
+              "
+              style={{
+                background: `
+                  linear-gradient(
+                    135deg,
+                    rgba(255,255,255,0.95),
+                    rgba(255,255,255,0.82)
+                  )
+                `,
+                borderColor: `${feat.color}30`,
+              }}
+            >
+              <div
+  className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-20"
+  style={{
+    background: feat.color,
+    filter: "blur(60px)",
+  }}
+/>
+<motion.div
 whileHover={{
-rotate: 10,
-scale: 1.15,
-y: -5,
+  rotate: 10,
+  scale: 1.15,
 }}
-className="text-3xl p-3 bg-slate-50 rounded-xl"
-></motion.div>
+className="
+w-16
+h-16
+rounded-2xl
+flex
+items-center
+justify-center
+text-3xl
+mb-5
+shadow-md
+"
+style={{
+  background: feat.bg,
+  color: feat.color,
+}}
+>
+  {feat.emoji}
+</motion.div>
                 <div>
-                  <h3 className="font-bold text-lg text-slate-900 mb-1" style={{ fontFamily: "var(--font-display)" }}>{feat.title}</h3>
-                  <p className="text-sm text-slate-600 leading-relaxed">{feat.desc}</p>
+                <h3
+className="
+font-bold
+text-xl
+mb-3
+group-hover:translate-x-1
+transition-all
+duration-300
+"
+style={{
+  color: feat.color,
+}}
+>{feat.title}</h3>
+<p className="text-sm leading-7 text-slate-600">{feat.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -423,41 +435,63 @@ className="text-3xl p-3 bg-slate-50 rounded-xl"
       </section>
 
       {/* ==================== 4. ACADEMIC STATISTICS ==================== */}
-      <section className="py-16 relative z-10" style={{ backgroundColor: colors.dark }}>
+      <section
+  className="py-20 relative z-10"
+  style={{
+    background:
+      "linear-gradient(180deg,#FFF8EE 0%,#F7F3FF 100%)",
+  }}
+>
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-            {stats.map((stat, i) => {
-              const IconComponent = stat.icon;
-              return (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="
-group
-relative
-overflow-hidden
-p-8
-rounded-3xl
-bg-white/5
-backdrop-blur-md
-border
-border-white/10
-transition-all
-duration-500
-hover:-translate-y-3
-hover:bg-white/10
-"
-                >
+          {stats.map((stat, i) => {
+  const IconComponent = stat.icon;
+  return (
+    <motion.div
+      key={stat.label}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: i * 0.1 }}
+      className="
+      group
+      relative
+      overflow-hidden
+      p-8
+      rounded-[32px]
+      backdrop-blur-xl
+      transition-all
+      duration-500
+      hover:-translate-y-3
+      hover:scale-[1.03]
+      "
+      style={{
+        background:
+          stat.label === "Active Students"
+            ? "linear-gradient(135deg,#F1ECFF,#FFFFFF)"
+            : stat.label === "Expert Teachers"
+            ? "linear-gradient(135deg,#EAF7EF,#FFFFFF)"
+            : stat.label === "Years Experience"
+            ? "linear-gradient(135deg,#FFF1F2,#FFFFFF)"
+            : "linear-gradient(135deg,#EEF8FF,#FFFFFF)",
+
+        border: `1px solid ${stat.color}25`,
+        boxShadow: "0 15px 40px rgba(0,0,0,0.08)",
+      }}
+    >
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white mb-2" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
                     <IconComponent className="w-6 h-6" style={{ color: stat.color }} />
                   </div>
-                  <div className="text-4xl md:text-5xl font-black text-white" style={{ fontFamily: "var(--font-display)" }}>
+                  <div
+  className="text-4xl md:text-5xl font-black"
+  style={{
+    color: stat.color,
+    fontFamily: "var(--font-display)",
+  }}
+>
                     {stat.value}
                   </div>
-                  <div className="text-sm text-slate-400 font-medium tracking-wide uppercase">
+                  <div className="text-sm text-slate-600 font-semibold tracking-wide uppercase">
                     {stat.label}
                   </div>
                 </motion.div>
@@ -466,89 +500,8 @@ hover:bg-white/10
           </div>
         </div>
       </section>
-
-      {/* ==================== 5. TEACHING METHODOLOGY ==================== */}
-      <section className="py-20 relative z-10">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-12 gap-12 items-center">
-            {/* Left Side: Illustration / Visual Representation Block */}
-            <motion.div 
-              initial={{ opacity: 0, x: -40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="lg:col-span-5 relative"
-            >
-              <div 
-                className="absolute inset-0 rounded-3xl transform rotate-3 scale-102 opacity-20"
-                style={{ background: `linear-gradient(135deg, ${colors.red}, ${colors.purple})` }}
-              />
-              <div className="relative bg-gradient-to-br from-slate-900 to-indigo-950 p-10 rounded-3xl text-white shadow-2xl space-y-6 overflow-hidden">
-                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-xl" />
-                <span className="text-xs uppercase tracking-widest bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full font-bold">
-                  Operational Philosophy
-                </span>
-                <h3 className="text-3xl font-bold leading-tight" style={{ fontFamily: "var(--font-display)" }}>
-                  How We Drive Cognitive Growth
-                </h3>
-                <p className="text-slate-300 text-sm leading-relaxed">
-                  Our conceptual design shifts focus away from rigid static learning structures toward experiential, continuous discovery parameters.
-                </p>
-                <div className="border-t border-white/10 pt-4 space-y-3">
-                  <div className="flex items-center gap-3 text-sm text-slate-200">
-                    <span className="w-2 h-2 rounded-full bg-red-500" /> Continuous diagnostic testing loops
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-slate-200">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" /> Interactive laboratory applications
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Right Side: Content Framework */}
-            <motion.div 
-              initial={{ opacity: 0, x: 40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="lg:col-span-7 space-y-6"
-            >
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full" style={{ background: "rgba(75,46,131,0.1)", color: colors.purple }}>
-                  Our Approach
-                </span>
-                <h2 className="text-3xl md:text-4xl font-bold mt-3 text-slate-900" style={{ fontFamily: "var(--font-display)" }}>
-                  Teaching Methodology
-                </h2>
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                {methodologies.map((method) => (
-                  <div key={method.label}className="
-                  group
-                  p-5
-                  rounded-2xl
-                  bg-white/80
-                  backdrop-blur-md
-                  border
-                  border-white
-                  transition-all
-                  duration-500
-                  hover:-translate-y-2
-                  hover:shadow-xl
-                  ">
-                    <h4 className="font-bold text-slate-900 flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: colors.green }} />
-                      {method.label}
-                    </h4>
-                    <p className="text-xs text-slate-500 leading-relaxed">{method.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
       {/* ==================== 7. EXAMINATION SYSTEM ==================== */}
-      <section className="py-20 relative z-10">
+      <section className="pb-20 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ fontFamily: "var(--font-display)", color: colors.dark }}>
