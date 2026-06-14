@@ -14,6 +14,7 @@ import { Footer } from "./Footer";
 import Messages from "../../pages/Messages";
 import Notices from "../../pages/Notices";
 import Staff from "../../pages/Staff";
+import Facilities from "../../pages/Facilities";
 
 import AdminLogin from "../../admin/AdminLogin";
 import AdminDashboard from "../../admin/AdminDashboard";
@@ -38,6 +39,10 @@ function AboutPage() {
 }
 
 function FacilitiesPage() {
+  return <Facilities />;
+}
+
+function AcademicsPage() {
   return <Academics />;
 }
 
@@ -75,7 +80,7 @@ function SchoolApp() {
           <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/facilities" element={<FacilitiesPage />} />
-          <Route path="/academics" element={<FacilitiesPage />} />
+          <Route path="/academics" element={<AcademicsPage />} />
           <Route path="/admissions" element={<AdmissionsPage />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/notices" element={<Notices />} />
