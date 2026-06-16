@@ -1147,6 +1147,7 @@ export default function AdminHome() {
               border: "1px solid rgba(255,255,255,0.14)",
               boxShadow: "0 22px 58px rgba(11,16,32,0.25)",
             }}
+            
           >
             <div className="p-5 border-b border-white/10">
               <div className="text-white font-bold text-lg flex items-center gap-2">

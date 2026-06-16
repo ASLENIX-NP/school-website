@@ -862,6 +862,7 @@ export default function AdminStaff() {
               style={{
                 height: "760px",
               }}
+              
             >
               <StaffPreview form={form} />
             </div>

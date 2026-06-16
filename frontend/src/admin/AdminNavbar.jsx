@@ -526,6 +526,7 @@ export default function AdminNavbar() {
   Transparent PNG works best. Image uploads to ImageKit, then click Save Changes.
 </span>
 
+
                       <input
                         type="file"
                         accept="image/*"
