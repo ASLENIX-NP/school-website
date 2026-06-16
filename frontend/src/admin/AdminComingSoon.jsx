@@ -94,6 +94,7 @@ export default function AdminComingSoon({ title, description }) {
               letterSpacing: "-0.045em",
             }}
           >
+            //change
             {title}
           </h1>
 
