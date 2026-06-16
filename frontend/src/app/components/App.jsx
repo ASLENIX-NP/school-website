@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-
+import AdminContact from "../../admin/AdminContact";
 import { Navbar } from "./Navbar";
 import { Hero } from "./Hero";
 import { Stats } from "./Stats";
@@ -10,7 +10,7 @@ import { Events } from "./Events";
 import { Gallery } from "./Gallery";
 import { Contact } from "./Contact";
 import { Footer } from "./Footer";
-
+import AdminFacilities from "../../admin/AdminFacilities";
 import Messages from "../../pages/Messages";
 import Notices from "../../pages/Notices";
 import NoticeDetail from "../../pages/NoticeDetail";
@@ -65,7 +65,6 @@ function ContactPage() {
   return <Contact />;
 }
 
-
 function ProtectedPage({ children }) {
   return <ProtectedAdminRoute>{children}</ProtectedAdminRoute>;
 }
@@ -88,10 +87,7 @@ function SchoolApp() {
           <Route path="/admissions" element={<AdmissionsPage />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/notices" element={<Notices />} />
-          <Route
-  path="/notices/:id"
-  element={<NoticeDetail />}
-/>
+          <Route path="/notices/:id" element={<NoticeDetail />} />
           <Route path="/staff" element={<Staff />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/gallery" element={<GalleryPage />} />
@@ -150,6 +146,32 @@ function SchoolApp() {
               </ProtectedPage>
             }
           />
+          <Route
+  path="/admin/facilities"
+  element={
+    <ProtectedPage>
+      <AdminFacilities />
+    </ProtectedPage>
+  }
+/>
+
+          <Route
+            path="/admin/notices"
+            element={
+              <ProtectedPage>
+                <AdminNotices />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/contact"
+            element={
+              <ProtectedPage>
+                <AdminContact />
+              </ProtectedPage>
+            }
+          />
 
           {/* Admin Editors To Build Next */}
           <Route
@@ -188,15 +210,6 @@ function SchoolApp() {
             }
           />
 
-<Route
-  path="/admin/notices"
-  element={
-    <ProtectedPage>
-      <AdminNotices />
-    </ProtectedPage>
-  }
-/>
-
           <Route
             path="/admin/events"
             element={
@@ -216,18 +229,6 @@ function SchoolApp() {
                 <AdminComingSoon
                   title="Manage Gallery"
                   description="Gallery editor will control images, categories, titles, and activity photos."
-                />
-              </ProtectedPage>
-            }
-          />
-
-          <Route
-            path="/admin/contact"
-            element={
-              <ProtectedPage>
-                <AdminComingSoon
-                  title="Manage Contact Page"
-                  description="Contact editor will control address, phone numbers, email, map text, and office details."
                 />
               </ProtectedPage>
             }

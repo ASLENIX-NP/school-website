@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
 import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
@@ -16,34 +16,112 @@ const colors = {
   gold: "#FACC15",
 };
 
-const contactInfo = [
-  {
-    icon: MapPin,
-    label: "Address",
-    value: "Basudev Marga, Hetauda Sub-Metropolitan City, Ward No. 2",
-    color: "#D71920",
+const defaultContactContent = {
+  badgeText: "Get In Touch",
+  title: "We'd Love to Hear From You",
+  highlightedText: "Hear From You",
+  subtitle:
+    "Questions about admissions, curriculum, or school life? Our team is here to help.",
+  contactInfo: [
+    {
+      id: "address",
+      icon: "map",
+      label: "Address",
+      value: "Basudev Marga, Hetauda Sub-Metropolitan City, Ward No. 2",
+      color: "#D71920",
+    },
+    {
+      id: "phone",
+      icon: "phone",
+      label: "Phone",
+      value: "057-590144, 057-590145, 057-590146",
+      color: "#168A3A",
+    },
+    {
+      id: "email",
+      icon: "mail",
+      label: "Email",
+      value: "infobjess2046@gmail.com",
+      color: "#4B2E83",
+    },
+    {
+      id: "school",
+      icon: "clock",
+      label: "School",
+      value: "Baljagriti Secondary English Boarding School",
+      color: "#7C5CC4",
+    },
+  ],
+  mapCard: {
+    title: "Baljagriti Campus",
+    address: "Basudev Marga, Hetauda, Makawanpur",
+    buttonText: "Open in Maps",
+    mapUrl:
+      "https://www.google.com/maps/search/?api=1&query=Basudev+Marga+Hetauda+Makwanpur+Nepal",
   },
-  {
-    icon: Phone,
-    label: "Phone",
-    value: "057-590144, 057-590145, 057-590146",
-    color: "#168A3A",
+  form: {
+    title: "Send a Message",
+    nameLabel: "Your Name",
+    namePlaceholder: "Your full name",
+    emailLabel: "Email Address",
+    emailPlaceholder: "your@email.com",
+    subjectLabel: "Subject",
+    subjectPlaceholder: "Admissions inquiry",
+    messageLabel: "Message",
+    messagePlaceholder: "Tell us how we can help you...",
+    buttonText: "Send Message",
+    sendingText: "Sending...",
+    successMessage: "Message sent successfully!",
+    errorMessage: "Message could not be sent. Please try again.",
   },
-  {
-    icon: Mail,
-    label: "Email",
-    value: "infobjess2046@gmail.com",
-    color: "#4B2E83",
-  },
-  {
-    icon: Clock,
-    label: "School",
-    value: "Baljagriti Secondary English Boarding School",
-    color: "#7C5CC4",
-  },
-];
+};
+
+function mergeContactContent(saved = {}) {
+  return {
+    ...defaultContactContent,
+    ...saved,
+    contactInfo:
+      Array.isArray(saved.contactInfo) && saved.contactInfo.length
+        ? saved.contactInfo
+        : defaultContactContent.contactInfo,
+    mapCard: {
+      ...defaultContactContent.mapCard,
+      ...(saved.mapCard || {}),
+    },
+    form: {
+      ...defaultContactContent.form,
+      ...(saved.form || {}),
+    },
+  };
+}
+
+function getContactIcon(icon) {
+  if (icon === "phone") return Phone;
+  if (icon === "mail") return Mail;
+  if (icon === "clock") return Clock;
+  return MapPin;
+}
+
+function HighlightedTitle({ title, highlightedText }) {
+  if (!highlightedText || !title.includes(highlightedText)) {
+    return <>{title}</>;
+  }
+
+  const [before, after] = title.split(highlightedText);
+
+  return (
+    <>
+      {before}
+      <span className="italic" style={{ color: colors.purple }}>
+        {highlightedText}
+      </span>
+      {after}
+    </>
+  );
+}
 
 function Contact() {
+  const [content, setContent] = useState(defaultContactContent);
   const [submitMessage, setSubmitMessage] = useState("");
   const [submitError, setSubmitError] = useState("");
 
@@ -54,6 +132,24 @@ function Contact() {
     reset,
   } = useForm();
 
+  useEffect(() => {
+    const loadContactContent = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/site-content/contact"
+        );
+
+        const savedContent = res.data?.data?.content || {};
+        setContent(mergeContactContent(savedContent));
+      } catch (error) {
+        console.error("Contact content load error:", error);
+        setContent(defaultContactContent);
+      }
+    };
+
+    loadContactContent();
+  }, []);
+
   const onSubmit = async (data) => {
     setSubmitMessage("");
     setSubmitError("");
@@ -61,11 +157,11 @@ function Contact() {
     try {
       await axios.post("http://localhost:5000/api/contact", data);
 
-      setSubmitMessage("Message sent successfully!");
+      setSubmitMessage(content.form.successMessage);
       reset();
     } catch (error) {
       console.error("Contact form error:", error);
-      setSubmitError("Message could not be sent. Please try again.");
+      setSubmitError(content.form.errorMessage);
     }
   };
 
@@ -116,7 +212,7 @@ function Contact() {
               boxShadow: "0 10px 28px rgba(215,25,32,0.08)",
             }}
           >
-            Get In Touch
+            {content.badgeText}
           </span>
 
           <h2
@@ -127,15 +223,14 @@ function Contact() {
               color: colors.dark,
             }}
           >
-            We'd Love to{" "}
-            <span className="italic" style={{ color: colors.purple }}>
-              Hear From You
-            </span>
+            <HighlightedTitle
+              title={content.title}
+              highlightedText={content.highlightedText}
+            />
           </h2>
 
           <p className="max-w-xl mx-auto text-lg" style={{ color: "#64748b" }}>
-            Questions about admissions, curriculum, or school life? Our team is
-            here to help.
+            {content.subtitle}
           </p>
         </motion.div>
 
@@ -146,12 +241,12 @@ function Contact() {
             transition={{ duration: 0.7 }}
             className="lg:col-span-2 space-y-5"
           >
-            {contactInfo.map((info) => {
-              const Icon = info.icon;
+            {content.contactInfo.map((info) => {
+              const Icon = getContactIcon(info.icon);
 
               return (
                 <div
-                  key={info.label}
+                  key={info.id || info.label}
                   className="flex gap-4 p-5 rounded-2xl"
                   style={{
                     background:
@@ -240,18 +335,18 @@ function Contact() {
                 </div>
 
                 <div className="text-white font-bold text-base">
-                  Baljagriti Campus
+                  {content.mapCard.title}
                 </div>
 
                 <div
                   className="text-xs mt-1 mb-4"
                   style={{ color: "rgba(255,255,255,0.64)" }}
                 >
-                  Basudev Marga, Hetauda, Makawanpur
+                  {content.mapCard.address}
                 </div>
 
                 <a
-                  href="https://www.google.com/maps/search/?api=1&query=Basudev+Marga+Hetauda+Makwanpur+Nepal"
+                  href={content.mapCard.mapUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 hover:scale-105"
@@ -263,7 +358,7 @@ function Contact() {
                       "0 16px 38px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
                   }}
                 >
-                  Open in Maps
+                  {content.mapCard.buttonText}
                 </a>
               </div>
             </div>
@@ -294,7 +389,7 @@ function Contact() {
                     color: colors.dark,
                   }}
                 >
-                  Send a Message
+                  {content.form.title}
                 </h3>
 
                 {submitMessage && (
@@ -329,11 +424,11 @@ function Contact() {
                       className="block text-sm font-medium mb-2"
                       style={{ color: "#475569" }}
                     >
-                      Your Name
+                      {content.form.nameLabel}
                     </label>
                     <input
                       {...register("name", { required: true })}
-                      placeholder="Your full name"
+                      placeholder={content.form.namePlaceholder}
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
                       style={{
                         background: "rgba(255,255,255,0.82)",
@@ -349,12 +444,12 @@ function Contact() {
                       className="block text-sm font-medium mb-2"
                       style={{ color: "#475569" }}
                     >
-                      Email Address
+                      {content.form.emailLabel}
                     </label>
                     <input
                       {...register("email", { required: true })}
                       type="email"
-                      placeholder="your@email.com"
+                      placeholder={content.form.emailPlaceholder}
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
                       style={{
                         background: "rgba(255,255,255,0.82)",
@@ -371,11 +466,11 @@ function Contact() {
                     className="block text-sm font-medium mb-2"
                     style={{ color: "#475569" }}
                   >
-                    Subject
+                    {content.form.subjectLabel}
                   </label>
                   <input
                     {...register("subject", { required: true })}
-                    placeholder="Admissions inquiry"
+                    placeholder={content.form.subjectPlaceholder}
                     className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
                     style={{
                       background: "rgba(255,255,255,0.82)",
@@ -391,12 +486,12 @@ function Contact() {
                     className="block text-sm font-medium mb-2"
                     style={{ color: "#475569" }}
                   >
-                    Message
+                    {content.form.messageLabel}
                   </label>
                   <textarea
                     {...register("message", { required: true })}
                     rows={5}
-                    placeholder="Tell us how we can help you..."
+                    placeholder={content.form.messagePlaceholder}
                     className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all resize-none"
                     style={{
                       background: "rgba(255,255,255,0.82)",
@@ -420,7 +515,7 @@ function Contact() {
                   }}
                 >
                   <Send className="w-4 h-4" />
-                  {isSubmitting ? "Sending..." : "Send Message"}
+                  {isSubmitting ? content.form.sendingText : content.form.buttonText}
                 </button>
               </form>
             </div>

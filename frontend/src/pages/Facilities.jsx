@@ -1,172 +1,324 @@
-import { useState } from "react";
-import { motion } from "framer-motion"; // Note: Changed to "framer-motion" as "motion/react" is atypical, change back if your project explicitly uses it.
-import { ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { motion } from "motion/react";
+import { ArrowRight, X, Image as ImageIcon } from "lucide-react";
 
 const colors = {
   red: "#D71920",
   green: "#168A3A",
   purple: "#4B2E83",
   dark: "#0B1020",
+  cyan: "#38BDF8",
+  gold: "#FACC15",
 };
 
-const facilities = [
-  {
-    emoji: "📚",
-    title: "E-Library",
-    category: "Digital Learning",
-    description: "Access thousands of digital books, journals, educational resources and online learning platforms.",
-    details: "Students can access e-books, research journals, academic databases, digital resources, and online learning platforms from school.",
-    color: colors.red,
-  },
-  {
-    emoji: "💻",
-    title: "Computer Lab",
-    category: "Technology",
-    description: "Modern computer laboratory equipped with internet access and updated software for practical learning.",
-    details: "40+ modern computers with internet access, programming tools, office applications, and multimedia software.",
-    color: colors.purple,
-  },
-  {
-    emoji: "🔬",
-    title: "Science Laboratory",
-    category: "Practical Education",
-    description: "Physics, Chemistry and Biology practical experiments with modern laboratory equipment and safety measures.",
-    details: "Fully equipped separate labs for Physics, Chemistry, and Biology, providing hands-on experimental learning and top-tier safety gear.",
-    color: colors.green,
-  },
-  {
-    emoji: "🚌",
-    title: "Bus Facility",
-    category: "Transportation",
-    description: "Safe and reliable transportation service covering multiple routes.",
-    details: "Baljagriti provides safe transportation with experienced drivers, route management, student safety monitoring, and comfortable buses for daily travel.",
-    color: "#F59E0B",
-  },
-  {
-    emoji: "🎭",
-    title: "Auditorium",
-    category: "Events & Activities",
-    description: "Spacious auditorium for seminars, cultural events, presentations, and school programs.",
-    details: "A state-of-the-art auditorium with advanced audio-visual technology, comfortable seating, and staging for hosting all major school events and presentations.",
-    color: colors.red,
-  },
-  {
-    emoji: "⚽",
-    title: "Sports Ground",
-    category: "Physical Development",
-    description: "Indoor and outdoor sports facilities encouraging fitness, teamwork, and healthy competition.",
-    details: "Expansive playgrounds and courts facilitating football, basketball, cricket, and various indoor games under expert physical guidance.",
-    color: colors.green,
-  },
-];
+const defaultFacilitiesContent = {
+  badgeText: "School Facilities",
+  title: "Learning Beyond Classrooms",
+  highlightedText: "Classrooms",
+  subtitle:
+    "Baljagriti provides modern facilities that create an engaging, practical, and technology-driven learning environment for every student.",
+  learnMoreText: "Learn More",
+  highlightsTitle: "Facility Highlights",
+  facilities: [
+    {
+      id: 1,
+      emoji: "📚",
+      title: "E-Library",
+      category: "Digital Learning",
+      description:
+        "Access thousands of digital books, journals, educational resources and online learning platforms.",
+      details:
+        "Students can access e-books, research journals, academic databases, digital resources, and online learning platforms from school.",
+      imageUrl: "",
+      color: colors.red,
+      visible: true,
+    },
+    {
+      id: 2,
+      emoji: "💻",
+      title: "Computer Lab",
+      category: "Technology",
+      description:
+        "Modern computer laboratory equipped with internet access and updated software for practical learning.",
+      details:
+        "40+ modern computers with internet access, programming tools, office applications, and multimedia software.",
+      imageUrl: "",
+      color: colors.purple,
+      visible: true,
+    },
+    {
+      id: 3,
+      emoji: "🔬",
+      title: "Science Laboratory",
+      category: "Practical Education",
+      description:
+        "Physics, Chemistry and Biology practical experiments with modern laboratory equipment and safety measures.",
+      details:
+        "Fully equipped separate labs for Physics, Chemistry, and Biology, providing hands-on experimental learning and top-tier safety gear.",
+      imageUrl: "",
+      color: colors.green,
+      visible: true,
+    },
+    {
+      id: 4,
+      emoji: "🚌",
+      title: "Bus Facility",
+      category: "Transportation",
+      description: "Safe and reliable transportation service covering multiple routes.",
+      details:
+        "Baljagriti provides safe transportation with experienced drivers, route management, student safety monitoring, and comfortable buses for daily travel.",
+      imageUrl: "",
+      color: "#F59E0B",
+      visible: true,
+    },
+    {
+      id: 5,
+      emoji: "🎭",
+      title: "Auditorium",
+      category: "Events & Activities",
+      description:
+        "Spacious auditorium for seminars, cultural events, presentations, and school programs.",
+      details:
+        "A state-of-the-art auditorium with advanced audio-visual technology, comfortable seating, and staging for hosting all major school events and presentations.",
+      imageUrl: "",
+      color: colors.red,
+      visible: true,
+    },
+    {
+      id: 6,
+      emoji: "⚽",
+      title: "Sports Ground",
+      category: "Physical Development",
+      description:
+        "Indoor and outdoor sports facilities encouraging fitness, teamwork, and healthy competition.",
+      details:
+        "Expansive playgrounds and courts facilitating football, basketball, cricket, and various indoor games under expert physical guidance.",
+      imageUrl: "",
+      color: colors.green,
+      visible: true,
+    },
+  ],
+};
 
-export default function Facilities() {
-  const [selectedFacility, setSelectedFacility] = useState(null);
+function mergeFacilitiesContent(saved = {}) {
+  return {
+    ...defaultFacilitiesContent,
+    ...saved,
+    facilities: Array.isArray(saved.facilities)
+      ? saved.facilities
+      : defaultFacilitiesContent.facilities,
+  };
+}
+
+function HighlightedTitle({ title, highlightedText }) {
+  if (!highlightedText || !title.includes(highlightedText)) {
+    return <>{title}</>;
+  }
+
+  const [before, after] = title.split(highlightedText);
+
+  return (
+    <>
+      {before}
+      <span style={{ color: colors.red }}>{highlightedText}</span>
+      {after}
+    </>
+  );
+}
+
+function FacilityVisual({ facility, className = "" }) {
+  if (facility.imageUrl) {
+    return (
+      <img
+        src={facility.imageUrl}
+        alt={facility.title}
+        className={`w-full h-full object-cover ${className}`}
+      />
+    );
+  }
 
   return (
     <div
-      className="min-h-screen pt-32 pb-24"
+      className={`w-full h-full flex items-center justify-center ${className}`}
       style={{
-        background: "linear-gradient(180deg,#FFF8EE 0%,#F8FAFC 100%)",
+        background: `${facility.color || colors.green}12`,
       }}
     >
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Hero */}
-        <div className="text-center mb-20">
+      <span className="text-6xl">{facility.emoji || "🏫"}</span>
+    </div>
+  );
+}
+
+export default function Facilities() {
+  const [content, setContent] = useState(defaultFacilitiesContent);
+  const [selectedFacility, setSelectedFacility] = useState(null);
+
+  useEffect(() => {
+    const loadFacilitiesContent = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/site-content/facilities"
+        );
+
+        const savedContent = res.data?.data?.content || {};
+        setContent(mergeFacilitiesContent(savedContent));
+      } catch (error) {
+        console.error("Facilities content load error:", error);
+        setContent(defaultFacilitiesContent);
+      }
+    };
+
+    loadFacilitiesContent();
+  }, []);
+
+  const visibleFacilities = content.facilities.filter(
+    (facility) => facility.visible !== false
+  );
+
+  return (
+    <div
+      className="min-h-screen pt-32 pb-24 relative overflow-hidden"
+      style={{
+        background: `
+          radial-gradient(circle at top left, rgba(75,46,131,0.12), transparent 34%),
+          radial-gradient(circle at bottom right, rgba(22,138,58,0.10), transparent 34%),
+          linear-gradient(180deg,#FFF8EE 0%,#F8FAFC 100%)
+        `,
+      }}
+    >
+      <div className="absolute top-20 left-8 w-48 h-48 rounded-full bg-purple-500/10 blur-3xl" />
+      <div className="absolute bottom-20 right-10 w-56 h-56 rounded-full bg-green-500/10 blur-3xl" />
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55 }}
+          className="text-center mb-20"
+        >
           <span
-            className="px-5 py-2 rounded-full text-sm font-semibold"
+            className="px-5 py-2 rounded-full text-sm font-semibold inline-flex items-center gap-2"
             style={{
               background: "rgba(22,138,58,0.08)",
               color: colors.green,
+              border: "1px solid rgba(22,138,58,0.18)",
             }}
           >
-            School Facilities
+            <ImageIcon className="w-4 h-4" />
+            {content.badgeText}
           </span>
 
-          <h1 className="text-5xl md:text-6xl font-bold mt-6 text-slate-900">
-            Learning Beyond <span style={{ color: colors.red }}>Classrooms</span>
+          <h1
+            className="text-5xl md:text-7xl mt-6 text-slate-950 leading-tight"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 850,
+              letterSpacing: "-0.045em",
+            }}
+          >
+            <HighlightedTitle
+              title={content.title}
+              highlightedText={content.highlightedText}
+            />
           </h1>
 
-          <p className="max-w-3xl mx-auto mt-6 text-lg text-slate-600">
-            Baljagriti provides modern facilities that create an engaging, practical, and technology-driven learning
-            environment for every student.
+          <p className="max-w-3xl mx-auto mt-6 text-lg md:text-xl text-slate-600 leading-relaxed">
+            {content.subtitle}
           </p>
-        </div>
+        </motion.div>
 
-        {/* Facilities Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {facilities.map((facility, index) => (
+          {visibleFacilities.map((facility, index) => (
             <motion.div
-              key={facility.title}
+              key={facility.id || facility.title}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.08 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.45, delay: index * 0.06 }}
               whileHover={{
-                y: -15,
-                scale: 1.03,
-                rotateY: 6,
+                y: -12,
+                scale: 1.02,
+                rotateY: 4,
               }}
-              className="rounded-3xl p-8 border backdrop-blur-md hover:-translate-y-4 hover:rotate-1 hover:shadow-2xl transition-all duration-300"
+              className="group rounded-[2rem] overflow-hidden border backdrop-blur-md transition-all duration-300"
               style={{
-                background: `${facility.color}08`,
-                borderColor: `${facility.color}25`,
-                boxShadow: "0 20px 40px rgba(0,0,0,0.05)",
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+                borderColor: `${facility.color || colors.green}25`,
+                boxShadow:
+                  "0 22px 54px rgba(15,23,42,0.09), inset 0 1px 0 rgba(255,255,255,0.82)",
               }}
             >
-              <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-5"
-                style={{
-                  background: `${facility.color}15`,
-                }}
-              >
-                {facility.emoji}
+              <div className="h-56 relative overflow-hidden">
+                <FacilityVisual
+                  facility={facility}
+                  className="transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
+
+                <div
+                  className="absolute top-5 left-5 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl"
+                  style={{
+                    background: "rgba(255,255,255,0.9)",
+                    border: `1px solid ${facility.color || colors.green}25`,
+                    boxShadow: "0 14px 32px rgba(15,23,42,0.18)",
+                  }}
+                >
+                  {facility.emoji || "🏫"}
+                </div>
               </div>
 
-              <span
-                className="text-xs font-semibold px-3 py-1 rounded-full"
-                style={{
-                  background: `${facility.color}15`,
-                  color: facility.color,
-                }}
-              >
-                {facility.category}
-              </span>
+              <div className="p-8">
+                <span
+                  className="text-xs font-semibold px-3 py-1 rounded-full"
+                  style={{
+                    background: `${facility.color || colors.green}15`,
+                    color: facility.color || colors.green,
+                  }}
+                >
+                  {facility.category}
+                </span>
 
-              <h3 className="text-2xl font-bold mt-4 text-slate-900">{facility.title}</h3>
+                <h3 className="text-2xl font-black mt-4 text-slate-950">
+                  {facility.title}
+                </h3>
 
-              <p className="mt-4 text-slate-600 leading-relaxed">{facility.description}</p>
+                <p className="mt-4 text-slate-600 leading-relaxed">
+                  {facility.description}
+                </p>
 
-              <button
-                onClick={() => setSelectedFacility(facility)}
-                className="mt-5 flex items-center gap-2 font-medium hover:gap-3 transition-all"
-                style={{ color: facility.color }}
-              >
-                Learn More
-                <ArrowRight size={18} />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedFacility(facility)}
+                  className="mt-6 flex items-center gap-2 font-bold hover:gap-3 transition-all"
+                  style={{ color: facility.color || colors.green }}
+                >
+                  {content.learnMoreText}
+                  <ArrowRight size={18} />
+                </button>
+              </div>
             </motion.div>
           ))}
         </div>
       </div>
 
       {selectedFacility && (
-  <div
-    className="fixed inset-0 z-[9999] flex items-center justify-center p-6"
-    style={{
-      background: "rgba(0,0,0,0.45)",
-      backdropFilter: "blur(12px)",
-    }}
-    onClick={() => setSelectedFacility(null)}
-  >
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-6"
+          style={{
+            background: "rgba(0,0,0,0.48)",
+            backdropFilter: "blur(12px)",
+          }}
+          onClick={() => setSelectedFacility(null)}
+        >
           <motion.div
-          onClick={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
             initial={{
               opacity: 0,
-              scale: 0.7,
-              rotateX: 25,
-              y: 100,
+              scale: 0.82,
+              rotateX: 18,
+              y: 60,
             }}
             animate={{
               opacity: 1,
@@ -174,21 +326,17 @@ export default function Facilities() {
               rotateX: 0,
               y: 0,
             }}
-            whileHover={{
-              scale: 1.03,
-              rotateY: 3,
-              rotateX: -2,
-            }}
             transition={{
               type: "spring",
               stiffness: 120,
-              damping: 12,
+              damping: 14,
             }}
-            exit={{ opacity: 0 }}
-            className="relative max-w-2xl w-full overflow-hidden rounded-[32px]"
+            className="relative max-w-3xl w-full overflow-hidden rounded-[32px]"
             style={{
-              background: "linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,250,252,0.95))",
-              boxShadow: "0 60px 120px rgba(0,0,0,0.28), 0 25px 50px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.7)",
+              background:
+                "linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,250,252,0.95))",
+              boxShadow:
+                "0 60px 120px rgba(0,0,0,0.28), 0 25px 50px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.7)",
             }}
           >
             <div
@@ -196,98 +344,74 @@ export default function Facilities() {
               style={{
                 background: `
                   radial-gradient(circle at top right,
-                  ${selectedFacility.color}30,
+                  ${selectedFacility.color || colors.green}30,
                   transparent 40%)
                 `,
               }}
             />
 
-            <div
-              className="absolute -top-24 -right-24 w-64 h-64 rounded-full"
-              style={{
-                background: `${selectedFacility.color}25`,
-                filter: "blur(80px)",
-              }}
-            />
+            <button
+              type="button"
+              onClick={() => setSelectedFacility(null)}
+              className="absolute top-5 right-5 z-[99999] w-12 h-12 rounded-full bg-white shadow-2xl cursor-pointer font-bold hover:bg-red-500 hover:text-white hover:rotate-180 hover:scale-110 transition-all duration-500 flex items-center justify-center"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-<button
-  type="button"
-  onClick={() => {
-    setSelectedFacility(null);
-  }}
-  className="
-    absolute
-    top-5
-    right-5
-    z-[99999]
-    w-14
-    h-14
-    rounded-full
-    bg-white
-    shadow-2xl
-    cursor-pointer
-    text-xl
-    font-bold
-    hover:bg-red-500
-    hover:text-white
-    hover:rotate-180
-    hover:scale-125
-    transition-all
-    duration-500
-  "
->
-  ✕
-</button>
+            <div className="grid md:grid-cols-[300px_1fr] relative z-10">
+              <div className="h-72 md:h-full min-h-[360px] relative overflow-hidden">
+                <FacilityVisual facility={selectedFacility} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
+              </div>
 
-            <div className="p-10 relative z-10">
-              <motion.div
-                whileHover={{
-                  scale: 1.15,
-                  rotate: 10,
-                  y: -8,
-                }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                }}
-                className="
-                  w-24 h-24 rounded-3xl
-                  flex items-center justify-center
-                  text-5xl mb-6
-                  transition-all duration-500
-                "
-                style={{
-                  background: `${selectedFacility.color}15`,
-                  border: `1px solid ${selectedFacility.color}30`,
-                }}
-              >
-                {selectedFacility.emoji}
-              </motion.div>
+              <div className="p-8 md:p-10">
+                <div
+                  className="w-20 h-20 rounded-3xl flex items-center justify-center text-5xl mb-6"
+                  style={{
+                    background: `${selectedFacility.color || colors.green}15`,
+                    border: `1px solid ${
+                      selectedFacility.color || colors.green
+                    }30`,
+                  }}
+                >
+                  {selectedFacility.emoji || "🏫"}
+                </div>
 
-              <span
-                className="px-4 py-2 rounded-full text-sm font-semibold"
-                style={{
-                  background: `${selectedFacility.color}15`,
-                  color: selectedFacility.color,
-                }}
-              >
-                {selectedFacility.category}
-              </span>
+                <span
+                  className="px-4 py-2 rounded-full text-sm font-semibold"
+                  style={{
+                    background: `${selectedFacility.color || colors.green}15`,
+                    color: selectedFacility.color || colors.green,
+                  }}
+                >
+                  {selectedFacility.category}
+                </span>
 
-              <h2 className="text-5xl font-black mt-5 text-slate-900">{selectedFacility.title}</h2>
+                <h2 className="text-4xl md:text-5xl font-black mt-5 text-slate-950 leading-tight">
+                  {selectedFacility.title}
+                </h2>
 
-              <p className="mt-5 text-lg text-slate-600"> {selectedFacility.description}</p>
+                <p className="mt-5 text-lg text-slate-600 leading-relaxed">
+                  {selectedFacility.description}
+                </p>
 
-              <div
-                className="mt-8 p-5 rounded-2xl"
-                style={{
-                  background: `${selectedFacility.color}08`,
-                  border: `1px solid ${selectedFacility.color}20`,
-                }}
-              >
-                <h4 className="font-bold text-slate-900 mb-3">Facility Highlights</h4>
+                <div
+                  className="mt-8 p-5 rounded-2xl"
+                  style={{
+                    background: `${selectedFacility.color || colors.green}08`,
+                    border: `1px solid ${
+                      selectedFacility.color || colors.green
+                    }20`,
+                  }}
+                >
+                  <h4 className="font-bold text-slate-950 mb-3">
+                    {content.highlightsTitle}
+                  </h4>
 
-                <p className="text-slate-600 leading-relaxed">{selectedFacility.details}</p>
+                  <p className="text-slate-600 leading-relaxed">
+                    {selectedFacility.details}
+                  </p>
+                </div>
               </div>
             </div>
           </motion.div>

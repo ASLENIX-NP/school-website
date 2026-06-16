@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { supabase } from "./config/supabase.js";
+
 import healthRoutes from "./routes/healthRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import adminAuthRoutes from "./routes/adminAuthRoutes.js";
@@ -26,13 +27,8 @@ app.use("/api/health", healthRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/admin/auth", adminAuthRoutes);
 app.use("/api/site-content", siteContentRoutes);
-import facilityRoutes from "./routes/facilityRoutes.js";
-
-app.use("/api/facilities", facilityRoutes);
-app.use(
-  "/api/notice-settings",
-  noticeSettingsRoutes
-);
+app.use("/api/notices", noticeRoutes);
+app.use("/api/notice-settings", noticeSettingsRoutes);
 
 app.post("/api/contact", async (req, res) => {
   try {
@@ -71,6 +67,8 @@ app.post("/api/contact", async (req, res) => {
       data,
     });
   } catch (error) {
+    console.error("Contact message server error:", error);
+
     res.status(500).json({
       success: false,
       message: "Server error",
