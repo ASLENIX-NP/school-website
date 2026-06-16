@@ -7,6 +7,7 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 import adminAuthRoutes from "./routes/adminAuthRoutes.js";
 import siteContentRoutes from "./routes/siteContentRoutes.js";
 import noticeRoutes from "./routes/noticeRoutes.js";
+import noticeSettingsRoutes from "./routes/noticeSettingsRoutes.js";
 
 dotenv.config();
 
@@ -25,7 +26,13 @@ app.use("/api/health", healthRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/admin/auth", adminAuthRoutes);
 app.use("/api/site-content", siteContentRoutes);
-app.use("/api/notices", noticeRoutes);
+import facilityRoutes from "./routes/facilityRoutes.js";
+
+app.use("/api/facilities", facilityRoutes);
+app.use(
+  "/api/notice-settings",
+  noticeSettingsRoutes
+);
 
 app.post("/api/contact", async (req, res) => {
   try {

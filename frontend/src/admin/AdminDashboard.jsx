@@ -88,11 +88,11 @@ const adminSections = [
     path: "/admin/staff",
   },
   {
-    title: "Manage Events",
-    description: "Add school events, programs, dates, and activity details.",
-    icon: CalendarDays,
+    title: "Manage Facilities",
+    description: "Edit facilities, labs, library, transport, sports and other infrastructure.",
+    icon: School,
     color: "#4B2E83",
-    path: "/admin/events",
+    path: "/admin/facilities",
   },
   {
     title: "Manage Gallery",

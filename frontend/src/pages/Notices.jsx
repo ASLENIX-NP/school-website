@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import {
   Calendar,
@@ -26,44 +27,7 @@ const colors = {
   - category
   - pdfUrl
 */
-const noticeData = {
-  badge: "School Updates",
-  title: "School Notices",
-  description:
-    "Stay informed with examination schedules, admissions, holidays, events, and important announcements from Baljagriti Secondary English School.",
-  notices: [
-    {
-      id: 1,
-      title: "First Terminal Examination Notice",
-      date: "2083-02-15",
-      category: "Examination",
-      description:
-        "Important notice regarding First Terminal Examination schedule, routines, and student guidelines.",
-      pdfUrl: "#",
-      pinned: true,
-    },
-    {
-      id: 2,
-      title: "School Reopening Notice",
-      date: "2083-02-08",
-      category: "Academic",
-      description:
-        "School will reopen after the scheduled break. Students are requested to attend regularly.",
-      pdfUrl: "#",
-      pinned: false,
-    },
-    {
-      id: 3,
-      title: "Parents Meeting Notice",
-      date: "2083-02-01",
-      category: "Parents",
-      description:
-        "Parents and guardians are requested to attend the upcoming school meeting.",
-      pdfUrl: "#",
-      pinned: false,
-    },
-  ],
-};
+
 
 function NoticeCard({ notice, index }) {
   return (
@@ -128,7 +92,7 @@ function NoticeCard({ notice, index }) {
 
             <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
               <Calendar className="w-4 h-4" />
-              {notice.date}
+              {notice.notice_date}
             </span>
           </div>
 
@@ -149,7 +113,7 @@ function NoticeCard({ notice, index }) {
           </p>
 
           <a
-            href={notice.pdfUrl}
+            href={notice.pdf_url}
             download
             className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all duration-300 hover:scale-105"
             style={{
@@ -168,6 +132,45 @@ function NoticeCard({ notice, index }) {
 }
 
 export default function Notices() {
+  const [notices, setNotices] = useState([]);
+const [settings, setSettings] = useState(null);
+
+useEffect(() => {
+  fetchNotices();
+  fetchSettings();
+}, []);
+
+const fetchNotices = async () => {
+  try {
+    const response = await fetch(
+      "http://localhost:5000/api/notices"
+    );
+
+    const result = await response.json();
+
+    if (result.success) {
+      setNotices(result.data);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const fetchSettings = async () => {
+  try {
+    const response = await fetch(
+      "http://localhost:5000/api/notice-settings"
+    );
+
+    const result = await response.json();
+
+    if (result.success) {
+      setSettings(result.data);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
   return (
     <section
       className="min-h-screen pt-32 pb-24 relative overflow-hidden"
@@ -213,7 +216,7 @@ export default function Notices() {
             }}
           >
             <Bell className="w-4 h-4" />
-            {noticeData.badge}
+            {settings?.page_badge}
           </span>
 
           <h1
@@ -225,17 +228,17 @@ export default function Notices() {
               letterSpacing: "-0.045em",
             }}
           >
-            {noticeData.title}
+            {settings?.page_title}
           </h1>
 
           <p className="max-w-3xl mx-auto text-base md:text-lg text-slate-500 leading-relaxed">
-            {noticeData.description}
+          {settings?.page_description}
           </p>
         </motion.div>
 
         <div className="grid lg:grid-cols-[1fr_330px] gap-8 items-start">
           <div className="space-y-6">
-            {noticeData.notices.map((notice, index) => (
+          {notices.map((notice, index) => (
               <NoticeCard key={notice.id} notice={notice} index={index} />
             ))}
           </div>

@@ -21,6 +21,8 @@ import AdminLogin from "../../admin/AdminLogin";
 import AdminDashboard from "../../admin/AdminDashboard";
 import AdminHome from "../../admin/AdminHome";
 import AdminMessages from "../../admin/AdminMessages";
+import AdminNotices from "../../admin/AdminNotices";
+
 import AdminNavbar from "../../admin/AdminNavbar";
 import AdminStaff from "../../admin/AdminStaff";
 import AdminComingSoon from "../../admin/AdminComingSoon";
@@ -62,6 +64,7 @@ function GalleryPage() {
 function ContactPage() {
   return <Contact />;
 }
+
 
 function ProtectedPage({ children }) {
   return <ProtectedAdminRoute>{children}</ProtectedAdminRoute>;
@@ -185,17 +188,14 @@ function SchoolApp() {
             }
           />
 
-          <Route
-            path="/admin/notices"
-            element={
-              <ProtectedPage>
-                <AdminComingSoon
-                  title="Manage Notices"
-                  description="Notices editor will let admin add, edit, delete, and upload PDF notices."
-                />
-              </ProtectedPage>
-            }
-          />
+<Route
+  path="/admin/notices"
+  element={
+    <ProtectedPage>
+      <AdminNotices />
+    </ProtectedPage>
+  }
+/>
 
           <Route
             path="/admin/events"
