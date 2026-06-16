@@ -13,6 +13,7 @@ import { Footer } from "./Footer";
 
 import Messages from "../../pages/Messages";
 import Notices from "../../pages/Notices";
+import NoticeDetail from "../../pages/NoticeDetail";
 import Staff from "../../pages/Staff";
 import Facilities from "../../pages/Facilities";
 
@@ -84,6 +85,10 @@ function SchoolApp() {
           <Route path="/admissions" element={<AdmissionsPage />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/notices" element={<Notices />} />
+          <Route
+  path="/notices/:id"
+  element={<NoticeDetail />}
+/>
           <Route path="/staff" element={<Staff />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/gallery" element={<GalleryPage />} />
