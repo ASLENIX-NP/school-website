@@ -145,7 +145,7 @@ export default function AdminDashboard() {
 
   return (
     <section
-      className="min-h-screen relative overflow-hidden"
+  className="min-h-screen relative overflow-visible"
       style={{
         background: `
           radial-gradient(circle at top right, rgba(56,189,248,0.16), transparent 34%),

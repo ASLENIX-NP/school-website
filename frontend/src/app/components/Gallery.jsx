@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Camera,
-  Image as ImageIcon,
   Sparkles,
   X,
   Layers,
   CalendarDays,
+  Image as ImageIcon,
 } from "lucide-react";
 
 const colors = {
@@ -17,17 +18,10 @@ const colors = {
   cream: "#FFF8EE",
 };
 
-/*
-  Later this can come from backend/admin dashboard.
-  Admin can add:
-  - image
-  - title
-  - category
-  - date
-*/
-const galleryData = {
+const defaultGalleryContent = {
   badge: "Gallery",
   title: "Campus in Action",
+  highlightedText: "in Action",
   description:
     "Explore moments from classrooms, activities, events, facilities, and student life at Baljagriti Secondary English School.",
 
@@ -41,6 +35,7 @@ const galleryData = {
       date: "Academic Session",
       image:
         "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&h=800&fit=crop&auto=format",
+      visible: true,
     },
     {
       id: 2,
@@ -49,6 +44,7 @@ const galleryData = {
       date: "Daily Learning",
       image:
         "https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&h=700&fit=crop&auto=format",
+      visible: true,
     },
     {
       id: 3,
@@ -57,6 +53,7 @@ const galleryData = {
       date: "Annual Program",
       image:
         "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=900&h=700&fit=crop&auto=format",
+      visible: true,
     },
     {
       id: 4,
@@ -65,6 +62,7 @@ const galleryData = {
       date: "Sports Week",
       image:
         "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=900&h=700&fit=crop&auto=format",
+      visible: true,
     },
     {
       id: 5,
@@ -73,6 +71,7 @@ const galleryData = {
       date: "Extra Curricular",
       image:
         "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=900&h=700&fit=crop&auto=format",
+      visible: true,
     },
     {
       id: 6,
@@ -81,6 +80,7 @@ const galleryData = {
       date: "Digital Learning",
       image:
         "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=900&h=700&fit=crop&auto=format",
+      visible: true,
     },
     {
       id: 7,
@@ -89,6 +89,7 @@ const galleryData = {
       date: "Practical Class",
       image:
         "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=900&h=700&fit=crop&auto=format",
+      visible: true,
     },
     {
       id: 8,
@@ -97,9 +98,46 @@ const galleryData = {
       date: "School Program",
       image:
         "https://images.unsplash.com/photo-1544717305-2782549b5136?w=900&h=700&fit=crop&auto=format",
+      visible: true,
     },
   ],
+
+  bottomTitle: "School Memories",
+  bottomDescription:
+    "Gallery images are updated by the school administration to highlight student life and campus activities.",
+  bottomNote: "Click image to preview",
 };
+
+function mergeGalleryContent(saved = {}) {
+  return {
+    ...defaultGalleryContent,
+    ...saved,
+    categories: Array.isArray(saved.categories)
+      ? saved.categories
+      : defaultGalleryContent.categories,
+    images: Array.isArray(saved.images)
+      ? saved.images
+      : defaultGalleryContent.images,
+  };
+}
+
+function HighlightedTitle({ title, highlightedText }) {
+  if (!highlightedText || !title.includes(highlightedText)) {
+    return <>{title}</>;
+  }
+
+  const [before, after] = title.split(highlightedText);
+
+  return (
+    <>
+      {before}
+      <span className="italic" style={{ color: colors.red }}>
+        {highlightedText}
+      </span>
+      {after}
+    </>
+  );
+}
 
 function GalleryCard({ item, index, onClick }) {
   const isLarge = index === 0 || index === 5;
@@ -123,11 +161,17 @@ function GalleryCard({ item, index, onClick }) {
         transform: "perspective(1000px)",
       }}
     >
-      <img
-        src={item.image}
-        alt={item.title}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-      />
+      {item.image ? (
+        <img
+          src={item.image}
+          alt={item.title}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-slate-200 flex items-center justify-center">
+          <ImageIcon className="w-16 h-16 text-slate-400" />
+        </div>
+      )}
 
       <div
         className="absolute inset-0 transition-opacity duration-300"
@@ -182,13 +226,40 @@ function GalleryCard({ item, index, onClick }) {
 }
 
 function Gallery() {
+  const [content, setContent] = useState(defaultGalleryContent);
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedImage, setSelectedImage] = useState(null);
 
+  useEffect(() => {
+    const loadGalleryContent = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/site-content/gallery"
+        );
+
+        const savedContent = res.data?.data?.content || {};
+        setContent(mergeGalleryContent(savedContent));
+      } catch (error) {
+        console.error("Gallery content load error:", error);
+        setContent(defaultGalleryContent);
+      }
+    };
+
+    loadGalleryContent();
+  }, []);
+
+  const categories = Array.from(
+    new Set(["All", ...(content.categories || []).filter(Boolean)])
+  );
+
+  const visibleImages = (content.images || []).filter(
+    (item) => item.visible !== false
+  );
+
   const filteredImages =
     activeCategory === "All"
-      ? galleryData.images
-      : galleryData.images.filter((item) => item.category === activeCategory);
+      ? visibleImages
+      : visibleImages.filter((item) => item.category === activeCategory);
 
   return (
     <section
@@ -236,7 +307,7 @@ function Gallery() {
             }}
           >
             <Camera className="w-4 h-4" />
-            {galleryData.badge}
+            {content.badge}
           </span>
 
           <h1
@@ -248,19 +319,14 @@ function Gallery() {
               letterSpacing: "-0.045em",
             }}
           >
-            Campus{" "}
-            <span
-              className="italic"
-              style={{
-                color: colors.red,
-              }}
-            >
-              in Action
-            </span>
+            <HighlightedTitle
+              title={content.title}
+              highlightedText={content.highlightedText}
+            />
           </h1>
 
           <p className="max-w-3xl mx-auto text-base md:text-lg text-slate-500 leading-relaxed">
-            {galleryData.description}
+            {content.description}
           </p>
         </motion.div>
 
@@ -270,7 +336,7 @@ function Gallery() {
           transition={{ duration: 0.55, delay: 0.1 }}
           className="flex flex-wrap justify-center gap-3 mb-12"
         >
-          {galleryData.categories.map((category) => {
+          {categories.map((category) => {
             const active = activeCategory === category;
 
             return (
@@ -310,21 +376,33 @@ function Gallery() {
             backdropFilter: "blur(18px)",
           }}
         >
-          <motion.div
-            layout
-            className="grid md:grid-cols-2 lg:grid-cols-3 auto-rows-auto gap-4"
-          >
-            <AnimatePresence mode="popLayout">
-              {filteredImages.map((item, index) => (
-                <GalleryCard
-                  key={item.id}
-                  item={item}
-                  index={index}
-                  onClick={setSelectedImage}
-                />
-              ))}
-            </AnimatePresence>
-          </motion.div>
+          {filteredImages.length > 0 ? (
+            <motion.div
+              layout
+              className="grid md:grid-cols-2 lg:grid-cols-3 auto-rows-auto gap-4"
+            >
+              <AnimatePresence mode="popLayout">
+                {filteredImages.map((item, index) => (
+                  <GalleryCard
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    onClick={setSelectedImage}
+                  />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          ) : (
+            <div className="bg-white rounded-3xl p-10 text-center">
+              <ImageIcon className="w-14 h-14 mx-auto text-slate-300 mb-4" />
+              <div className="font-bold text-slate-800">
+                No gallery images found.
+              </div>
+              <div className="text-sm text-slate-500 mt-1">
+                Please check another category.
+              </div>
+            </div>
+          )}
         </div>
 
         <motion.div
@@ -352,13 +430,12 @@ function Gallery() {
             </div>
 
             <div>
-              <div className="text-white font-bold">Admin Gallery Ready</div>
+              <div className="text-white font-bold">{content.bottomTitle}</div>
               <div
                 className="text-sm"
                 style={{ color: "rgba(255,255,255,0.68)" }}
               >
-                Images, categories, titles, and dates can later come from admin
-                dashboard.
+                {content.bottomDescription}
               </div>
             </div>
           </div>
@@ -368,7 +445,7 @@ function Gallery() {
             style={{ color: "rgba(255,255,255,0.72)" }}
           >
             <Sparkles className="w-4 h-4" style={{ color: "#FACC15" }} />
-            Click image to preview
+            {content.bottomNote}
           </div>
         </motion.div>
       </div>
@@ -411,11 +488,17 @@ function Gallery() {
                 <X className="w-5 h-5 text-white" />
               </button>
 
-              <img
-                src={selectedImage.image}
-                alt={selectedImage.title}
-                className="w-full h-[70vh] object-cover"
-              />
+              {selectedImage.image ? (
+                <img
+                  src={selectedImage.image}
+                  alt={selectedImage.title}
+                  className="w-full h-[70vh] object-cover"
+                />
+              ) : (
+                <div className="w-full h-[70vh] bg-slate-100 flex items-center justify-center">
+                  <ImageIcon className="w-20 h-20 text-slate-300" />
+                </div>
+              )}
 
               <div className="p-6">
                 <div className="flex flex-wrap items-center gap-3 mb-2">

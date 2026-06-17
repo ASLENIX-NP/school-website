@@ -10,23 +10,27 @@ import { Events } from "./Events";
 import { Gallery } from "./Gallery";
 import { Contact } from "./Contact";
 import { Footer } from "./Footer";
-import AdminFacilities from "../../admin/AdminFacilities";
+
 import Messages from "../../pages/Messages";
 import Notices from "../../pages/Notices";
 import NoticeDetail from "../../pages/NoticeDetail";
 import Staff from "../../pages/Staff";
 import Facilities from "../../pages/Facilities";
-
+import AdminAbout from "../../admin/AdminAbout";
 import AdminLogin from "../../admin/AdminLogin";
 import AdminDashboard from "../../admin/AdminDashboard";
 import AdminHome from "../../admin/AdminHome";
 import AdminMessages from "../../admin/AdminMessages";
 import AdminNotices from "../../admin/AdminNotices";
-
+import AdminFacilities from "../../admin/AdminFacilities";
 import AdminNavbar from "../../admin/AdminNavbar";
 import AdminStaff from "../../admin/AdminStaff";
 import AdminComingSoon from "../../admin/AdminComingSoon";
 import ProtectedAdminRoute from "../../admin/ProtectedAdminRoute";
+import AdminAcademics from "../../admin/AdminAcademics";
+import AdminAdmissions from "../../admin/AdminAdmissions";
+import AdminFooter from "../../admin/AdminFooter";
+import AdminGallery from "../../admin/AdminGallery";
 
 function HomePage() {
   return (
@@ -175,40 +179,31 @@ function SchoolApp() {
 
           {/* Admin Editors To Build Next */}
           <Route
-            path="/admin/about"
-            element={
-              <ProtectedPage>
-                <AdminComingSoon
-                  title="Manage About"
-                  description="About editor will control school intro, story, mission, vision, and journey timeline."
-                />
-              </ProtectedPage>
-            }
-          />
+  path="/admin/about"
+  element={
+    <ProtectedPage>
+      <AdminAbout />
+    </ProtectedPage>
+  }
+/>
 
           <Route
-            path="/admin/academics"
-            element={
-              <ProtectedPage>
-                <AdminComingSoon
-                  title="Manage Academics"
-                  description="Academics editor will control academic programs, facilities, and learning sections."
-                />
-              </ProtectedPage>
-            }
-          />
+  path="/admin/academics"
+  element={
+    <ProtectedPage>
+      <AdminAcademics />
+    </ProtectedPage>
+  }
+/>
 
           <Route
-            path="/admin/admissions"
-            element={
-              <ProtectedPage>
-                <AdminComingSoon
-                  title="Manage Admissions"
-                  description="Admissions editor will control admission process, dates, requirements, and scholarships."
-                />
-              </ProtectedPage>
-            }
-          />
+  path="/admin/admissions"
+  element={
+    <ProtectedPage>
+      <AdminAdmissions />
+    </ProtectedPage>
+  }
+/>
 
           <Route
             path="/admin/events"
@@ -223,16 +218,13 @@ function SchoolApp() {
           />
 
           <Route
-            path="/admin/gallery"
-            element={
-              <ProtectedPage>
-                <AdminComingSoon
-                  title="Manage Gallery"
-                  description="Gallery editor will control images, categories, titles, and activity photos."
-                />
-              </ProtectedPage>
-            }
-          />
+  path="/admin/gallery"
+  element={
+    <ProtectedPage>
+      <AdminGallery />
+    </ProtectedPage>
+  }
+/>
 
           <Route
             path="/admin/contact-messages"
@@ -247,16 +239,13 @@ function SchoolApp() {
           />
 
           <Route
-            path="/admin/footer"
-            element={
-              <ProtectedPage>
-                <AdminComingSoon
-                  title="Manage Footer"
-                  description="Footer editor will control footer logo text, links, contact details, and social links."
-                />
-              </ProtectedPage>
-            }
-          />
+  path="/admin/footer"
+  element={
+    <ProtectedPage>
+      <AdminFooter />
+    </ProtectedPage>
+  }
+/>
 
           <Route
             path="/admin/settings"

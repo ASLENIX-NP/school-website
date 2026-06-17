@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { motion } from "motion/react";
 import {
   CheckCircle2,
@@ -8,6 +10,7 @@ import {
   Eye,
   CalendarDays,
   BookOpen,
+  Image as ImageIcon,
 } from "lucide-react";
 
 const colors = {
@@ -21,77 +24,180 @@ const colors = {
   lightPurple: "#F1ECFF",
 };
 
-const pillars = [
-  {
-    icon: Award,
-    label: "Academic Excellence",
-    desc: "Focused classroom learning that helps students build a strong academic foundation from early years to Grade 10.",
-  },
-  {
-    icon: Heart,
-    label: "Holistic Development",
-    desc: "A nurturing and child-friendly environment where students grow academically, personally, socially, and morally.",
-  },
-  {
-    icon: Lightbulb,
-    label: "Creative & Practical Learning",
-    desc: "Extra-curricular activities, competitions, sports, arts, and school programs help students explore their talents.",
-  },
-];
+const defaultAboutContent = {
+  pageTitle: "About Us",
+  pageSubtitle:
+    "Learn about Baljagriti Secondary English School, our values, and our commitment to quality education.",
+  heroImageUrl:
+    "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=700&h=500&fit=crop&auto=format",
+  heroImageAlt: "Students in classroom with teacher",
+  floatingCardEmoji: "🏫",
+  floatingCardTitle: "Baljagriti Secondary English School",
+  floatingCardSubtitle: "Hetauda, Makwanpur",
+  topCardTitle: "PG to Grade 10",
+  topCardSubtitle: "Co-educational day school",
+  pillars: [
+    {
+      id: 1,
+      icon: "award",
+      label: "Academic Excellence",
+      desc: "Focused classroom learning that helps students build a strong academic foundation from early years to Grade 10.",
+      color: "#D71920",
+      visible: true,
+    },
+    {
+      id: 2,
+      icon: "heart",
+      label: "Holistic Development",
+      desc: "A nurturing and child-friendly environment where students grow academically, personally, socially, and morally.",
+      color: "#168A3A",
+      visible: true,
+    },
+    {
+      id: 3,
+      icon: "lightbulb",
+      label: "Creative & Practical Learning",
+      desc: "Extra-curricular activities, competitions, sports, arts, and school programs help students explore their talents.",
+      color: "#4B2E83",
+      visible: true,
+    },
+  ],
+  highlights: [
+    "Play Group to Grade 10",
+    "Co-educational day school",
+    "Located in Hetauda-2, Makwanpur",
+    "Child-friendly learning environment",
+    "Focus on academic and moral foundation",
+    "ECA, sports, arts, and competitions",
+  ],
+  storyBadge: "Our Story",
+  storyTitle: "Building Tomorrow's Leaders Today",
+  storyParagraphs: [
+    "Baljagriti Secondary English School, located in the heart of Makwanpur, Nepal, has been a beacon of quality education for many years. What began as a small school with a strong vision has grown into a thriving institution serving students from Play Group to Grade 10.",
+    "We take pride in our dedicated team of experienced educators who work tirelessly to ensure every child receives the attention, guidance, and learning environment they need to grow academically and personally.",
+  ],
+  storyImageUrl:
+    "https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&h=700&fit=crop&auto=format",
+  storyImageAlt: "School campus",
+  storyImageTitle: "School Campus",
+  storyImageSubtitle: "Image can later be managed from admin dashboard",
+  missionVision: [
+    {
+      id: 1,
+      icon: "target",
+      title: "Our Mission",
+      desc: "To provide a safe, nurturing, and academically rigorous learning environment that empowers students to become confident, creative, and responsible citizens equipped for the challenges of the modern world.",
+      color: "#4B2E83",
+      visible: true,
+    },
+    {
+      id: 2,
+      icon: "eye",
+      title: "Our Vision",
+      desc: "To be a leading educational institution in Makwanpur, recognized for academic excellence, holistic development, and producing leaders who contribute positively to society and the nation.",
+      color: "#168A3A",
+      visible: true,
+    },
+  ],
+  journeyTitle: "Our Journey",
+  journey: [
+    {
+      id: 1,
+      year: "2046 BS",
+      title: "School Founded",
+      desc: "Baljagriti Secondary English School was established in Makwanpur with a vision to provide quality English-medium education.",
+      visible: true,
+    },
+    {
+      id: 2,
+      year: "Secondary Level",
+      title: "Expanded to Grade 10",
+      desc: "The school expanded its academic structure to support students from early learning levels up to Grade 10.",
+      visible: true,
+    },
+    {
+      id: 3,
+      year: "Academic Growth",
+      title: "Strong SEE Foundation",
+      desc: "Students continued building strong academic results through focused classroom teaching, discipline, and guided learning.",
+      visible: true,
+    },
+    {
+      id: 4,
+      year: "Today",
+      title: "Growing Learning Community",
+      desc: "The school community continues to grow with dedicated educators, modern facilities, and a focus on holistic student development.",
+      visible: true,
+    },
+  ],
+};
 
-const highlights = [
-  "Play Group to Grade 10",
-  "Co-educational day school",
-  "Located in Hetauda-2, Makwanpur",
-  "Child-friendly learning environment",
-  "Focus on academic and moral foundation",
-  "ECA, sports, arts, and competitions",
-];
+function mergeAboutContent(saved = {}) {
+  return {
+    ...defaultAboutContent,
+    ...saved,
+    pillars: Array.isArray(saved.pillars)
+      ? saved.pillars
+      : defaultAboutContent.pillars,
+    highlights: Array.isArray(saved.highlights)
+      ? saved.highlights
+      : defaultAboutContent.highlights,
+    storyParagraphs: Array.isArray(saved.storyParagraphs)
+      ? saved.storyParagraphs
+      : defaultAboutContent.storyParagraphs,
+    missionVision: Array.isArray(saved.missionVision)
+      ? saved.missionVision
+      : defaultAboutContent.missionVision,
+    journey: Array.isArray(saved.journey)
+      ? saved.journey
+      : defaultAboutContent.journey,
+  };
+}
 
-const storyParagraphs = [
-  "Baljagriti Secondary English School, located in the heart of Makwanpur, Nepal, has been a beacon of quality education for many years. What began as a small school with a strong vision has grown into a thriving institution serving students from Play Group to Grade 10.",
-  "We take pride in our dedicated team of experienced educators who work tirelessly to ensure every child receives the attention, guidance, and learning environment they need to grow academically and personally.",
-];
+function getIcon(icon) {
+  if (icon === "heart") return Heart;
+  if (icon === "lightbulb") return Lightbulb;
+  if (icon === "target") return Target;
+  if (icon === "eye") return Eye;
+  return Award;
+}
 
-const missionVision = [
-  {
-    icon: Target,
-    title: "Our Mission",
-    desc: "To provide a safe, nurturing, and academically rigorous learning environment that empowers students to become confident, creative, and responsible citizens equipped for the challenges of the modern world.",
-    color: colors.purple,
-  },
-  {
-    icon: Eye,
-    title: "Our Vision",
-    desc: "To be a leading educational institution in Makwanpur, recognized for academic excellence, holistic development, and producing leaders who contribute positively to society and the nation.",
-    color: colors.green,
-  },
-];
+function AboutImage({ src, alt }) {
+  if (src) {
+    return <img src={src} alt={alt} className="w-full h-full object-cover" />;
+  }
 
-const journey = [
-  {
-    year: "2046 BS",
-    title: "School Founded",
-    desc: "Baljagriti Secondary English School was established in Makwanpur with a vision to provide quality English-medium education.",
-  },
-  {
-    year: "Secondary Level",
-    title: "Expanded to Grade 10",
-    desc: "The school expanded its academic structure to support students from early learning levels up to Grade 10.",
-  },
-  {
-    year: "Academic Growth",
-    title: "Strong SEE Foundation",
-    desc: "Students continued building strong academic results through focused classroom teaching, discipline, and guided learning.",
-  },
-  {
-    year: "Today",
-    title: "Growing Learning Community",
-    desc: "The school community continues to grow with dedicated educators, modern facilities, and a focus on holistic student development.",
-  },
-];
+  return (
+    <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+      <ImageIcon className="w-20 h-20 text-slate-300" />
+    </div>
+  );
+}
 
 export function About() {
+  const [content, setContent] = useState(defaultAboutContent);
+
+  useEffect(() => {
+    const loadAboutContent = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/site-content/about");
+        const savedContent = res.data?.data?.content || {};
+        setContent(mergeAboutContent(savedContent));
+      } catch (error) {
+        console.error("About content load error:", error);
+        setContent(defaultAboutContent);
+      }
+    };
+
+    loadAboutContent();
+  }, []);
+
+  const visiblePillars = content.pillars.filter((item) => item.visible !== false);
+  const visibleMissionVision = content.missionVision.filter(
+    (item) => item.visible !== false
+  );
+  const visibleJourney = content.journey.filter((item) => item.visible !== false);
+
   return (
     <section
       id="about"
@@ -136,15 +242,14 @@ export function About() {
               letterSpacing: "-0.04em",
             }}
           >
-            About Us
+            {content.pageTitle}
           </h1>
 
           <p
             className="max-w-2xl mx-auto text-base md:text-lg"
             style={{ color: "#64748b" }}
           >
-            Learn about Baljagriti Secondary English School, our values, and our
-            commitment to quality education.
+            {content.pageSubtitle}
           </p>
         </motion.div>
 
@@ -164,11 +269,7 @@ export function About() {
                 border: "1px solid rgba(255,255,255,0.5)",
               }}
             >
-              <img
-                src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=700&h=500&fit=crop&auto=format"
-                alt="Students in classroom with teacher"
-                className="w-full h-full object-cover"
-              />
+              <AboutImage src={content.heroImageUrl} alt={content.heroImageAlt} />
 
               <div
                 className="absolute inset-0"
@@ -189,12 +290,12 @@ export function About() {
                 width: "200px",
               }}
             >
-              <div className="text-4xl mb-2">🏫</div>
+              <div className="text-4xl mb-2">{content.floatingCardEmoji}</div>
               <div className="text-white font-semibold text-sm">
-                Baljagriti Secondary English School
+                {content.floatingCardTitle}
               </div>
               <div className="text-xs mt-1" style={{ color: colors.green }}>
-                Hetauda, Makwanpur
+                {content.floatingCardSubtitle}
               </div>
             </div>
 
@@ -224,10 +325,10 @@ export function About() {
                     className="text-sm font-semibold"
                     style={{ color: colors.dark }}
                   >
-                    PG to Grade 10
+                    {content.topCardTitle}
                   </div>
                   <div className="text-xs" style={{ color: "#64748b" }}>
-                    Co-educational day school
+                    {content.topCardSubtitle}
                   </div>
                 </div>
               </div>
@@ -240,18 +341,13 @@ export function About() {
             transition={{ duration: 0.7, delay: 0.15 }}
           >
             <div className="space-y-4 mb-8">
-              {pillars.map((p, index) => {
-                const Icon = p.icon;
-                const cardColor =
-                  index === 0
-                    ? colors.red
-                    : index === 1
-                    ? colors.green
-                    : colors.purple;
+              {visiblePillars.map((p) => {
+                const Icon = getIcon(p.icon);
+                const cardColor = p.color || colors.green;
 
                 return (
                   <div
-                    key={p.label}
+                    key={p.id}
                     className="flex gap-4 p-5 rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group"
                     style={{
                       background:
@@ -289,7 +385,7 @@ export function About() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              {highlights.map((h) => (
+              {content.highlights.map((h) => (
                 <div key={h} className="flex items-start gap-2">
                   <CheckCircle2
                     className="w-4 h-4 mt-0.5 flex-shrink-0"
@@ -319,7 +415,7 @@ export function About() {
                 border: "1px solid rgba(75,46,131,0.18)",
               }}
             >
-              Our Story
+              {content.storyBadge}
             </span>
 
             <h2
@@ -332,11 +428,11 @@ export function About() {
                 letterSpacing: "-0.04em",
               }}
             >
-              Building Tomorrow&apos;s Leaders Today
+              {content.storyTitle}
             </h2>
 
             <div className="space-y-5">
-              {storyParagraphs.map((text) => (
+              {content.storyParagraphs.map((text) => (
                 <p key={text} className="text-lg leading-relaxed text-slate-500">
                   {text}
                 </p>
@@ -359,11 +455,7 @@ export function About() {
               transform: "perspective(1000px) rotateY(-3deg) rotateX(2deg)",
             }}
           >
-            <img
-              src="https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&h=700&fit=crop&auto=format"
-              alt="School campus"
-              className="w-full h-full object-cover opacity-90"
-            />
+            <AboutImage src={content.storyImageUrl} alt={content.storyImageAlt} />
 
             <div
               className="absolute inset-0"
@@ -394,12 +486,14 @@ export function About() {
                 </div>
 
                 <div>
-                  <div className="text-white font-semibold">School Campus</div>
+                  <div className="text-white font-semibold">
+                    {content.storyImageTitle}
+                  </div>
                   <div
                     className="text-sm"
                     style={{ color: "rgba(255,255,255,0.72)" }}
                   >
-                    Image can later be managed from admin dashboard
+                    {content.storyImageSubtitle}
                   </div>
                 </div>
               </div>
@@ -408,12 +502,12 @@ export function About() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 mt-28">
-          {missionVision.map((item, index) => {
-            const Icon = item.icon;
+          {visibleMissionVision.map((item, index) => {
+            const Icon = getIcon(item.icon);
 
             return (
               <motion.div
-                key={item.title}
+                key={item.id}
                 initial={{ opacity: 0, y: 35 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -422,7 +516,7 @@ export function About() {
                 style={{
                   background:
                     "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.76))",
-                  border: `1px solid ${item.color}22`,
+                  border: `1px solid ${(item.color || colors.green)}22`,
                   boxShadow: "0 18px 48px rgba(11,16,32,0.08)",
                   backdropFilter: "blur(14px)",
                 }}
@@ -430,11 +524,14 @@ export function About() {
                 <div
                   className="w-14 h-14 rounded-2xl flex items-center justify-center mb-7"
                   style={{
-                    background: `${item.color}12`,
-                    border: `1px solid ${item.color}22`,
+                    background: `${item.color || colors.green}12`,
+                    border: `1px solid ${item.color || colors.green}22`,
                   }}
                 >
-                  <Icon className="w-6 h-6" style={{ color: item.color }} />
+                  <Icon
+                    className="w-6 h-6"
+                    style={{ color: item.color || colors.green }}
+                  />
                 </div>
 
                 <h3
@@ -474,7 +571,7 @@ export function About() {
                 letterSpacing: "-0.04em",
               }}
             >
-              Our Journey
+              {content.journeyTitle}
             </h2>
           </motion.div>
 
@@ -485,9 +582,9 @@ export function About() {
             />
 
             <div className="space-y-8">
-              {journey.map((item, index) => (
+              {visibleJourney.map((item, index) => (
                 <motion.div
-                  key={item.title}
+                  key={item.id}
                   initial={{ opacity: 0, x: -35 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
