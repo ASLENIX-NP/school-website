@@ -31,6 +31,8 @@ import AdminAcademics from "../../admin/AdminAcademics";
 import AdminAdmissions from "../../admin/AdminAdmissions";
 import AdminFooter from "../../admin/AdminFooter";
 import AdminGallery from "../../admin/AdminGallery";
+import AdminSettings from "../../admin/AdminSettings";
+
 
 function HomePage() {
   return (
@@ -132,6 +134,14 @@ function SchoolApp() {
               </ProtectedPage>
             }
           />
+          <Route
+  path="/admin/settings"
+  element={
+    <ProtectedPage>
+      <AdminSettings />
+    </ProtectedPage>
+  }
+/>
 
           <Route
             path="/admin/messages"
@@ -246,19 +256,6 @@ function SchoolApp() {
     </ProtectedPage>
   }
 />
-
-          <Route
-            path="/admin/settings"
-            element={
-              <ProtectedPage>
-                <AdminComingSoon
-                  title="Website Settings"
-                  description="Settings will control global school name, site defaults, and common information."
-                />
-              </ProtectedPage>
-            }
-          />
-
           {/* Fallback */}
           <Route
             path="*"

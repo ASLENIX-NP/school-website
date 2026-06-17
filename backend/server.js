@@ -9,6 +9,8 @@ import adminAuthRoutes from "./routes/adminAuthRoutes.js";
 import siteContentRoutes from "./routes/siteContentRoutes.js";
 import noticeRoutes from "./routes/noticeRoutes.js";
 import noticeSettingsRoutes from "./routes/noticeSettingsRoutes.js";
+import adminSettingsRoutes from "./routes/adminSettingsRoutes.js";
+
 
 dotenv.config();
 
@@ -30,6 +32,7 @@ app.use("/api/admin/auth", adminAuthRoutes);
 app.use("/api/site-content", siteContentRoutes);
 app.use("/api/notices", noticeRoutes);
 app.use("/api/notice-settings", noticeSettingsRoutes);
+app.use("/api/admin-settings", adminSettingsRoutes);
 
 app.post("/api/contact", async (req, res) => {
   try {

@@ -1,34 +1,58 @@
 import express from "express";
 import jwt from "jsonwebtoken";
+import { UAParser } from "ua-parser-js";
+import { supabase } from "../config/supabase.js";
 import { protectAdmin } from "../middleware/adminAuthMiddleware.js";
 
-const router = express.Router();
 
+const router = express.Router();
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Email and password are required.",
-      });
-    }
+    const { data: admin, error } = await supabase
+      .from("admin_settings")
+      .select("*")
+      .eq("admin_email", email)
+      .single();
 
-    const adminEmail = process.env.ADMIN_EMAIL;
-    const adminPassword = process.env.ADMIN_PASSWORD;
-
-    if (email !== adminEmail || password !== adminPassword) {
+    if (error || !admin) {
       return res.status(401).json({
         success: false,
-        message: "Invalid admin credentials.",
+        message: "Invalid email",
       });
     }
+
+    if (admin.password !== password) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+    const parser = new UAParser(req.headers["user-agent"]);
+const result = parser.getResult();
+
+const device =
+  result.os.name || "Unknown Device";
+
+const browser =
+  result.browser.name || "Unknown Browser";
+
+await supabase
+  .from("admin_login_activity")
+  .insert([
+    {
+      device,
+      browser,
+      location: "Kathmandu, Nepal",
+      status: "Success",
+    },
+  ]);
 
     const token = jwt.sign(
       {
-        email,
-        role: "admin",
+        email: admin.admin_email,
+        role: admin.role,
       },
       process.env.JWT_SECRET,
       {
@@ -36,19 +60,19 @@ router.post("/login", async (req, res) => {
       }
     );
 
-    res.status(200).json({
+    return res.json({
       success: true,
-      message: "Admin login successful.",
       token,
       admin: {
-        email,
-        role: "admin",
+        email: admin.admin_email,
+        role: admin.role,
       },
     });
-  } catch (error) {
-    res.status(500).json({
+
+  } catch (err) {
+    return res.status(500).json({
       success: false,
-      message: "Server error during admin login.",
+      message: err.message,
     });
   }
 });
