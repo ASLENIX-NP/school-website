@@ -232,6 +232,50 @@ function EditorCard({ icon: Icon, title, color, children }) {
   );
 }
 
+function VisibilityDeleteControls({ visible, onToggle, onDelete }) {
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="p-3 rounded-xl"
+        style={{
+          background:
+            visible !== false
+              ? "rgba(22,138,58,0.1)"
+              : "rgba(100,116,139,0.12)",
+          color: visible !== false ? colors.green : "#64748B",
+          border:
+            visible !== false
+              ? "1px solid rgba(22,138,58,0.2)"
+              : "1px solid rgba(100,116,139,0.16)",
+        }}
+        title={visible !== false ? "Visible" : "Hidden"}
+      >
+        {visible !== false ? (
+          <EyeIcon className="w-4 h-4" />
+        ) : (
+          <EyeOff className="w-4 h-4" />
+        )}
+      </button>
+
+      <button
+        type="button"
+        onClick={onDelete}
+        className="p-3 rounded-xl"
+        style={{
+          background: "rgba(215,25,32,0.09)",
+          color: colors.red,
+          border: "1px solid rgba(215,25,32,0.18)",
+        }}
+        title="Delete"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
 function ImageUploadBox({
   label,
   imageUrl,
@@ -301,6 +345,18 @@ function ImageUploadBox({
   );
 }
 
+function PreviewImage({ src, alt, height = "h-60" }) {
+  if (src) {
+    return <img src={src} alt={alt} className={`w-full ${height} object-cover`} />;
+  }
+
+  return (
+    <div className={`w-full ${height} bg-slate-100 flex items-center justify-center`}>
+      <ImageIcon className="w-14 h-14 text-slate-300" />
+    </div>
+  );
+}
+
 function AboutPreview({ form }) {
   const visiblePillars = (form.pillars || []).filter(
     (item) => item.visible !== false
@@ -314,6 +370,25 @@ function AboutPreview({ form }) {
     (item) => item.visible !== false
   );
 
+  const glanceItems = [
+    {
+      value: form.topCardTitle || "PG to Grade 10",
+      label: form.topCardSubtitle || "Co-educational day school",
+    },
+    {
+      value: visibleJourney[0]?.year || "2046 BS",
+      label: "Established",
+    },
+    {
+      value: form.floatingCardSubtitle || "Hetauda, Makwanpur",
+      label: "School Location",
+    },
+    {
+      value: "ECA",
+      label: "Sports, arts & activities",
+    },
+  ];
+
   return (
     <div
       className="min-h-full p-6"
@@ -322,8 +397,18 @@ function AboutPreview({ form }) {
           "radial-gradient(circle at top right, rgba(124,92,196,0.18), transparent 34%), radial-gradient(circle at bottom left, rgba(22,138,58,0.14), transparent 32%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
       }}
     >
-      {/* Top Heading */}
       <div className="text-center mb-8">
+        <span
+          className="inline-block px-4 py-1.5 rounded-full text-sm font-bold mb-4"
+          style={{
+            background: "rgba(215,25,32,0.08)",
+            color: colors.red,
+            border: "1px solid rgba(215,25,32,0.14)",
+          }}
+        >
+          School Profile
+        </span>
+
         <h3
           className="text-4xl text-slate-950"
           style={{
@@ -340,111 +425,112 @@ function AboutPreview({ form }) {
         </p>
       </div>
 
-      {/* Main Image */}
       <div
-        className="rounded-3xl overflow-hidden bg-white mb-6 relative"
+        className="rounded-3xl overflow-hidden bg-white mb-5 relative"
         style={{
           border: "1px solid rgba(15,23,42,0.08)",
           boxShadow: "0 14px 34px rgba(15,23,42,0.08)",
         }}
       >
-        {form.heroImageUrl ? (
-          <img
-            src={form.heroImageUrl}
-            alt={form.heroImageAlt || "About image"}
-            className="w-full h-60 object-cover"
-          />
-        ) : (
-          <div className="w-full h-60 bg-slate-100 flex items-center justify-center">
-            <ImageIcon className="w-14 h-14 text-slate-300" />
-          </div>
-        )}
+        <PreviewImage
+          src={form.heroImageUrl}
+          alt={form.heroImageAlt || "About image"}
+        />
 
-        <div className="absolute bottom-4 left-4 right-4 rounded-2xl p-4 bg-black/45 backdrop-blur-md">
-          <div className="text-3xl mb-1">{form.floatingCardEmoji}</div>
-          <div className="text-white font-bold text-sm">
-            {form.floatingCardTitle}
+        <div
+          className="absolute top-4 left-4 rounded-2xl px-4 py-3"
+          style={{
+            background: "rgba(255,255,255,0.92)",
+            border: "1px solid rgba(75,46,131,0.14)",
+            backdropFilter: "blur(12px)",
+          }}
+        >
+          <div
+            className="w-10 h-1 rounded-full mb-2"
+            style={{ background: colors.green }}
+          />
+
+          <div className="text-sm font-bold text-slate-950">
+            {form.topCardTitle}
           </div>
-          <div className="text-green-300 text-xs">
-            {form.floatingCardSubtitle}
+
+          <div className="text-xs text-slate-500">
+            {form.topCardSubtitle}
           </div>
         </div>
       </div>
 
-      {/* Top Small Card */}
       <div
-        className="bg-white rounded-2xl p-4 mb-6 flex items-center gap-3"
+        className="rounded-3xl p-5 mb-8"
         style={{
-          border: "1px solid rgba(22,138,58,0.14)",
-          boxShadow: "0 12px 30px rgba(15,23,42,0.06)",
+          background: `linear-gradient(135deg, ${colors.dark}, ${colors.purple})`,
+          border: "1px solid rgba(255,255,255,0.12)",
+          boxShadow: "0 16px 42px rgba(11,16,32,0.16)",
         }}
       >
         <div
-          className="w-11 h-11 rounded-xl flex items-center justify-center"
+          className="w-16 h-1 rounded-full mb-5"
           style={{
-            background: "rgba(22,138,58,0.1)",
+            background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
           }}
-        >
-          <Award className="w-5 h-5" style={{ color: colors.green }} />
-        </div>
+        />
 
-        <div>
-          <div className="font-bold text-slate-950">{form.topCardTitle}</div>
-          <div className="text-xs text-slate-500">{form.topCardSubtitle}</div>
-        </div>
-      </div>
-
-      {/* Pillars */}
-      <div className="mb-8">
-        <div className="text-xl font-black text-slate-950 mb-4">
-          Pillar Cards
-        </div>
-
-        <div className="space-y-4">
-          {visiblePillars.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-2xl p-4"
-              style={{
-                border: `1px solid ${(item.color || colors.green)}22`,
-                boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-              }}
-            >
-              <div className="font-black text-slate-950">{item.label}</div>
-              <div className="text-sm text-slate-500 mt-1 leading-relaxed">
-                {item.desc}
+        <div className="grid grid-cols-2 gap-4">
+          {glanceItems.map((item) => (
+            <div key={`${item.value}-${item.label}`}>
+              <div className="text-xl font-black text-white">{item.value}</div>
+              <div
+                className="text-xs mt-1"
+                style={{ color: "rgba(255,255,255,0.65)" }}
+              >
+                {item.label}
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Highlights */}
       <div className="mb-8">
         <div className="text-xl font-black text-slate-950 mb-4">
-          Highlights
+          Pillar Cards
         </div>
 
-        <div className="grid grid-cols-1 gap-3">
-          {(form.highlights || []).map((item, index) => (
-            <div
-              key={`${item}-${index}`}
-              className="bg-white rounded-2xl p-3 flex items-start gap-2"
-              style={{
-                border: "1px solid rgba(15,23,42,0.08)",
-              }}
-            >
-              <CheckCircle2
-                className="w-4 h-4 mt-0.5 flex-shrink-0"
-                style={{ color: colors.green }}
-              />
-              <span className="text-sm text-slate-600">{item}</span>
-            </div>
-          ))}
+        <div className="space-y-4">
+          {visiblePillars.map((item, index) => {
+            const pillarColor = item.color || colors.green;
+
+            return (
+              <div
+                key={item.id}
+                className="bg-white rounded-2xl p-4"
+                style={{
+                  border: `1px solid ${pillarColor}22`,
+                  boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
+                }}
+              >
+                <div
+                  className="text-sm font-black tracking-widest mb-3"
+                  style={{ color: pillarColor }}
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </div>
+
+                <div
+                  className="w-16 h-1 rounded-full mb-4"
+                  style={{ background: pillarColor }}
+                />
+
+                <div className="font-black text-slate-950">{item.label}</div>
+
+                <div className="text-sm text-slate-500 mt-1 leading-relaxed">
+                  {item.desc}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Story Section */}
       <div className="mb-8">
         <div
           className="inline-flex px-4 py-1.5 rounded-full text-sm font-bold mb-4"
@@ -484,78 +570,71 @@ function AboutPreview({ form }) {
             boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
           }}
         >
-          {form.storyImageUrl ? (
-            <img
-              src={form.storyImageUrl}
-              alt={form.storyImageAlt || "Story image"}
-              className="w-full h-60 object-cover"
-            />
-          ) : (
-            <div className="w-full h-60 bg-slate-100 flex items-center justify-center">
-              <ImageIcon className="w-14 h-14 text-slate-300" />
-            </div>
-          )}
+          <PreviewImage
+            src={form.storyImageUrl}
+            alt={form.storyImageAlt || "Story image"}
+          />
 
           <div className="absolute bottom-4 left-4 right-4 rounded-2xl p-4 bg-black/45 backdrop-blur-md">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-white" />
-              </div>
+            <div
+              className="w-14 h-1 rounded-full mb-3"
+              style={{
+                background:
+                  "linear-gradient(90deg, rgba(250,204,21,0.95), rgba(56,189,248,0.95))",
+              }}
+            />
 
-              <div>
-                <div className="text-white font-bold">
-                  {form.storyImageTitle}
-                </div>
-                <div className="text-white/70 text-xs">
-                  {form.storyImageSubtitle}
-                </div>
-              </div>
+            <div className="text-white font-bold">{form.storyImageTitle}</div>
+            <div className="text-white/70 text-xs">
+              {form.storyImageSubtitle}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mission / Vision */}
       <div className="mb-8">
         <div className="text-xl font-black text-slate-950 mb-4">
           Mission / Vision
         </div>
 
         <div className="space-y-4">
-          {visibleMissionVision.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-3xl p-5"
-              style={{
-                border: `1px solid ${(item.color || colors.green)}22`,
-                boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-              }}
-            >
+          {visibleMissionVision.map((item, index) => {
+            const cardColor = item.color || colors.green;
+
+            return (
               <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
+                key={item.id}
+                className="bg-white rounded-3xl p-5"
                 style={{
-                  background: `${item.color || colors.green}12`,
+                  border: `1px solid ${cardColor}22`,
+                  boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
                 }}
               >
-                <Target
-                  className="w-5 h-5"
-                  style={{ color: item.color || colors.green }}
+                <div
+                  className="text-sm font-black tracking-widest mb-3"
+                  style={{ color: cardColor }}
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </div>
+
+                <div
+                  className="w-16 h-1 rounded-full mb-4"
+                  style={{ background: cardColor }}
                 />
-              </div>
 
-              <div className="text-2xl font-black text-slate-950">
-                {item.title}
-              </div>
+                <div className="text-2xl font-black text-slate-950">
+                  {item.title}
+                </div>
 
-              <p className="text-sm text-slate-500 mt-3 leading-relaxed">
-                {item.desc}
-              </p>
-            </div>
-          ))}
+                <p className="text-sm text-slate-500 mt-3 leading-relaxed">
+                  {item.desc}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Journey */}
       <div>
         <div className="text-center mb-6">
           <div className="text-3xl font-black text-slate-950">
@@ -564,7 +643,7 @@ function AboutPreview({ form }) {
         </div>
 
         <div className="space-y-4">
-          {visibleJourney.map((item) => (
+          {visibleJourney.map((item, index) => (
             <div
               key={item.id}
               className="bg-white rounded-3xl p-5"
@@ -575,12 +654,10 @@ function AboutPreview({ form }) {
             >
               <div className="flex items-start gap-4">
                 <div
-                  className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{
-                    background: colors.dark,
-                  }}
+                  className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-black"
+                  style={{ background: colors.dark }}
                 >
-                  <CalendarDays className="w-5 h-5 text-white" />
+                  {String(index + 1).padStart(2, "0")}
                 </div>
 
                 <div>
@@ -925,8 +1002,10 @@ export default function AdminAbout() {
           </h1>
 
           <p className="text-slate-500 max-w-3xl text-lg">
-            Edit about heading, school image, pillars, highlights, story,
-            mission, vision, and journey timeline.
+            Edit about heading, school images, pillar cards, story, mission,
+            vision, and journey timeline. Icon and old highlight editing is
+            hidden because the public page now uses a cleaner number-and-line
+            layout.
           </p>
         </motion.div>
 
@@ -959,7 +1038,11 @@ export default function AdminAbout() {
 
         <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start">
           <div className="space-y-8">
-            <EditorCard icon={Type} title="Top About Section" color={colors.purple}>
+            <EditorCard
+              icon={Type}
+              title="Top About Section"
+              color={colors.purple}
+            >
               <div className="grid gap-5">
                 <Field
                   label="Page Title"
@@ -989,28 +1072,6 @@ export default function AdminAbout() {
                   onChange={(value) => updateField("heroImageAlt", value)}
                 />
 
-                <div className="grid md:grid-cols-3 gap-4">
-                  <Field
-                    label="Floating Emoji"
-                    value={form.floatingCardEmoji}
-                    onChange={(value) => updateField("floatingCardEmoji", value)}
-                  />
-
-                  <Field
-                    label="Floating Card Title"
-                    value={form.floatingCardTitle}
-                    onChange={(value) => updateField("floatingCardTitle", value)}
-                  />
-
-                  <Field
-                    label="Floating Card Subtitle"
-                    value={form.floatingCardSubtitle}
-                    onChange={(value) =>
-                      updateField("floatingCardSubtitle", value)
-                    }
-                  />
-                </div>
-
                 <div className="grid md:grid-cols-2 gap-4">
                   <Field
                     label="Top Small Card Title"
@@ -1024,6 +1085,15 @@ export default function AdminAbout() {
                     onChange={(value) => updateField("topCardSubtitle", value)}
                   />
                 </div>
+
+                <Field
+                  label="School Location Text"
+                  value={form.floatingCardSubtitle}
+                  onChange={(value) =>
+                    updateField("floatingCardSubtitle", value)
+                  }
+                  placeholder="Example: Hetauda, Makwanpur"
+                />
               </div>
             </EditorCard>
 
@@ -1057,90 +1127,47 @@ export default function AdminAbout() {
                         <div className="font-black text-slate-950">
                           Pillar {index + 1}
                         </div>
+
                         <div className="text-sm text-slate-500">
                           {item.label}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updatePillar(item.id, "visible", !item.visible)
-                          }
-                          className="p-3 rounded-xl"
-                          style={{
-                            background:
-                              item.visible !== false
-                                ? "rgba(22,138,58,0.1)"
-                                : "rgba(100,116,139,0.12)",
-                            color:
-                              item.visible !== false ? colors.green : "#64748B",
-                          }}
-                        >
-                          {item.visible !== false ? (
-                            <EyeIcon className="w-4 h-4" />
-                          ) : (
-                            <EyeOff className="w-4 h-4" />
-                          )}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => deletePillar(item.id)}
-                          className="p-3 rounded-xl"
-                          style={{
-                            background: "rgba(215,25,32,0.09)",
-                            color: colors.red,
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <VisibilityDeleteControls
+                        visible={item.visible}
+                        onToggle={() =>
+                          updatePillar(item.id, "visible", !item.visible)
+                        }
+                        onDelete={() => deletePillar(item.id)}
+                      />
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
                       <Field
                         label="Label"
                         value={item.label}
-                        onChange={(value) => updatePillar(item.id, "label", value)}
+                        onChange={(value) =>
+                          updatePillar(item.id, "label", value)
+                        }
                       />
 
                       <Field
-                        label="Color"
+                        label="Accent Color"
                         type="color"
                         value={item.color}
-                        onChange={(value) => updatePillar(item.id, "color", value)}
-                      />
-                    </div>
-
-                    <div className="mt-4">
-                      <label className="block text-sm font-bold mb-2 text-slate-700">
-                        Icon
-                      </label>
-                      <select
-                        value={item.icon}
-                        onChange={(e) =>
-                          updatePillar(item.id, "icon", e.target.value)
+                        onChange={(value) =>
+                          updatePillar(item.id, "color", value)
                         }
-                        className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
-                        style={{
-                          background: "rgba(255,255,255,0.88)",
-                          border: "1px solid rgba(75,46,131,0.16)",
-                          color: colors.dark,
-                        }}
-                      >
-                        <option value="award">Award</option>
-                        <option value="heart">Heart</option>
-                        <option value="lightbulb">Lightbulb</option>
-                      </select>
+                      />
                     </div>
 
                     <div className="mt-4">
                       <TextArea
                         label="Description"
                         value={item.desc}
-                        onChange={(value) => updatePillar(item.id, "desc", value)}
+                        onChange={(value) =>
+                          updatePillar(item.id, "desc", value)
+                        }
                       />
                     </div>
                   </div>
@@ -1148,24 +1175,11 @@ export default function AdminAbout() {
               </div>
             </EditorCard>
 
-            <EditorCard icon={CheckCircle2} title="Highlights" color={colors.green}>
-              <TextArea
-                label="Highlights - one item per line"
-                value={form.highlights.join("\n")}
-                onChange={(value) =>
-                  updateField(
-                    "highlights",
-                    value
-                      .split("\n")
-                      .map((item) => item.trim())
-                      .filter(Boolean)
-                  )
-                }
-                rows={7}
-              />
-            </EditorCard>
-
-            <EditorCard icon={BookOpen} title="Story Section" color={colors.purple}>
+            <EditorCard
+              icon={BookOpen}
+              title="Story Section"
+              color={colors.purple}
+            >
               <div className="grid gap-5">
                 <Field
                   label="Story Badge"
@@ -1227,7 +1241,11 @@ export default function AdminAbout() {
               </div>
             </EditorCard>
 
-            <EditorCard icon={Target} title="Mission / Vision Cards" color={colors.green}>
+            <EditorCard
+              icon={Target}
+              title="Mission / Vision Cards"
+              color={colors.green}
+            >
               <div className="flex justify-end mb-6">
                 <button
                   type="button"
@@ -1257,50 +1275,23 @@ export default function AdminAbout() {
                         <div className="font-black text-slate-950">
                           Card {index + 1}
                         </div>
+
                         <div className="text-sm text-slate-500">
                           {item.title}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateMissionVision(
-                              item.id,
-                              "visible",
-                              !item.visible
-                            )
-                          }
-                          className="p-3 rounded-xl"
-                          style={{
-                            background:
-                              item.visible !== false
-                                ? "rgba(22,138,58,0.1)"
-                                : "rgba(100,116,139,0.12)",
-                            color:
-                              item.visible !== false ? colors.green : "#64748B",
-                          }}
-                        >
-                          {item.visible !== false ? (
-                            <EyeIcon className="w-4 h-4" />
-                          ) : (
-                            <EyeOff className="w-4 h-4" />
-                          )}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => deleteMissionVision(item.id)}
-                          className="p-3 rounded-xl"
-                          style={{
-                            background: "rgba(215,25,32,0.09)",
-                            color: colors.red,
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <VisibilityDeleteControls
+                        visible={item.visible}
+                        onToggle={() =>
+                          updateMissionVision(
+                            item.id,
+                            "visible",
+                            !item.visible
+                          )
+                        }
+                        onDelete={() => deleteMissionVision(item.id)}
+                      />
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
@@ -1313,35 +1304,13 @@ export default function AdminAbout() {
                       />
 
                       <Field
-                        label="Color"
+                        label="Accent Color"
                         type="color"
                         value={item.color}
                         onChange={(value) =>
                           updateMissionVision(item.id, "color", value)
                         }
                       />
-                    </div>
-
-                    <div className="mt-4">
-                      <label className="block text-sm font-bold mb-2 text-slate-700">
-                        Icon
-                      </label>
-                      <select
-                        value={item.icon}
-                        onChange={(e) =>
-                          updateMissionVision(item.id, "icon", e.target.value)
-                        }
-                        className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
-                        style={{
-                          background: "rgba(255,255,255,0.88)",
-                          border: "1px solid rgba(75,46,131,0.16)",
-                          color: colors.dark,
-                        }}
-                      >
-                        <option value="target">Target</option>
-                        <option value="eye">Eye</option>
-                        <option value="award">Award</option>
-                      </select>
                     </div>
 
                     <div className="mt-4">
@@ -1358,7 +1327,11 @@ export default function AdminAbout() {
               </div>
             </EditorCard>
 
-            <EditorCard icon={CalendarDays} title="Journey Timeline" color={colors.red}>
+            <EditorCard
+              icon={CalendarDays}
+              title="Journey Timeline"
+              color={colors.red}
+            >
               <div className="grid gap-5">
                 <Field
                   label="Journey Section Title"
@@ -1394,46 +1367,19 @@ export default function AdminAbout() {
                         <div className="font-black text-slate-950">
                           Journey {index + 1}
                         </div>
+
                         <div className="text-sm text-slate-500">
                           {item.title}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateJourney(item.id, "visible", !item.visible)
-                          }
-                          className="p-3 rounded-xl"
-                          style={{
-                            background:
-                              item.visible !== false
-                                ? "rgba(22,138,58,0.1)"
-                                : "rgba(100,116,139,0.12)",
-                            color:
-                              item.visible !== false ? colors.green : "#64748B",
-                          }}
-                        >
-                          {item.visible !== false ? (
-                            <EyeIcon className="w-4 h-4" />
-                          ) : (
-                            <EyeOff className="w-4 h-4" />
-                          )}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => deleteJourney(item.id)}
-                          className="p-3 rounded-xl"
-                          style={{
-                            background: "rgba(215,25,32,0.09)",
-                            color: colors.red,
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <VisibilityDeleteControls
+                        visible={item.visible}
+                        onToggle={() =>
+                          updateJourney(item.id, "visible", !item.visible)
+                        }
+                        onDelete={() => deleteJourney(item.id)}
+                      />
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
@@ -1470,7 +1416,7 @@ export default function AdminAbout() {
           </div>
 
           <aside
-  className="rounded-3xl overflow-hidden"
+            className="rounded-3xl overflow-hidden"
             style={{
               background:
                 "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
@@ -1490,8 +1436,8 @@ export default function AdminAbout() {
             </div>
 
             <div className="bg-white">
-  <AboutPreview form={form} />
-</div>
+              <AboutPreview form={form} />
+            </div>
           </aside>
         </div>
       </main>

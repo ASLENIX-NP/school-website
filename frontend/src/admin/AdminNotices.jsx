@@ -12,7 +12,94 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  ExternalLink,
 } from "lucide-react";
+
+const colors = {
+  red: "#D71920",
+  green: "#168A3A",
+  purple: "#4B2E83",
+  dark: "#0B1020",
+  cyan: "#38BDF8",
+  gold: "#FACC15",
+};
+
+function Field({ label, value, onChange, placeholder = "", type = "text" }) {
+  return (
+    <div>
+      <label className="block text-sm font-bold mb-2 text-slate-700">
+        {label}
+      </label>
+
+      <input
+        type={type}
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
+        style={{
+          background: "rgba(255,255,255,0.88)",
+          border: "1px solid rgba(75,46,131,0.16)",
+          color: colors.dark,
+        }}
+      />
+    </div>
+  );
+}
+
+function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
+  return (
+    <div>
+      <label className="block text-sm font-bold mb-2 text-slate-700">
+        {label}
+      </label>
+
+      <textarea
+        rows={rows}
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 rounded-2xl outline-none text-sm resize-none"
+        style={{
+          background: "rgba(255,255,255,0.88)",
+          border: "1px solid rgba(75,46,131,0.16)",
+          color: colors.dark,
+        }}
+      />
+    </div>
+  );
+}
+
+function EditorCard({ title, children }) {
+  return (
+    <div
+      className="rounded-3xl p-6"
+      style={{
+        background:
+          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+        border: "1px solid rgba(11,16,32,0.08)",
+        boxShadow:
+          "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
+      }}
+    >
+      <h2 className="text-xl font-black text-slate-950 mb-5">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function formatNoticeDate(dateValue) {
+  if (!dateValue) return "No date";
+
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return dateValue;
+
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export default function AdminNotices() {
   const [notices, setNotices] = useState([]);
@@ -32,7 +119,7 @@ export default function AdminNotices() {
   const [sidebar, setSidebar] = useState({
     title: "Admin Ready",
     description:
-      "Notice title, date, category, description and PDF file can later come directly from the admin dashboard.",
+      "Notice title, date, category, description and PDF file can come directly from the admin dashboard.",
     buttonText: "Contact School Office",
     buttonLink: "/contact",
   });
@@ -81,7 +168,7 @@ export default function AdminNotices() {
           title: s.sidebar_title || "Admin Ready",
           description:
             s.sidebar_description ||
-            "Notice title, date, category, description and PDF file can later come directly from the admin dashboard.",
+            "Notice title, date, category, description and PDF file can come directly from the admin dashboard.",
           buttonText: s.sidebar_button_text || "Contact School Office",
           buttonLink: s.sidebar_button_link || "/contact",
         });
@@ -262,157 +349,233 @@ export default function AdminNotices() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="font-bold text-slate-600">Loading notice editor...</div>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "#FFF8EE" }}
+      >
+        <div className="font-bold text-slate-600">
+          Loading notice editor...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div
-        className="h-[82px] flex items-center"
+    <section
+      className="min-h-screen relative overflow-hidden"
+      style={{
+        background: `
+          radial-gradient(circle at top right, rgba(56,189,248,0.16), transparent 34%),
+          radial-gradient(circle at bottom left, rgba(250,204,21,0.12), transparent 32%),
+          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
+        `,
+      }}
+    >
+      <header
+        className="sticky top-0 z-40"
         style={{
           background:
-            "linear-gradient(135deg,#020617 0%, #0F172A 40%, #1E293B 100%)",
+            "linear-gradient(145deg, rgba(2,6,23,0.96), rgba(15,23,42,0.88))",
+          borderBottom: "1px solid rgba(255,255,255,0.12)",
+          boxShadow: "0 18px 52px rgba(0,0,0,0.22)",
+          backdropFilter: "blur(22px)",
         }}
       >
-        <div className="max-w-[1600px] mx-auto w-full px-8 flex items-center justify-between">
+        <div className="max-w-[1600px] mx-auto px-6 h-20 flex items-center justify-between">
           <Link
             to="/admin/dashboard"
-            className="flex items-center gap-2 text-white text-base font-medium hover:opacity-80 transition"
-            style={{
-              color: "#FFFFFF",
-              textDecoration: "none",
-            }}
+            className="inline-flex items-center gap-2 text-white font-bold"
           >
-            <ArrowLeft className="w-4 h-4" style={{ color: "#FFFFFF" }} />
-            <span style={{ color: "#FFFFFF" }}>Back to Dashboard</span>
+            <ArrowLeft className="w-5 h-5" />
+            Back to Dashboard
           </Link>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <a
               href="/notices"
               target="_blank"
               rel="noreferrer"
-              className="px-8 py-4 rounded-3xl border border-white/10 bg-white/5 text-white font-semibold flex items-center gap-3"
+              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.14)",
+              }}
             >
-              <Eye className="w-5 h-5" />
-              View Full Notices
+              <ExternalLink className="w-4 h-4" />
+              View Notices Page
             </a>
 
             <button
               onClick={saveChanges}
               disabled={saving || uploadingId}
-              className="px-8 py-4 rounded-3xl font-semibold flex items-center gap-3 disabled:opacity-60"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all hover:scale-105 disabled:opacity-60"
               style={{
-                background: "linear-gradient(135deg,#FACC15,#67E8F9)",
-                color: "#0B1020",
+                color: "#020617",
+                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                boxShadow:
+                  "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
               }}
             >
-              <Save className="w-5 h-5" />
+              <Save className="w-4 h-4" />
               {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-[1600px] mx-auto p-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 text-red-600 font-semibold">
-              <Bell className="w-4 h-4" />
-              Manage Notices
-            </span>
+      <main className="max-w-[1600px] mx-auto px-6 py-10">
+        <div className="mb-8">
+          <span
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-5"
+            style={{
+              background: "rgba(215,25,32,0.1)",
+              color: colors.red,
+              border: "1px solid rgba(215,25,32,0.2)",
+            }}
+          >
+            <Bell className="w-4 h-4" />
+            Manage Notices
+          </span>
 
-            <h1 className="text-5xl font-black mt-4">Edit Notice Content</h1>
+          <h1
+            className="text-4xl md:text-6xl mb-4"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 850,
+              color: colors.dark,
+              letterSpacing: "-0.045em",
+            }}
+          >
+            Edit Notice Content
+          </h1>
 
-            <p className="text-slate-500 mt-3">
-              Add, edit, delete, upload PDF, and preview notices.
-            </p>
-          </div>
+          <p className="text-slate-500 max-w-3xl text-lg">
+            Add notices, upload PDF files, pin important notices, and update the
+            notice page heading, calendar, and sidebar card.
+          </p>
         </div>
 
         {success && (
-          <div className="mb-6 rounded-2xl px-5 py-4 bg-green-50 text-green-700 border border-green-100 flex items-center gap-3 font-semibold">
+          <div
+            className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold"
+            style={{
+              background: "rgba(22,138,58,0.1)",
+              color: colors.green,
+              border: "1px solid rgba(22,138,58,0.2)",
+            }}
+          >
             <CheckCircle2 className="w-5 h-5" />
             {success}
           </div>
         )}
 
         {error && (
-          <div className="mb-6 rounded-2xl px-5 py-4 bg-red-50 text-red-700 border border-red-100 flex items-center gap-3 font-semibold">
+          <div
+            className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold"
+            style={{
+              background: "rgba(215,25,32,0.1)",
+              color: colors.red,
+              border: "1px solid rgba(215,25,32,0.2)",
+            }}
+          >
             <AlertCircle className="w-5 h-5" />
             {error}
           </div>
         )}
 
-        <div className="grid lg:grid-cols-[520px_1fr] gap-8">
+        <div className="grid xl:grid-cols-[620px_1fr] gap-8 items-start">
           <div className="space-y-6">
             <button
               onClick={addNotice}
-              className="w-full p-4 rounded-2xl bg-blue-500 text-white font-bold flex items-center justify-center gap-2 hover:bg-blue-600 transition"
+              className="w-full p-4 rounded-2xl text-white font-bold flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
+              style={{
+                background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
+                boxShadow: "0 14px 34px rgba(75,46,131,0.22)",
+              }}
             >
               <Plus className="w-5 h-5" />
               Add Notice
             </button>
 
             {notices.length === 0 && (
-              <div className="bg-white rounded-3xl p-6 border text-center">
-                <FileText className="w-10 h-10 mx-auto text-slate-300 mb-3" />
-                <div className="font-bold text-slate-800">No notices yet</div>
-                <p className="text-sm text-slate-500 mt-1">
-                  Click Add Notice to create your first notice.
-                </p>
-              </div>
+              <EditorCard title="No Notices Yet">
+                <div className="text-center">
+                  <FileText className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+                  <div className="font-bold text-slate-800">
+                    No notices added
+                  </div>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Click Add Notice to create your first notice.
+                  </p>
+                </div>
+              </EditorCard>
             )}
 
             {notices.map((notice, index) => (
-              <div key={notice.id} className="bg-white rounded-3xl p-6 border">
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="font-bold text-xl">Notice #{index + 1}</h3>
+              <EditorCard key={notice.id} title={`Notice ${index + 1}`}>
+                <div className="flex items-start justify-between gap-4 mb-5">
+                  <div>
+                    <div className="font-black text-slate-950">
+                      {notice.title || "Untitled notice"}
+                    </div>
+                    <div className="text-sm text-slate-500">
+                      {notice.category || "No category"}
+                    </div>
+                  </div>
 
-                  <button onClick={() => deleteNotice(notice.id)}>
-                    <Trash2 className="w-5 h-5 text-red-500 hover:text-red-600" />
+                  <button
+                    type="button"
+                    onClick={() => deleteNotice(notice.id)}
+                    className="p-3 rounded-xl"
+                    style={{
+                      background: "rgba(215,25,32,0.09)",
+                      color: colors.red,
+                      border: "1px solid rgba(215,25,32,0.18)",
+                    }}
+                    title="Delete notice"
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
 
-                <div className="space-y-4">
-                  <input
-                    className="w-full border rounded-xl p-3"
-                    placeholder="Notice Title"
+                <div className="grid gap-4">
+                  <Field
+                    label="Notice Title"
                     value={notice.title}
-                    onChange={(e) =>
-                      updateNotice(notice.id, "title", e.target.value)
+                    onChange={(value) =>
+                      updateNotice(notice.id, "title", value)
                     }
+                    placeholder="Notice Title"
                   />
 
-                  <input
-                    className="w-full border rounded-xl p-3"
-                    placeholder="Category"
-                    value={notice.category}
-                    onChange={(e) =>
-                      updateNotice(notice.id, "category", e.target.value)
-                    }
-                  />
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <Field
+                      label="Category"
+                      value={notice.category}
+                      onChange={(value) =>
+                        updateNotice(notice.id, "category", value)
+                      }
+                      placeholder="Exam / Holiday / Admission"
+                    />
 
-                  <input
-                    type="date"
-                    className="w-full border rounded-xl p-3"
-                    value={notice.date}
-                    onChange={(e) =>
-                      updateNotice(notice.id, "date", e.target.value)
-                    }
-                  />
+                    <Field
+                      label="Notice Date"
+                      type="date"
+                      value={notice.date}
+                      onChange={(value) =>
+                        updateNotice(notice.id, "date", value)
+                      }
+                    />
+                  </div>
 
-                  <textarea
+                  <TextArea
+                    label="Description"
                     rows={4}
-                    className="w-full border rounded-xl p-3"
-                    placeholder="Description"
                     value={notice.description}
-                    onChange={(e) =>
-                      updateNotice(notice.id, "description", e.target.value)
+                    onChange={(value) =>
+                      updateNotice(notice.id, "description", value)
                     }
+                    placeholder="Notice description"
                   />
 
                   <div>
@@ -420,8 +583,17 @@ export default function AdminNotices() {
                       Notice PDF
                     </label>
 
-                    <label className="flex flex-col items-center justify-center gap-2 cursor-pointer rounded-2xl p-5 text-center border border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 transition">
-                      <UploadCloud className="w-7 h-7 text-purple-700" />
+                    <label
+                      className="flex flex-col items-center justify-center gap-2 cursor-pointer rounded-2xl p-5 text-center transition"
+                      style={{
+                        background: "rgba(255,255,255,0.72)",
+                        border: "1px dashed rgba(75,46,131,0.28)",
+                      }}
+                    >
+                      <UploadCloud
+                        className="w-7 h-7"
+                        style={{ color: colors.purple }}
+                      />
 
                       <span className="font-bold text-slate-800">
                         {uploadingId === notice.id
@@ -430,7 +602,7 @@ export default function AdminNotices() {
                       </span>
 
                       <span className="text-xs text-slate-500 leading-relaxed">
-                        Recommended: PDF only, maximum 10 MB.
+                        PDF only, maximum 10 MB. Click Save Changes after upload.
                       </span>
 
                       <input
@@ -446,22 +618,46 @@ export default function AdminNotices() {
                     </label>
 
                     {notice.pdfUrl && (
-                      <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-green-50 border border-green-100 px-4 py-3">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <FileText className="w-4 h-4 text-green-700 flex-shrink-0" />
-                          <span className="text-sm font-semibold text-green-700 truncate">
+                      <div
+                        className="mt-3 rounded-2xl px-4 py-4"
+                        style={{
+                          background: "rgba(22,138,58,0.08)",
+                          border: "1px solid rgba(22,138,58,0.18)",
+                        }}
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileText
+                            className="w-4 h-4"
+                            style={{ color: colors.green }}
+                          />
+
+                          <span
+                            className="text-sm font-bold truncate"
+                            style={{ color: colors.green }}
+                          >
                             PDF uploaded
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <a
                             href={notice.pdfUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-sm font-bold text-green-700 hover:underline"
+                            className="px-4 py-2 rounded-xl text-sm font-bold bg-white text-slate-800 border border-slate-200 hover:bg-slate-50 transition"
                           >
-                            View
+                            View PDF
+                          </a>
+
+                          <a
+                            href={notice.pdfUrl}
+                            download
+                            className="px-4 py-2 rounded-xl text-sm font-bold text-white transition"
+                            style={{
+                              background: `linear-gradient(135deg, ${colors.green}, ${colors.purple})`,
+                            }}
+                          >
+                            Download PDF
                           </a>
 
                           <button
@@ -469,169 +665,185 @@ export default function AdminNotices() {
                             onClick={() =>
                               updateNotice(notice.id, "pdfUrl", "")
                             }
-                            className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-red-500 hover:text-white transition"
-                            title="Remove PDF"
+                            className="px-4 py-2 rounded-xl text-sm font-bold bg-white border border-red-100 hover:bg-red-500 hover:text-white transition"
+                            style={{ color: colors.red }}
                           >
-                            <X className="w-4 h-4" />
+                            Remove
                           </button>
                         </div>
                       </div>
                     )}
                   </div>
 
-                  <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <label className="flex items-center gap-3 cursor-pointer select-none text-sm font-bold text-slate-700">
                     <input
                       type="checkbox"
-                      className="rounded"
+                      className="w-5 h-5"
                       checked={notice.pinned}
                       onChange={(e) =>
                         updateNotice(notice.id, "pinned", e.target.checked)
                       }
                     />
-                    <span className="text-sm font-medium text-slate-700">
-                      Pinned Notice
-                    </span>
+                    Pin this notice as important
                   </label>
                 </div>
-              </div>
+              </EditorCard>
             ))}
 
-            <div className="bg-white rounded-3xl p-6 border">
-              <h2 className="font-bold text-xl mb-4">Page Settings</h2>
-              <div className="space-y-4">
-                <input
-                  className="w-full border rounded-xl p-3"
-                  placeholder="Page Badge"
+            <EditorCard title="Page Settings">
+              <div className="grid gap-4">
+                <Field
+                  label="Page Badge"
                   value={pageSettings.badge}
-                  onChange={(e) =>
+                  onChange={(value) =>
                     setPageSettings({
                       ...pageSettings,
-                      badge: e.target.value,
+                      badge: value,
                     })
                   }
                 />
-                <input
-                  className="w-full border rounded-xl p-3"
-                  placeholder="Page Title"
+
+                <Field
+                  label="Page Title"
                   value={pageSettings.title}
-                  onChange={(e) =>
+                  onChange={(value) =>
                     setPageSettings({
                       ...pageSettings,
-                      title: e.target.value,
+                      title: value,
                     })
                   }
                 />
-                <textarea
+
+                <TextArea
+                  label="Page Description"
                   rows={3}
-                  className="w-full border rounded-xl p-3"
-                  placeholder="Page Description"
                   value={pageSettings.description}
-                  onChange={(e) =>
+                  onChange={(value) =>
                     setPageSettings({
                       ...pageSettings,
-                      description: e.target.value,
+                      description: value,
                     })
                   }
                 />
               </div>
-            </div>
+            </EditorCard>
 
-            <div className="bg-white rounded-3xl p-6 border">
-              <h2 className="font-bold text-xl mb-4">Calendar Settings</h2>
-              <div className="space-y-4">
-                <input
-                  className="w-full border rounded-xl p-3"
-                  placeholder="Calendar Title"
+            <EditorCard title="Calendar Settings">
+              <div className="grid gap-4">
+                <Field
+                  label="Calendar Title"
                   value={calendar.title}
-                  onChange={(e) =>
-                    setCalendar({ ...calendar, title: e.target.value })
+                  onChange={(value) =>
+                    setCalendar({ ...calendar, title: value })
                   }
                 />
-                <input
-                  className="w-full border rounded-xl p-3"
-                  placeholder="Calendar Subtitle"
-                  value={calendar.subtitle}
-                  onChange={(e) =>
-                    setCalendar({ ...calendar, subtitle: e.target.value })
-                  }
-                />
-                <input
-                  className="w-full border rounded-xl p-3"
-                  placeholder="Embed URL Override"
-                  value={calendar.embedUrl}
-                  onChange={(e) =>
-                    setCalendar({ ...calendar, embedUrl: e.target.value })
-                  }
-                />
-              </div>
-            </div>
 
-            <div className="bg-white rounded-3xl p-6 border">
-              <h2 className="font-bold text-xl mb-4">Sidebar Card</h2>
-              <div className="space-y-4">
-                <input
-                  className="w-full border rounded-xl p-3"
-                  placeholder="Card Title"
-                  value={sidebar.title}
-                  onChange={(e) =>
-                    setSidebar({ ...sidebar, title: e.target.value })
+                <Field
+                  label="Calendar Subtitle"
+                  value={calendar.subtitle}
+                  onChange={(value) =>
+                    setCalendar({ ...calendar, subtitle: value })
                   }
                 />
-                <textarea
-                  rows={3}
-                  className="w-full border rounded-xl p-3"
-                  placeholder="Card Description"
-                  value={sidebar.description}
-                  onChange={(e) =>
-                    setSidebar({ ...sidebar, description: e.target.value })
-                  }
-                />
-                <input
-                  className="w-full border rounded-xl p-3"
-                  placeholder="Button Text"
-                  value={sidebar.buttonText}
-                  onChange={(e) =>
-                    setSidebar({ ...sidebar, buttonText: e.target.value })
-                  }
-                />
-                <input
-                  className="w-full border rounded-xl p-3"
-                  placeholder="Button Action URL Link"
-                  value={sidebar.buttonLink}
-                  onChange={(e) =>
-                    setSidebar({ ...sidebar, buttonLink: e.target.value })
+
+                <Field
+                  label="Embed URL"
+                  value={calendar.embedUrl}
+                  onChange={(value) =>
+                    setCalendar({ ...calendar, embedUrl: value })
                   }
                 />
               </div>
-            </div>
+            </EditorCard>
+
+            <EditorCard title="Sidebar Card">
+              <div className="grid gap-4">
+                <Field
+                  label="Card Title"
+                  value={sidebar.title}
+                  onChange={(value) =>
+                    setSidebar({ ...sidebar, title: value })
+                  }
+                />
+
+                <TextArea
+                  label="Card Description"
+                  rows={3}
+                  value={sidebar.description}
+                  onChange={(value) =>
+                    setSidebar({ ...sidebar, description: value })
+                  }
+                />
+
+                <Field
+                  label="Button Text"
+                  value={sidebar.buttonText}
+                  onChange={(value) =>
+                    setSidebar({ ...sidebar, buttonText: value })
+                  }
+                />
+
+                <Field
+                  label="Button Link"
+                  value={sidebar.buttonLink}
+                  onChange={(value) =>
+                    setSidebar({ ...sidebar, buttonLink: value })
+                  }
+                />
+              </div>
+            </EditorCard>
           </div>
 
-          <div className="sticky top-6 h-[90vh] overflow-y-auto">
-            <div
-              className="rounded-[32px] overflow-hidden"
-              style={{
-                background: "linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
-                border: "1px solid rgba(11,16,32,0.08)",
-                boxShadow: "0 18px 48px rgba(11,16,32,0.075)",
-              }}
-            >
-              <div className="p-5 border-b bg-white">
-                <h2 className="text-2xl font-black">
-                  Live Notice Page Preview
-                </h2>
-                <p className="text-slate-500 mt-1">
-                  Updates instantly while typing
-                </p>
+          <aside
+            className="xl:sticky xl:top-28 rounded-3xl overflow-hidden"
+            style={{
+              background:
+                "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
+              border: "1px solid rgba(255,255,255,0.14)",
+              boxShadow: "0 22px 58px rgba(11,16,32,0.25)",
+            }}
+          >
+            <div className="p-5 border-b border-white/10">
+              <div className="text-white font-bold text-lg flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                Notices Page Preview
               </div>
 
-              <div className="p-6">
+              <div className="text-sm text-white/55">
+                Preview updates while editing.
+              </div>
+            </div>
+
+            <div
+              className="bg-white overflow-y-auto"
+              style={{ height: "760px" }}
+            >
+              <div
+                className="min-h-full p-6"
+                style={{
+                  background:
+                    "radial-gradient(circle at top right, rgba(124,92,196,0.18), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
+                }}
+              >
                 <div className="text-center mb-10">
-                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 text-red-600 font-semibold">
-                    <Bell className="w-4 h-4" />
+                  <span
+                    className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold"
+                    style={{
+                      background: "rgba(215,25,32,0.08)",
+                      color: colors.red,
+                      border: "1px solid rgba(215,25,32,0.14)",
+                    }}
+                  >
                     {pageSettings.badge}
                   </span>
 
-                  <h1 className="text-5xl font-black mt-5">
+                  <h1
+                    className="text-5xl font-black mt-5 text-slate-950"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      letterSpacing: "-0.045em",
+                    }}
+                  >
                     {pageSettings.title}
                   </h1>
 
@@ -640,56 +852,104 @@ export default function AdminNotices() {
                   </p>
                 </div>
 
-                <div className="grid lg:grid-cols-[1fr_320px] gap-8 mt-10">
-                  <div className="space-y-6">
-                    {notices.length === 0 && (
-                      <div className="rounded-3xl bg-white p-8 border text-center">
-                        <FileText className="w-10 h-10 mx-auto text-slate-300 mb-3" />
-                        <div className="font-bold text-slate-800">
-                          No notices added
+                <div className="grid gap-6">
+                  {notices.length === 0 && (
+                    <div className="rounded-3xl bg-white p-8 border text-center">
+                      <FileText className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+                      <div className="font-bold text-slate-800">
+                        No notices added
+                      </div>
+                    </div>
+                  )}
+
+                  {notices.map((notice) => (
+                    <div
+                      key={notice.id}
+                      className="rounded-3xl bg-white p-6"
+                      style={{
+                        border: "1px solid rgba(15,23,42,0.08)",
+                        boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
+                      }}
+                    >
+                      <div className="grid md:grid-cols-[120px_1fr] gap-5">
+                        <div>
+                          <div
+                            className="w-16 h-1 rounded-full mb-4"
+                            style={{
+                              background: notice.pinned
+                                ? colors.red
+                                : colors.green,
+                            }}
+                          />
+
+                          <div className="text-sm font-black text-slate-950">
+                            {formatNoticeDate(notice.date)}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2 mb-3">
+                            <span
+                              className="px-3 py-1 rounded-full text-xs font-bold"
+                              style={{
+                                background: "rgba(22,138,58,0.1)",
+                                color: colors.green,
+                              }}
+                            >
+                              {notice.category || "Category"}
+                            </span>
+
+                            {notice.pinned && (
+                              <span
+                                className="px-3 py-1 rounded-full text-xs font-bold"
+                                style={{
+                                  background: "rgba(215,25,32,0.1)",
+                                  color: colors.red,
+                                }}
+                              >
+                                Important
+                              </span>
+                            )}
+                          </div>
+
+                          <h2 className="text-2xl font-black text-slate-950 mb-3">
+                            {notice.title || "Notice Title"}
+                          </h2>
+
+                          <p className="text-slate-500 mb-5 leading-relaxed">
+                            {notice.description || "Notice description"}
+                          </p>
+
+                          {notice.pdfUrl ? (
+                            <div className="flex flex-wrap gap-3">
+                              <span className="px-4 py-2 rounded-xl text-sm font-bold bg-white text-slate-800 border border-slate-200">
+                                View PDF
+                              </span>
+
+                              <span
+                                className="px-4 py-2 rounded-xl text-sm font-bold text-white"
+                                style={{
+                                  background: `linear-gradient(135deg, ${colors.green}, ${colors.purple})`,
+                                }}
+                              >
+                                Download PDF
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-sm font-semibold text-slate-400">
+                              No PDF attached
+                            </span>
+                          )}
                         </div>
                       </div>
-                    )}
+                    </div>
+                  ))}
 
-                    {notices.map((notice) => (
-                      <div
-                        key={notice.id}
-                        className="rounded-3xl bg-white p-6 border shadow-sm"
-                      >
-                        <div className="flex items-center gap-3 mb-3">
-                          <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
-                            {notice.category || "Category"}
-                          </span>
-                          <span className="text-slate-500">
-                            {notice.date || "Date"}
-                          </span>
-                        </div>
-
-                        <h2 className="text-3xl font-black mb-3">
-                          {notice.title || "Notice Title"}
-                        </h2>
-
-                        <p className="text-slate-600 mb-5">
-                          {notice.description || "Notice description"}
-                        </p>
-
-                        <button
-                          className="px-5 py-3 rounded-xl text-white font-bold transition opacity-90 hover:opacity-100"
-                          style={{
-                            background:
-                              "linear-gradient(135deg,#168A3A,#4B2E83)",
-                          }}
-                        >
-                          Download Notice
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div>
-                    <div className="bg-white rounded-3xl p-5 border shadow-sm">
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <div className="bg-white rounded-3xl p-5 border">
                       <h3 className="font-black text-2xl">{calendar.title}</h3>
                       <p className="text-slate-500 mb-4">{calendar.subtitle}</p>
+
                       <iframe
                         title="Nepali Calendar"
                         src={
@@ -701,29 +961,35 @@ export default function AdminNotices() {
                     </div>
 
                     <div
-                      className="p-5 rounded-3xl mt-4 text-white shadow-sm"
+                      className="p-5 rounded-3xl text-white shadow-sm"
                       style={{
-                        background: "linear-gradient(135deg,#0B1020,#4B2E83)",
+                        background: `linear-gradient(135deg, ${colors.dark}, ${colors.purple})`,
                       }}
                     >
+                      <div
+                        className="w-16 h-1 rounded-full mb-5"
+                        style={{
+                          background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
+                        }}
+                      />
+
                       <h3 className="font-bold text-xl">{sidebar.title}</h3>
+
                       <p className="mt-3 text-white/70 text-sm leading-relaxed">
                         {sidebar.description}
                       </p>
-                      <a
-                        href={sidebar.buttonLink}
-                        className="inline-block mt-5 font-bold bg-white/10 hover:bg-white/20 transition px-4 py-2 rounded-xl text-center text-sm border border-white/20"
-                      >
+
+                      <span className="inline-block mt-5 font-bold bg-white/10 px-4 py-2 rounded-xl text-center text-sm border border-white/20">
                         {sidebar.buttonText}
-                      </a>
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </aside>
         </div>
-      </div>
-    </div>
+      </main>
+    </section>
   );
 }

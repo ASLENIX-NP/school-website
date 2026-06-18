@@ -12,10 +12,8 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
-  Image as ImageIcon,
   Type,
   Building2,
-  Palette,
   X,
 } from "lucide-react";
 
@@ -81,7 +79,8 @@ const defaultFacilitiesContent = {
       emoji: "🚌",
       title: "Bus Facility",
       category: "Transportation",
-      description: "Safe and reliable transportation service covering multiple routes.",
+      description:
+        "Safe and reliable transportation service covering multiple routes.",
       details:
         "Baljagriti provides safe transportation with experienced drivers, route management, student safety monitoring, and comfortable buses for daily travel.",
       imageUrl: "",
@@ -195,6 +194,58 @@ function EditorCard({ icon: Icon, title, color, children }) {
   );
 }
 
+function FacilityPreviewVisual({ facility }) {
+  const facilityColor = facility.color || colors.green;
+
+  if (facility.imageUrl) {
+    return (
+      <img
+        src={facility.imageUrl}
+        alt={facility.title}
+        className="w-full h-full object-cover"
+      />
+    );
+  }
+
+  return (
+    <div
+      className="w-full h-full flex items-center justify-center"
+      style={{
+        background: `
+          radial-gradient(circle at top right, ${facilityColor}24, transparent 36%),
+          linear-gradient(145deg, rgba(11,16,32,0.96), rgba(75,46,131,0.9))
+        `,
+      }}
+    >
+      <div className="text-center px-6">
+        <div
+          className="w-16 h-1 rounded-full mx-auto mb-4"
+          style={{
+            background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
+          }}
+        />
+
+        <div
+          className="text-xs font-bold uppercase tracking-[0.18em] mb-2"
+          style={{ color: "rgba(255,255,255,0.58)" }}
+        >
+          {facility.category}
+        </div>
+
+        <div
+          className="text-2xl font-black text-white leading-tight"
+          style={{
+            fontFamily: "var(--font-display)",
+            letterSpacing: "-0.04em",
+          }}
+        >
+          {facility.title}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FacilityPreview({ form }) {
   const visibleFacilities = form.facilities.filter(
     (facility) => facility.visible !== false
@@ -210,14 +261,13 @@ function FacilityPreview({ form }) {
     >
       <div className="text-center mb-8">
         <span
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-4"
+          className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold mb-4"
           style={{
             background: "rgba(22,138,58,0.08)",
             color: colors.green,
             border: "1px solid rgba(22,138,58,0.18)",
           }}
         >
-          <ImageIcon className="w-4 h-4" />
           {form.badgeText}
         </span>
 
@@ -238,53 +288,61 @@ function FacilityPreview({ form }) {
       </div>
 
       <div className="grid gap-4">
-        {visibleFacilities.slice(0, 4).map((facility) => (
-          <div
-            key={facility.id}
-            className="bg-white rounded-2xl overflow-hidden"
-            style={{
-              border: `1px solid ${facility.color || colors.green}22`,
-              boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-            }}
-          >
-            <div className="h-36 relative overflow-hidden">
-              {facility.imageUrl ? (
-                <img
-                  src={facility.imageUrl}
-                  alt={facility.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div
-                  className="w-full h-full flex items-center justify-center text-5xl"
-                  style={{ background: `${facility.color || colors.green}12` }}
-                >
-                  {facility.emoji || "🏫"}
+        {visibleFacilities.slice(0, 4).map((facility) => {
+          const facilityColor = facility.color || colors.green;
+
+          return (
+            <div
+              key={facility.id}
+              className="bg-white rounded-2xl overflow-hidden"
+              style={{
+                border: `1px solid ${facilityColor}22`,
+                boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
+              }}
+            >
+              <div className="h-36 relative overflow-hidden">
+                <FacilityPreviewVisual facility={facility} />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
+
+                <div className="absolute bottom-4 left-4 right-4">
+                  <div
+                    className="w-14 h-1 rounded-full mb-3"
+                    style={{ background: facilityColor }}
+                  />
+
+                  <div
+                    className="inline-flex px-3 py-1 rounded-full text-xs font-bold"
+                    style={{
+                      background: "rgba(255,255,255,0.9)",
+                      color: facilityColor,
+                      border: `1px solid ${facilityColor}22`,
+                    }}
+                  >
+                    {facility.category}
+                  </div>
                 </div>
-              )}
-            </div>
-
-            <div className="p-4">
-              <div
-                className="inline-flex px-3 py-1 rounded-full text-xs font-bold"
-                style={{
-                  background: `${facility.color || colors.green}15`,
-                  color: facility.color || colors.green,
-                }}
-              >
-                {facility.category}
               </div>
 
-              <div className="mt-3 font-black text-slate-950">
-                {facility.title}
-              </div>
+              <div className="p-4">
+                <div className="font-black text-slate-950">
+                  {facility.title}
+                </div>
 
-              <div className="mt-2 text-sm text-slate-500 line-clamp-2">
-                {facility.description}
+                <div className="mt-2 text-sm text-slate-500 line-clamp-2">
+                  {facility.description}
+                </div>
+
+                <div
+                  className="mt-3 text-sm font-bold"
+                  style={{ color: facilityColor }}
+                >
+                  {form.learnMoreText}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -392,11 +450,15 @@ export default function AdminFacilities() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await axios.post("http://localhost:5000/api/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const res = await axios.post(
+        "http://localhost:5000/api/upload",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       const uploadedUrl =
         res.data?.url ||
@@ -559,9 +621,10 @@ export default function AdminFacilities() {
           </h1>
 
           <p className="text-slate-500 max-w-3xl text-lg">
-            Edit the facilities page heading, cards, images, colors,
-            categories, descriptions, and modal details. Images upload directly
-            to ImageKit.
+            Edit the facilities page heading, cards, images, accent colors,
+            categories, descriptions, and modal details. Emoji editing is no
+            longer shown because the public page now uses a cleaner premium
+            visual style.
           </p>
         </motion.div>
 
@@ -763,16 +826,7 @@ export default function AdminFacilities() {
                               </button>
                             </>
                           ) : (
-                            <div
-                              className="w-full h-44 flex items-center justify-center text-6xl"
-                              style={{
-                                background: `${
-                                  facility.color || colors.green
-                                }12`,
-                              }}
-                            >
-                              {facility.emoji || "🏫"}
-                            </div>
+                            <FacilityPreviewVisual facility={facility} />
                           )}
                         </div>
 
@@ -818,25 +872,6 @@ export default function AdminFacilities() {
                       <div className="grid gap-4">
                         <div className="grid md:grid-cols-2 gap-4">
                           <Field
-                            label="Emoji"
-                            value={facility.emoji}
-                            onChange={(value) =>
-                              updateFacility(facility.id, "emoji", value)
-                            }
-                          />
-
-                          <Field
-                            label="Color"
-                            type="color"
-                            value={facility.color}
-                            onChange={(value) =>
-                              updateFacility(facility.id, "color", value)
-                            }
-                          />
-                        </div>
-
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <Field
                             label="Facility Title"
                             value={facility.title}
                             onChange={(value) =>
@@ -852,6 +887,15 @@ export default function AdminFacilities() {
                             }
                           />
                         </div>
+
+                        <Field
+                          label="Accent Color"
+                          type="color"
+                          value={facility.color}
+                          onChange={(value) =>
+                            updateFacility(facility.id, "color", value)
+                          }
+                        />
 
                         <TextArea
                           label="Short Description"

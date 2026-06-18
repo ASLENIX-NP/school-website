@@ -202,6 +202,7 @@ function AdmissionsPreview({ form }) {
           style={{
             background: "rgba(215,25,32,0.08)",
             color: colors.red,
+            border: "1px solid rgba(215,25,32,0.14)",
           }}
         >
           {form.badgeText}
@@ -223,38 +224,56 @@ function AdmissionsPreview({ form }) {
       </div>
 
       <div className="grid gap-4 mb-10">
-        {visibleSteps.map((step) => (
-          <div
-            key={step.id}
-            className="bg-white rounded-3xl p-5"
-            style={{
-              border: `1px solid ${(step.color || colors.green)}22`,
-              boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-            }}
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center font-black"
-                style={{
-                  background: `${step.color || colors.green}12`,
-                  color: step.color || colors.green,
-                }}
-              >
-                {step.step}
+        {visibleSteps.map((step, index) => {
+          const stepColor = step.color || colors.green;
+
+          return (
+            <div
+              key={step.id}
+              className="bg-white rounded-3xl p-5"
+              style={{
+                border: `1px solid ${stepColor}22`,
+                boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
+              }}
+            >
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div
+                  className="text-sm font-black tracking-widest"
+                  style={{ color: stepColor }}
+                >
+                  {step.step || String(index + 1).padStart(2, "0")}
+                </div>
+
+                <div
+                  className="w-16 h-1 rounded-full"
+                  style={{ background: stepColor }}
+                />
               </div>
 
-              <div className="font-black text-slate-950">{step.title}</div>
-            </div>
+              <h3 className="font-black text-xl text-slate-950">
+                {step.title}
+              </h3>
 
-            <p className="text-sm text-slate-500 leading-relaxed">
-              {step.desc}
-            </p>
-          </div>
-        ))}
+              <p className="text-sm text-slate-500 leading-relaxed mt-2">
+                {step.desc}
+              </p>
+            </div>
+          );
+        })}
       </div>
 
       <div className="bg-white rounded-3xl p-6 border">
-        <h3 className="text-3xl font-black text-slate-950">{form.formTitle}</h3>
+        <div
+          className="w-20 h-1 rounded-full mb-5"
+          style={{
+            background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
+          }}
+        />
+
+        <h3 className="text-3xl font-black text-slate-950">
+          {form.formTitle}
+        </h3>
+
         <p className="text-sm text-slate-500 mt-2 mb-5">
           {form.formDescription}
         </p>
@@ -263,12 +282,15 @@ function AdmissionsPreview({ form }) {
           <div className="bg-slate-50 border rounded-xl p-3 text-sm text-slate-500">
             {form.nameLabel}
           </div>
+
           <div className="bg-slate-50 border rounded-xl p-3 text-sm text-slate-500">
             {form.emailLabel}
           </div>
+
           <div className="bg-slate-50 border rounded-xl p-3 text-sm text-slate-500">
             {form.phoneLabel}
           </div>
+
           <div className="bg-slate-50 border rounded-xl p-3 text-sm text-slate-500">
             {form.gradeLabel}: {(form.grades || []).join(", ")}
           </div>
@@ -495,7 +517,8 @@ export default function AdminAdmissions() {
 
           <p className="text-slate-500 max-w-3xl text-lg">
             Edit admission heading, process steps, inquiry form labels, grade
-            options, and success message.
+            options, and success message. Step icon editing is hidden because
+            the public page now uses a clean number-and-line design.
           </p>
         </motion.div>
 
@@ -528,7 +551,11 @@ export default function AdminAdmissions() {
 
         <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start">
           <div className="space-y-8">
-            <EditorCard icon={Type} title="Top Admissions Section" color={colors.purple}>
+            <EditorCard
+              icon={Type}
+              title="Top Admissions Section"
+              color={colors.purple}
+            >
               <div className="grid gap-5">
                 <Field
                   label="Badge Text"
@@ -557,7 +584,11 @@ export default function AdminAdmissions() {
               </div>
             </EditorCard>
 
-            <EditorCard icon={ClipboardList} title="Admission Process Steps" color={colors.green}>
+            <EditorCard
+              icon={ClipboardList}
+              title="Admission Process Steps"
+              color={colors.green}
+            >
               <div className="flex justify-end mb-6">
                 <button
                   type="button"
@@ -587,6 +618,7 @@ export default function AdminAdmissions() {
                         <div className="font-black text-slate-950">
                           Step {index + 1}
                         </div>
+
                         <div className="text-sm text-slate-500">
                           {step.title}
                         </div>
@@ -606,7 +638,12 @@ export default function AdminAdmissions() {
                                 : "rgba(100,116,139,0.12)",
                             color:
                               step.visible !== false ? colors.green : "#64748B",
+                            border:
+                              step.visible !== false
+                                ? "1px solid rgba(22,138,58,0.2)"
+                                : "1px solid rgba(100,116,139,0.16)",
                           }}
+                          title={step.visible !== false ? "Visible" : "Hidden"}
                         >
                           {step.visible !== false ? (
                             <Eye className="w-4 h-4" />
@@ -622,14 +659,16 @@ export default function AdminAdmissions() {
                           style={{
                             background: "rgba(215,25,32,0.09)",
                             color: colors.red,
+                            border: "1px solid rgba(215,25,32,0.18)",
                           }}
+                          title="Delete step"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-3 gap-4">
                       <Field
                         label="Step Number"
                         value={step.step}
@@ -647,37 +686,13 @@ export default function AdminAdmissions() {
                       />
 
                       <Field
-                        label="Color"
+                        label="Accent Color"
                         type="color"
                         value={step.color}
                         onChange={(value) =>
                           updateStep(step.id, "color", value)
                         }
                       />
-
-                      <div>
-                        <label className="block text-sm font-bold mb-2 text-slate-700">
-                          Icon
-                        </label>
-
-                        <select
-                          value={step.icon}
-                          onChange={(e) =>
-                            updateStep(step.id, "icon", e.target.value)
-                          }
-                          className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
-                          style={{
-                            background: "rgba(255,255,255,0.88)",
-                            border: "1px solid rgba(75,46,131,0.16)",
-                            color: colors.dark,
-                          }}
-                        >
-                          <option value="message">Message</option>
-                          <option value="map">Location</option>
-                          <option value="file">File</option>
-                          <option value="check">Check</option>
-                        </select>
-                      </div>
                     </div>
 
                     <div className="mt-4">
@@ -695,7 +710,11 @@ export default function AdminAdmissions() {
               </div>
             </EditorCard>
 
-            <EditorCard icon={FileText} title="Inquiry Form Text" color={colors.red}>
+            <EditorCard
+              icon={FileText}
+              title="Inquiry Form Text"
+              color={colors.red}
+            >
               <div className="grid gap-5">
                 <Field
                   label="Form Title"

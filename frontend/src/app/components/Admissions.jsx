@@ -1,18 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
-import {
-  MessageCircle,
-  MapPin,
-  FileText,
-  CheckCircle,
-  Phone,
-  User,
-  Mail,
-  GraduationCap,
-  Send,
-  CheckCircle2,
-} from "lucide-react";
 import { useForm } from "react-hook-form";
 
 const colors = {
@@ -110,13 +98,6 @@ function mergeAdmissionsContent(saved = {}) {
       ? saved.grades
       : defaultAdmissionsContent.grades,
   };
-}
-
-function getStepIcon(icon) {
-  if (icon === "map") return MapPin;
-  if (icon === "file") return FileText;
-  if (icon === "check") return CheckCircle;
-  return MessageCircle;
 }
 
 function HighlightedTitle({ title, highlightedText }) {
@@ -226,14 +207,13 @@ function Admissions() {
           className="text-center mb-16"
         >
           <span
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold mb-5"
+            className="inline-flex items-center px-5 py-2 rounded-full text-sm font-bold mb-5"
             style={{
               background: "rgba(215,25,32,0.08)",
               color: colors.red,
               border: "1px solid rgba(215,25,32,0.16)",
             }}
           >
-            <GraduationCap className="w-4 h-4" />
             {content.badgeText}
           </span>
 
@@ -243,7 +223,7 @@ function Admissions() {
               fontFamily: "var(--font-display)",
               fontWeight: 850,
               color: colors.dark,
-              letterSpacing: "-0.045em",
+              letterSpacing: "-0.055em",
             }}
           >
             <HighlightedTitle
@@ -259,7 +239,7 @@ function Admissions() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
           {visibleSteps.map((step, index) => {
-            const Icon = getStepIcon(step.icon);
+            const stepColor = step.color || colors.green;
 
             return (
               <motion.div
@@ -274,53 +254,52 @@ function Admissions() {
                   <div
                     className="hidden lg:block absolute top-12 left-full w-6 h-0.5 z-10"
                     style={{
-                      background: `linear-gradient(90deg, ${
-                        step.color || colors.green
-                      }80, transparent)`,
+                      background: `linear-gradient(90deg, ${stepColor}80, transparent)`,
                     }}
                   />
                 )}
 
                 <div
-                  className="p-6 rounded-3xl h-full transition-all duration-300 group-hover:-translate-y-2"
+                  className="p-6 rounded-3xl h-full transition-all duration-300 group-hover:-translate-y-2 cursor-default"
                   style={{
                     background:
-                      "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
-                    border: `1px solid ${step.color || colors.green}22`,
+                      "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.82))",
+                    border: `1px solid ${stepColor}24`,
                     boxShadow:
                       "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
                     backdropFilter: "blur(16px)",
                   }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = `0 26px 64px rgba(11,16,32,0.14), 0 0 0 1px ${stepColor}22`;
+                    e.currentTarget.style.borderColor = `${stepColor}55`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow =
+                      "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)";
+                    e.currentTarget.style.borderColor = `${stepColor}24`;
+                  }}
                 >
-                  <div className="flex items-center gap-3 mb-5">
-                    <div
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                      style={{
-                        background: `${step.color || colors.green}12`,
-                        border: `1px solid ${step.color || colors.green}24`,
-                        boxShadow: `0 12px 28px ${
-                          step.color || colors.green
-                        }18`,
-                      }}
-                    >
-                      <Icon
-                        className="w-6 h-6"
-                        style={{ color: step.color || colors.green }}
-                      />
-                    </div>
-
+                  <div className="flex items-start justify-between gap-4 mb-6">
                     <span
-                      className="text-4xl font-black opacity-30"
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        color: step.color || colors.green,
-                      }}
+                      className="text-sm font-black tracking-widest"
+                      style={{ color: stepColor }}
                     >
-                      {step.step}
+                      {step.step || String(index + 1).padStart(2, "0")}
                     </span>
+
+                    <div
+                      className="w-14 h-1 rounded-full transition-all duration-300 group-hover:w-24"
+                      style={{ background: stepColor }}
+                    />
                   </div>
 
-                  <h3 className="font-black text-xl mb-3 text-slate-950">
+                  <h3
+                    className="font-black text-2xl mb-4 text-slate-950 leading-tight"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      letterSpacing: "-0.035em",
+                    }}
+                  >
                     {step.title}
                   </h3>
 
@@ -341,22 +320,39 @@ function Admissions() {
           className="max-w-3xl mx-auto"
         >
           <div
-            className="p-8 md:p-10 rounded-3xl"
+            className="group p-8 md:p-10 rounded-3xl transition-all duration-300"
             style={{
               background:
-                "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+                "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.82))",
               border: "1px solid rgba(11,16,32,0.08)",
               backdropFilter: "blur(18px)",
               boxShadow:
                 "0 24px 70px rgba(11,16,32,0.12), inset 0 1px 0 rgba(255,255,255,0.85)",
             }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow =
+                "0 32px 86px rgba(11,16,32,0.16), 0 0 0 1px rgba(22,138,58,0.12)";
+              e.currentTarget.style.borderColor = "rgba(22,138,58,0.2)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow =
+                "0 24px 70px rgba(11,16,32,0.12), inset 0 1px 0 rgba(255,255,255,0.85)";
+              e.currentTarget.style.borderColor = "rgba(11,16,32,0.08)";
+            }}
           >
+            <div
+              className="w-20 h-1 rounded-full mb-7 transition-all duration-300 group-hover:w-36"
+              style={{
+                background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
+              }}
+            />
+
             <h3
               className="text-3xl mb-2 text-slate-950"
               style={{
                 fontFamily: "var(--font-display)",
                 fontWeight: 850,
-                letterSpacing: "-0.03em",
+                letterSpacing: "-0.035em",
               }}
             >
               {content.formTitle}
@@ -375,11 +371,16 @@ function Admissions() {
                   boxShadow: "0 16px 42px rgba(22,138,58,0.1)",
                 }}
               >
-                <div className="text-4xl mb-3">🎉</div>
+                <div
+                  className="w-16 h-1 rounded-full mx-auto mb-5"
+                  style={{ background: colors.green }}
+                />
+
                 <div className="text-slate-950 font-black text-xl">
                   {content.successTitle}
                 </div>
-                <div className="text-sm mt-1 text-slate-500">
+
+                <div className="text-sm mt-2 text-slate-500">
                   {submitMessage || content.successMessage}
                 </div>
               </div>
@@ -387,21 +388,19 @@ function Admissions() {
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="flex items-center gap-2 text-sm font-bold mb-2 text-slate-700">
-                      <User className="w-4 h-4" />
+                    <label className="block text-sm font-bold mb-2 text-slate-700">
                       {content.nameLabel}
                     </label>
 
                     <input
                       {...register("name", { required: true })}
                       placeholder={content.namePlaceholder}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900"
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10"
                     />
                   </div>
 
                   <div>
-                    <label className="flex items-center gap-2 text-sm font-bold mb-2 text-slate-700">
-                      <Mail className="w-4 h-4" />
+                    <label className="block text-sm font-bold mb-2 text-slate-700">
                       {content.emailLabel}
                     </label>
 
@@ -409,34 +408,32 @@ function Admissions() {
                       {...register("email", { required: true })}
                       type="email"
                       placeholder={content.emailPlaceholder}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900"
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10"
                     />
                   </div>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="flex items-center gap-2 text-sm font-bold mb-2 text-slate-700">
-                      <Phone className="w-4 h-4" />
+                    <label className="block text-sm font-bold mb-2 text-slate-700">
                       {content.phoneLabel}
                     </label>
 
                     <input
                       {...register("phone")}
                       placeholder={content.phonePlaceholder}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900"
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10"
                     />
                   </div>
 
                   <div>
-                    <label className="flex items-center gap-2 text-sm font-bold mb-2 text-slate-700">
-                      <GraduationCap className="w-4 h-4" />
+                    <label className="block text-sm font-bold mb-2 text-slate-700">
                       {content.gradeLabel}
                     </label>
 
                     <select
                       {...register("grade", { required: true })}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900"
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10"
                     >
                       <option value="">{content.gradePlaceholder}</option>
 
@@ -452,13 +449,12 @@ function Admissions() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 rounded-xl font-bold text-white mt-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-4 rounded-xl font-bold text-white mt-2 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{
                     background: `linear-gradient(135deg, ${colors.red}, ${colors.green})`,
                     boxShadow: "0 16px 38px rgba(215,25,32,0.22)",
                   }}
                 >
-                  <Send className="w-4 h-4" />
                   {isSubmitting
                     ? content.submittingText
                     : content.submitButtonText}

@@ -342,9 +342,16 @@ function VisibilityDeleteControls({ visible, onToggle, onDelete }) {
         className="p-3 rounded-xl"
         style={{
           background:
-            visible !== false ? "rgba(22,138,58,0.1)" : "rgba(100,116,139,0.12)",
+            visible !== false
+              ? "rgba(22,138,58,0.1)"
+              : "rgba(100,116,139,0.12)",
           color: visible !== false ? colors.green : "#64748B",
+          border:
+            visible !== false
+              ? "1px solid rgba(22,138,58,0.2)"
+              : "1px solid rgba(100,116,139,0.16)",
         }}
+        title={visible !== false ? "Visible" : "Hidden"}
       >
         {visible !== false ? (
           <Eye className="w-4 h-4" />
@@ -360,7 +367,9 @@ function VisibilityDeleteControls({ visible, onToggle, onDelete }) {
         style={{
           background: "rgba(215,25,32,0.09)",
           color: colors.red,
+          border: "1px solid rgba(215,25,32,0.18)",
         }}
+        title="Delete"
       >
         <Trash2 className="w-4 h-4" />
       </button>
@@ -394,6 +403,7 @@ function AcademicsPreview({ form }) {
           style={{
             background: "rgba(215,25,32,0.08)",
             color: colors.red,
+            border: "1px solid rgba(215,25,32,0.14)",
           }}
         >
           {form.heroBadge}
@@ -420,50 +430,59 @@ function AcademicsPreview({ form }) {
         </div>
 
         <div className="grid gap-4">
-          {visiblePrograms.map((program) => (
-            <div
-              key={program.id}
-              className="bg-white rounded-3xl p-5"
-              style={{
-                border: `1px solid ${program.badgeColor || colors.green}22`,
-                boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-              }}
-            >
-              <span
-                className="text-xs font-bold text-white px-3 py-1 rounded-lg"
+          {visiblePrograms.map((program, index) => {
+            const programColor = program.badgeColor || colors.green;
+
+            return (
+              <div
+                key={program.id}
+                className="bg-white rounded-3xl p-5"
                 style={{
-                  background: program.badgeColor || colors.green,
+                  border: `1px solid ${programColor}22`,
+                  boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
                 }}
               >
-                {program.span}
-              </span>
+                <div
+                  className="text-sm font-black tracking-widest mb-3"
+                  style={{ color: programColor }}
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </div>
 
-              <h3 className="text-xl font-black mt-3 text-slate-950">
-                {program.level}
-              </h3>
+                <div
+                  className="w-16 h-1 rounded-full mb-4"
+                  style={{ background: programColor }}
+                />
 
-              <p className="text-sm text-slate-500 mt-2">
-                {program.highlight}
-              </p>
+                <span className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+                  {program.span}
+                </span>
 
-              <div className="grid grid-cols-1 gap-2 mt-4">
-                {(program.classes || []).map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-center gap-2 text-sm text-slate-600"
-                  >
-                    <CheckCircle2
-                      className="w-4 h-4"
-                      style={{
-                        color: program.badgeColor || colors.green,
-                      }}
-                    />
-                    {item}
-                  </div>
-                ))}
+                <h3 className="text-xl font-black mt-3 text-slate-950">
+                  {program.level}
+                </h3>
+
+                <p className="text-sm text-slate-500 mt-2">
+                  {program.highlight}
+                </p>
+
+                <div className="grid grid-cols-1 gap-2 mt-4">
+                  {(program.classes || []).map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-center gap-2 text-sm text-slate-600"
+                    >
+                      <span
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{ background: programColor }}
+                      />
+                      {item}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -471,58 +490,85 @@ function AcademicsPreview({ form }) {
         <div className="text-xl font-black text-slate-950 mb-2">
           {form.featuresTitle}
         </div>
-        <p className="text-sm text-slate-500 mb-4">{form.featuresDescription}</p>
+
+        <p className="text-sm text-slate-500 mb-4">
+          {form.featuresDescription}
+        </p>
 
         <div className="grid gap-4">
-          {visibleFeatures.map((feature) => (
-            <div
-              key={feature.id}
-              className="bg-white rounded-3xl p-5"
-              style={{
-                border: `1px solid ${feature.color || colors.green}22`,
-                boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-              }}
-            >
-              <div className="text-4xl mb-3">{feature.emoji}</div>
-              <h3
-                className="font-black text-xl"
+          {visibleFeatures.map((feature, index) => {
+            const featureColor = feature.color || colors.green;
+
+            return (
+              <div
+                key={feature.id}
+                className="bg-white rounded-3xl p-5"
                 style={{
-                  color: feature.color || colors.green,
+                  border: `1px solid ${featureColor}22`,
+                  boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
                 }}
               >
-                {feature.title}
-              </h3>
-              <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-                {feature.desc}
-              </p>
-            </div>
-          ))}
+                <div
+                  className="text-sm font-black tracking-widest mb-3"
+                  style={{ color: featureColor }}
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </div>
+
+                <div
+                  className="w-16 h-1 rounded-full mb-4"
+                  style={{ background: featureColor }}
+                />
+
+                <h3 className="font-black text-xl text-slate-950">
+                  {feature.title}
+                </h3>
+
+                <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                  {feature.desc}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       <div className="mb-10">
-        <div className="text-xl font-black text-slate-950 mb-4">Statistics</div>
+        <div className="text-xl font-black text-slate-950 mb-4">
+          Statistics
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
-          {visibleStats.map((stat) => (
-            <div
-              key={stat.id}
-              className="bg-white rounded-3xl p-5 text-center"
-              style={{
-                border: `1px solid ${stat.color || colors.green}22`,
-              }}
-            >
+          {visibleStats.map((stat) => {
+            const statColor = stat.color || colors.green;
+
+            return (
               <div
-                className="text-3xl font-black"
-                style={{ color: stat.color || colors.green }}
+                key={stat.id}
+                className="bg-white rounded-3xl p-5 text-center"
+                style={{
+                  border: `1px solid ${statColor}22`,
+                  boxShadow: "0 12px 32px rgba(15,23,42,0.06)",
+                }}
               >
-                {stat.value}
+                <div
+                  className="w-12 h-1 rounded-full mx-auto mb-4"
+                  style={{ background: statColor }}
+                />
+
+                <div
+                  className="text-3xl font-black"
+                  style={{ color: statColor }}
+                >
+                  {stat.value}
+                </div>
+
+                <div className="text-xs uppercase font-bold text-slate-500 mt-1">
+                  {stat.label}
+                </div>
               </div>
-              <div className="text-xs uppercase font-bold text-slate-500 mt-1">
-                {stat.label}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -530,22 +576,60 @@ function AcademicsPreview({ form }) {
         <div className="text-xl font-black text-slate-950 mb-2">
           {form.examTitle}
         </div>
+
         <p className="text-sm text-slate-500 mb-4">{form.examDescription}</p>
 
         <div className="space-y-4">
-          {visibleTimeline.map((item) => (
-            <div key={item.id} className="bg-white rounded-3xl p-5 border">
-              <div className="font-black text-slate-950">{item.term}</div>
-              <div className="text-sm text-slate-500">{item.timeframe}</div>
-            </div>
-          ))}
+          {visibleTimeline.map((item, index) => {
+            const termColor =
+              index % 4 === 0
+                ? colors.red
+                : index % 4 === 1
+                ? colors.green
+                : index % 4 === 2
+                ? colors.purple
+                : colors.softPurple;
+
+            return (
+              <div
+                key={item.id}
+                className="bg-white rounded-3xl p-5"
+                style={{
+                  border: `1px solid ${termColor}22`,
+                  boxShadow: "0 12px 32px rgba(15,23,42,0.06)",
+                }}
+              >
+                <div
+                  className="w-14 h-1 rounded-full mb-3"
+                  style={{ background: termColor }}
+                />
+
+                <div className="font-black text-slate-950">{item.term}</div>
+                <div className="text-sm text-slate-500">{item.timeframe}</div>
+              </div>
+            );
+          })}
         </div>
 
-        <div className="bg-white rounded-3xl p-5 border mt-4">
-          <div className="font-black text-slate-950">
-            {form.continuousTitle}
-          </div>
-          <p className="text-sm text-slate-500 mt-2">
+        <div
+          className="rounded-3xl p-5 mt-4"
+          style={{
+            background: `linear-gradient(135deg, ${colors.dark}, ${colors.purple})`,
+          }}
+        >
+          <div
+            className="w-16 h-1 rounded-full mb-4"
+            style={{
+              background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
+            }}
+          />
+
+          <div className="font-black text-white">{form.continuousTitle}</div>
+
+          <p
+            className="text-sm mt-2"
+            style={{ color: "rgba(255,255,255,0.68)" }}
+          >
             {form.continuousDescription}
           </p>
 
@@ -553,7 +637,12 @@ function AcademicsPreview({ form }) {
             {(form.ongoingAssessments || []).map((item) => (
               <div
                 key={item}
-                className="bg-slate-50 rounded-xl p-3 text-center text-sm font-bold text-slate-600"
+                className="rounded-xl p-3 text-center text-sm font-bold"
+                style={{
+                  background: "rgba(255,255,255,0.1)",
+                  color: "rgba(255,255,255,0.86)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                }}
               >
                 {item}
               </div>
@@ -563,12 +652,24 @@ function AcademicsPreview({ form }) {
       </div>
 
       <div className="bg-white rounded-3xl p-6 text-center border">
-        <h2 className="text-3xl font-black text-slate-950">{form.ctaTitle}</h2>
+        <div
+          className="w-20 h-1 rounded-full mx-auto mb-5"
+          style={{
+            background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
+          }}
+        />
+
+        <h2 className="text-3xl font-black text-slate-950">
+          {form.ctaTitle}
+        </h2>
+
         <p className="text-sm text-slate-500 mt-3">{form.ctaDescription}</p>
+
         <div className="flex gap-3 mt-5 justify-center">
           <span className="px-5 py-3 rounded-xl font-bold bg-yellow-200">
             {form.primaryButtonText}
           </span>
+
           <span className="px-5 py-3 rounded-xl font-bold bg-slate-100">
             {form.secondaryButtonText}
           </span>
@@ -884,7 +985,9 @@ export default function AdminAcademics() {
 
           <p className="text-slate-500 max-w-3xl text-lg">
             Edit academic hero, programs, features, statistics, examination
-            system, ongoing assessments, and CTA buttons.
+            system, ongoing assessments, and CTA buttons. Emoji and icon editing
+            is hidden because the public page now uses a cleaner number-and-line
+            design.
           </p>
         </motion.div>
 
@@ -1016,21 +1119,13 @@ export default function AdminAcademics() {
                       />
 
                       <Field
-                        label="Badge Color"
+                        label="Accent Color"
                         type="color"
                         value={program.badgeColor}
-                        onChange={(value) =>
-                          updateProgram(program.id, "badgeColor", value)
-                        }
-                      />
-
-                      <Field
-                        label="Border Color CSS"
-                        value={program.border}
-                        onChange={(value) =>
-                          updateProgram(program.id, "border", value)
-                        }
-                        placeholder="rgba(22,138,58,0.15)"
+                        onChange={(value) => {
+                          updateProgram(program.id, "badgeColor", value);
+                          updateProgram(program.id, "border", `${value}24`);
+                        }}
                       />
                     </div>
 
@@ -1132,15 +1227,7 @@ export default function AdminAcademics() {
                       />
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <Field
-                        label="Emoji"
-                        value={feature.emoji}
-                        onChange={(value) =>
-                          updateFeature(feature.id, "emoji", value)
-                        }
-                      />
-
+                    <div className="grid md:grid-cols-2 gap-4">
                       <Field
                         label="Title"
                         value={feature.title}
@@ -1150,7 +1237,7 @@ export default function AdminAcademics() {
                       />
 
                       <Field
-                        label="Color"
+                        label="Accent Color"
                         type="color"
                         value={feature.color}
                         onChange={(value) =>
@@ -1218,7 +1305,7 @@ export default function AdminAcademics() {
                       />
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-3 gap-4">
                       <Field
                         label="Value"
                         value={stat.value}
@@ -1236,37 +1323,13 @@ export default function AdminAcademics() {
                       />
 
                       <Field
-                        label="Color"
+                        label="Accent Color"
                         type="color"
                         value={stat.color}
                         onChange={(value) =>
                           updateStat(stat.id, "color", value)
                         }
                       />
-
-                      <div>
-                        <label className="block text-sm font-bold mb-2 text-slate-700">
-                          Icon
-                        </label>
-
-                        <select
-                          value={stat.icon}
-                          onChange={(e) =>
-                            updateStat(stat.id, "icon", e.target.value)
-                          }
-                          className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
-                          style={{
-                            background: "rgba(255,255,255,0.88)",
-                            border: "1px solid rgba(75,46,131,0.16)",
-                            color: colors.dark,
-                          }}
-                        >
-                          <option value="users">Users</option>
-                          <option value="graduation">Graduation</option>
-                          <option value="milestone">Milestone</option>
-                          <option value="award">Award</option>
-                        </select>
-                      </div>
                     </div>
                   </div>
                 ))}

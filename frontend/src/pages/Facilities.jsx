@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
-import { ArrowRight, X, Image as ImageIcon } from "lucide-react";
+import { X } from "lucide-react";
 
 const colors = {
   red: "#D71920",
@@ -65,7 +65,8 @@ const defaultFacilitiesContent = {
       emoji: "🚌",
       title: "Bus Facility",
       category: "Transportation",
-      description: "Safe and reliable transportation service covering multiple routes.",
+      description:
+        "Safe and reliable transportation service covering multiple routes.",
       details:
         "Baljagriti provides safe transportation with experienced drivers, route management, student safety monitoring, and comfortable buses for daily travel.",
       imageUrl: "",
@@ -128,6 +129,8 @@ function HighlightedTitle({ title, highlightedText }) {
 }
 
 function FacilityVisual({ facility, className = "" }) {
+  const facilityColor = facility.color || colors.green;
+
   if (facility.imageUrl) {
     return (
       <img
@@ -142,10 +145,37 @@ function FacilityVisual({ facility, className = "" }) {
     <div
       className={`w-full h-full flex items-center justify-center ${className}`}
       style={{
-        background: `${facility.color || colors.green}12`,
+        background: `
+          radial-gradient(circle at top right, ${facilityColor}24, transparent 36%),
+          linear-gradient(145deg, rgba(11,16,32,0.96), rgba(75,46,131,0.9))
+        `,
       }}
     >
-      <span className="text-6xl">{facility.emoji || "🏫"}</span>
+      <div className="text-center px-8">
+        <div
+          className="w-20 h-1 rounded-full mx-auto mb-5"
+          style={{
+            background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
+          }}
+        />
+
+        <div
+          className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
+          style={{ color: "rgba(255,255,255,0.58)" }}
+        >
+          {facility.category}
+        </div>
+
+        <div
+          className="text-3xl font-black text-white leading-tight"
+          style={{
+            fontFamily: "var(--font-display)",
+            letterSpacing: "-0.045em",
+          }}
+        >
+          {facility.title}
+        </div>
+      </div>
     </div>
   );
 }
@@ -198,14 +228,13 @@ export default function Facilities() {
           className="text-center mb-20"
         >
           <span
-            className="px-5 py-2 rounded-full text-sm font-semibold inline-flex items-center gap-2"
+            className="px-5 py-2 rounded-full text-sm font-bold inline-flex items-center"
             style={{
               background: "rgba(22,138,58,0.08)",
               color: colors.green,
               border: "1px solid rgba(22,138,58,0.18)",
             }}
           >
-            <ImageIcon className="w-4 h-4" />
             {content.badgeText}
           </span>
 
@@ -214,7 +243,7 @@ export default function Facilities() {
             style={{
               fontFamily: "var(--font-display)",
               fontWeight: 850,
-              letterSpacing: "-0.045em",
+              letterSpacing: "-0.055em",
             }}
           >
             <HighlightedTitle
@@ -229,76 +258,94 @@ export default function Facilities() {
         </motion.div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {visibleFacilities.map((facility, index) => (
-            <motion.div
-            key={facility.id || facility.title}
-            onClick={() => setSelectedFacility(facility)}
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.25 }}
-            transition={{ duration: 0.45, delay: index * 0.06 }}
-            whileHover={{
-              y: -12,
-              scale: 1.02,
-              rotateY: 4,
-            }}
-            className="group rounded-[2rem] overflow-hidden border backdrop-blur-md transition-all duration-300 cursor-pointer"
-            style={{
-                background:
-                  "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
-                borderColor: `${facility.color || colors.green}25`,
-                boxShadow:
-                  "0 22px 54px rgba(15,23,42,0.09), inset 0 1px 0 rgba(255,255,255,0.82)",
-              }}
-            >
-              <div className="h-56 relative overflow-hidden">
-                <FacilityVisual
-                  facility={facility}
-                  className="transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
+          {visibleFacilities.map((facility, index) => {
+            const facilityColor = facility.color || colors.green;
 
-                <div
-                  className="absolute top-5 left-5 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl"
-                  style={{
-                    background: "rgba(255,255,255,0.9)",
-                    border: `1px solid ${facility.color || colors.green}25`,
-                    boxShadow: "0 14px 32px rgba(15,23,42,0.18)",
-                  }}
-                >
-                  {facility.emoji || "🏫"}
-                </div>
-              </div>
+            return (
+              <motion.div
+                key={facility.id || facility.title}
+                onClick={() => setSelectedFacility(facility)}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.25 }}
+                transition={{ duration: 0.45, delay: index * 0.06 }}
+                className="group rounded-[2rem] overflow-hidden transition-all duration-300 cursor-pointer"
+                style={{
+                  background:
+                    "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.82))",
+                  border: `1px solid ${facilityColor}24`,
+                  boxShadow:
+                    "0 22px 54px rgba(15,23,42,0.09), inset 0 1px 0 rgba(255,255,255,0.82)",
+                  backdropFilter: "blur(16px)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-10px)";
+                  e.currentTarget.style.boxShadow = `0 30px 72px rgba(15,23,42,0.16), 0 0 0 1px ${facilityColor}22`;
+                  e.currentTarget.style.borderColor = `${facilityColor}55`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow =
+                    "0 22px 54px rgba(15,23,42,0.09), inset 0 1px 0 rgba(255,255,255,0.82)";
+                  e.currentTarget.style.borderColor = `${facilityColor}24`;
+                }}
+              >
+                <div className="h-56 relative overflow-hidden">
+                  <FacilityVisual
+                    facility={facility}
+                    className="transition-transform duration-500 group-hover:scale-105"
+                  />
 
-              <div className="p-8">
-                <span
-                  className="text-xs font-semibold px-3 py-1 rounded-full"
-                  style={{
-                    background: `${facility.color || colors.green}15`,
-                    color: facility.color || colors.green,
-                  }}
-                >
-                  {facility.category}
-                </span>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
 
-                <h3 className="text-2xl font-black mt-4 text-slate-950">
-                  {facility.title}
-                </h3>
+                  <div
+                    className="absolute bottom-5 left-5 right-5"
+                  >
+                    <div
+                      className="w-16 h-1 rounded-full mb-4 transition-all duration-300 group-hover:w-28"
+                      style={{
+                        background: facilityColor,
+                      }}
+                    />
 
-                <p className="mt-4 text-slate-600 leading-relaxed">
-                  {facility.description}
-                </p>
-
-                <div
-  className="mt-6 flex items-center gap-2 font-bold hover:gap-3 transition-all"
-  style={{ color: facility.color || colors.green }}
->
-                  {content.learnMoreText}
-                  <ArrowRight size={18} />
+                    <div
+                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
+                      style={{
+                        background: "rgba(255,255,255,0.9)",
+                        color: facilityColor,
+                        border: `1px solid ${facilityColor}22`,
+                      }}
+                    >
+                      {facility.category}
+                    </div>
                   </div>
-              </div>
-            </motion.div>
-          ))}
+                </div>
+
+                <div className="p-8">
+                  <h3
+                    className="text-3xl font-black text-slate-950 leading-tight"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      letterSpacing: "-0.04em",
+                    }}
+                  >
+                    {facility.title}
+                  </h3>
+
+                  <p className="mt-4 text-slate-600 leading-relaxed">
+                    {facility.description}
+                  </p>
+
+                  <div
+                    className="mt-6 inline-flex items-center font-bold transition-all duration-300 group-hover:tracking-wide"
+                    style={{ color: facilityColor }}
+                  >
+                    {content.learnMoreText}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
 
@@ -315,20 +362,18 @@ export default function Facilities() {
             onClick={(e) => e.stopPropagation()}
             initial={{
               opacity: 0,
-              scale: 0.82,
-              rotateX: 18,
-              y: 60,
+              scale: 0.86,
+              y: 40,
             }}
             animate={{
               opacity: 1,
               scale: 1,
-              rotateX: 0,
               y: 0,
             }}
             transition={{
               type: "spring",
               stiffness: 120,
-              damping: 14,
+              damping: 16,
             }}
             className="relative max-w-3xl w-full overflow-hidden rounded-[32px]"
             style={{
@@ -343,7 +388,7 @@ export default function Facilities() {
               style={{
                 background: `
                   radial-gradient(circle at top right,
-                  ${selectedFacility.color || colors.green}30,
+                  ${selectedFacility.color || colors.green}24,
                   transparent 40%)
                 `,
               }}
@@ -365,28 +410,32 @@ export default function Facilities() {
 
               <div className="p-8 md:p-10">
                 <div
-                  className="w-20 h-20 rounded-3xl flex items-center justify-center text-5xl mb-6"
+                  className="w-20 h-1 rounded-full mb-6"
                   style={{
-                    background: `${selectedFacility.color || colors.green}15`,
-                    border: `1px solid ${
-                      selectedFacility.color || colors.green
-                    }30`,
+                    background: selectedFacility.color || colors.green,
                   }}
-                >
-                  {selectedFacility.emoji || "🏫"}
-                </div>
+                />
 
                 <span
-                  className="px-4 py-2 rounded-full text-sm font-semibold"
+                  className="px-4 py-2 rounded-full text-sm font-bold"
                   style={{
-                    background: `${selectedFacility.color || colors.green}15`,
+                    background: `${selectedFacility.color || colors.green}12`,
                     color: selectedFacility.color || colors.green,
+                    border: `1px solid ${
+                      selectedFacility.color || colors.green
+                    }22`,
                   }}
                 >
                   {selectedFacility.category}
                 </span>
 
-                <h2 className="text-4xl md:text-5xl font-black mt-5 text-slate-950 leading-tight">
+                <h2
+                  className="text-4xl md:text-5xl font-black mt-5 text-slate-950 leading-tight"
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    letterSpacing: "-0.055em",
+                  }}
+                >
                   {selectedFacility.title}
                 </h2>
 

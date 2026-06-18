@@ -1,24 +1,12 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import schoolLogo from "../../assets/school-logo.jpeg";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
-import {
-  ArrowRight,
-  BookOpen,
-  GraduationCap,
-  MapPin,
-  Sparkles,
-  Trophy,
-  Monitor,
-  FlaskConical,
-  Library,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 const palette = {
   cyan: "#38BDF8",
   gold: "#FACC15",
-  violet: "#8B5CF6",
   green: "#22C55E",
 };
 
@@ -59,44 +47,88 @@ const defaultHeroData = {
   floating4Subtitle: "Learning Resources",
 };
 
-function GlassStat({ icon: Icon, value, label, color, delay }) {
+function GlassStat({ value, label, color, delay }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 18, scale: 0.94 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.55 }}
-      className="rounded-3xl p-4"
+      className="rounded-3xl p-5"
       style={{
         background:
-          "linear-gradient(145deg, rgba(255,255,255,0.14), rgba(255,255,255,0.055))",
-        border: "1px solid rgba(255,255,255,0.18)",
+          "linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055))",
+        border: "1px solid rgba(255,255,255,0.16)",
         boxShadow:
-          "0 20px 46px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.16)",
+          "0 20px 46px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.13)",
         backdropFilter: "blur(18px)",
       }}
     >
       <div
-        className="w-10 h-10 rounded-2xl flex items-center justify-center mb-3"
-        style={{
-          background: `${color}24`,
-          border: `1px solid ${color}40`,
-        }}
-      >
-        <Icon className="w-5 h-5" style={{ color }} />
-      </div>
+        className="w-11 h-1 rounded-full mb-4"
+        style={{ background: color }}
+      />
 
       <div
-        className="text-xl font-bold"
+        className="text-2xl font-black"
         style={{
           color: "#FFFFFF",
           fontFamily: "var(--font-display)",
+          letterSpacing: "-0.035em",
         }}
       >
         {value}
       </div>
 
-      <div className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.62)" }}>
+      <div
+        className="text-xs mt-1 font-medium"
+        style={{ color: "rgba(255,255,255,0.62)" }}
+      >
         {label}
+      </div>
+    </motion.div>
+  );
+}
+
+function FloatingTextTag({ className, title, subtitle, color, delay }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{
+        opacity: 1,
+        y: [0, 9, 0],
+      }}
+      transition={{
+        opacity: { duration: 0.55, delay },
+        y: {
+          duration: 7,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay,
+        },
+      }}
+      className={`rounded-3xl px-5 py-4 ${className}`}
+      style={{
+        background:
+          "linear-gradient(145deg, rgba(15,23,42,0.64), rgba(15,23,42,0.36))",
+        border: `1px solid ${color}55`,
+        boxShadow: "0 24px 60px rgba(0,0,0,0.28)",
+        backdropFilter: "blur(20px)",
+      }}
+    >
+      <div
+        className="w-12 h-1 rounded-full mb-3"
+        style={{ background: color }}
+      />
+
+      <div className="text-white text-sm font-bold whitespace-nowrap">
+        {title}
+      </div>
+
+      <div
+        className="text-xs mt-1 whitespace-nowrap"
+        style={{ color: "rgba(255,255,255,0.66)" }}
+      >
+        {subtitle}
       </div>
     </motion.div>
   );
@@ -105,66 +137,38 @@ function GlassStat({ icon: Icon, value, label, color, delay }) {
 function HeroImageStage({ heroData }) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.92, y: 24 }}
+      initial={{ opacity: 0, scale: 0.96, y: 24 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.85, delay: 0.18 }}
-      className="relative min-h-[430px] lg:min-h-[470px] flex items-center justify-center"
+      className="relative min-h-[430px] lg:min-h-[470px] xl:min-h-[560px] flex items-center justify-center"
     >
-      <svg
-        className="absolute inset-0 w-full h-full pointer-events-none hidden lg:block"
-        viewBox="0 0 720 520"
-        fill="none"
-      >
-        <motion.path
-          d="M90 270 C130 90 560 90 630 270 C700 435 480 500 260 455 C125 428 60 350 90 270Z"
-          stroke="rgba(56,189,248,0.22)"
-          strokeWidth="2"
-          strokeDasharray="8 10"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 1.4, delay: 0.4 }}
-        />
-        <motion.path
-          d="M125 330 C175 135 555 130 600 305 C625 415 490 470 320 455 C195 442 110 405 125 330Z"
-          stroke="rgba(250,204,21,0.18)"
-          strokeWidth="2"
-          strokeDasharray="5 12"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 1.4, delay: 0.65 }}
-        />
-      </svg>
-
       <div
-        className="absolute w-[84%] h-[76%] rounded-[3rem]"
+        className="absolute w-[88%] h-[68%] xl:h-[66%] rounded-[3rem]"
         style={{
           background:
-            "linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.045))",
-          border: "1px solid rgba(255,255,255,0.18)",
+            "linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.035))",
+          border: "1px solid rgba(255,255,255,0.14)",
           boxShadow:
-            "0 38px 100px rgba(0,0,0,0.46), inset 0 1px 0 rgba(255,255,255,0.14)",
+            "0 38px 100px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.1)",
           backdropFilter: "blur(22px)",
-          transform: "perspective(1200px) rotateY(-5deg) rotateX(3deg)",
+          transform: "perspective(1200px) rotateY(-3deg) rotateX(2deg)",
         }}
       />
 
       <motion.div
         animate={{
-          y: [0, -8, 0],
-          rotateY: [-2, -1, -2],
-          rotateX: [2, 0, 2],
+          y: [0, -7, 0],
         }}
         transition={{
-          duration: 6,
+          duration: 7,
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="relative z-10 w-[84%] h-[350px] lg:h-[380px] rounded-[2.5rem] overflow-hidden"
+        className="relative z-10 w-[88%] h-[360px] lg:h-[395px] rounded-[2.5rem] overflow-hidden"
         style={{
           boxShadow:
-            "0 42px 110px rgba(0,0,0,0.55), 0 0 70px rgba(56,189,248,0.14)",
-          border: "1px solid rgba(255,255,255,0.18)",
-          transformStyle: "preserve-3d",
+            "0 42px 110px rgba(0,0,0,0.52), 0 0 70px rgba(56,189,248,0.1)",
+          border: "1px solid rgba(255,255,255,0.16)",
         }}
       >
         <img
@@ -177,145 +181,93 @@ function HeroImageStage({ heroData }) {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to top, rgba(2,6,23,0.62) 0%, rgba(2,6,23,0.12) 45%, transparent 100%)",
+              "linear-gradient(to top, rgba(2,6,23,0.68) 0%, rgba(2,6,23,0.18) 48%, transparent 100%)",
           }}
         />
 
-        <div
-          className="absolute top-4 left-4 px-4 py-3 rounded-2xl flex items-center gap-3"
-          style={{
-            background: "rgba(2,6,23,0.42)",
-            border: "1px solid rgba(255,255,255,0.16)",
-            backdropFilter: "blur(16px)",
-            boxShadow: "0 16px 40px rgba(0,0,0,0.26)",
-          }}
-        >
-          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center overflow-hidden">
-            <img
-              src={schoolLogo}
-              alt="Baljagriti School Logo"
-              className="w-full h-full object-contain p-1"
-            />
-          </div>
+        <div className="absolute top-5 left-5 right-5 flex items-center justify-between gap-4">
+          <div
+            className="px-4 py-3 rounded-2xl"
+            style={{
+              background: "rgba(2,6,23,0.42)",
+              border: "1px solid rgba(255,255,255,0.14)",
+              backdropFilter: "blur(16px)",
+              boxShadow: "0 16px 40px rgba(0,0,0,0.24)",
+            }}
+          >
+            <div className="text-white text-sm font-bold">
+              Baljagriti School
+            </div>
 
-          <div>
-            <div className="text-white text-sm font-bold">Baljagriti</div>
             <div
-              className="text-xs"
+              className="text-xs mt-0.5"
               style={{ color: "rgba(255,255,255,0.64)" }}
             >
               {heroData.imageLocation}
             </div>
           </div>
+
+          <div
+            className="hidden md:block w-20 h-1 rounded-full"
+            style={{
+              background:
+                "linear-gradient(90deg, rgba(250,204,21,0.95), rgba(56,189,248,0.95))",
+            }}
+          />
         </div>
 
         <div
-          className="absolute bottom-4 left-4 right-4 px-4 py-3 rounded-2xl"
+          className="absolute bottom-5 left-5 right-5 px-5 py-4 rounded-2xl"
           style={{
-            background: "rgba(2,6,23,0.38)",
+            background: "rgba(2,6,23,0.42)",
             border: "1px solid rgba(255,255,255,0.14)",
             backdropFilter: "blur(14px)",
           }}
         >
-          <div className="flex items-center gap-2 text-white font-semibold text-sm">
-            <MapPin className="w-4 h-4" style={{ color: palette.gold }} />
+          <div className="text-white font-bold text-base">
             {heroData.imageBottomTitle}
           </div>
+
           <div
-            className="text-xs mt-1"
-            style={{ color: "rgba(255,255,255,0.64)" }}
+            className="text-sm mt-1 leading-relaxed"
+            style={{ color: "rgba(255,255,255,0.66)" }}
           >
             {heroData.imageBottomDescription}
           </div>
         </div>
       </motion.div>
 
-      <FloatingBadge
-        className="absolute left-[4%] top-6 z-20 hidden xl:block"
-        icon={GraduationCap}
+      <FloatingTextTag
+        className="absolute left-[7%] top-3 z-20 hidden xl:block"
         title={heroData.floating1Title}
         subtitle={heroData.floating1Subtitle}
         color={palette.gold}
         delay={0.3}
-        direction="up"
       />
 
-      <FloatingBadge
-        className="absolute right-[2%] top-16 z-20 hidden xl:block"
-        icon={Monitor}
+      <FloatingTextTag
+        className="absolute right-[6%] top-12 z-20 hidden xl:block"
         title={heroData.floating2Title}
         subtitle={heroData.floating2Subtitle}
         color={palette.cyan}
         delay={0.45}
-        direction="down"
       />
 
-      <FloatingBadge
-        className="absolute left-[8%] bottom-1 z-20 hidden xl:block"
-        icon={FlaskConical}
+      <FloatingTextTag
+        className="absolute left-[12%] bottom-2 z-20 hidden xl:block"
         title={heroData.floating3Title}
         subtitle={heroData.floating3Subtitle}
-        color={palette.violet}
+        color="#8B5CF6"
         delay={0.6}
-        direction="up"
       />
 
-      <FloatingBadge
-        className="absolute right-[7%] bottom-0 z-20 hidden xl:block"
-        icon={Library}
+      <FloatingTextTag
+        className="absolute right-[12%] bottom-7 z-20 hidden xl:block"
         title={heroData.floating4Title}
         subtitle={heroData.floating4Subtitle}
         color={palette.green}
         delay={0.75}
-        direction="down"
       />
-    </motion.div>
-  );
-}
-
-function FloatingBadge({
-  className,
-  icon: Icon,
-  title,
-  subtitle,
-  color,
-  delay,
-  direction,
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: direction === "up" ? [0, -10, 0] : [0, 10, 0] }}
-      transition={{
-        opacity: { duration: 0.55, delay },
-        y: { duration: 5, repeat: Infinity, ease: "easeInOut" },
-      }}
-      className={`rounded-3xl px-4 py-3 ${className}`}
-      style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07))",
-        border: `1px solid ${color}4d`,
-        boxShadow: "0 24px 60px rgba(0,0,0,0.32)",
-        backdropFilter: "blur(20px)",
-      }}
-    >
-      <div className="flex items-center gap-3">
-        <div
-          className="w-11 h-11 rounded-2xl flex items-center justify-center"
-          style={{
-            background: `${color}22`,
-            border: `1px solid ${color}42`,
-          }}
-        >
-          <Icon className="w-5 h-5" style={{ color }} />
-        </div>
-        <div>
-          <div className="text-white text-sm font-bold">{title}</div>
-          <div className="text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
-            {subtitle}
-          </div>
-        </div>
-      </div>
     </motion.div>
   );
 }
@@ -326,7 +278,9 @@ function Hero() {
   useEffect(() => {
     const loadHeroContent = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/site-content/home");
+        const res = await axios.get(
+          "http://localhost:5000/api/site-content/home"
+        );
 
         const savedHero = res.data?.data?.content?.hero;
 
@@ -350,7 +304,7 @@ function Hero() {
       className="relative overflow-hidden pt-20 pb-20 lg:pb-14"
       style={{
         background:
-          "radial-gradient(circle at 10% 18%, rgba(56,189,248,0.28), transparent 32%), radial-gradient(circle at 85% 12%, rgba(250,204,21,0.22), transparent 30%), radial-gradient(circle at 60% 78%, rgba(139,92,246,0.28), transparent 38%), linear-gradient(135deg, #020617 0%, #07111F 45%, #111827 100%)",
+          "radial-gradient(circle at 10% 18%, rgba(56,189,248,0.24), transparent 32%), radial-gradient(circle at 85% 12%, rgba(250,204,21,0.18), transparent 30%), radial-gradient(circle at 60% 78%, rgba(139,92,246,0.2), transparent 38%), linear-gradient(135deg, #020617 0%, #07111F 45%, #111827 100%)",
       }}
     >
       <style>{`
@@ -365,19 +319,19 @@ function Hero() {
         }
 
         @keyframes pulseGlow {
-          0%, 100% { opacity: 0.45; transform: scale(1); }
-          50% { opacity: 0.95; transform: scale(1.08); }
+          0%, 100% { opacity: 0.35; transform: scale(1); }
+          50% { opacity: 0.65; transform: scale(1.05); }
         }
       `}</style>
 
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
-          className="absolute inset-0 opacity-[0.12]"
+          className="absolute inset-0 opacity-[0.08]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(255,255,255,.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.18) 1px, transparent 1px)",
+              "linear-gradient(rgba(255,255,255,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.16) 1px, transparent 1px)",
             backgroundSize: "90px 90px",
-            animation: "gridDrift 22s linear infinite",
+            animation: "gridDrift 24s linear infinite",
             transform: "perspective(700px) rotateX(63deg) translateY(160px)",
             transformOrigin: "center bottom",
           }}
@@ -387,9 +341,9 @@ function Hero() {
           className="absolute -top-40 -left-32 w-[620px] h-[620px] rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(56,189,248,0.45), transparent 68%)",
+              "radial-gradient(circle, rgba(56,189,248,0.35), transparent 68%)",
             filter: "blur(18px)",
-            animation: "pulseGlow 6s ease-in-out infinite",
+            animation: "pulseGlow 7s ease-in-out infinite",
           }}
         />
 
@@ -397,9 +351,9 @@ function Hero() {
           className="absolute -top-32 -right-32 w-[560px] h-[560px] rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(250,204,21,0.32), transparent 68%)",
+              "radial-gradient(circle, rgba(250,204,21,0.24), transparent 68%)",
             filter: "blur(18px)",
-            animation: "pulseGlow 7s ease-in-out infinite",
+            animation: "pulseGlow 8s ease-in-out infinite",
           }}
         />
       </div>
@@ -410,27 +364,16 @@ function Hero() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65 }}
-            className="inline-flex items-center gap-3 rounded-full px-4 py-2 mb-6"
+            className="inline-flex items-center rounded-full px-5 py-2 mb-6"
             style={{
               background:
-                "linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06))",
-              border: "1px solid rgba(255,255,255,0.18)",
-              boxShadow: "0 18px 46px rgba(0,0,0,0.26)",
+                "linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055))",
+              border: "1px solid rgba(255,255,255,0.16)",
+              boxShadow: "0 18px 46px rgba(0,0,0,0.22)",
               backdropFilter: "blur(18px)",
-              color: "rgba(255,255,255,0.9)",
+              color: "rgba(255,255,255,0.88)",
             }}
           >
-            <span
-              className="w-8 h-8 rounded-full bg-white flex items-center justify-center overflow-hidden"
-              style={{ boxShadow: "0 0 22px rgba(56,189,248,0.35)" }}
-            >
-              <img
-                src={schoolLogo}
-                alt="Baljagriti School Logo"
-                className="w-full h-full object-contain p-1"
-              />
-            </span>
-            <Sparkles className="w-4 h-4" style={{ color: palette.gold }} />
             <span className="text-sm font-semibold">{heroData.badge}</span>
           </motion.div>
 
@@ -495,6 +438,7 @@ function Hero() {
               <span className="relative z-10 flex items-center gap-2">
                 {heroData.primaryButtonText} <ArrowRight className="w-4 h-4" />
               </span>
+
               <span
                 className="absolute top-0 bottom-0 w-24 opacity-40"
                 style={{
@@ -524,21 +468,20 @@ function Hero() {
 
           <div className="grid grid-cols-3 gap-3 max-w-xl">
             <GlassStat
-              icon={Trophy}
               value={heroData.stat1Value}
               label={heroData.stat1Label}
               color={palette.gold}
               delay={0.3}
             />
+
             <GlassStat
-              icon={BookOpen}
               value={heroData.stat2Value}
               label={heroData.stat2Label}
               color={palette.cyan}
               delay={0.38}
             />
+
             <GlassStat
-              icon={MapPin}
               value={heroData.stat3Value}
               label={heroData.stat3Label}
               color={palette.green}

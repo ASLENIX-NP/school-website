@@ -1,18 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import {
-  Users,
-  BookOpen,
-  Trophy,
-  Star,
-  Sparkles,
-  Award,
-  GraduationCap,
-  UserRoundCheck,
-  Bell,
-  ArrowRight,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 const palette = {
   cyan: "#38BDF8",
@@ -21,9 +10,6 @@ const palette = {
   violet: "#8B5CF6",
 };
 
-/*
-  Later this full object can come from admin dashboard API.
-*/
 const statsData = {
   eyebrow: "School Highlights",
   title: "Numbers that reflect our journey.",
@@ -32,31 +18,31 @@ const statsData = {
 
   stats: [
     {
-      icon: Users,
       value: 3800,
       suffix: "+",
       label: "Students Enrolled",
+      note: "Across school programs",
       color: palette.cyan,
     },
     {
-      icon: BookOpen,
       value: 240,
       suffix: "+",
       label: "Expert Teachers",
+      note: "Academic and support team",
       color: palette.gold,
     },
     {
-      icon: Trophy,
       value: 35,
       suffix: " yrs",
       label: "Years of Excellence",
+      note: "Serving Makwanpur",
       color: palette.green,
     },
     {
-      icon: Star,
       value: 98,
       suffix: "%",
       label: "Success Rate",
+      note: "Academic performance",
       color: palette.violet,
     },
   ],
@@ -80,19 +66,16 @@ const statsData = {
       "Our students consistently achieve outstanding results in the SEE examinations under NEB.",
     cards: [
       {
-        icon: Award,
         title: "Best SEE Results",
         description:
           "Consistently achieving top results in the Secondary Education Examination under the National Examination Board.",
       },
       {
-        icon: GraduationCap,
         title: "GPA 4.00 Achievers",
         description:
           "Our brightest students attain a perfect GPA of 4.00, a testament to our teaching quality and student dedication.",
       },
       {
-        icon: UserRoundCheck,
         title: "Holistic Development",
         description:
           "Beyond academics, we foster creativity, leadership, and sportsmanship through diverse extracurricular programs.",
@@ -167,17 +150,40 @@ function Counter({ target, suffix }) {
     </span>
   );
 }
+const formatNoticeDate = (dateValue) => {
+  if (!dateValue) return "No date";
 
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return dateValue;
+
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+const getNoticeExcerpt = (notice) => {
+  const text =
+    notice?.description ||
+    notice?.content ||
+    "Click to read the full school notice and important update.";
+
+  return text.length > 110 ? `${text.slice(0, 110)}...` : text;
+};
 function Stats() {
   const [notices, setNotices] = useState([]);
+
   useEffect(() => {
     fetch("http://localhost:5000/api/notices")
       .then((res) => res.json())
       .then((data) => {
-        setNotices(data.slice(0, 3));
+        const noticeList = Array.isArray(data) ? data : data?.data || [];
+        setNotices(noticeList.slice(0, 3));
       })
       .catch((err) => console.log(err));
   }, []);
+
   return (
     <section
       className="relative overflow-hidden py-16"
@@ -191,7 +197,7 @@ function Stats() {
           className="absolute -top-28 left-10 w-80 h-80 rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(56,189,248,0.14), transparent 70%)",
+              "radial-gradient(circle, rgba(56,189,248,0.11), transparent 70%)",
           }}
         />
 
@@ -199,7 +205,7 @@ function Stats() {
           className="absolute top-72 right-10 w-80 h-80 rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(250,204,21,0.14), transparent 70%)",
+              "radial-gradient(circle, rgba(250,204,21,0.1), transparent 70%)",
           }}
         />
       </div>
@@ -214,14 +220,13 @@ function Stats() {
         >
           <div>
             <div
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-3"
+              className="inline-flex items-center rounded-full px-4 py-2 mb-3"
               style={{
-                background: "rgba(2,6,23,0.06)",
+                background: "rgba(2,6,23,0.04)",
                 border: "1px solid rgba(2,6,23,0.08)",
                 color: "#0F172A",
               }}
             >
-              <Sparkles className="w-4 h-4" style={{ color: palette.gold }} />
               <span className="text-sm font-bold">{statsData.eyebrow}</span>
             </div>
 
@@ -243,56 +248,46 @@ function Stats() {
         </motion.div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-20">
-          {statsData.stats.map((stat, i) => {
-            const Icon = stat.icon;
+          {statsData.stats.map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.08 }}
+              className="group rounded-[1.6rem] p-6 transition-all duration-300 hover:-translate-y-2"
+              style={{
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.94), rgba(255,255,255,0.74))",
+                border: "1px solid rgba(15,23,42,0.08)",
+                boxShadow:
+                  "0 20px 58px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+                backdropFilter: "blur(18px)",
+              }}
+            >
+              <div
+                className="w-14 h-1 rounded-full mb-7 transition-all duration-300 group-hover:w-20"
+                style={{ background: stat.color }}
+              />
 
-            return (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 28, scale: 0.96 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.08 }}
-                className="group rounded-[1.6rem] p-6 transition-all duration-300 hover:-translate-y-2"
+              <div
+                className="text-4xl md:text-5xl mb-2 text-slate-950"
                 style={{
-                  background:
-                    "linear-gradient(145deg, rgba(255,255,255,0.92), rgba(255,255,255,0.68))",
-                  border: "1px solid rgba(15,23,42,0.08)",
-                  boxShadow:
-                    "0 20px 58px rgba(15,23,42,0.09), inset 0 1px 0 rgba(255,255,255,0.9)",
-                  backdropFilter: "blur(18px)",
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 850,
+                  letterSpacing: "-0.055em",
                 }}
               >
-                <div
-                  className="rounded-2xl flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110"
-                  style={{
-                    width: "52px",
-                    height: "52px",
-                    background: `${stat.color}18`,
-                    border: `1px solid ${stat.color}30`,
-                    boxShadow: `0 12px 28px ${stat.color}18`,
-                  }}
-                >
-                  <Icon className="w-6 h-6" style={{ color: stat.color }} />
-                </div>
+                <Counter target={stat.value} suffix={stat.suffix} />
+              </div>
 
-                <div
-                  className="text-3xl md:text-4xl mb-1 text-slate-950"
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 850,
-                    letterSpacing: "-0.04em",
-                  }}
-                >
-                  <Counter target={stat.value} suffix={stat.suffix} />
-                </div>
+              <div className="text-base font-bold text-slate-700">
+                {stat.label}
+              </div>
 
-                <div className="text-sm font-medium text-slate-500">
-                  {stat.label}
-                </div>
-              </motion.div>
-            );
-          })}
+              <div className="text-sm mt-1 text-slate-500">{stat.note}</div>
+            </motion.div>
+          ))}
         </div>
 
         <motion.div
@@ -315,7 +310,7 @@ function Stats() {
             <img
               src={statsData.story.image}
               alt="Baljagriti school"
-              className="absolute inset-0 w-full h-full object-cover opacity-75"
+              className="absolute inset-0 w-full h-full object-cover opacity-78"
             />
 
             <div
@@ -337,6 +332,7 @@ function Stats() {
               <div className="text-white text-sm font-bold">
                 Baljagriti School
               </div>
+
               <div
                 className="text-xs"
                 style={{ color: "rgba(255,255,255,0.68)" }}
@@ -358,6 +354,7 @@ function Stats() {
               <div className="text-white text-lg font-bold mb-1">
                 Quality Education Since 2046 BS
               </div>
+
               <div
                 className="text-sm"
                 style={{ color: "rgba(255,255,255,0.68)" }}
@@ -369,14 +366,13 @@ function Stats() {
 
           <div>
             <div
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-5"
+              className="inline-flex items-center rounded-full px-4 py-2 mb-5"
               style={{
                 background: "rgba(215,25,32,0.06)",
                 border: "1px solid rgba(215,25,32,0.16)",
                 color: "#D71920",
               }}
             >
-              <Sparkles className="w-4 h-4" />
               <span className="text-sm font-bold">{statsData.story.badge}</span>
             </div>
 
@@ -443,140 +439,192 @@ function Stats() {
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {statsData.excellence.cards.map((card, i) => {
-            const Icon = card.icon;
-
-            return (
-              <motion.div
-                key={card.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.55, delay: i * 0.1 }}
-                className="rounded-2xl p-7 md:p-8 transition-all duration-300 hover:-translate-y-1"
-                style={{
-                  background: "#FFFFFF",
-                  border: "1px solid rgba(15,23,42,0.1)",
-                  boxShadow: "0 8px 26px rgba(15,23,42,0.06)",
-                }}
+          {statsData.excellence.cards.map((card, i) => (
+            <motion.div
+              key={card.title}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.55, delay: i * 0.1 }}
+              className="rounded-2xl p-7 md:p-8 transition-all duration-300 hover:-translate-y-1"
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid rgba(15,23,42,0.1)",
+                boxShadow: "0 8px 26px rgba(15,23,42,0.06)",
+              }}
+            >
+              <div
+                className="text-sm font-black tracking-widest mb-7"
+                style={{ color: "#1F6F4A" }}
               >
-                <div
-                  className="w-14 h-14 rounded-xl flex items-center justify-center mb-7"
-                  style={{
-                    background: "#EEF3F0",
-                  }}
-                >
-                  <Icon className="w-6 h-6" style={{ color: "#1F6F4A" }} />
-                </div>
+                {String(i + 1).padStart(2, "0")}
+              </div>
 
-                <h3
-                  className="text-xl md:text-2xl text-slate-950 mb-3"
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 800,
-                    letterSpacing: "-0.025em",
-                  }}
-                >
-                  {card.title}
-                </h3>
-
-                <p className="text-sm md:text-base leading-relaxed text-slate-500">
-                  {card.description}
-                </p>
-              </motion.div>
-            );
-          })}
-        </div>
-
-        <div className="mt-24">
-          <div className="flex items-end justify-between gap-6 mb-10">
-            <div>
-              <h2
-                className="text-3xl md:text-4xl text-slate-950 mb-3"
+              <h3
+                className="text-xl md:text-2xl text-slate-950 mb-3"
                 style={{
                   fontFamily: "var(--font-display)",
-                  fontWeight: 850,
-                  letterSpacing: "-0.035em",
+                  fontWeight: 800,
+                  letterSpacing: "-0.025em",
                 }}
               >
-                {statsData.notices.title}
-              </h2>
+                {card.title}
+              </h3>
 
-              <p className="text-base md:text-lg text-slate-500">
-                {statsData.notices.description}
+              <p className="text-sm md:text-base leading-relaxed text-slate-500">
+                {card.description}
               </p>
-            </div>
+            </motion.div>
+          ))}
+        </div>
 
+       <div className="mt-24">
+  <div className="flex items-end justify-between gap-6 mb-10">
+    <div>
+      <h2
+        className="text-3xl md:text-4xl text-slate-950 mb-3"
+        style={{
+          fontFamily: "var(--font-display)",
+          fontWeight: 850,
+          letterSpacing: "-0.035em",
+        }}
+      >
+        {statsData.notices.title}
+      </h2>
+
+      <p className="text-base md:text-lg text-slate-500">
+        {statsData.notices.description}
+      </p>
+    </div>
+
+    <Link
+      to="/notices"
+      className="hidden md:flex items-center gap-2 text-sm font-semibold transition-all hover:gap-3"
+      style={{ color: "#64748B" }}
+    >
+      View All <ArrowRight className="w-4 h-4" />
+    </Link>
+  </div>
+
+  {notices.length === 0 ? (
+    <div
+      className="rounded-[28px] p-10 text-center"
+      style={{
+        background:
+          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(248,250,252,0.9))",
+        border: "1px solid rgba(15,23,42,0.08)",
+        boxShadow: "0 16px 42px rgba(15,23,42,0.06)",
+      }}
+    >
+      <h3 className="text-xl font-bold text-slate-900 mb-2">
+        No notices available right now
+      </h3>
+
+      <p className="text-slate-500">
+        New school notices will appear here once added from the admin panel.
+      </p>
+    </div>
+  ) : (
+    <div className="space-y-5">
+      {notices.map((notice, i) => {
+        const noticeId = notice.id || notice._id;
+        const noticeDate = notice.notice_date || notice.date;
+        const noticeLink = noticeId ? `/notices/${noticeId}` : "/notices";
+
+        return (
+          <motion.div
+            key={noticeId || notice.title || i}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.45, delay: i * 0.08 }}
+          >
             <Link
-              to="/notices"
-              className="hidden md:flex items-center gap-2 text-sm font-semibold transition-all hover:gap-3"
-              style={{ color: "#64748B" }}
+              to={noticeLink}
+              className="group block rounded-[28px] transition-all duration-300 hover:-translate-y-1"
+              style={{
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,250,252,0.92))",
+                border: "1px solid rgba(15,23,42,0.08)",
+                boxShadow:
+                  "0 14px 38px rgba(15,23,42,0.065), inset 0 1px 0 rgba(255,255,255,0.9)",
+              }}
             >
-              View All <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          <div className="space-y-4">
-          {notices.map((notice, i) => (
-              <motion.div
-                key={notice.title}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.45, delay: i * 0.08 }}
-                className="group rounded-2xl p-6 flex items-center gap-5 transition-all duration-300 hover:-translate-y-1"
-                style={{
-                  background: "#FFFFFF",
-                  border: "1px solid rgba(15,23,42,0.09)",
-                  boxShadow: "0 8px 24px rgba(15,23,42,0.045)",
-                }}
-              >
+              <div className="grid md:grid-cols-[150px_1fr_160px] gap-6 items-center p-6 md:p-7">
                 <div
-                  className="rounded-2xl flex items-center justify-center flex-shrink-0"
+                  className="rounded-2xl p-4"
                   style={{
-                    width: "52px",
-                    height: "52px",
-                    background: "#F1F5F9",
+                    background:
+                      "linear-gradient(145deg, rgba(215,25,32,0.06), rgba(22,138,58,0.06))",
                     border: "1px solid rgba(15,23,42,0.06)",
                   }}
                 >
-                  <Bell className="w-5 h-5" style={{ color: "#1E3A8A" }} />
+                  <div
+                    className="w-14 h-1 rounded-full mb-4"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, #D71920 0%, #168A3A 100%)",
+                    }}
+                  />
+
+                  <div className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400 mb-1">
+                    Notice Date
+                  </div>
+
+                  <div className="text-sm font-bold text-slate-800">
+                    {formatNoticeDate(noticeDate)}
+                  </div>
                 </div>
 
                 <div className="min-w-0">
-                <Link
-  to={`/notices/${notice._id}`}
->
-  <h3 className="text-lg md:text-xl font-semibold text-slate-900 mb-2 hover:text-green-600 transition">
-    {notice.title}
-  </h3>
-</Link>
-
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                    <span>{notice.date}</span>
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
                     <span
-                      className="px-3 py-1 rounded-full text-sm"
+                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
                       style={{
-                        background: "#F1F5F9",
-                        color: "#334155",
+                        background: "rgba(22,138,58,0.09)",
+                        color: "#168A3A",
+                        border: "1px solid rgba(22,138,58,0.16)",
                       }}
                     >
-                      {notice.category}
+                      {notice.category || "Notice"}
+                    </span>
+
+                    <span className="text-xs font-semibold text-slate-400">
+                      School Announcement
                     </span>
                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
 
-          <Link
-            to="/notices"
-            className="mt-6 md:hidden flex items-center justify-center gap-2 text-sm font-semibold"
-            style={{ color: "#64748B" }}
-          >
-            View All <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+                  <h3
+                    className="text-xl md:text-2xl text-slate-950 leading-snug mb-2 transition-colors duration-300 group-hover:text-green-700"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontWeight: 850,
+                      letterSpacing: "-0.025em",
+                    }}
+                  >
+                    {notice.title || "School Notice"}
+                  </h3>
+
+                  <p className="text-sm md:text-base leading-relaxed text-slate-500 line-clamp-2">
+                    {getNoticeExcerpt(notice)}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+        );
+      })}
+    </div>
+  )}
+
+  <Link
+    to="/notices"
+    className="mt-6 md:hidden flex items-center justify-center gap-2 text-sm font-semibold"
+    style={{ color: "#64748B" }}
+  >
+    View All <ArrowRight className="w-4 h-4" />
+  </Link>
+</div>
       </div>
     </section>
   );

@@ -2,16 +2,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
-import {
-  ArrowRight,
-  CheckCircle2,
-  Award,
-  GraduationCap,
-  Users,
-  Milestone,
-  Calendar,
-  BookOpen,
-} from "lucide-react";
 
 const colors = {
   red: "#D71920",
@@ -271,13 +261,6 @@ function HighlightedTitle({ title, highlight }) {
   );
 }
 
-function getStatIcon(icon) {
-  if (icon === "graduation") return GraduationCap;
-  if (icon === "milestone") return Milestone;
-  if (icon === "award") return Award;
-  return Users;
-}
-
 export function Academics() {
   const [content, setContent] = useState(defaultAcademicsContent);
 
@@ -348,7 +331,7 @@ export function Academics() {
             className="space-y-8"
           >
             <span
-              className="inline-block px-5 py-2 rounded-full text-sm font-semibold"
+              className="inline-block px-5 py-2 rounded-full text-sm font-bold"
               style={{
                 background: "rgba(215,25,32,0.08)",
                 color: colors.red,
@@ -359,10 +342,11 @@ export function Academics() {
             </span>
 
             <h1
-              className="text-5xl md:text-7xl font-extrabold tracking-tight"
+              className="text-5xl md:text-7xl font-black tracking-tight"
               style={{
                 fontFamily: "var(--font-display)",
                 color: colors.dark,
+                letterSpacing: "-0.06em",
               }}
             >
               <HighlightedTitle
@@ -381,75 +365,99 @@ export function Academics() {
       <section className="pb-20 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {visiblePrograms.map((prog, i) => (
-              <motion.div
-                key={prog.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="p-6 rounded-3xl border flex flex-col justify-between group relative overflow-hidden transition-all duration-500 hover:-translate-y-4 hover:scale-[1.03] hover:shadow-[0_35px_80px_rgba(0,0,0,0.15)]"
-                style={{
-                  borderColor: prog.border || `${prog.badgeColor}25`,
-                  background: `
-                    linear-gradient(
-                      145deg,
-                      rgba(255,255,255,0.98),
-                      rgba(248,250,252,0.88)
-                    )
-                  `,
-                  boxShadow: "0 20px 40px rgba(0,0,0,0.08)",
-                  backdropFilter: "blur(18px)",
-                }}
-              >
-                <div
-                  className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700"
+            {visiblePrograms.map((prog, i) => {
+              const cardColor = prog.badgeColor || colors.green;
+
+              return (
+                <motion.div
+                  key={prog.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                  className="group p-6 rounded-3xl flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:-translate-y-2 cursor-default"
                   style={{
-                    background: `${prog.badgeColor || colors.green}15`,
-                    filter: "blur(60px)",
+                    border: `1px solid ${cardColor}24`,
+                    background:
+                      "linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,250,252,0.9))",
+                    boxShadow: "0 18px 42px rgba(11,16,32,0.08)",
+                    backdropFilter: "blur(18px)",
                   }}
-                />
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = `0 26px 64px rgba(11,16,32,0.14), 0 0 0 1px ${cardColor}22`;
+                    e.currentTarget.style.borderColor = `${cardColor}55`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow =
+                      "0 18px 42px rgba(11,16,32,0.08)";
+                    e.currentTarget.style.borderColor = `${cardColor}24`;
+                  }}
+                >
+                  <div
+                    className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700"
+                    style={{
+                      background: `${cardColor}12`,
+                      filter: "blur(60px)",
+                    }}
+                  />
 
-                <div>
-                  <span
-                    className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md text-white mb-4 inline-block"
-                    style={{ backgroundColor: prog.badgeColor || colors.green }}
-                  >
-                    {prog.span}
-                  </span>
+                  <div className="relative z-10">
+                    <div
+                      className="text-sm font-black tracking-widest mb-5"
+                      style={{ color: cardColor }}
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </div>
 
-                  <h3
-                    className="text-xl font-bold mb-3 text-slate-900 group-hover:text-green-700 transition-colors"
-                    style={{ fontFamily: "var(--font-display)" }}
-                  >
-                    {prog.level}
-                  </h3>
+                    <div
+                      className="w-16 h-1 rounded-full mb-6 transition-all duration-300 group-hover:w-28"
+                      style={{ background: cardColor }}
+                    />
 
-                  <p className="text-xs text-slate-500 mb-5 leading-relaxed">
-                    {prog.highlight}
-                  </p>
-
-                  <div className="space-y-2.5 border-t pt-4 border-slate-100">
-                    <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wide">
-                      Course Structure:
+                    <span
+                      className="text-xs font-bold uppercase tracking-[0.16em] mb-4 block"
+                      style={{ color: "#64748B" }}
+                    >
+                      {prog.span}
                     </span>
 
-                    {(prog.classes || []).map((item) => (
-                      <div
-                        key={item}
-                        className="flex items-center gap-2 text-sm text-slate-700"
-                      >
-                        <CheckCircle2
-                          className="w-4 h-4 shrink-0"
-                          style={{ color: prog.badgeColor || colors.green }}
-                        />
-                        <span>{item}</span>
-                      </div>
-                    ))}
+                    <h3
+                      className="text-2xl font-black mb-4 text-slate-950 leading-tight"
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        letterSpacing: "-0.035em",
+                      }}
+                    >
+                      {prog.level}
+                    </h3>
+
+                    <p className="text-sm text-slate-500 mb-6 leading-relaxed">
+                      {prog.highlight}
+                    </p>
+
+                    <div className="space-y-2.5 border-t pt-5 border-slate-100">
+                      <span className="text-xs font-bold text-slate-400 block uppercase tracking-[0.16em]">
+                        Course Structure
+                      </span>
+
+                      {(prog.classes || []).map((item) => (
+                        <div
+                          key={item}
+                          className="flex items-center gap-3 text-sm text-slate-700"
+                        >
+                          <span
+                            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                            style={{ background: cardColor }}
+                          />
+
+                          <span>{item}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -457,71 +465,100 @@ export function Academics() {
       <section className="py-20 bg-white/60 backdrop-blur-md relative z-10">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
+            <span
+              className="inline-block px-4 py-2 rounded-full text-sm font-bold mb-5"
+              style={{
+                background: "rgba(22,138,58,0.08)",
+                color: colors.green,
+                border: "1px solid rgba(22,138,58,0.14)",
+              }}
+            >
+              Academic Strengths
+            </span>
+
             <h2
-              className="text-3xl md:text-4xl font-bold mb-4"
+              className="text-3xl md:text-4xl font-black mb-4"
               style={{
                 fontFamily: "var(--font-display)",
                 color: colors.dark,
+                letterSpacing: "-0.04em",
               }}
             >
               {content.featuresTitle}
             </h2>
 
-            <p className="text-slate-600 max-w-2xl mx-auto">
+            <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed">
               {content.featuresDescription}
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibleFeatures.map((feat, i) => (
-              <motion.div
-                key={feat.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
-                whileHover={{ y: -10 }}
-                className="relative overflow-hidden p-7 rounded-[28px] backdrop-blur-xl border transition-all duration-500 shadow-lg"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.82))",
-                  borderColor: `${feat.color || colors.green}30`,
-                }}
-              >
-                <div
-                  className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-20"
-                  style={{
-                    background: feat.color || colors.green,
-                    filter: "blur(60px)",
-                  }}
-                />
+            {visibleFeatures.map((feat, i) => {
+              const featureColor = feat.color || colors.green;
 
+              return (
                 <motion.div
-                  whileHover={{
-                    rotate: 10,
-                    scale: 1.15,
-                  }}
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-5 shadow-md"
+                  key={feat.id}
+                  initial={{ opacity: 0, y: 26 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.45, delay: i * 0.06 }}
+                  className="group relative overflow-hidden p-7 rounded-[28px] transition-all duration-300 hover:-translate-y-2 cursor-default"
                   style={{
-                    background: `${feat.color || colors.green}12`,
-                    color: feat.color || colors.green,
+                    background:
+                      "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.82))",
+                    border: `1px solid ${featureColor}24`,
+                    boxShadow: "0 16px 42px rgba(11,16,32,0.07)",
+                    backdropFilter: "blur(16px)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = `0 24px 56px rgba(11,16,32,0.13), 0 0 0 1px ${featureColor}22`;
+                    e.currentTarget.style.borderColor = `${featureColor}55`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow =
+                      "0 16px 42px rgba(11,16,32,0.07)";
+                    e.currentTarget.style.borderColor = `${featureColor}24`;
                   }}
                 >
-                  {feat.emoji}
+                  <div
+                    className="absolute top-0 right-0 w-36 h-36 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700"
+                    style={{
+                      background: `${featureColor}12`,
+                      filter: "blur(62px)",
+                    }}
+                  />
+
+                  <div className="relative z-10">
+                    <div
+                      className="text-sm font-black tracking-widest mb-5 transition-all duration-300 group-hover:scale-105 origin-left"
+                      style={{ color: featureColor }}
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </div>
+
+                    <div
+                      className="w-16 h-1 rounded-full mb-7 transition-all duration-300 group-hover:w-28"
+                      style={{ background: featureColor }}
+                    />
+
+                    <h3
+                      className="font-black text-2xl mb-4 text-slate-950"
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        letterSpacing: "-0.035em",
+                      }}
+                    >
+                      {feat.title}
+                    </h3>
+
+                    <p className="text-base leading-relaxed text-slate-500">
+                      {feat.desc}
+                    </p>
+                  </div>
                 </motion.div>
-
-                <h3
-                  className="font-bold text-xl mb-3 transition-all duration-300"
-                  style={{
-                    color: feat.color || colors.green,
-                  }}
-                >
-                  {feat.title}
-                </h3>
-
-                <p className="text-sm leading-7 text-slate-600">{feat.desc}</p>
-              </motion.div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -535,43 +572,49 @@ export function Academics() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
             {visibleStats.map((stat, i) => {
-              const IconComponent = getStatIcon(stat.icon);
+              const statColor = stat.color || colors.green;
 
               return (
                 <motion.div
                   key={stat.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="group relative overflow-hidden p-8 rounded-[32px] backdrop-blur-xl transition-all duration-500 hover:-translate-y-3 hover:scale-[1.03]"
+                  className="group relative overflow-hidden p-8 rounded-[32px] transition-all duration-300 hover:-translate-y-2 cursor-default"
                   style={{
-                    background: "linear-gradient(135deg,#FFFFFF,#F8FAFC)",
-                    border: `1px solid ${stat.color || colors.green}25`,
-                    boxShadow: "0 15px 40px rgba(0,0,0,0.08)",
+                    background:
+                      "linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,250,252,0.9))",
+                    border: `1px solid ${statColor}24`,
+                    boxShadow: "0 16px 42px rgba(11,16,32,0.08)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = `0 24px 58px rgba(11,16,32,0.13), 0 0 0 1px ${statColor}22`;
+                    e.currentTarget.style.borderColor = `${statColor}55`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow =
+                      "0 16px 42px rgba(11,16,32,0.08)";
+                    e.currentTarget.style.borderColor = `${statColor}24`;
                   }}
                 >
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center text-white mb-2"
-                    style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
-                  >
-                    <IconComponent
-                      className="w-6 h-6"
-                      style={{ color: stat.color || colors.green }}
-                    />
-                  </div>
+                    className="w-16 h-1 rounded-full mx-auto mb-6 transition-all duration-300 group-hover:w-24"
+                    style={{ background: statColor }}
+                  />
 
                   <div
-                    className="text-4xl md:text-5xl font-black"
+                    className="text-4xl md:text-5xl font-black mb-3"
                     style={{
-                      color: stat.color || colors.green,
+                      color: statColor,
                       fontFamily: "var(--font-display)",
+                      letterSpacing: "-0.055em",
                     }}
                   >
                     {stat.value}
                   </div>
 
-                  <div className="text-sm text-slate-600 font-semibold tracking-wide uppercase">
+                  <div className="text-sm text-slate-600 font-bold tracking-wide uppercase">
                     {stat.label}
                   </div>
                 </motion.div>
@@ -584,107 +627,248 @@ export function Academics() {
       <section className="pb-20 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
+            <span
+              className="inline-block px-4 py-2 rounded-full text-sm font-bold mb-5"
+              style={{
+                background: "rgba(75,46,131,0.08)",
+                color: colors.purple,
+                border: "1px solid rgba(75,46,131,0.14)",
+              }}
+            >
+              Evaluation Framework
+            </span>
+
             <h2
-              className="text-3xl md:text-4xl font-bold mb-4"
+              className="text-3xl md:text-4xl font-black mb-4"
               style={{
                 fontFamily: "var(--font-display)",
                 color: colors.dark,
+                letterSpacing: "-0.04em",
               }}
             >
               {content.examTitle}
             </h2>
 
-            <p className="text-slate-600 max-w-2xl mx-auto">
+            <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed">
               {content.examDescription}
             </p>
           </div>
 
           <div className="grid lg:grid-cols-12 gap-12 items-start">
             <div className="lg:col-span-7 space-y-4 relative before:absolute before:left-6 before:top-4 before:bottom-4 before:w-0.5 before:bg-slate-200">
-              {visibleTimeline.map((t, index) => (
-                <motion.div
-                  key={t.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.05 }}
-                  className="group flex gap-4 relative z-10 bg-white/80 backdrop-blur-xl p-5 rounded-3xl border transition-all duration-500 hover:-translate-x-2 hover:shadow-xl"
-                >
-                  <div className="w-4 h-4 rounded-full bg-white border-4 border-indigo-600 shrink-0 mt-1.5" />
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-base">
-                      {t.term}
-                    </h4>
-                    <p className="text-xs text-slate-500">{t.timeframe}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+              {visibleTimeline.map((t, index) => {
+                const termColor =
+                  index % 4 === 0
+                    ? colors.red
+                    : index % 4 === 1
+                    ? colors.green
+                    : index % 4 === 2
+                    ? colors.purple
+                    : colors.softPurple;
 
-            <div className="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-100 shadow-xl space-y-6">
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-red-500" />
-                <h3
-                  className="font-bold text-lg text-slate-900"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {content.continuousTitle}
-                </h3>
-              </div>
-
-              <p className="text-xs text-slate-500 leading-relaxed">
-                {content.continuousDescription}
-              </p>
-
-              <div className="grid grid-cols-2 gap-3">
-                {(content.ongoingAssessments || []).map((item) => (
-                  <div
-                    key={item}
-                    className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-center font-medium text-slate-700 text-sm"
+                return (
+                  <motion.div
+                    key={t.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.05 }}
+                    className="group flex gap-5 relative z-10 p-5 rounded-3xl transition-all duration-300 hover:-translate-x-2 cursor-default"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.82))",
+                      border: `1px solid ${termColor}24`,
+                      boxShadow: "0 12px 32px rgba(11,16,32,0.06)",
+                      backdropFilter: "blur(16px)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.boxShadow =
+                        "0 20px 46px rgba(11,16,32,0.12)";
+                      e.currentTarget.style.borderColor = `${termColor}55`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow =
+                        "0 12px 32px rgba(11,16,32,0.06)";
+                      e.currentTarget.style.borderColor = `${termColor}24`;
+                    }}
                   >
-                    {item}
-                  </div>
-                ))}
-              </div>
+                    <div
+                      className="w-12 h-12 rounded-full shrink-0 flex items-center justify-center text-sm font-black text-white"
+                      style={{
+                        background: termColor,
+                        boxShadow: `0 14px 32px ${termColor}30`,
+                      }}
+                    >
+                      {String(index + 1).padStart(2, "0")}
+                    </div>
+
+                    <div>
+                      <div
+                        className="w-14 h-1 rounded-full mb-3 transition-all duration-300 group-hover:w-24"
+                        style={{ background: termColor }}
+                      />
+
+                      <h4
+                        className="font-black text-slate-950 text-xl"
+                        style={{
+                          fontFamily: "var(--font-display)",
+                          letterSpacing: "-0.025em",
+                        }}
+                      >
+                        {t.term}
+                      </h4>
+
+                      <p className="text-sm text-slate-500 mt-1">
+                        {t.timeframe}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
+
+            <motion.div
+  className="group lg:col-span-5 p-7 rounded-3xl space-y-6 transition-all duration-300 cursor-default"
+  whileHover={{
+    y: -8,
+    scale: 1.015,
+  }}
+  style={{
+    background:
+      "linear-gradient(145deg, rgba(11,16,32,0.96), rgba(75,46,131,0.9))",
+    border: "1px solid rgba(255,255,255,0.12)",
+    boxShadow:
+      "0 24px 64px rgba(11,16,32,0.18), inset 0 1px 0 rgba(255,255,255,0.12)",
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.boxShadow =
+      "0 32px 78px rgba(11,16,32,0.28), 0 0 0 1px rgba(255,255,255,0.16), inset 0 1px 0 rgba(255,255,255,0.14)";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.boxShadow =
+      "0 24px 64px rgba(11,16,32,0.18), inset 0 1px 0 rgba(255,255,255,0.12)";
+  }}
+>
+  <div
+    className="w-20 h-1 rounded-full transition-all duration-300 group-hover:w-36"
+    style={{
+      background: "linear-gradient(90deg, #D71920 0%, #168A3A 100%)",
+    }}
+  />
+
+  <h3
+    className="font-black text-2xl text-white"
+    style={{
+      fontFamily: "var(--font-display)",
+      letterSpacing: "-0.035em",
+    }}
+  >
+    {content.continuousTitle}
+  </h3>
+
+  <p
+    className="text-sm leading-relaxed"
+    style={{ color: "rgba(255,255,255,0.68)" }}
+  >
+    {content.continuousDescription}
+  </p>
+
+  <div className="grid grid-cols-2 gap-3">
+    {(content.ongoingAssessments || []).map((item) => (
+      <div
+        key={item}
+        className="p-4 rounded-2xl text-center font-bold text-sm transition-all duration-300 hover:-translate-y-1"
+        style={{
+          background: "rgba(255,255,255,0.1)",
+          border: "1px solid rgba(255,255,255,0.12)",
+          color: "rgba(255,255,255,0.86)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.16)";
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)";
+          e.currentTarget.style.boxShadow = "0 14px 30px rgba(0,0,0,0.18)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+          e.currentTarget.style.boxShadow = "none";
+        }}
+      >
+        {item}
+      </div>
+    ))}
+  </div>
+</motion.div>
           </div>
         </div>
       </section>
 
       <section className="pt-10 pb-24 text-center relative z-10">
-        <div className="max-w-4xl mx-auto px-6 space-y-6">
-          <h2
-            className="text-4xl md:text-5xl font-black text-slate-900"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            {content.ctaTitle}
-          </h2>
+        <motion.div
+  className="group max-w-4xl mx-auto px-6 py-14 rounded-[36px] space-y-6 transition-all duration-300 cursor-default"
+  whileHover={{
+    y: -8,
+    scale: 1.01,
+  }}
+  style={{
+    background:
+      "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+    border: "1px solid rgba(15,23,42,0.08)",
+    boxShadow: "0 24px 70px rgba(11,16,32,0.09)",
+    backdropFilter: "blur(16px)",
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.boxShadow =
+      "0 34px 86px rgba(11,16,32,0.15), 0 0 0 1px rgba(22,138,58,0.12)";
+    e.currentTarget.style.borderColor = "rgba(22,138,58,0.2)";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.boxShadow = "0 24px 70px rgba(11,16,32,0.09)";
+    e.currentTarget.style.borderColor = "rgba(15,23,42,0.08)";
+  }}
+>
+  <div
+    className="w-20 h-1 rounded-full mx-auto transition-all duration-300 group-hover:w-36"
+    style={{
+      background: "linear-gradient(90deg, #D71920 0%, #168A3A 100%)",
+    }}
+  />
 
-          <p className="text-slate-600 max-w-xl mx-auto text-base">
-            {content.ctaDescription}
-          </p>
+  <h2
+    className="text-4xl md:text-5xl font-black text-slate-900"
+    style={{
+      fontFamily: "var(--font-display)",
+      letterSpacing: "-0.055em",
+    }}
+  >
+    {content.ctaTitle}
+  </h2>
 
-          <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link
-              to={content.primaryButtonLink || "/admissions"}
-              className="px-8 py-4 rounded-xl text-base font-bold transition-all duration-300 hover:scale-105 shadow-lg w-full sm:w-auto"
-              style={{
-                background: "linear-gradient(135deg, #FACC15 0%, #A7F3D0 100%)",
-                color: "#111827",
-                boxShadow: "0 8px 20px rgba(250,204,21,0.18)",
-              }}
-            >
-              {content.primaryButtonText}
-            </Link>
+  <p className="text-slate-600 max-w-xl mx-auto text-base leading-relaxed">
+    {content.ctaDescription}
+  </p>
 
-            <Link
-              to={content.secondaryButtonLink || "/contact"}
-              className="px-8 py-4 rounded-xl text-base font-bold text-slate-800 bg-white border border-slate-200 transition-all duration-300 hover:bg-slate-50 w-full sm:w-auto shadow-sm"
-            >
-              {content.secondaryButtonText}
-            </Link>
-          </div>
-        </div>
+  <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center items-center">
+    <Link
+      to={content.primaryButtonLink || "/admissions"}
+      className="px-8 py-4 rounded-xl text-base font-bold transition-all duration-300 hover:scale-105 hover:-translate-y-1 shadow-lg w-full sm:w-auto"
+      style={{
+        background: "linear-gradient(135deg, #FACC15 0%, #38BDF8 100%)",
+        color: "#111827",
+        boxShadow: "0 8px 20px rgba(56,189,248,0.2)",
+      }}
+    >
+      {content.primaryButtonText}
+    </Link>
+
+    <Link
+      to={content.secondaryButtonLink || "/contact"}
+      className="px-8 py-4 rounded-xl text-base font-bold text-slate-800 bg-white border border-slate-200 transition-all duration-300 hover:-translate-y-1 hover:bg-slate-50 w-full sm:w-auto shadow-sm hover:shadow-lg"
+    >
+      {content.secondaryButtonText}
+    </Link>
+  </div>
+</motion.div>
       </section>
     </div>
   );

@@ -1,17 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
-import {
-  CheckCircle2,
-  Award,
-  Heart,
-  Lightbulb,
-  Target,
-  Eye,
-  CalendarDays,
-  BookOpen,
-  Image as ImageIcon,
-} from "lucide-react";
+import { Image as ImageIcon } from "lucide-react";
 
 const colors = {
   red: "#D71920",
@@ -154,14 +144,6 @@ function mergeAboutContent(saved = {}) {
   };
 }
 
-function getIcon(icon) {
-  if (icon === "heart") return Heart;
-  if (icon === "lightbulb") return Lightbulb;
-  if (icon === "target") return Target;
-  if (icon === "eye") return Eye;
-  return Award;
-}
-
 function AboutImage({ src, alt }) {
   if (src) {
     return <img src={src} alt={alt} className="w-full h-full object-cover" />;
@@ -180,7 +162,9 @@ export function About() {
   useEffect(() => {
     const loadAboutContent = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/site-content/about");
+        const res = await axios.get(
+          "http://localhost:5000/api/site-content/about"
+        );
         const savedContent = res.data?.data?.content || {};
         setContent(mergeAboutContent(savedContent));
       } catch (error) {
@@ -192,11 +176,34 @@ export function About() {
     loadAboutContent();
   }, []);
 
-  const visiblePillars = content.pillars.filter((item) => item.visible !== false);
+  const visiblePillars = content.pillars.filter(
+    (item) => item.visible !== false
+  );
   const visibleMissionVision = content.missionVision.filter(
     (item) => item.visible !== false
   );
-  const visibleJourney = content.journey.filter((item) => item.visible !== false);
+  const visibleJourney = content.journey.filter(
+    (item) => item.visible !== false
+  );
+
+  const glanceItems = [
+    {
+      value: content.topCardTitle || "PG to Grade 10",
+      label: content.topCardSubtitle || "Co-educational day school",
+    },
+    {
+      value: visibleJourney[0]?.year || "2046 BS",
+      label: "Established",
+    },
+    {
+      value: content.floatingCardSubtitle || "Hetauda, Makwanpur",
+      label: "School Location",
+    },
+    {
+      value: "ECA",
+      label: "Sports, arts & activities",
+    },
+  ];
 
   return (
     <section
@@ -213,7 +220,8 @@ export function About() {
       <div
         className="absolute top-0 right-0 w-[520px] h-[520px] rounded-full pointer-events-none"
         style={{
-          background: `radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)`,
+          background:
+            "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
           filter: "blur(8px)",
         }}
       />
@@ -221,7 +229,8 @@ export function About() {
       <div
         className="absolute bottom-0 left-0 w-[420px] h-[420px] rounded-full pointer-events-none"
         style={{
-          background: `radial-gradient(circle, rgba(22,138,58,0.11), transparent 70%)`,
+          background:
+            "radial-gradient(circle, rgba(22,138,58,0.11), transparent 70%)",
           filter: "blur(8px)",
         }}
       />
@@ -233,27 +242,35 @@ export function About() {
           transition={{ duration: 0.65 }}
           className="text-center mb-10"
         >
+          <div
+            className="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold mb-5"
+            style={{
+              background: "rgba(215,25,32,0.07)",
+              color: colors.red,
+              border: "1px solid rgba(215,25,32,0.14)",
+            }}
+          >
+            School Profile
+          </div>
+
           <h1
             className="text-4xl md:text-5xl mb-3"
             style={{
               fontFamily: "var(--font-display)",
-              fontWeight: 800,
+              fontWeight: 850,
               color: colors.dark,
-              letterSpacing: "-0.04em",
+              letterSpacing: "-0.045em",
             }}
           >
             {content.pageTitle}
           </h1>
 
-          <p
-            className="max-w-2xl mx-auto text-base md:text-lg"
-            style={{ color: "#64748b" }}
-          >
+          <p className="max-w-2xl mx-auto text-base md:text-lg text-slate-500">
             {content.pageSubtitle}
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-14 items-center">
+        <div className="grid lg:grid-cols-2 gap-14 items-start">
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
@@ -264,73 +281,86 @@ export function About() {
               className="relative rounded-3xl overflow-hidden h-[390px]"
               style={{
                 boxShadow:
-                  "0 30px 80px rgba(11,16,32,0.26), 0 0 0 1px rgba(255,255,255,0.55)",
+                  "0 30px 80px rgba(11,16,32,0.24), 0 0 0 1px rgba(255,255,255,0.55)",
                 transform: "perspective(1000px) rotateY(3deg) rotateX(2deg)",
                 border: "1px solid rgba(255,255,255,0.5)",
               }}
             >
-              <AboutImage src={content.heroImageUrl} alt={content.heroImageAlt} />
+              <AboutImage
+                src={content.heroImageUrl}
+                alt={content.heroImageAlt}
+              />
 
               <div
                 className="absolute inset-0"
                 style={{
                   background:
-                    "linear-gradient(to top, rgba(11,16,32,0.62) 0%, transparent 56%)",
+                    "linear-gradient(to top, rgba(11,16,32,0.64) 0%, transparent 56%)",
                 }}
               />
             </div>
 
             <div
-              className="absolute -bottom-7 -right-7 p-6 rounded-2xl"
-              style={{
-                background: `linear-gradient(135deg, ${colors.dark}, ${colors.purple})`,
-                boxShadow:
-                  "0 22px 58px rgba(11,16,32,0.42), 0 0 38px rgba(75,46,131,0.22)",
-                border: "1px solid rgba(255,255,255,0.14)",
-                width: "200px",
-              }}
-            >
-              <div className="text-4xl mb-2">{content.floatingCardEmoji}</div>
-              <div className="text-white font-semibold text-sm">
-                {content.floatingCardTitle}
-              </div>
-              <div className="text-xs mt-1" style={{ color: colors.green }}>
-                {content.floatingCardSubtitle}
-              </div>
-            </div>
-
-            <div
-              className="absolute -top-6 -left-6 px-5 py-4 rounded-2xl"
+              className="absolute top-6 left-6 px-5 py-4 rounded-2xl"
               style={{
                 background:
                   "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(241,236,255,0.86))",
                 boxShadow:
-                  "0 18px 48px rgba(11,16,32,0.16), 0 0 0 1px rgba(255,255,255,0.6)",
+                  "0 18px 48px rgba(11,16,32,0.14), 0 0 0 1px rgba(255,255,255,0.6)",
                 border: "1px solid rgba(75,46,131,0.16)",
                 backdropFilter: "blur(18px)",
               }}
             >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{
-                    background: "rgba(22,138,58,0.12)",
-                    border: "1px solid rgba(22,138,58,0.22)",
-                  }}
-                >
-                  <Award className="w-5 h-5" style={{ color: colors.green }} />
-                </div>
-                <div>
-                  <div
-                    className="text-sm font-semibold"
-                    style={{ color: colors.dark }}
-                  >
-                    {content.topCardTitle}
+              <div
+                className="w-12 h-1 rounded-full mb-3"
+                style={{ background: colors.green }}
+              />
+
+              <div
+                className="text-sm font-bold"
+                style={{ color: colors.dark }}
+              >
+                {content.topCardTitle}
+              </div>
+
+              <div className="text-xs mt-1 text-slate-500">
+                {content.topCardSubtitle}
+              </div>
+            </div>
+
+            <div
+              className="mt-12 rounded-3xl p-6"
+              style={{
+                background:
+                  "linear-gradient(145deg, rgba(11,16,32,0.96), rgba(75,46,131,0.9))",
+                border: "1px solid rgba(255,255,255,0.12)",
+                boxShadow:
+                  "0 20px 55px rgba(11,16,32,0.18), inset 0 1px 0 rgba(255,255,255,0.12)",
+              }}
+            >
+              <div
+                className="w-16 h-1 rounded-full mb-5"
+                style={{
+                  background:
+                    "linear-gradient(90deg, #D71920 0%, #168A3A 100%)",
+                }}
+              />
+
+              <div className="grid grid-cols-2 gap-5">
+                {glanceItems.map((item) => (
+                  <div key={`${item.value}-${item.label}`}>
+                    <div className="text-2xl font-black text-white">
+                      {item.value}
+                    </div>
+
+                    <div
+                      className="text-sm mt-1"
+                      style={{ color: "rgba(255,255,255,0.68)" }}
+                    >
+                      {item.label}
+                    </div>
                   </div>
-                  <div className="text-xs" style={{ color: "#64748b" }}>
-                    {content.topCardSubtitle}
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </motion.div>
@@ -340,67 +370,65 @@ export function About() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.15 }}
           >
-            <div className="space-y-4 mb-8">
-              {visiblePillars.map((p) => {
-                const Icon = getIcon(p.icon);
+            <div className="space-y-4">
+              {visiblePillars.map((p, index) => {
                 const cardColor = p.color || colors.green;
 
                 return (
                   <div
                     key={p.id}
-                    className="flex gap-4 p-5 rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group"
+                    className="group p-6 rounded-3xl transition-all duration-300 hover:-translate-y-2 cursor-default"
                     style={{
                       background:
-                        "linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,255,255,0.72))",
+                        "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.82))",
                       border: `1px solid ${cardColor}22`,
                       boxShadow: "0 16px 42px rgba(11,16,32,0.08)",
                       backdropFilter: "blur(14px)",
                     }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.boxShadow = `0 22px 54px rgba(11,16,32,0.14), 0 0 0 1px ${cardColor}22`;
+                      e.currentTarget.style.borderColor = `${cardColor}55`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow =
+                        "0 16px 42px rgba(11,16,32,0.08)";
+                      e.currentTarget.style.borderColor = `${cardColor}22`;
+                    }}
                   >
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{
-                        background: `${cardColor}14`,
-                        border: `1px solid ${cardColor}24`,
-                        boxShadow: `0 10px 24px ${cardColor}18`,
-                      }}
-                    >
-                      <Icon className="w-6 h-6" style={{ color: cardColor }} />
-                    </div>
-
-                    <div>
+                    <div className="flex items-start gap-5">
                       <div
-                        className="font-semibold mb-1"
-                        style={{ color: colors.dark }}
+                        className="text-sm font-black tracking-widest pt-1 transition-all duration-300 group-hover:scale-110"
+                        style={{ color: cardColor }}
                       >
-                        {p.label}
+                        {String(index + 1).padStart(2, "0")}
                       </div>
-                      <div className="text-sm" style={{ color: "#64748b" }}>
-                        {p.desc}
+
+                      <div className="flex-1">
+                        <div
+                          className="w-16 h-1 rounded-full mb-4 transition-all duration-300 group-hover:w-28"
+                          style={{ background: cardColor }}
+                        />
+
+                        <div
+                          className="font-bold mb-2 text-[1.65rem] leading-tight transition-colors duration-300"
+                          style={{ color: colors.dark }}
+                        >
+                          {p.label}
+                        </div>
+
+                        <div className="text-base text-slate-500 leading-relaxed">
+                          {p.desc}
+                        </div>
                       </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {content.highlights.map((h) => (
-                <div key={h} className="flex items-start gap-2">
-                  <CheckCircle2
-                    className="w-4 h-4 mt-0.5 flex-shrink-0"
-                    style={{ color: colors.green }}
-                  />
-                  <span className="text-sm" style={{ color: "#475569" }}>
-                    {h}
-                  </span>
-                </div>
-              ))}
-            </div>
           </motion.div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-16 items-center mt-32">
+        <div className="grid lg:grid-cols-2 gap-16 items-center mt-24">
           <motion.div
             initial={{ opacity: 0, y: 35 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -422,10 +450,10 @@ export function About() {
               className="text-4xl md:text-5xl mb-6"
               style={{
                 fontFamily: "var(--font-display)",
-                fontWeight: 800,
+                fontWeight: 850,
                 color: colors.dark,
                 lineHeight: 1.1,
-                letterSpacing: "-0.04em",
+                letterSpacing: "-0.045em",
               }}
             >
               {content.storyTitle}
@@ -455,7 +483,10 @@ export function About() {
               transform: "perspective(1000px) rotateY(-3deg) rotateX(2deg)",
             }}
           >
-            <AboutImage src={content.storyImageUrl} alt={content.storyImageAlt} />
+            <AboutImage
+              src={content.storyImageUrl}
+              alt={content.storyImageAlt}
+            />
 
             <div
               className="absolute inset-0"
@@ -474,28 +505,23 @@ export function About() {
                 boxShadow: "0 18px 46px rgba(11,16,32,0.28)",
               }}
             >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center"
-                  style={{
-                    background: "rgba(255,255,255,0.18)",
-                    border: "1px solid rgba(255,255,255,0.24)",
-                  }}
-                >
-                  <BookOpen className="w-6 h-6 text-white" />
-                </div>
+              <div
+                className="w-16 h-1 rounded-full mb-4"
+                style={{
+                  background:
+                    "linear-gradient(90deg, rgba(250,204,21,0.95), rgba(56,189,248,0.95))",
+                }}
+              />
 
-                <div>
-                  <div className="text-white font-semibold">
-                    {content.storyImageTitle}
-                  </div>
-                  <div
-                    className="text-sm"
-                    style={{ color: "rgba(255,255,255,0.72)" }}
-                  >
-                    {content.storyImageSubtitle}
-                  </div>
-                </div>
+              <div className="text-white font-bold">
+                {content.storyImageTitle}
+              </div>
+
+              <div
+                className="text-sm mt-1"
+                style={{ color: "rgba(255,255,255,0.72)" }}
+              >
+                {content.storyImageSubtitle}
               </div>
             </div>
           </motion.div>
@@ -503,7 +529,7 @@ export function About() {
 
         <div className="grid md:grid-cols-2 gap-8 mt-28">
           {visibleMissionVision.map((item, index) => {
-            const Icon = getIcon(item.icon);
+            const mvColor = item.color || colors.green;
 
             return (
               <motion.div
@@ -512,35 +538,43 @@ export function About() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.65, delay: index * 0.1 }}
-                className="rounded-3xl p-8 transition-all duration-300 hover:-translate-y-1"
+                className="group rounded-3xl p-8 transition-all duration-300 hover:-translate-y-2 cursor-default"
                 style={{
                   background:
-                    "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.76))",
-                  border: `1px solid ${(item.color || colors.green)}22`,
+                    "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.82))",
+                  border: `1px solid ${mvColor}22`,
                   boxShadow: "0 18px 48px rgba(11,16,32,0.08)",
                   backdropFilter: "blur(14px)",
                 }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = `0 24px 56px rgba(11,16,32,0.14), 0 0 0 1px ${mvColor}22`;
+                  e.currentTarget.style.borderColor = `${mvColor}55`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow =
+                    "0 18px 48px rgba(11,16,32,0.08)";
+                  e.currentTarget.style.borderColor = `${mvColor}22`;
+                }}
               >
                 <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center mb-7"
-                  style={{
-                    background: `${item.color || colors.green}12`,
-                    border: `1px solid ${item.color || colors.green}22`,
-                  }}
+                  className="text-sm font-black tracking-widest mb-5 transition-all duration-300 group-hover:scale-110"
+                  style={{ color: mvColor }}
                 >
-                  <Icon
-                    className="w-6 h-6"
-                    style={{ color: item.color || colors.green }}
-                  />
+                  {String(index + 1).padStart(2, "0")}
                 </div>
 
+                <div
+                  className="w-20 h-1 rounded-full mb-7 transition-all duration-300 group-hover:w-32"
+                  style={{ background: mvColor }}
+                />
+
                 <h3
-                  className="text-3xl mb-4"
+                  className="text-3xl mb-4 transition-colors duration-300"
                   style={{
                     fontFamily: "var(--font-display)",
-                    fontWeight: 800,
+                    fontWeight: 850,
                     color: colors.dark,
-                    letterSpacing: "-0.03em",
+                    letterSpacing: "-0.035em",
                   }}
                 >
                   {item.title}
@@ -566,9 +600,9 @@ export function About() {
               className="text-4xl md:text-5xl"
               style={{
                 fontFamily: "var(--font-display)",
-                fontWeight: 800,
+                fontWeight: 850,
                 color: colors.dark,
-                letterSpacing: "-0.04em",
+                letterSpacing: "-0.045em",
               }}
             >
               {content.journeyTitle}
@@ -592,13 +626,13 @@ export function About() {
                   className="relative md:pl-20"
                 >
                   <div
-                    className="hidden md:flex absolute left-0 top-1 w-12 h-12 rounded-full items-center justify-center"
+                    className="hidden md:flex absolute left-0 top-1 w-12 h-12 rounded-full items-center justify-center text-sm font-black text-white"
                     style={{
                       background: colors.dark,
                       boxShadow: "0 14px 34px rgba(11,16,32,0.24)",
                     }}
                   >
-                    <CalendarDays className="w-5 h-5 text-white" />
+                    {String(index + 1).padStart(2, "0")}
                   </div>
 
                   <div
@@ -611,7 +645,7 @@ export function About() {
                     }}
                   >
                     <div
-                      className="text-lg font-semibold mb-1"
+                      className="text-lg font-bold mb-1"
                       style={{ color: colors.green }}
                     >
                       {item.year}
@@ -621,7 +655,7 @@ export function About() {
                       className="text-2xl mb-2"
                       style={{
                         fontFamily: "var(--font-display)",
-                        fontWeight: 800,
+                        fontWeight: 850,
                         color: colors.dark,
                         letterSpacing: "-0.025em",
                       }}
