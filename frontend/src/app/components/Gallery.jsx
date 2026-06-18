@@ -8,6 +8,8 @@ import {
   Layers,
   CalendarDays,
   Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const colors = {
@@ -33,8 +35,16 @@ const defaultGalleryContent = {
       title: "Classroom Learning",
       category: "Classroom",
       date: "Academic Session",
+      description:
+        "Students actively participate in classroom discussions and collaborative learning.",
       image:
-        "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&h=800&fit=crop&auto=format",
+        "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200",
+      images: [
+        "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200",
+        "https://images.unsplash.com/photo-1588072432836-e10032774350?w=1200",
+        "https://images.unsplash.com/photo-1544717305-2782549b5136?w=1200",
+        "https://images.unsplash.com/photo-1513258496099-48168024aec0?w=1200",
+      ],
       visible: true,
     },
     {
@@ -44,6 +54,9 @@ const defaultGalleryContent = {
       date: "Daily Learning",
       image:
         "https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&h=700&fit=crop&auto=format",
+      images: [
+        "https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&h=700&fit=crop&auto=format",
+      ],
       visible: true,
     },
     {
@@ -53,6 +66,9 @@ const defaultGalleryContent = {
       date: "Annual Program",
       image:
         "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=900&h=700&fit=crop&auto=format",
+      images: [
+        "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=900&h=700&fit=crop&auto=format",
+      ],
       visible: true,
     },
     {
@@ -62,6 +78,9 @@ const defaultGalleryContent = {
       date: "Sports Week",
       image:
         "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=900&h=700&fit=crop&auto=format",
+      images: [
+        "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=900&h=700&fit=crop&auto=format",
+      ],
       visible: true,
     },
     {
@@ -71,6 +90,9 @@ const defaultGalleryContent = {
       date: "Extra Curricular",
       image:
         "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=900&h=700&fit=crop&auto=format",
+      images: [
+        "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=900&h=700&fit=crop&auto=format",
+      ],
       visible: true,
     },
     {
@@ -80,6 +102,9 @@ const defaultGalleryContent = {
       date: "Digital Learning",
       image:
         "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=900&h=700&fit=crop&auto=format",
+      images: [
+        "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=900&h=700&fit=crop&auto=format",
+      ],
       visible: true,
     },
     {
@@ -89,6 +114,9 @@ const defaultGalleryContent = {
       date: "Practical Class",
       image:
         "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=900&h=700&fit=crop&auto=format",
+      images: [
+        "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=900&h=700&fit=crop&auto=format",
+      ],
       visible: true,
     },
     {
@@ -98,6 +126,9 @@ const defaultGalleryContent = {
       date: "School Program",
       image:
         "https://images.unsplash.com/photo-1544717305-2782549b5136?w=900&h=700&fit=crop&auto=format",
+      images: [
+        "https://images.unsplash.com/photo-1544717305-2782549b5136?w=900&h=700&fit=crop&auto=format",
+      ],
       visible: true,
     },
   ],
@@ -141,6 +172,8 @@ function HighlightedTitle({ title, highlightedText }) {
 
 function GalleryCard({ item, index, onClick }) {
   const isLarge = index === 0 || index === 5;
+  // FIX 3: Use item.image || item.images?.[0] consistently
+  const displayImage = item.image || item.images?.[0];
 
   return (
     <motion.button
@@ -161,9 +194,9 @@ function GalleryCard({ item, index, onClick }) {
         transform: "perspective(1000px)",
       }}
     >
-      {item.image ? (
+      {displayImage ? (
         <img
-          src={item.image}
+          src={displayImage}
           alt={item.title}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
@@ -205,9 +238,7 @@ function GalleryCard({ item, index, onClick }) {
       >
         <div className="flex items-center gap-2 mb-2">
           <CalendarDays className="w-4 h-4" style={{ color: "#FACC15" }} />
-          <span className="text-xs font-medium text-white/70">
-            {item.date}
-          </span>
+          <span className="text-xs font-medium text-white/70">{item.date}</span>
         </div>
 
         <h3
@@ -228,7 +259,31 @@ function GalleryCard({ item, index, onClick }) {
 function Gallery() {
   const [content, setContent] = useState(defaultGalleryContent);
   const [activeCategory, setActiveCategory] = useState("All");
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedAlbum, setSelectedAlbum] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const nextImage = () => {
+    if (!selectedAlbum) return;
+  
+    const next =
+      (currentImageIndex + 1) %
+      selectedAlbum.images.length;
+  
+    setCurrentImageIndex(next);
+    setActiveImage(selectedAlbum.images[next]);
+  };
+  
+  const previousImage = () => {
+    if (!selectedAlbum) return;
+  
+    const prev =
+      (currentImageIndex - 1 + selectedAlbum.images.length) %
+      selectedAlbum.images.length;
+  
+    setCurrentImageIndex(prev);
+    setActiveImage(selectedAlbum.images[prev]);
+  };
+  // FIX 1: Move activeImage state INSIDE the Gallery component (was incorrectly at module level)
+  const [activeImage, setActiveImage] = useState(null);
 
   useEffect(() => {
     const loadGalleryContent = async () => {
@@ -260,7 +315,9 @@ function Gallery() {
     activeCategory === "All"
       ? visibleImages
       : visibleImages.filter((item) => item.category === activeCategory);
-
+      console.log("ALL IMAGES:", content.images);
+      console.log("VISIBLE IMAGES:", visibleImages.length);
+      console.log("FILTERED IMAGES:", filteredImages.length);
   return (
     <section
       id="gallery"
@@ -377,21 +434,57 @@ function Gallery() {
           }}
         >
           {filteredImages.length > 0 ? (
-            <motion.div
-              layout
-              className="grid md:grid-cols-2 lg:grid-cols-3 auto-rows-auto gap-4"
-            >
-              <AnimatePresence mode="popLayout">
-                {filteredImages.map((item, index) => (
-                  <GalleryCard
-                    key={item.id}
-                    item={item}
-                    index={index}
-                    onClick={setSelectedImage}
-                  />
-                ))}
-              </AnimatePresence>
-            </motion.div>
+            <div className="space-y-24">
+              {filteredImages.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5 }}
+                  className={`grid lg:grid-cols-2 gap-12 items-center ${
+                    index % 2 !== 0 ? "lg:[&>*:first-child]:order-2" : ""
+                  }`}
+                >
+                  {/* IMAGE */}
+                  <div className="overflow-hidden rounded-[32px] shadow-2xl">
+                    <img
+                      // FIX 4: Use item.image || item.images?.[0] so items with only images[] still display
+                      src={item.image || item.images?.[0]}
+                      alt={item.title}
+                      className="w-full h-[450px] object-cover hover:scale-105 transition duration-700"
+                    />
+                  </div>
+
+                  {/* CONTENT */}
+                  <div>
+                    <span className="px-4 py-2 rounded-full bg-green-100 text-green-700 font-semibold">
+                      {item.category}
+                    </span>
+
+                    <h2 className="text-5xl font-black text-slate-900 mt-5">
+                      {item.title}
+                    </h2>
+
+                    <p className="text-slate-500 mt-3">{item.date}</p>
+
+                    <p className="text-lg text-slate-600 mt-6 leading-relaxed">
+                      {item.description ||
+                        "Students participate in engaging academic and extracurricular activities that promote creativity, leadership, teamwork, and practical learning."}
+                    </p>
+
+                    <button
+                      onClick={() => {
+                        setSelectedAlbum(item);
+                      }}
+                      className="mt-8 px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-green-600 text-white font-bold relative z-50"
+                    >
+                      View Album ({item.images?.length || 0})
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           ) : (
             <div className="bg-white rounded-3xl p-10 text-center">
               <ImageIcon className="w-14 h-14 mx-auto text-slate-300 mb-4" />
@@ -450,13 +543,15 @@ function Gallery() {
         </motion.div>
       </div>
 
+      {/* ALBUM MODAL */}
       <AnimatePresence>
-        {selectedImage && (
+        {selectedAlbum && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setSelectedImage(null)}
+            // FIX 2: Was setselectedAlbum (lowercase s) — corrected to setSelectedAlbum
+            onClick={() => setSelectedAlbum(null)}
             className="fixed inset-0 z-[100] flex items-center justify-center p-5"
             style={{
               background: "rgba(2,6,23,0.82)",
@@ -477,28 +572,58 @@ function Gallery() {
             >
               <button
                 type="button"
-                onClick={() => setSelectedImage(null)}
-                className="absolute right-4 top-4 z-10 w-11 h-11 rounded-full flex items-center justify-center"
-                style={{
-                  background: "rgba(2,6,23,0.72)",
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  backdropFilter: "blur(14px)",
-                }}
+                onClick={() => setSelectedAlbum(null)}
+                className="
+                  absolute
+                  top-5
+                  right-5
+                  z-[99999]
+                  w-12
+                  h-12
+                  rounded-full
+                  bg-white
+                  shadow-2xl
+                  cursor-pointer
+                  font-bold
+                  hover:bg-red-500
+                  hover:text-white
+                  hover:rotate-180
+                  hover:scale-110
+                  transition-all
+                  duration-500
+                  flex
+                  items-center
+                  justify-center
+                "
               >
-                <X className="w-5 h-5 text-white" />
+                <X className="w-5 h-5" />
               </button>
 
-              {selectedImage.image ? (
-                <img
-                  src={selectedImage.image}
-                  alt={selectedImage.title}
-                  className="w-full h-[70vh] object-cover"
-                />
-              ) : (
-                <div className="w-full h-[70vh] bg-slate-100 flex items-center justify-center">
-                  <ImageIcon className="w-20 h-20 text-slate-300" />
+              <div className="p-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  {selectedAlbum.images?.map((img, index) => (
+                    <img
+                      key={index}
+                      src={img}
+                      alt=""
+                      onClick={() => {
+                        setActiveImage(img);
+                        setCurrentImageIndex(index);
+                      }}
+                      className="
+                        w-full
+                        h-72
+                        object-cover
+                        rounded-2xl
+                        cursor-pointer
+                        hover:scale-105
+                        transition-all
+                        duration-500
+                      "
+                    />
+                  ))}
                 </div>
-              )}
+              </div>
 
               <div className="p-6">
                 <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -510,11 +635,11 @@ function Gallery() {
                       border: "1px solid rgba(22,138,58,0.16)",
                     }}
                   >
-                    {selectedImage.category}
+                    {selectedAlbum.category}
                   </span>
 
                   <span className="text-sm text-slate-500">
-                    {selectedImage.date}
+                    {selectedAlbum.date}
                   </span>
                 </div>
 
@@ -527,10 +652,107 @@ function Gallery() {
                     letterSpacing: "-0.035em",
                   }}
                 >
-                  {selectedImage.title}
+                  {selectedAlbum.title}
                 </h2>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* FULL-SCREEN IMAGE LIGHTBOX — moved OUTSIDE album modal so it's not clipped by overflow:hidden */}
+      <AnimatePresence>
+        {activeImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setActiveImage(null)}
+            className="fixed inset-0 z-[999999] bg-black/90 flex items-center justify-center p-6"
+          >
+            <button
+  onClick={(e) => {
+    e.stopPropagation();
+    previousImage();
+  }}
+  className="
+    absolute
+    left-8
+    top-1/2
+    -translate-y-1/2
+    w-16
+    h-16
+    rounded-full
+    bg-white
+    shadow-2xl
+    hover:scale-110
+    transition-all
+    z-50
+  "
+>
+<ChevronLeft size={32} />
+</button>
+<button
+  onClick={(e) => {
+    e.stopPropagation();
+    nextImage();
+  }}
+  className="
+    absolute
+    right-8
+    top-1/2
+    -translate-y-1/2
+    w-16
+    h-16
+    rounded-full
+    bg-white
+    shadow-2xl
+    hover:scale-110
+    transition-all
+    z-[999999]
+    flex
+    items-center
+    justify-center
+  "
+>
+<ChevronRight size={32} />
+</button>
+            <button
+              onClick={() => setActiveImage(null)}
+              className="
+                absolute
+                top-6
+                right-6
+                w-14
+                h-14
+                rounded-full
+                bg-white
+                flex
+                items-center
+                justify-center
+                hover:bg-red-500
+                hover:text-white
+                hover:rotate-180
+                transition-all
+                duration-500
+              "
+            >
+              <X size={24} />
+            </button>
+
+            <motion.img
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              src={activeImage}
+              alt=""
+              className="
+                max-w-[95vw]
+                max-h-[90vh]
+                rounded-3xl
+                shadow-2xl
+              "
+            />
           </motion.div>
         )}
       </AnimatePresence>

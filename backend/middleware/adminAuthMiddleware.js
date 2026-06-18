@@ -15,7 +15,11 @@ export const protectAdmin = (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (!decoded || decoded.role !== "admin") {
+    if (
+      !decoded ||
+      (decoded.role !== "admin" &&
+       decoded.role !== "Super Admin")
+    ) {
       return res.status(401).json({
         success: false,
         message: "Not authorized as admin.",

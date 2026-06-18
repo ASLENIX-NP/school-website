@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
+import { supabase } from "../lib/supabase";
 import {
   ArrowLeft,
   Save,
@@ -44,8 +45,13 @@ const defaultGalleryContent = {
       title: "Classroom Learning",
       category: "Classroom",
       date: "Academic Session",
+      description:
+        "Students actively participate in classroom discussions and collaborative learning.",
       image:
         "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&h=800&fit=crop&auto=format",
+      images: [
+        "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&h=800&fit=crop&auto=format",
+      ],
       visible: true,
     },
     {
@@ -53,8 +59,13 @@ const defaultGalleryContent = {
       title: "Interactive Teaching",
       category: "Classroom",
       date: "Daily Learning",
+      description:
+        "Teachers use interactive methods to engage students in meaningful learning experiences.",
       image:
         "https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&h=700&fit=crop&auto=format",
+      images: [
+        "https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&h=700&fit=crop&auto=format",
+      ],
       visible: true,
     },
     {
@@ -62,8 +73,13 @@ const defaultGalleryContent = {
       title: "School Event",
       category: "Events",
       date: "Annual Program",
+      description:
+        "Students and staff come together to celebrate the school's annual program with performances and activities.",
       image:
         "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=900&h=700&fit=crop&auto=format",
+      images: [
+        "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=900&h=700&fit=crop&auto=format",
+      ],
       visible: true,
     },
     {
@@ -71,8 +87,13 @@ const defaultGalleryContent = {
       title: "Sports Activities",
       category: "Sports",
       date: "Sports Week",
+      description:
+        "Students compete in various sports events showcasing their athletic abilities and team spirit.",
       image:
         "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=900&h=700&fit=crop&auto=format",
+      images: [
+        "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=900&h=700&fit=crop&auto=format",
+      ],
       visible: true,
     },
     {
@@ -80,8 +101,13 @@ const defaultGalleryContent = {
       title: "Creative Activities",
       category: "ECA",
       date: "Extra Curricular",
+      description:
+        "Students explore their creativity through various extracurricular activities and clubs.",
       image:
         "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=900&h=700&fit=crop&auto=format",
+      images: [
+        "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=900&h=700&fit=crop&auto=format",
+      ],
       visible: true,
     },
     {
@@ -89,8 +115,13 @@ const defaultGalleryContent = {
       title: "Computer Lab",
       category: "Facilities",
       date: "Digital Learning",
+      description:
+        "Students utilize the modern computer lab for digital learning and technology exploration.",
       image:
         "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=900&h=700&fit=crop&auto=format",
+      images: [
+        "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=900&h=700&fit=crop&auto=format",
+      ],
       visible: true,
     },
   ],
@@ -100,6 +131,28 @@ const defaultGalleryContent = {
     "Gallery images are updated by the school administration to highlight student life and campus activities.",
   bottomNote: "Click image to preview",
 };
+async function uploadGalleryImage(file) {
+  const extension = file.name.split(".").pop();
+
+  const safeName = `${Date.now()}-${Math.random()
+    .toString(36)
+    .substring(2)}.${extension}`;
+
+  const { error } = await supabase.storage
+    .from("gallery")
+    .upload(safeName, file);
+
+  if (error) {
+    console.error("Supabase Upload Error:", error);
+    throw error;
+  }
+
+  const { data } = supabase.storage
+    .from("gallery")
+    .getPublicUrl(safeName);
+
+  return data.publicUrl;
+}
 
 function normalizeCategories(categories = []) {
   const cleaned = categories
@@ -132,16 +185,6 @@ function cleanFileName(fileName = "") {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onloadend = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Image read failed"));
-
-    reader.readAsDataURL(file);
-  });
-}
 
 function Field({ label, value, onChange, placeholder = "", type = "text" }) {
   return (
@@ -248,6 +291,7 @@ function VisibilityDeleteControls({ visible, onToggle, onDelete }) {
   );
 }
 
+// Step 11: Updated GalleryPreview to match public gallery layout
 function GalleryPreview({ form }) {
   const visibleImages = (form.images || []).filter(
     (item) => item.visible !== false
@@ -302,41 +346,43 @@ function GalleryPreview({ form }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {visibleImages.map((item, index) => (
-          <div
-            key={item.id}
-            className={`relative rounded-3xl overflow-hidden ${
-              index === 0 ? "col-span-2 h-72" : "h-48"
-            }`}
-            style={{
-              boxShadow: "0 12px 32px rgba(15,23,42,0.12)",
-            }}
-          >
+      {/* Step 11: space-y-10 layout matching public gallery */}
+      <div className="space-y-10">
+        {visibleImages.map((item) => (
+          <div key={item.id}>
             {item.image ? (
               <img
                 src={item.image}
                 alt={item.title}
-                className="absolute inset-0 w-full h-full object-cover"
+                className="w-full h-52 object-cover rounded-3xl"
+                style={{ boxShadow: "0 12px 32px rgba(15,23,42,0.12)" }}
               />
             ) : (
-              <div className="absolute inset-0 bg-slate-200 flex items-center justify-center">
+              <div className="w-full h-52 rounded-3xl bg-slate-200 flex items-center justify-center">
                 <ImageIcon className="w-14 h-14 text-slate-400" />
               </div>
             )}
 
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(to top, rgba(11,16,32,0.75), transparent)",
-              }}
-            />
-
-            <div className="absolute bottom-4 left-4 right-4">
-              <div className="text-white/70 text-xs">{item.category}</div>
-              <div className="text-white font-black">{item.title}</div>
-              <div className="text-white/60 text-xs">{item.date}</div>
+            <div className="mt-3 px-1">
+              <div className="text-xs text-slate-500 font-semibold uppercase tracking-wide">
+                {item.category}
+              </div>
+              <div className="font-black text-slate-950 mt-0.5">{item.title}</div>
+              <div className="text-xs text-slate-400 mt-0.5">{item.date}</div>
+              {item.description && (
+                <div className="text-sm text-slate-600 mt-1 leading-relaxed">
+                  {item.description}
+                </div>
+              )}
+              <button
+                type="button"
+                className="mt-2 px-4 py-1.5 rounded-xl text-xs font-bold text-white"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
+                }}
+              >
+                View Album ({(item.images || []).length})
+              </button>
             </div>
           </div>
         ))}
@@ -522,14 +568,17 @@ export default function AdminGallery() {
     }
 
     try {
-      const imageData = await readFileAsDataUrl(file);
-      updateImage(id, "image", imageData);
+      const image = await uploadGalleryImage(file);
+
+      updateImage(id, "image", image);
+      updateImage(id, "images", [image]);
     } catch (err) {
       console.error("Single gallery image upload error:", err);
       setError("Could not read selected image.");
     }
   };
 
+  // Step 2: Updated upload to create album structure
   const handleCategoryImageUpload = async (files) => {
     setError("");
     setSuccess("");
@@ -549,14 +598,20 @@ export default function AdminGallery() {
 
     try {
       const uploadedImages = await Promise.all(
-        selectedFiles.map(async (file, index) => ({
-          id: Date.now() + index,
-          title: cleanFileName(file.name) || `New Image ${index + 1}`,
-          category,
-          date: "School Activity",
-          image: await readFileAsDataUrl(file),
-          visible: true,
-        }))
+        selectedFiles.map(async (file, index) => {
+          const imageUrl = await uploadGalleryImage(file);
+      
+          return {
+            id: Date.now() + index,
+            title: cleanFileName(file.name) || `New Image ${index + 1}`,
+            category,
+            date: "School Activity",
+            description: "",
+            image: imageUrl,
+            images: [imageUrl],
+            visible: true,
+          };
+        })
       );
 
       setForm((prev) => ({
@@ -573,6 +628,30 @@ export default function AdminGallery() {
       console.error("Multiple gallery image upload error:", err);
       setError("Could not read selected images.");
     }
+  };
+
+  // Step 4: Add images to existing album
+  const addAlbumImages = async (albumId, files) => {
+    const uploaded = await Promise.all(
+      Array.from(files).map(async (file) => {
+        return await uploadGalleryImage(file);
+      })
+    );
+
+    setForm((prev) => ({
+      ...prev,
+      images: prev.images.map((item) =>
+        item.id === albumId
+          ? {
+              ...item,
+              images: [
+                ...(item.images || []),
+                ...uploaded,
+              ],
+            }
+          : item
+      ),
+    }));
   };
 
   async function saveGalleryContent() {
@@ -607,8 +686,17 @@ export default function AdminGallery() {
       setForm(cleanedForm);
       setSuccess("Gallery page content saved successfully.");
     } catch (err) {
+      console.log("FULL ERROR:", err);
+      console.log("RESPONSE:", err.response);
+      console.log("DATA:", err.response?.data);
+    
       console.error("Save gallery content error:", err);
-      setError(err.response?.data?.message || "Could not save gallery content.");
+    
+      setError(
+        err.response?.data?.message ||
+        JSON.stringify(err.response?.data) ||
+        "Could not save gallery content."
+      );
     } finally {
       setSaving(false);
     }
@@ -874,7 +962,7 @@ export default function AdminGallery() {
               </div>
 
               <p className="text-xs text-slate-500 mt-4 leading-relaxed">
-                “All” is created automatically on the public gallery page. Here
+                "All" is created automatically on the public gallery page. Here
                 you only manage real categories. Select one category before
                 uploading images.
               </p>
@@ -988,8 +1076,9 @@ export default function AdminGallery() {
                           <div className="font-black text-slate-950">
                             {item.title || "Untitled Image"}
                           </div>
+                          {/* Step 10: Show album photo count */}
                           <div className="text-sm text-slate-500">
-                            {item.category} · {item.date}
+                            {item.category} · {item.date} · {(item.images || []).length} Photos
                           </div>
                         </div>
 
@@ -1028,7 +1117,7 @@ export default function AdminGallery() {
                             }}
                           >
                             <Upload className="w-4 h-4" />
-                            Replace Image
+                            Replace Cover
                             <input
                               type="file"
                               accept="image/*"
@@ -1099,8 +1188,82 @@ export default function AdminGallery() {
                             }
                             placeholder="Annual Program"
                           />
+
+                          {/* Step 3: Album Description Field */}
+                          <TextArea
+                            label="Album Description"
+                            value={item.description || ""}
+                            onChange={(value) =>
+                              updateImage(item.id, "description", value)
+                            }
+                            rows={4}
+                          />
                         </div>
                       </div>
+
+                      {/* Steps 5–9: Album Images Section */}
+                      <hr className="my-4" />
+
+                      <h4 className="font-bold text-slate-900 mb-3">
+                        Album Images
+                      </h4>
+
+                      {/* Step 6: Show album images grid */}
+                      <div className="grid grid-cols-3 gap-3">
+                        {(item.images || []).map((img, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={img}
+                              alt=""
+                              className="w-full h-28 object-cover rounded-xl"
+                            />
+
+                            {/* Step 8: Delete album image */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...(item.images || [])];
+                                updated.splice(index, 1);
+                                updateImage(item.id, "images", updated);
+                              }}
+                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold"
+                            >
+                              ×
+                            </button>
+
+                            {/* Step 9: Set cover image */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateImage(item.id, "image", img);
+                              }}
+                              className="mt-2 w-full py-1 text-xs rounded-lg bg-green-600 text-white font-semibold"
+                            >
+                              Set Cover
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Step 7: Upload more images into album */}
+                      <label
+                        className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white font-bold mt-4"
+                        style={{
+                          background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
+                        }}
+                      >
+                        Add Images
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            addAlbumImages(item.id, e.target.files);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
                     </div>
                   ))}
                 </div>
