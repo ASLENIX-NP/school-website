@@ -231,18 +231,19 @@ export default function Facilities() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {visibleFacilities.map((facility, index) => (
             <motion.div
-              key={facility.id || facility.title}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.25 }}
-              transition={{ duration: 0.45, delay: index * 0.06 }}
-              whileHover={{
-                y: -12,
-                scale: 1.02,
-                rotateY: 4,
-              }}
-              className="group rounded-[2rem] overflow-hidden border backdrop-blur-md transition-all duration-300"
-              style={{
+            key={facility.id || facility.title}
+            onClick={() => setSelectedFacility(facility)}
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{ duration: 0.45, delay: index * 0.06 }}
+            whileHover={{
+              y: -12,
+              scale: 1.02,
+              rotateY: 4,
+            }}
+            className="group rounded-[2rem] overflow-hidden border backdrop-blur-md transition-all duration-300 cursor-pointer"
+            style={{
                 background:
                   "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
                 borderColor: `${facility.color || colors.green}25`,
@@ -288,15 +289,13 @@ export default function Facilities() {
                   {facility.description}
                 </p>
 
-                <button
-                  type="button"
-                  onClick={() => setSelectedFacility(facility)}
-                  className="mt-6 flex items-center gap-2 font-bold hover:gap-3 transition-all"
-                  style={{ color: facility.color || colors.green }}
-                >
+                <div
+  className="mt-6 flex items-center gap-2 font-bold hover:gap-3 transition-all"
+  style={{ color: facility.color || colors.green }}
+>
                   {content.learnMoreText}
                   <ArrowRight size={18} />
-                </button>
+                  </div>
               </div>
             </motion.div>
           ))}
