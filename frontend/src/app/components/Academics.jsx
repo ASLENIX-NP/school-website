@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
+import { X, ChevronDown } from "lucide-react";
 
 const colors = {
   red: "#D71920",
@@ -13,7 +14,6 @@ const colors = {
   lightGreen: "#EAF7EF",
   lightPurple: "#F1ECFF",
 };
-
 const defaultAcademicsContent = {
   heroBadge: "Nurturing Excellence",
   heroTitle: "Academics at Baljagriti",
@@ -42,7 +42,7 @@ const defaultAcademicsContent = {
     {
       id: 2,
       level: "Primary Level",
-      span: "Grade 1 – 5",
+      span: "Grade 1 – 4",
       badgeColor: colors.green,
       border: "rgba(22,138,58,0.15)",
       classes: ["English", "Nepali", "Mathematics", "Science", "Social Studies"],
@@ -53,7 +53,7 @@ const defaultAcademicsContent = {
     {
       id: 3,
       level: "Lower Secondary Level",
-      span: "Grade 6 – 8",
+      span: "Grade 5 – 7",
       badgeColor: colors.purple,
       border: "rgba(75,46,131,0.15)",
       classes: [
@@ -71,7 +71,7 @@ const defaultAcademicsContent = {
     {
       id: 4,
       level: "Secondary Level",
-      span: "Grade 9 – 10",
+      span: "Grade 8 – 10",
       badgeColor: colors.dark,
       border: "rgba(11,16,32,0.12)",
       classes: [
@@ -224,7 +224,93 @@ const defaultAcademicsContent = {
   secondaryButtonText: "Contact Administration",
   secondaryButtonLink: "/contact",
 };
+const curriculumData = {
+  "Pre-Primary Level": [
+    {
+      grade: "Nursery",
+      books: [
+        { subject: "English", publication: "Ekta Publication" },
+        { subject: "Nepali", publication: "Janak Publication" },
+        { subject: "Mathematics", publication: "Buddha Publication" },
+      ],
+    },
+    {
+      grade: "LKG",
+      books: [
+        { subject: "English", publication: "Ekta Publication" },
+        { subject: "Nepali", publication: "Janak Publication" },
+        { subject: "Mathematics", publication: "Buddha Publication" },
+      ],
+    },
+    {
+      grade: "UKG",
+      books: [
+        { subject: "English", publication: "Ekta Publication" },
+        { subject: "Nepali", publication: "Janak Publication" },
+        { subject: "Mathematics", publication: "Buddha Publication" },
+      ],
+    },
+  ],
 
+  "Primary Level": [
+    {
+      grade: "Grade 1",
+      books: [
+        { subject: "English", publication: "Ekta" },
+        { subject: "Nepali", publication: "Janak" },
+        { subject: "Mathematics", publication: "CDC" },
+        { subject: "Science", publication: "CDC" },
+      ],
+    },
+    {
+      grade: "Grade 2",
+      books: [
+        { subject: "English", publication: "Ekta" },
+        { subject: "Nepali", publication: "Janak" },
+        { subject: "Mathematics", publication: "CDC" },
+        { subject: "Science", publication: "CDC" },
+      ],
+    },
+    {
+      grade: "Grade 3",
+      books: [],
+    },
+    {
+      grade: "Grade 4",
+      books: [],
+    },
+  ],
+
+  "Lower Secondary Level": [
+    {
+      grade: "Grade 5",
+      books: [],
+    },
+    {
+      grade: "Grade 6",
+      books: [],
+    },
+    {
+      grade: "Grade 7",
+      books: [],
+    },
+  ],
+
+  "Secondary Level": [
+    {
+      grade: "Grade 8",
+      books: [],
+    },
+    {
+      grade: "Grade 9",
+      books: [],
+    },
+    {
+      grade: "Grade 10",
+      books: [],
+    },
+  ],
+};
 function mergeAcademicsContent(saved = {}) {
   return {
     ...defaultAcademicsContent,
@@ -263,7 +349,7 @@ function HighlightedTitle({ title, highlight }) {
 
 export function Academics() {
   const [content, setContent] = useState(defaultAcademicsContent);
-
+  const [selectedProgram, setSelectedProgram] = useState(null);
   useEffect(() => {
     const loadAcademicsContent = async () => {
       try {
@@ -371,11 +457,12 @@ export function Academics() {
               return (
                 <motion.div
                   key={prog.id}
+                  onClick={() => setSelectedProgram(prog.level)}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="group p-6 rounded-3xl flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:-translate-y-2 cursor-default"
+                  className="group p-6 rounded-3xl flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:-translate-y-2 cursor-pointer"
                   style={{
                     border: `1px solid ${cardColor}24`,
                     background:
@@ -870,6 +957,153 @@ export function Academics() {
   </div>
 </motion.div>
       </section>
+      {selectedProgram && (
+  <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-6">
+ <div
+  className="w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-[36px] relative"
+  style={{
+    background:
+      "linear-gradient(135deg,#ffffff 0%,#f8fafc 50%,#f3f0ff 100%)",
+    boxShadow:
+      "0 40px 100px rgba(11,16,32,0.25)",
+  }}
+>
+<button
+  onClick={() => setSelectedProgram(null)}
+  className="sticky top-4 ml-auto mr-4 z-50 flex w-12 h-12 items-center justify-center rounded-full transition-all duration-300"
+  style={{
+    background: "#D71920",
+    color: "#fff",
+    boxShadow: "0 12px 30px rgba(215,25,32,0.3)",
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.transform = "rotate(90deg) scale(1.1)";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = "rotate(0deg) scale(1)";
+  }}
+>
+  <X size={24} />
+</button>
+
+<div className="mb-8">
+  <div
+    className="inline-block px-4 py-2 rounded-full text-sm font-bold mb-4"
+    style={{
+      background: "rgba(75,46,131,0.08)",
+      color: "#4B2E83",
+    }}
+  >
+    Academic Curriculum
+  </div>
+
+  <h2
+    className="text-5xl font-black"
+    style={{
+      color: "#0B1020",
+      letterSpacing: "-0.04em",
+    }}
+  >
+    {selectedProgram}
+  </h2>
+
+  <p className="text-slate-500 mt-3">
+    View subjects, books and publications for each grade level.
+  </p>
+</div>
+
+      <div className="space-y-5">
+        {curriculumData[selectedProgram]?.map((grade) => (
+          <details
+          key={grade.grade}
+          className="overflow-hidden rounded-3xl transition-all duration-300"
+          style={{
+            background:
+              "linear-gradient(145deg, rgba(255,255,255,0.95), rgba(248,250,252,0.9))",
+            border: "1px solid rgba(75,46,131,0.12)",
+            boxShadow: "0 10px 30px rgba(15,23,42,0.06)",
+          }}
+        >
+           <summary
+  className="cursor-pointer px-8 py-6 flex justify-between items-center"
+  style={{
+    background:
+      "linear-gradient(90deg, rgba(75,46,131,0.03), rgba(22,138,58,0.03))",
+  }}
+>
+  <div>
+    <div
+      className="text-xs uppercase font-bold tracking-[0.2em]"
+      style={{ color: "#64748B" }}
+    >
+      Grade
+    </div>
+
+    <div className="text-2xl font-black text-slate-900">
+      {grade.grade}
+    </div>
+  </div>
+
+  <ChevronDown size={24} />
+</summary>
+
+            <div className="p-5 bg-slate-50 border-t">
+
+              {grade.books.length > 0 ? (
+                <div className="grid md:grid-cols-2 gap-4">
+
+                  {grade.books.map((book, index) => (
+                   <div
+                   key={index}
+                   className="group rounded-3xl p-5 transition-all duration-300 hover:-translate-y-2"
+                   style={{
+                     background:
+                       "linear-gradient(145deg,#ffffff,#f8fafc)",
+                     border: "1px solid rgba(75,46,131,0.08)",
+                     boxShadow: "0 12px 24px rgba(15,23,42,0.05)",
+                   }}
+                 >
+                      <div
+  className="w-12 h-1 rounded-full mb-4"
+  style={{
+    background:
+      "linear-gradient(90deg,#D71920,#168A3A)",
+  }}
+/>
+
+<div className="text-lg font-black text-slate-900">
+  {book.subject}
+</div>
+
+<div className="text-sm text-slate-500 mt-2">
+  Publication
+</div>
+
+<div
+  className="font-bold mt-1"
+  style={{ color: "#4B2E83" }}
+>
+  {book.publication}
+</div>
+                    </div>
+                  ))}
+
+                </div>
+              ) : (
+                <div className="text-slate-500">
+                  Curriculum details coming soon.
+                </div>
+              )}
+
+            </div>
+          </details>
+        ))}
+      </div>
+
+    </div>
+
+  </div>
+)}
     </div>
   );
 }

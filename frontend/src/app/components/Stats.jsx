@@ -109,7 +109,6 @@ const statsData = {
 function Counter({ target, suffix }) {
   const [count, setCount] = useState(0);
   const ref = useRef(null);
-  const started = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -117,25 +116,29 @@ function Counter({ target, suffix }) {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
+        if (entry.isIntersecting) {
+          setCount(0);
 
-          const duration = 1600;
+          const duration = 1500;
           const start = performance.now();
 
-          const tick = (now) => {
-            const t = Math.min((now - start) / duration, 1);
-            const ease = 1 - Math.pow(1 - t, 3);
+          const animate = (now) => {
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
 
-            setCount(Math.round(ease * target));
+            setCount(Math.floor(target * eased));
 
-            if (t < 1) requestAnimationFrame(tick);
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            }
           };
 
-          requestAnimationFrame(tick);
+          requestAnimationFrame(animate);
         }
       },
-      { threshold: 0.35 }
+      {
+        threshold: 0.4,
+      }
     );
 
     observer.observe(el);
@@ -214,7 +217,7 @@ function Stats() {
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: false, amount: 0.3 }}
           transition={{ duration: 0.55 }}
           className="mb-9 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4"
         >
@@ -293,7 +296,7 @@ function Stats() {
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: false, amount: 0.3 }}
           transition={{ duration: 0.6 }}
           className="grid lg:grid-cols-2 gap-10 items-center mb-24"
         >
@@ -444,7 +447,7 @@ function Stats() {
               key={card.title}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: false, amount: 0.3 }}
               transition={{ duration: 0.55, delay: i * 0.1 }}
               className="rounded-2xl p-7 md:p-8 transition-all duration-300 hover:-translate-y-1"
               style={{
@@ -536,7 +539,7 @@ function Stats() {
             key={noticeId || notice.title || i}
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: false, amount: 0.3 }}
             transition={{ duration: 0.45, delay: i * 0.08 }}
           >
             <Link

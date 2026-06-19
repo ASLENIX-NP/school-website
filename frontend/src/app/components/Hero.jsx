@@ -50,10 +50,10 @@ const defaultHeroData = {
 function GlassStat({ value, label, color, delay }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.55 }}
-      className="rounded-3xl p-5"
+    initial={{ opacity: 0, y: 18 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay, duration: 0.55 }}
+    className="group rounded-3xl p-5 cursor-pointer transition-all duration-300 hover:-translate-y-2"
       style={{
         background:
           "linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055))",
@@ -63,10 +63,10 @@ function GlassStat({ value, label, color, delay }) {
         backdropFilter: "blur(18px)",
       }}
     >
-      <div
-        className="w-11 h-1 rounded-full mb-4"
-        style={{ background: color }}
-      />
+     <div
+  className="w-11 h-1 rounded-full mb-4 transition-all duration-300 ease-out group-hover:w-20"
+  style={{ background: color }}
+/>
 
       <div
         className="text-2xl font-black"
@@ -92,11 +92,15 @@ function GlassStat({ value, label, color, delay }) {
 function FloatingTextTag({ className, title, subtitle, color, delay }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{
-        opacity: 1,
-        y: [0, 9, 0],
-      }}
+  initial={{ opacity: 0, y: -10 }}
+  animate={{
+    opacity: 1,
+    y: [0, 9, 0],
+  }}
+  whileHover={{
+    y: -8,
+    scale: 1.03,
+  }}
       transition={{
         opacity: { duration: 0.55, delay },
         y: {
@@ -106,7 +110,7 @@ function FloatingTextTag({ className, title, subtitle, color, delay }) {
           delay,
         },
       }}
-      className={`rounded-3xl px-5 py-4 ${className}`}
+      className={`group rounded-3xl px-5 py-4 cursor-pointer transition-all duration-300 ${className}`}
       style={{
         background:
           "linear-gradient(145deg, rgba(15,23,42,0.64), rgba(15,23,42,0.36))",
@@ -115,10 +119,10 @@ function FloatingTextTag({ className, title, subtitle, color, delay }) {
         backdropFilter: "blur(20px)",
       }}
     >
-      <div
-        className="w-12 h-1 rounded-full mb-3"
-        style={{ background: color }}
-      />
+     <div
+  className="w-12 h-1 rounded-full mb-3 transition-all duration-300 group-hover:w-24"
+  style={{ background: color }}
+/>
 
       <div className="text-white text-sm font-bold whitespace-nowrap">
         {title}
@@ -369,7 +373,8 @@ function Hero() {
               background:
                 "linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055))",
               border: "1px solid rgba(255,255,255,0.16)",
-              boxShadow: "0 18px 46px rgba(0,0,0,0.22)",
+              boxShadow:
+              "0 25px 60px rgba(0,0,0,0.28), 0 0 30px rgba(56,189,248,0.08), inset 0 1px 0 rgba(255,255,255,0.13)",
               backdropFilter: "blur(18px)",
               color: "rgba(255,255,255,0.88)",
             }}
