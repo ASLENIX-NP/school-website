@@ -114,7 +114,16 @@ export function Navbar() {
             backdropFilter: "blur(24px)",
           }}
         >
-          <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
+        <Link
+  to="/"
+  onClick={() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }}
+  className="flex items-center gap-3 group flex-shrink-0"
+>
             <div
               className="rounded-2xl overflow-hidden bg-white flex items-center justify-center transition-all duration-300 group-hover:scale-105"
               style={{

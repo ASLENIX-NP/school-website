@@ -64,7 +64,7 @@ function GlassStat({ value, label, color, delay }) {
       }}
     >
      <div
-  className="w-11 h-1 rounded-full mb-4 transition-all duration-300 ease-out group-hover:w-20"
+  className="w-11 h-1 rounded-full mb-4 transition-all duration-200 ease-out group-hover:w-20"
   style={{ background: color }}
 />
 
@@ -119,8 +119,8 @@ function FloatingTextTag({ className, title, subtitle, color, delay }) {
         backdropFilter: "blur(20px)",
       }}
     >
-     <div
-  className="w-12 h-1 rounded-full mb-3 transition-all duration-300 group-hover:w-24"
+<div
+  className="w-12 h-1 rounded-full mb-3 transition-all duration-150 ease-out group-hover:w-24"
   style={{ background: color }}
 />
 
@@ -242,12 +242,12 @@ function HeroImageStage({ heroData }) {
       </motion.div>
 
       <FloatingTextTag
-        className="absolute left-[7%] top-3 z-20 hidden xl:block"
-        title={heroData.floating1Title}
-        subtitle={heroData.floating1Subtitle}
-        color={palette.gold}
-        delay={0.3}
-      />
+  className="absolute left-[7%] top-3 z-20 hidden xl:block"
+  title={heroData.floating1Title}
+  subtitle={heroData.floating1Subtitle}
+  color={palette.gold}
+  delay={0.3}
+/>
 
       <FloatingTextTag
         className="absolute right-[6%] top-12 z-20 hidden xl:block"
