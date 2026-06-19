@@ -65,6 +65,8 @@ const defaultContactContent = {
     namePlaceholder: "Your full name",
     emailLabel: "Email Address",
     emailPlaceholder: "your@email.com",
+    phoneLabel: "Phone Number",
+    phonePlaceholder: "98XXXXXXXX or +97798XXXXXXXX",
     subjectLabel: "Subject",
     subjectPlaceholder: "Admissions inquiry",
     messageLabel: "Message",
@@ -102,6 +104,17 @@ function getContactIcon(icon) {
   return MapPin;
 }
 
+function normalizePhone(phone = "") {
+  return String(phone).replace(/[^\d+]/g, "").trim();
+}
+
+function isValidPhone(phone = "") {
+  const cleaned = normalizePhone(phone);
+  const digitsOnly = cleaned.replace(/\D/g, "");
+
+  return digitsOnly.length >= 10 && digitsOnly.length <= 15;
+}
+
 function HighlightedTitle({ title, highlightedText }) {
   if (!highlightedText || !title.includes(highlightedText)) {
     return <>{title}</>;
@@ -120,6 +133,16 @@ function HighlightedTitle({ title, highlightedText }) {
   );
 }
 
+function ErrorText({ children }) {
+  if (!children) return null;
+
+  return (
+    <p className="text-xs font-semibold mt-2" style={{ color: colors.red }}>
+      {children}
+    </p>
+  );
+}
+
 function Contact() {
   const [content, setContent] = useState(defaultContactContent);
   const [submitMessage, setSubmitMessage] = useState("");
@@ -128,7 +151,7 @@ function Contact() {
   const {
     register,
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
     reset,
   } = useForm();
 
@@ -154,14 +177,22 @@ function Contact() {
     setSubmitMessage("");
     setSubmitError("");
 
+    const payload = {
+      ...data,
+      phone: normalizePhone(data.phone),
+      source: "contact",
+    };
+
     try {
-      await axios.post("http://localhost:5000/api/contact", data);
+      await axios.post("http://localhost:5000/api/contact", payload);
 
       setSubmitMessage(content.form.successMessage);
       reset();
     } catch (error) {
       console.error("Contact form error:", error);
-      setSubmitError(content.form.errorMessage);
+      setSubmitError(
+        error.response?.data?.message || content.form.errorMessage
+      );
     }
   };
 
@@ -427,7 +458,9 @@ function Contact() {
                       {content.form.nameLabel}
                     </label>
                     <input
-                      {...register("name", { required: true })}
+                      {...register("name", {
+                        required: "Name is required.",
+                      })}
                       placeholder={content.form.namePlaceholder}
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
                       style={{
@@ -437,6 +470,7 @@ function Contact() {
                         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
                       }}
                     />
+                    <ErrorText>{errors.name?.message}</ErrorText>
                   </div>
 
                   <div>
@@ -447,7 +481,9 @@ function Contact() {
                       {content.form.emailLabel}
                     </label>
                     <input
-                      {...register("email", { required: true })}
+                      {...register("email", {
+                        required: "Email is required.",
+                      })}
                       type="email"
                       placeholder={content.form.emailPlaceholder}
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
@@ -458,27 +494,60 @@ function Contact() {
                         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
                       }}
                     />
+                    <ErrorText>{errors.email?.message}</ErrorText>
                   </div>
                 </div>
 
-                <div>
-                  <label
-                    className="block text-sm font-medium mb-2"
-                    style={{ color: "#475569" }}
-                  >
-                    {content.form.subjectLabel}
-                  </label>
-                  <input
-                    {...register("subject", { required: true })}
-                    placeholder={content.form.subjectPlaceholder}
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
-                    style={{
-                      background: "rgba(255,255,255,0.82)",
-                      border: "1px solid rgba(75,46,131,0.16)",
-                      color: colors.dark,
-                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
-                    }}
-                  />
+                <div className="grid md:grid-cols-2 gap-5">
+                  <div>
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: "#475569" }}
+                    >
+                      {content.form.phoneLabel}
+                    </label>
+                    <input
+                      {...register("phone", {
+                        required: "Phone number is required.",
+                        validate: (value) =>
+                          isValidPhone(value) ||
+                          "Please enter a valid phone number.",
+                      })}
+                      type="tel"
+                      placeholder={content.form.phonePlaceholder}
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                      style={{
+                        background: "rgba(255,255,255,0.82)",
+                        border: "1px solid rgba(75,46,131,0.16)",
+                        color: colors.dark,
+                        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
+                      }}
+                    />
+                    <ErrorText>{errors.phone?.message}</ErrorText>
+                  </div>
+
+                  <div>
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: "#475569" }}
+                    >
+                      {content.form.subjectLabel}
+                    </label>
+                    <input
+                      {...register("subject", {
+                        required: "Subject is required.",
+                      })}
+                      placeholder={content.form.subjectPlaceholder}
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                      style={{
+                        background: "rgba(255,255,255,0.82)",
+                        border: "1px solid rgba(75,46,131,0.16)",
+                        color: colors.dark,
+                        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
+                      }}
+                    />
+                    <ErrorText>{errors.subject?.message}</ErrorText>
+                  </div>
                 </div>
 
                 <div>
@@ -489,7 +558,9 @@ function Contact() {
                     {content.form.messageLabel}
                   </label>
                   <textarea
-                    {...register("message", { required: true })}
+                    {...register("message", {
+                      required: "Message is required.",
+                    })}
                     rows={5}
                     placeholder={content.form.messagePlaceholder}
                     className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all resize-none"
@@ -500,6 +571,7 @@ function Contact() {
                       boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
                     }}
                   />
+                  <ErrorText>{errors.message?.message}</ErrorText>
                 </div>
 
                 <button
@@ -515,7 +587,9 @@ function Contact() {
                   }}
                 >
                   <Send className="w-4 h-4" />
-                  {isSubmitting ? content.form.sendingText : content.form.buttonText}
+                  {isSubmitting
+                    ? content.form.sendingText
+                    : content.form.buttonText}
                 </button>
               </form>
             </div>

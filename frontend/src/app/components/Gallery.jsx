@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -10,6 +10,8 @@ import {
   Image as ImageIcon,
   ChevronLeft,
   ChevronRight,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 
 const colors = {
@@ -18,6 +20,19 @@ const colors = {
   purple: "#4B2E83",
   dark: "#0B1020",
   cream: "#FFF8EE",
+};
+
+const fallbackCategoryDescriptions = {
+  Classroom:
+    "Students participate in active classroom learning, discussion, collaboration, and academic activities.",
+  Events:
+    "School events highlight student participation, celebration, leadership, and community involvement.",
+  Sports:
+    "Sports activities encourage teamwork, discipline, confidence, fitness, and healthy competition.",
+  ECA:
+    "Extra-curricular activities help students explore creativity, leadership, teamwork, and personal growth.",
+  Facilities:
+    "School facilities support practical learning, technology use, science activities, and overall student development.",
 };
 
 const defaultGalleryContent = {
@@ -29,38 +44,24 @@ const defaultGalleryContent = {
 
   categories: ["All", "Classroom", "Events", "Sports", "ECA", "Facilities"],
 
+  categoryDescriptions: fallbackCategoryDescriptions,
+
   images: [
     {
       id: 1,
       title: "Classroom Learning",
       category: "Classroom",
       date: "Academic Session",
-      description:
-        "Students actively participate in classroom discussions and collaborative learning.",
       image:
         "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200",
       images: [
         "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200",
         "https://images.unsplash.com/photo-1588072432836-e10032774350?w=1200",
-        "https://images.unsplash.com/photo-1544717305-2782549b5136?w=1200",
-        "https://images.unsplash.com/photo-1513258496099-48168024aec0?w=1200",
       ],
       visible: true,
     },
     {
       id: 2,
-      title: "Interactive Teaching",
-      category: "Classroom",
-      date: "Daily Learning",
-      image:
-        "https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&h=700&fit=crop&auto=format",
-      images: [
-        "https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&h=700&fit=crop&auto=format",
-      ],
-      visible: true,
-    },
-    {
-      id: 3,
       title: "School Event",
       category: "Events",
       date: "Annual Program",
@@ -68,66 +69,6 @@ const defaultGalleryContent = {
         "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=900&h=700&fit=crop&auto=format",
       images: [
         "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=900&h=700&fit=crop&auto=format",
-      ],
-      visible: true,
-    },
-    {
-      id: 4,
-      title: "Sports Activities",
-      category: "Sports",
-      date: "Sports Week",
-      image:
-        "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=900&h=700&fit=crop&auto=format",
-      images: [
-        "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=900&h=700&fit=crop&auto=format",
-      ],
-      visible: true,
-    },
-    {
-      id: 5,
-      title: "Creative Activities",
-      category: "ECA",
-      date: "Extra Curricular",
-      image:
-        "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=900&h=700&fit=crop&auto=format",
-      images: [
-        "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=900&h=700&fit=crop&auto=format",
-      ],
-      visible: true,
-    },
-    {
-      id: 6,
-      title: "Computer Lab",
-      category: "Facilities",
-      date: "Digital Learning",
-      image:
-        "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=900&h=700&fit=crop&auto=format",
-      images: [
-        "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=900&h=700&fit=crop&auto=format",
-      ],
-      visible: true,
-    },
-    {
-      id: 7,
-      title: "Science Learning",
-      category: "Facilities",
-      date: "Practical Class",
-      image:
-        "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=900&h=700&fit=crop&auto=format",
-      images: [
-        "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=900&h=700&fit=crop&auto=format",
-      ],
-      visible: true,
-    },
-    {
-      id: 8,
-      title: "Student Participation",
-      category: "Events",
-      date: "School Program",
-      image:
-        "https://images.unsplash.com/photo-1544717305-2782549b5136?w=900&h=700&fit=crop&auto=format",
-      images: [
-        "https://images.unsplash.com/photo-1544717305-2782549b5136?w=900&h=700&fit=crop&auto=format",
       ],
       visible: true,
     },
@@ -139,13 +80,30 @@ const defaultGalleryContent = {
   bottomNote: "Click image to preview",
 };
 
+function normalizeCategories(categories = []) {
+  const cleaned = categories
+    .map((item) => String(item || "").trim())
+    .filter(Boolean);
+
+  const withoutAll = cleaned.filter((item) => item.toLowerCase() !== "all");
+
+  return ["All", ...(withoutAll.length ? withoutAll : ["Classroom"])];
+}
+
 function mergeGalleryContent(saved = {}) {
   return {
     ...defaultGalleryContent,
     ...saved,
     categories: Array.isArray(saved.categories)
-      ? saved.categories
+      ? normalizeCategories(saved.categories)
       : defaultGalleryContent.categories,
+    categoryDescriptions:
+      saved.categoryDescriptions && typeof saved.categoryDescriptions === "object"
+        ? {
+            ...fallbackCategoryDescriptions,
+            ...saved.categoryDescriptions,
+          }
+        : fallbackCategoryDescriptions,
     images: Array.isArray(saved.images)
       ? saved.images
       : defaultGalleryContent.images,
@@ -170,89 +128,117 @@ function HighlightedTitle({ title, highlightedText }) {
   );
 }
 
-function GalleryCard({ item, index, onClick }) {
-  const isLarge = index === 0 || index === 5;
-  // FIX 3: Use item.image || item.images?.[0] consistently
-  const displayImage = item.image || item.images?.[0];
+function buildCategoryAlbums(content) {
+  const categories = normalizeCategories(content.categories).filter(
+    (category) => category !== "All"
+  );
+
+  const visibleImages = (content.images || []).filter(
+    (item) => item.visible !== false
+  );
+
+  return categories
+    .map((category) => {
+      const categoryItems = visibleImages.filter(
+        (item) => item.category === category
+      );
+
+      const seen = new Set();
+      const photos = [];
+
+      categoryItems.forEach((item) => {
+        const urls =
+          Array.isArray(item.images) && item.images.length > 0
+            ? item.images
+            : item.image
+            ? [item.image]
+            : [];
+
+        urls.forEach((url) => {
+          if (!url || seen.has(url)) return;
+
+          seen.add(url);
+          photos.push({
+            url,
+            title: item.title || category,
+            date: item.date || "School Activity",
+            category,
+          });
+        });
+      });
+
+      const cover =
+        categoryItems.find((item) => item.image)?.image ||
+        photos[0]?.url ||
+        "";
+
+      return {
+        category,
+        title: category,
+        date: categoryItems[0]?.date || "School Activity",
+        description:
+          content.categoryDescriptions?.[category] ||
+          fallbackCategoryDescriptions[category] ||
+          "Explore school moments, activities, learning experiences, and student participation from this category.",
+        cover,
+        photos,
+        total: photos.length,
+      };
+    })
+    .filter((album) => album.total > 0);
+}
+
+function GalleryCategoryCard({ album, index, onClick }) {
+  const isLarge = index === 0 || index === 4;
 
   return (
-    <motion.button
-      type="button"
-      layout
-      initial={{ opacity: 0, y: 28, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 20, scale: 0.96 }}
-      transition={{ duration: 0.45, delay: index * 0.04 }}
-      onClick={() => onClick(item)}
-      className={`group relative overflow-hidden rounded-3xl text-left ${
-        isLarge ? "lg:col-span-2 lg:row-span-2 h-[420px]" : "h-[300px]"
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className={`grid lg:grid-cols-2 gap-12 items-center ${
+        index % 2 !== 0 ? "lg:[&>*:first-child]:order-2" : ""
       }`}
-      style={{
-        boxShadow:
-          "0 24px 70px rgba(11,16,32,0.16), 0 0 0 1px rgba(255,255,255,0.65)",
-        border: "1px solid rgba(255,255,255,0.55)",
-        transform: "perspective(1000px)",
-      }}
     >
-      {displayImage ? (
-        <img
-          src={displayImage}
-          alt={item.title}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-        />
-      ) : (
-        <div className="absolute inset-0 bg-slate-200 flex items-center justify-center">
-          <ImageIcon className="w-16 h-16 text-slate-400" />
-        </div>
-      )}
-
-      <div
-        className="absolute inset-0 transition-opacity duration-300"
-        style={{
-          background:
-            "linear-gradient(to top, rgba(11,16,32,0.78) 0%, rgba(11,16,32,0.24) 48%, rgba(11,16,32,0.06) 100%)",
-        }}
-      />
-
-      <div
-        className="absolute top-5 left-5 rounded-full px-3 py-1.5 text-xs font-bold"
-        style={{
-          background: "rgba(255,255,255,0.18)",
-          color: "#FFFFFF",
-          border: "1px solid rgba(255,255,255,0.24)",
-          backdropFilter: "blur(16px)",
-        }}
-      >
-        {item.category}
+      <div className="overflow-hidden rounded-[32px] shadow-2xl bg-white">
+        {album.cover ? (
+          <img
+            src={album.cover}
+            alt={album.title}
+            className="w-full h-[450px] object-cover hover:scale-105 transition duration-700"
+          />
+        ) : (
+          <div className="w-full h-[450px] bg-slate-100 flex items-center justify-center">
+            <ImageIcon className="w-16 h-16 text-slate-300" />
+          </div>
+        )}
       </div>
 
-      <div
-        className="absolute bottom-5 left-5 right-5 rounded-2xl p-4 translate-y-2 group-hover:translate-y-0 transition-transform duration-300"
-        style={{
-          background:
-            "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07))",
-          border: "1px solid rgba(255,255,255,0.18)",
-          backdropFilter: "blur(18px)",
-          boxShadow: "0 18px 48px rgba(0,0,0,0.26)",
-        }}
-      >
-        <div className="flex items-center gap-2 mb-2">
-          <CalendarDays className="w-4 h-4" style={{ color: "#FACC15" }} />
-          <span className="text-xs font-medium text-white/70">{item.date}</span>
-        </div>
+      <div>
+        <span className="px-4 py-2 rounded-full bg-green-100 text-green-700 font-semibold">
+          {album.category}
+        </span>
 
-        <h3
-          className="text-xl md:text-2xl text-white"
-          style={{
-            fontFamily: "var(--font-display)",
-            fontWeight: 850,
-            letterSpacing: "-0.03em",
-          }}
+        <h2 className="text-5xl font-black text-slate-900 mt-5">
+          {album.title}
+        </h2>
+
+        <p className="text-slate-500 mt-3">{album.date}</p>
+
+        <p className="text-lg text-slate-600 mt-6 leading-relaxed">
+          {album.description}
+        </p>
+
+        <button
+          type="button"
+          onClick={() => onClick(album)}
+          className="mt-8 px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-green-600 text-white font-bold relative z-50"
         >
-          {item.title}
-        </h3>
+          View Album ({album.total})
+        </button>
       </div>
-    </motion.button>
+    </motion.div>
   );
 }
 
@@ -261,29 +247,8 @@ function Gallery() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedAlbum, setSelectedAlbum] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const nextImage = () => {
-    if (!selectedAlbum) return;
-  
-    const next =
-      (currentImageIndex + 1) %
-      selectedAlbum.images.length;
-  
-    setCurrentImageIndex(next);
-    setActiveImage(selectedAlbum.images[next]);
-  };
-  
-  const previousImage = () => {
-    if (!selectedAlbum) return;
-  
-    const prev =
-      (currentImageIndex - 1 + selectedAlbum.images.length) %
-      selectedAlbum.images.length;
-  
-    setCurrentImageIndex(prev);
-    setActiveImage(selectedAlbum.images[prev]);
-  };
-  // FIX 1: Move activeImage state INSIDE the Gallery component (was incorrectly at module level)
-  const [activeImage, setActiveImage] = useState(null);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
 
   useEffect(() => {
     const loadGalleryContent = async () => {
@@ -303,21 +268,49 @@ function Gallery() {
     loadGalleryContent();
   }, []);
 
-  const categories = Array.from(
-    new Set(["All", ...(content.categories || []).filter(Boolean)])
-  );
+  const categories = normalizeCategories(content.categories);
 
-  const visibleImages = (content.images || []).filter(
-    (item) => item.visible !== false
-  );
+  const categoryAlbums = useMemo(() => buildCategoryAlbums(content), [content]);
 
-  const filteredImages =
+  const filteredAlbums =
     activeCategory === "All"
-      ? visibleImages
-      : visibleImages.filter((item) => item.category === activeCategory);
-      console.log("ALL IMAGES:", content.images);
-      console.log("VISIBLE IMAGES:", visibleImages.length);
-      console.log("FILTERED IMAGES:", filteredImages.length);
+      ? categoryAlbums
+      : categoryAlbums.filter((album) => album.category === activeCategory);
+
+  const currentPhoto = selectedAlbum?.photos?.[currentImageIndex];
+
+  const openAlbum = (album) => {
+    setSelectedAlbum(album);
+    setCurrentImageIndex(0);
+    setZoomOpen(false);
+    setZoomScale(1);
+  };
+
+  const closeAlbum = () => {
+    setSelectedAlbum(null);
+    setCurrentImageIndex(0);
+    setZoomOpen(false);
+    setZoomScale(1);
+  };
+
+  const previousImage = (e) => {
+    e?.stopPropagation();
+    if (!selectedAlbum?.photos?.length) return;
+
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? selectedAlbum.photos.length - 1 : prev - 1
+    );
+    setZoomScale(1);
+  };
+
+  const nextImage = (e) => {
+    e?.stopPropagation();
+    if (!selectedAlbum?.photos?.length) return;
+
+    setCurrentImageIndex((prev) => (prev + 1) % selectedAlbum.photos.length);
+    setZoomScale(1);
+  };
+
   return (
     <section
       id="gallery"
@@ -433,56 +426,15 @@ function Gallery() {
             backdropFilter: "blur(18px)",
           }}
         >
-          {filteredImages.length > 0 ? (
+          {filteredAlbums.length > 0 ? (
             <div className="space-y-24">
-              {filteredImages.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5 }}
-                  className={`grid lg:grid-cols-2 gap-12 items-center ${
-                    index % 2 !== 0 ? "lg:[&>*:first-child]:order-2" : ""
-                  }`}
-                >
-                  {/* IMAGE */}
-                  <div className="overflow-hidden rounded-[32px] shadow-2xl">
-                    <img
-                      // FIX 4: Use item.image || item.images?.[0] so items with only images[] still display
-                      src={item.image || item.images?.[0]}
-                      alt={item.title}
-                      className="w-full h-[450px] object-cover hover:scale-105 transition duration-700"
-                    />
-                  </div>
-
-                  {/* CONTENT */}
-                  <div>
-                    <span className="px-4 py-2 rounded-full bg-green-100 text-green-700 font-semibold">
-                      {item.category}
-                    </span>
-
-                    <h2 className="text-5xl font-black text-slate-900 mt-5">
-                      {item.title}
-                    </h2>
-
-                    <p className="text-slate-500 mt-3">{item.date}</p>
-
-                    <p className="text-lg text-slate-600 mt-6 leading-relaxed">
-                      {item.description ||
-                        "Students participate in engaging academic and extracurricular activities that promote creativity, leadership, teamwork, and practical learning."}
-                    </p>
-
-                    <button
-                      onClick={() => {
-                        setSelectedAlbum(item);
-                      }}
-                      className="mt-8 px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-green-600 text-white font-bold relative z-50"
-                    >
-                      View Album ({item.images?.length || 0})
-                    </button>
-                  </div>
-                </motion.div>
+              {filteredAlbums.map((album, index) => (
+                <GalleryCategoryCard
+                  key={album.category}
+                  album={album}
+                  index={index}
+                  onClick={openAlbum}
+                />
               ))}
             </div>
           ) : (
@@ -543,15 +495,13 @@ function Gallery() {
         </motion.div>
       </div>
 
-      {/* ALBUM MODAL */}
       <AnimatePresence>
         {selectedAlbum && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            // FIX 2: Was setselectedAlbum (lowercase s) — corrected to setSelectedAlbum
-            onClick={() => setSelectedAlbum(null)}
+            onClick={closeAlbum}
             className="fixed inset-0 z-[100] flex items-center justify-center p-5"
             style={{
               background: "rgba(2,6,23,0.82)",
@@ -564,7 +514,7 @@ function Gallery() {
               exit={{ opacity: 0, scale: 0.92, y: 24 }}
               transition={{ duration: 0.25 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative max-w-5xl w-full rounded-[2rem] overflow-hidden"
+              className="relative max-w-6xl w-full rounded-[2rem] overflow-hidden"
               style={{
                 background: "#FFFFFF",
                 boxShadow: "0 35px 100px rgba(0,0,0,0.42)",
@@ -572,186 +522,216 @@ function Gallery() {
             >
               <button
                 type="button"
-                onClick={() => setSelectedAlbum(null)}
-                className="
-                  absolute
-                  top-5
-                  right-5
-                  z-[99999]
-                  w-12
-                  h-12
-                  rounded-full
-                  bg-white
-                  shadow-2xl
-                  cursor-pointer
-                  font-bold
-                  hover:bg-red-500
-                  hover:text-white
-                  hover:rotate-180
-                  hover:scale-110
-                  transition-all
-                  duration-500
-                  flex
-                  items-center
-                  justify-center
-                "
+                onClick={closeAlbum}
+                className="absolute top-5 right-5 z-[99999] w-12 h-12 rounded-full bg-white shadow-2xl cursor-pointer font-bold hover:bg-red-500 hover:text-white hover:rotate-180 hover:scale-110 transition-all duration-500 flex items-center justify-center"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="p-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                  {selectedAlbum.images?.map((img, index) => (
-                    <img
-                      key={index}
-                      src={img}
-                      alt=""
+              <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-0">
+                <div className="relative bg-slate-950 min-h-[520px] flex items-center justify-center p-5">
+                  {currentPhoto?.url ? (
+                    <button
+                      type="button"
                       onClick={() => {
-                        setActiveImage(img);
-                        setCurrentImageIndex(index);
+                        setZoomOpen(true);
+                        setZoomScale(1);
                       }}
-                      className="
-                        w-full
-                        h-72
-                        object-cover
-                        rounded-2xl
-                        cursor-pointer
-                        hover:scale-105
-                        transition-all
-                        duration-500
-                      "
-                    />
-                  ))}
-                </div>
-              </div>
+                      className="w-full h-full"
+                    >
+                      <img
+                        src={currentPhoto.url}
+                        alt={currentPhoto.title || selectedAlbum.title}
+                        className="max-h-[560px] w-full object-contain rounded-2xl"
+                      />
+                    </button>
+                  ) : (
+                    <ImageIcon className="w-16 h-16 text-slate-500" />
+                  )}
 
-              <div className="p-6">
-                <div className="flex flex-wrap items-center gap-3 mb-2">
-                  <span
-                    className="px-3 py-1 rounded-full text-xs font-bold"
+                  {selectedAlbum.photos.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={previousImage}
+                        className="absolute left-5 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white shadow-2xl hover:scale-110 transition-all flex items-center justify-center"
+                      >
+                        <ChevronLeft size={26} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={nextImage}
+                        className="absolute right-5 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white shadow-2xl hover:scale-110 transition-all flex items-center justify-center"
+                      >
+                        <ChevronRight size={26} />
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                <div className="p-6">
+                  <div className="flex flex-wrap items-center gap-3 mb-2">
+                    <span
+                      className="px-3 py-1 rounded-full text-xs font-bold"
+                      style={{
+                        background: "rgba(22,138,58,0.09)",
+                        color: colors.green,
+                        border: "1px solid rgba(22,138,58,0.16)",
+                      }}
+                    >
+                      {selectedAlbum.category}
+                    </span>
+
+                    <span className="text-sm text-slate-500">
+                      {currentPhoto?.date || selectedAlbum.date}
+                    </span>
+                  </div>
+
+                  <h2
+                    className="text-3xl"
                     style={{
-                      background: "rgba(22,138,58,0.09)",
-                      color: colors.green,
-                      border: "1px solid rgba(22,138,58,0.16)",
+                      fontFamily: "var(--font-display)",
+                      fontWeight: 850,
+                      color: colors.dark,
+                      letterSpacing: "-0.035em",
                     }}
                   >
-                    {selectedAlbum.category}
-                  </span>
+                    {selectedAlbum.title}
+                  </h2>
 
-                  <span className="text-sm text-slate-500">
-                    {selectedAlbum.date}
-                  </span>
+                  <p className="text-slate-600 mt-4 leading-relaxed">
+                    {selectedAlbum.description}
+                  </p>
+
+                  <div className="mt-5 text-sm font-bold text-slate-500">
+                    {currentImageIndex + 1} of {selectedAlbum.photos.length}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3 mt-5 max-h-[300px] overflow-y-auto pr-1">
+                    {selectedAlbum.photos.map((photo, index) => (
+                      <button
+                        key={`${photo.url}-${index}`}
+                        type="button"
+                        onClick={() => {
+                          setCurrentImageIndex(index);
+                          setZoomScale(1);
+                        }}
+                        className="rounded-2xl overflow-hidden border-2 bg-slate-100"
+                        style={{
+                          borderColor:
+                            currentImageIndex === index
+                              ? colors.green
+                              : "rgba(15,23,42,0.08)",
+                        }}
+                      >
+                        <img
+                          src={photo.url}
+                          alt=""
+                          className="w-full h-24 object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setZoomOpen(true);
+                      setZoomScale(1);
+                    }}
+                    className="mt-6 w-full px-5 py-3 rounded-2xl font-bold text-white flex items-center justify-center gap-2"
+                    style={{
+                      background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
+                    }}
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                    Open Full Image
+                  </button>
                 </div>
-
-                <h2
-                  className="text-3xl"
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 850,
-                    color: colors.dark,
-                    letterSpacing: "-0.035em",
-                  }}
-                >
-                  {selectedAlbum.title}
-                </h2>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* FULL-SCREEN IMAGE LIGHTBOX — moved OUTSIDE album modal so it's not clipped by overflow:hidden */}
       <AnimatePresence>
-        {activeImage && (
+        {zoomOpen && currentPhoto?.url && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setActiveImage(null)}
-            className="fixed inset-0 z-[999999] bg-black/90 flex items-center justify-center p-6"
+            onClick={() => {
+              setZoomOpen(false);
+              setZoomScale(1);
+            }}
+            className="fixed inset-0 z-[999999] bg-black/92 flex items-center justify-center p-6 overflow-hidden"
           >
-            <button
-  onClick={(e) => {
-    e.stopPropagation();
-    previousImage();
-  }}
-  className="
-    absolute
-    left-8
-    top-1/2
-    -translate-y-1/2
-    w-16
-    h-16
-    rounded-full
-    bg-white
-    shadow-2xl
-    hover:scale-110
-    transition-all
-    z-50
-  "
->
-<ChevronLeft size={32} />
-</button>
-<button
-  onClick={(e) => {
-    e.stopPropagation();
-    nextImage();
-  }}
-  className="
-    absolute
-    right-8
-    top-1/2
-    -translate-y-1/2
-    w-16
-    h-16
-    rounded-full
-    bg-white
-    shadow-2xl
-    hover:scale-110
-    transition-all
-    z-[999999]
-    flex
-    items-center
-    justify-center
-  "
->
-<ChevronRight size={32} />
-</button>
-            <button
-              onClick={() => setActiveImage(null)}
-              className="
-                absolute
-                top-6
-                right-6
-                w-14
-                h-14
-                rounded-full
-                bg-white
-                flex
-                items-center
-                justify-center
-                hover:bg-red-500
-                hover:text-white
-                hover:rotate-180
-                transition-all
-                duration-500
-              "
-            >
-              <X size={24} />
-            </button>
+            {selectedAlbum?.photos?.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={previousImage}
+                  className="absolute left-8 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white shadow-2xl hover:scale-110 transition-all z-50 flex items-center justify-center"
+                >
+                  <ChevronLeft size={32} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={nextImage}
+                  className="absolute right-8 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white shadow-2xl hover:scale-110 transition-all z-50 flex items-center justify-center"
+                >
+                  <ChevronRight size={32} />
+                </button>
+              </>
+            )}
+
+            <div className="absolute top-6 right-6 flex items-center gap-3 z-50">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setZoomScale((prev) => Math.max(1, prev - 0.25));
+                }}
+                className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-2xl"
+              >
+                <ZoomOut size={22} />
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setZoomScale((prev) => Math.min(3, prev + 0.25));
+                }}
+                className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-2xl"
+              >
+                <ZoomIn size={22} />
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setZoomOpen(false);
+                  setZoomScale(1);
+                }}
+                className="w-14 h-14 rounded-full bg-white flex items-center justify-center hover:bg-red-500 hover:text-white hover:rotate-180 transition-all duration-500"
+              >
+                <X size={24} />
+              </button>
+            </div>
 
             <motion.img
               initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
+              animate={{ scale: zoomScale }}
               exit={{ scale: 0.8 }}
-              src={activeImage}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              src={currentPhoto.url}
               alt=""
-              className="
-                max-w-[95vw]
-                max-h-[90vh]
-                rounded-3xl
-                shadow-2xl
-              "
+              className="max-w-[92vw] max-h-[86vh] rounded-3xl shadow-2xl object-contain cursor-zoom-in"
             />
           </motion.div>
         )}

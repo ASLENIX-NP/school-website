@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
-import { supabase } from "../lib/supabase";
 import {
   ArrowLeft,
   Save,
@@ -11,13 +10,12 @@ import {
   CheckCircle2,
   ExternalLink,
   Eye,
-  EyeOff,
   Camera,
   Type,
   Image as ImageIcon,
   Layers,
-  Upload,
   Sparkles,
+  Upload,
 } from "lucide-react";
 
 const colors = {
@@ -131,28 +129,6 @@ const defaultGalleryContent = {
     "Gallery images are updated by the school administration to highlight student life and campus activities.",
   bottomNote: "Click image to preview",
 };
-async function uploadGalleryImage(file) {
-  const extension = file.name.split(".").pop();
-
-  const safeName = `${Date.now()}-${Math.random()
-    .toString(36)
-    .substring(2)}.${extension}`;
-
-  const { error } = await supabase.storage
-    .from("gallery")
-    .upload(safeName, file);
-
-  if (error) {
-    console.error("Supabase Upload Error:", error);
-    throw error;
-  }
-
-  const { data } = supabase.storage
-    .from("gallery")
-    .getPublicUrl(safeName);
-
-  return data.publicUrl;
-}
 
 function normalizeCategories(categories = []) {
   const cleaned = categories
@@ -175,16 +151,6 @@ function mergeGalleryContent(saved = {}) {
       : defaultGalleryContent.images,
   };
 }
-
-function cleanFileName(fileName = "") {
-  return fileName
-    .replace(/\.[^/.]+$/, "")
-    .replace(/[-_]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
 
 function Field({ label, value, onChange, placeholder = "", type = "text" }) {
   return (
@@ -254,44 +220,6 @@ function EditorCard({ icon: Icon, title, color, children }) {
   );
 }
 
-function VisibilityDeleteControls({ visible, onToggle, onDelete }) {
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="p-3 rounded-xl"
-        style={{
-          background:
-            visible !== false
-              ? "rgba(22,138,58,0.1)"
-              : "rgba(100,116,139,0.12)",
-          color: visible !== false ? colors.green : "#64748B",
-        }}
-      >
-        {visible !== false ? (
-          <Eye className="w-4 h-4" />
-        ) : (
-          <EyeOff className="w-4 h-4" />
-        )}
-      </button>
-
-      <button
-        type="button"
-        onClick={onDelete}
-        className="p-3 rounded-xl"
-        style={{
-          background: "rgba(215,25,32,0.09)",
-          color: colors.red,
-        }}
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
-    </div>
-  );
-}
-
-// Step 11: Updated GalleryPreview to match public gallery layout
 function GalleryPreview({ form }) {
   const visibleImages = (form.images || []).filter(
     (item) => item.visible !== false
@@ -311,6 +239,7 @@ function GalleryPreview({ form }) {
           style={{
             background: "rgba(75,46,131,0.09)",
             color: colors.purple,
+            border: "1px solid rgba(75,46,131,0.16)",
           }}
         >
           {form.badge}
@@ -346,46 +275,57 @@ function GalleryPreview({ form }) {
         ))}
       </div>
 
-      {/* Step 11: space-y-10 layout matching public gallery */}
-      <div className="space-y-10">
-        {visibleImages.map((item) => (
-          <div key={item.id}>
-            {item.image ? (
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-52 object-cover rounded-3xl"
-                style={{ boxShadow: "0 12px 32px rgba(15,23,42,0.12)" }}
-              />
-            ) : (
-              <div className="w-full h-52 rounded-3xl bg-slate-200 flex items-center justify-center">
-                <ImageIcon className="w-14 h-14 text-slate-400" />
-              </div>
-            )}
+      <div className="space-y-8">
+        {visibleImages.slice(0, 5).map((item) => {
+          const displayImage = item.image || item.images?.[0];
 
-            <div className="mt-3 px-1">
-              <div className="text-xs text-slate-500 font-semibold uppercase tracking-wide">
-                {item.category}
-              </div>
-              <div className="font-black text-slate-950 mt-0.5">{item.title}</div>
-              <div className="text-xs text-slate-400 mt-0.5">{item.date}</div>
-              {item.description && (
-                <div className="text-sm text-slate-600 mt-1 leading-relaxed">
-                  {item.description}
+          return (
+            <div key={item.id}>
+              {displayImage ? (
+                <img
+                  src={displayImage}
+                  alt={item.title}
+                  className="w-full h-52 object-cover rounded-3xl"
+                  style={{ boxShadow: "0 12px 32px rgba(15,23,42,0.12)" }}
+                />
+              ) : (
+                <div className="w-full h-52 rounded-3xl bg-slate-200 flex items-center justify-center">
+                  <ImageIcon className="w-14 h-14 text-slate-400" />
                 </div>
               )}
-              <button
-                type="button"
-                className="mt-2 px-4 py-1.5 rounded-xl text-xs font-bold text-white"
-                style={{
-                  background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
-                }}
-              >
-                View Album ({(item.images || []).length})
-              </button>
+
+              <div className="mt-3 px-1">
+                <div className="text-xs text-slate-500 font-semibold uppercase tracking-wide">
+                  {item.category}
+                </div>
+
+                <div className="font-black text-slate-950 mt-0.5">
+                  {item.title}
+                </div>
+
+                <div className="text-xs text-slate-400 mt-0.5">
+                  {item.date}
+                </div>
+
+                {item.description && (
+                  <div className="text-sm text-slate-600 mt-1 leading-relaxed">
+                    {item.description}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  className="mt-2 px-4 py-1.5 rounded-xl text-xs font-bold text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
+                  }}
+                >
+                  View Album ({(item.images || []).length})
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div
@@ -527,133 +467,6 @@ export default function AdminGallery() {
     }
   };
 
-  const updateImage = (id, field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      images: prev.images.map((item) =>
-        item.id === id ? { ...item, [field]: value } : item
-      ),
-    }));
-  };
-
-  const deleteImage = (id) => {
-    setForm((prev) => ({
-      ...prev,
-      images: prev.images.filter((item) => item.id !== id),
-    }));
-  };
-
-  const validateImageFile = (file) => {
-    if (!file.type.startsWith("image/")) {
-      return "Please upload only image files.";
-    }
-
-    if (file.size > 3 * 1024 * 1024) {
-      return "Image is too large. Please upload images under 3 MB.";
-    }
-
-    return "";
-  };
-
-  const handleReplaceImage = async (id, file) => {
-    setError("");
-
-    if (!file) return;
-
-    const validationError = validateImageFile(file);
-
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    try {
-      const image = await uploadGalleryImage(file);
-
-      updateImage(id, "image", image);
-      updateImage(id, "images", [image]);
-    } catch (err) {
-      console.error("Single gallery image upload error:", err);
-      setError("Could not read selected image.");
-    }
-  };
-
-  // Step 2: Updated upload to create album structure
-  const handleCategoryImageUpload = async (files) => {
-    setError("");
-    setSuccess("");
-
-    const selectedFiles = Array.from(files || []);
-
-    if (selectedFiles.length === 0) return;
-
-    const category = selectedCategory || getCategoryOptions()[0] || "Classroom";
-
-    const validationError = selectedFiles.map(validateImageFile).find(Boolean);
-
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    try {
-      const uploadedImages = await Promise.all(
-        selectedFiles.map(async (file, index) => {
-          const imageUrl = await uploadGalleryImage(file);
-      
-          return {
-            id: Date.now() + index,
-            title: cleanFileName(file.name) || `New Image ${index + 1}`,
-            category,
-            date: "School Activity",
-            description: "",
-            image: imageUrl,
-            images: [imageUrl],
-            visible: true,
-          };
-        })
-      );
-
-      setForm((prev) => ({
-        ...prev,
-        images: [...prev.images, ...uploadedImages],
-      }));
-
-      setSuccess(
-        `${uploadedImages.length} image${
-          uploadedImages.length > 1 ? "s" : ""
-        } uploaded to ${category}. Now edit title/date if needed, then click Save Changes.`
-      );
-    } catch (err) {
-      console.error("Multiple gallery image upload error:", err);
-      setError("Could not read selected images.");
-    }
-  };
-
-  // Step 4: Add images to existing album
-  const addAlbumImages = async (albumId, files) => {
-    const uploaded = await Promise.all(
-      Array.from(files).map(async (file) => {
-        return await uploadGalleryImage(file);
-      })
-    );
-
-    setForm((prev) => ({
-      ...prev,
-      images: prev.images.map((item) =>
-        item.id === albumId
-          ? {
-              ...item,
-              images: [
-                ...(item.images || []),
-                ...uploaded,
-              ],
-            }
-          : item
-      ),
-    }));
-  };
-
   async function saveGalleryContent() {
     setSuccess("");
     setError("");
@@ -686,16 +499,12 @@ export default function AdminGallery() {
       setForm(cleanedForm);
       setSuccess("Gallery page content saved successfully.");
     } catch (err) {
-      console.log("FULL ERROR:", err);
-      console.log("RESPONSE:", err.response);
-      console.log("DATA:", err.response?.data);
-    
       console.error("Save gallery content error:", err);
-    
+
       setError(
         err.response?.data?.message ||
-        JSON.stringify(err.response?.data) ||
-        "Could not save gallery content."
+          JSON.stringify(err.response?.data) ||
+          "Could not save gallery content."
       );
     } finally {
       setSaving(false);
@@ -703,14 +512,6 @@ export default function AdminGallery() {
   }
 
   const categoryOptions = getCategoryOptions();
-
-  const selectedCategoryImages = (form.images || []).filter(
-    (item) => item.category === selectedCategory
-  );
-
-  const visibleSelectedCount = selectedCategoryImages.filter(
-    (item) => item.visible !== false
-  ).length;
 
   if (loading) {
     return (
@@ -821,8 +622,8 @@ export default function AdminGallery() {
           </h1>
 
           <p className="text-slate-500 max-w-3xl text-lg">
-            Select a category, upload one or multiple images into that category,
-            then edit each image title and date/label.
+            Edit the gallery heading, categories, and bottom information. Use
+            the image manager to upload, remove, and organize gallery images.
           </p>
         </motion.div>
 
@@ -855,6 +656,52 @@ export default function AdminGallery() {
 
         <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start">
           <div className="space-y-8">
+            <button
+              type="button"
+              onClick={() => navigate("/admin/gallery-images")}
+              className="w-full rounded-[32px] p-7 text-left transition-all hover:-translate-y-1"
+              style={{
+                background: `linear-gradient(135deg, ${colors.dark}, ${colors.purple})`,
+                border: "1px solid rgba(255,255,255,0.14)",
+                boxShadow: "0 24px 70px rgba(11,16,32,0.18)",
+              }}
+            >
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white font-bold mb-4">
+                    <Upload className="w-4 h-4" />
+                    Upload / Remove Images
+                  </div>
+
+                  <h2
+                    className="text-3xl font-black text-white"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      letterSpacing: "-0.04em",
+                    }}
+                  >
+                    Manage Gallery Images
+                  </h2>
+
+                  <p className="text-white/65 mt-2 max-w-xl">
+                    Select a category, upload one or multiple images from local
+                    device, select images, delete selected images, and edit
+                    image details.
+                  </p>
+                </div>
+
+                <div
+                  className="px-6 py-4 rounded-2xl font-black"
+                  style={{
+                    background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                    color: colors.dark,
+                  }}
+                >
+                  Open Image Manager
+                </div>
+              </div>
+            </button>
+
             <EditorCard
               icon={Type}
               title="Top Gallery Section"
@@ -940,7 +787,9 @@ export default function AdminGallery() {
                             ? colors.green
                             : "rgba(22,138,58,0.1)",
                         color:
-                          selectedCategory === category ? "#FFFFFF" : colors.green,
+                          selectedCategory === category
+                            ? "#FFFFFF"
+                            : colors.green,
                       }}
                     >
                       Select
@@ -963,311 +812,8 @@ export default function AdminGallery() {
 
               <p className="text-xs text-slate-500 mt-4 leading-relaxed">
                 "All" is created automatically on the public gallery page. Here
-                you only manage real categories. Select one category before
-                uploading images.
+                you only manage real categories.
               </p>
-            </EditorCard>
-
-            <EditorCard
-              icon={ImageIcon}
-              title={`Images in ${selectedCategory}`}
-              color={colors.red}
-            >
-              <div
-                className="rounded-3xl p-5 mb-6"
-                style={{
-                  background: "rgba(15,23,42,0.04)",
-                  border: "1px solid rgba(15,23,42,0.08)",
-                }}
-              >
-                <div className="grid md:grid-cols-[1fr_auto] gap-4 items-end">
-                  <div>
-                    <label className="block text-sm font-bold mb-2 text-slate-700">
-                      Selected Category
-                    </label>
-
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
-                      style={{
-                        background: "rgba(255,255,255,0.88)",
-                        border: "1px solid rgba(75,46,131,0.16)",
-                        color: colors.dark,
-                      }}
-                    >
-                      {categoryOptions.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
-
-                    <p className="text-xs text-slate-500 mt-2">
-                      Upload one or many images. All selected images will go
-                      inside <b>{selectedCategory}</b>.
-                    </p>
-                  </div>
-
-                  <label
-                    className="cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
-                    style={{
-                      background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
-                    }}
-                  >
-                    <Upload className="w-4 h-4" />
-                    Upload Image(s)
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={(e) => {
-                        handleCategoryImageUpload(e.target.files);
-                        e.target.value = "";
-                      }}
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <div className="font-black text-slate-950">
-                    {selectedCategory} Gallery
-                  </div>
-                  <div className="text-sm text-slate-500">
-                    {selectedCategoryImages.length} total image
-                    {selectedCategoryImages.length === 1 ? "" : "s"} ·{" "}
-                    {visibleSelectedCount} visible
-                  </div>
-                </div>
-              </div>
-
-              {selectedCategoryImages.length === 0 ? (
-                <div
-                  className="rounded-3xl p-10 text-center"
-                  style={{
-                    background: "rgba(15,23,42,0.04)",
-                    border: "1px dashed rgba(15,23,42,0.18)",
-                  }}
-                >
-                  <ImageIcon className="w-14 h-14 mx-auto text-slate-300 mb-4" />
-                  <div className="font-black text-slate-900">
-                    No images in {selectedCategory}.
-                  </div>
-                  <div className="text-sm text-slate-500 mt-1">
-                    Click Upload Image(s) and select one or multiple images.
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-5">
-                  {selectedCategoryImages.map((item) => (
-                    <div
-                      key={item.id}
-                      className="rounded-3xl p-5"
-                      style={{
-                        background: "rgba(15,23,42,0.04)",
-                        border: "1px solid rgba(15,23,42,0.08)",
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-5">
-                        <div>
-                          <div className="font-black text-slate-950">
-                            {item.title || "Untitled Image"}
-                          </div>
-                          {/* Step 10: Show album photo count */}
-                          <div className="text-sm text-slate-500">
-                            {item.category} · {item.date} · {(item.images || []).length} Photos
-                          </div>
-                        </div>
-
-                        <VisibilityDeleteControls
-                          visible={item.visible}
-                          onToggle={() =>
-                            updateImage(item.id, "visible", !item.visible)
-                          }
-                          onDelete={() => deleteImage(item.id)}
-                        />
-                      </div>
-
-                      <div className="grid md:grid-cols-[220px_1fr] gap-5">
-                        <div>
-                          <div
-                            className="w-full h-44 rounded-2xl overflow-hidden bg-slate-100 border flex items-center justify-center"
-                            style={{
-                              borderColor: "rgba(15,23,42,0.08)",
-                            }}
-                          >
-                            {item.image ? (
-                              <img
-                                src={item.image}
-                                alt={item.title}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <ImageIcon className="w-12 h-12 text-slate-300" />
-                            )}
-                          </div>
-
-                          <label
-                            className="mt-3 w-full cursor-pointer inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold text-white"
-                            style={{
-                              background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
-                            }}
-                          >
-                            <Upload className="w-4 h-4" />
-                            Replace Cover
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                handleReplaceImage(
-                                  item.id,
-                                  e.target.files?.[0]
-                                );
-                                e.target.value = "";
-                              }}
-                            />
-                          </label>
-
-                          <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                            Recommended size: 1200 × 800 px. Maximum size: 3 MB.
-                            Use JPG, PNG, or WEBP.
-                          </p>
-                        </div>
-
-                        <div className="grid gap-4">
-                          <Field
-                            label="Image Title"
-                            value={item.title}
-                            onChange={(value) =>
-                              updateImage(item.id, "title", value)
-                            }
-                          />
-
-                          <div>
-                            <label className="block text-sm font-bold mb-2 text-slate-700">
-                              Image Category
-                            </label>
-
-                            <select
-                              value={item.category || ""}
-                              onChange={(e) =>
-                                updateImage(
-                                  item.id,
-                                  "category",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
-                              style={{
-                                background: "rgba(255,255,255,0.88)",
-                                border: "1px solid rgba(75,46,131,0.16)",
-                                color: colors.dark,
-                              }}
-                            >
-                              {categoryOptions.map((category) => (
-                                <option key={category} value={category}>
-                                  {category}
-                                </option>
-                              ))}
-                            </select>
-
-                            <p className="text-xs text-slate-500 mt-2">
-                              Changing this moves the image to another category.
-                            </p>
-                          </div>
-
-                          <Field
-                            label="Date / Label"
-                            value={item.date}
-                            onChange={(value) =>
-                              updateImage(item.id, "date", value)
-                            }
-                            placeholder="Annual Program"
-                          />
-
-                          {/* Step 3: Album Description Field */}
-                          <TextArea
-                            label="Album Description"
-                            value={item.description || ""}
-                            onChange={(value) =>
-                              updateImage(item.id, "description", value)
-                            }
-                            rows={4}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Steps 5–9: Album Images Section */}
-                      <hr className="my-4" />
-
-                      <h4 className="font-bold text-slate-900 mb-3">
-                        Album Images
-                      </h4>
-
-                      {/* Step 6: Show album images grid */}
-                      <div className="grid grid-cols-3 gap-3">
-                        {(item.images || []).map((img, index) => (
-                          <div key={index} className="relative">
-                            <img
-                              src={img}
-                              alt=""
-                              className="w-full h-28 object-cover rounded-xl"
-                            />
-
-                            {/* Step 8: Delete album image */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const updated = [...(item.images || [])];
-                                updated.splice(index, 1);
-                                updateImage(item.id, "images", updated);
-                              }}
-                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold"
-                            >
-                              ×
-                            </button>
-
-                            {/* Step 9: Set cover image */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                updateImage(item.id, "image", img);
-                              }}
-                              className="mt-2 w-full py-1 text-xs rounded-lg bg-green-600 text-white font-semibold"
-                            >
-                              Set Cover
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Step 7: Upload more images into album */}
-                      <label
-                        className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white font-bold mt-4"
-                        style={{
-                          background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
-                        }}
-                      >
-                        Add Images
-                        <input
-                          type="file"
-                          multiple
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            addAlbumImages(item.id, e.target.files);
-                            e.target.value = "";
-                          }}
-                        />
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              )}
             </EditorCard>
 
             <EditorCard

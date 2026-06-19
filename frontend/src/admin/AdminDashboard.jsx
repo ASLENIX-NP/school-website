@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { motion } from "motion/react";
 import {
   LayoutDashboard,
@@ -10,7 +11,6 @@ import {
   Bell,
   Images,
   Users,
-  CalendarDays,
   Phone,
   Footprints,
   LogOut,
@@ -18,7 +18,10 @@ import {
   Settings,
   School,
   Newspaper,
+  Inbox,
   Mail,
+  CheckCircle2,
+  Circle,
 } from "lucide-react";
 
 const colors = {
@@ -109,13 +112,6 @@ const adminSections = [
     path: "/admin/contact",
   },
   {
-    title: "Contact Messages",
-    description: "View messages submitted from the public contact form.",
-    icon: Mail,
-    color: "#D71920",
-    path: "/admin/contact-messages",
-  },
-  {
     title: "Manage Footer",
     description: "Edit footer logo text, quick links, contact details, and social links.",
     icon: Footprints,
@@ -131,11 +127,102 @@ const adminSections = [
   },
 ];
 
+function formatDate(value) {
+  if (!value) return "Recently";
+
+  try {
+    return new Date(value).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return "Recently";
+  }
+}
+
+function getSourceLabel(source) {
+  if (source === "admission") return "Admissions";
+  return "Contact";
+}
+
+function MessagePreviewCard({ message }) {
+  return (
+    <div
+      className="rounded-2xl p-4"
+      style={{
+        background: message.is_read
+          ? "rgba(15,23,42,0.035)"
+          : "rgba(22,138,58,0.08)",
+        border: message.is_read
+          ? "1px solid rgba(15,23,42,0.08)"
+          : "1px solid rgba(22,138,58,0.22)",
+      }}
+    >
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div>
+          <div className="flex items-center gap-2">
+            {message.is_read ? (
+              <CheckCircle2 className="w-4 h-4 text-slate-400" />
+            ) : (
+              <Circle className="w-4 h-4" style={{ color: colors.green }} />
+            )}
+
+            <div className="font-black text-slate-950">
+              {message.name || "Unknown Sender"}
+            </div>
+          </div>
+
+          <div className="text-xs text-slate-500 mt-1">
+            {getSourceLabel(message.source)} · {formatDate(message.created_at)}
+          </div>
+        </div>
+
+        <span
+          className="px-3 py-1 rounded-full text-xs font-bold"
+          style={{
+            background:
+              message.source === "admission"
+                ? "rgba(75,46,131,0.1)"
+                : "rgba(215,25,32,0.09)",
+            color: message.source === "admission" ? colors.purple : colors.red,
+          }}
+        >
+          {getSourceLabel(message.source)}
+        </span>
+      </div>
+
+      <p className="text-sm text-slate-600 leading-relaxed line-clamp-2">
+        {message.message || "No message text."}
+      </p>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [selectedSection, setSelectedSection] = useState(adminSections[0]);
+  const [messages, setMessages] = useState([]);
+  const [messagesLoading, setMessagesLoading] = useState(true);
 
   const adminUser = JSON.parse(localStorage.getItem("adminUser") || "{}");
+
+  useEffect(() => {
+    const loadMessages = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/contact-messages");
+        setMessages(Array.isArray(res.data?.data) ? res.data.data : []);
+      } catch (err) {
+        console.error("Dashboard messages load error:", err);
+        setMessages([]);
+      } finally {
+        setMessagesLoading(false);
+      }
+    };
+
+    loadMessages();
+  }, []);
 
   const logout = () => {
     localStorage.removeItem("adminToken");
@@ -143,9 +230,12 @@ export default function AdminDashboard() {
     navigate("/admin/login");
   };
 
+  const latestMessages = messages.slice(0, 2);
+  const unreadCount = messages.filter((item) => !item.is_read).length;
+
   return (
     <section
-  className="min-h-screen relative overflow-visible"
+      className="min-h-screen relative overflow-visible"
       style={{
         background: `
           radial-gradient(circle at top right, rgba(56,189,248,0.16), transparent 34%),
@@ -234,10 +324,98 @@ export default function AdminDashboard() {
           </h1>
 
           <p className="text-slate-500 max-w-3xl text-lg">
-            Choose one website section below. We will build each admin editor
-            one by one, starting from the most important sections.
+            Choose one website section below. Recent admission and contact
+            messages are shown separately so the dashboard stays clean.
           </p>
         </motion.div>
+
+        <div
+          className="rounded-[32px] p-6 md:p-7 mb-8"
+          style={{
+            background:
+              "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.76))",
+            border: "1px solid rgba(11,16,32,0.08)",
+            boxShadow:
+              "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
+            backdropFilter: "blur(16px)",
+          }}
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-5">
+            <div className="flex items-center gap-4">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                style={{
+                  background: "rgba(215,25,32,0.09)",
+                  border: "1px solid rgba(215,25,32,0.18)",
+                  color: colors.red,
+                }}
+              >
+                <Inbox className="w-7 h-7" />
+              </div>
+
+              <div>
+                <h2
+                  className="text-2xl md:text-3xl"
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 850,
+                    color: colors.dark,
+                    letterSpacing: "-0.04em",
+                  }}
+                >
+                  Recent Messages
+                </h2>
+
+                <p className="text-slate-500 text-sm md:text-base">
+                  Latest messages from Contact and Admissions forms.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <div
+                className="px-4 py-3 rounded-2xl text-sm font-bold"
+                style={{
+                  background: "rgba(22,138,58,0.09)",
+                  color: colors.green,
+                  border: "1px solid rgba(22,138,58,0.16)",
+                }}
+              >
+                {unreadCount} unread
+              </div>
+
+              <button
+                type="button"
+                onClick={() => navigate("/admin/contact-messages")}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
+                  boxShadow: "0 16px 36px rgba(22,138,58,0.2)",
+                }}
+              >
+                View More
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {messagesLoading ? (
+            <div className="rounded-2xl p-5 bg-slate-50 text-slate-500 font-semibold">
+              Loading latest messages...
+            </div>
+          ) : latestMessages.length === 0 ? (
+            <div className="rounded-2xl p-5 bg-slate-50 text-slate-500 font-semibold flex items-center gap-3">
+              <Mail className="w-5 h-5" />
+              No contact or admission messages yet.
+            </div>
+          ) : (
+            <div className="grid lg:grid-cols-2 gap-4">
+              {latestMessages.map((message) => (
+                <MessagePreviewCard key={message.id} message={message} />
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="grid xl:grid-cols-[1fr_360px] gap-8 items-start">
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -268,7 +446,7 @@ export default function AdminDashboard() {
                   }}
                 >
                   <div
-                    className="w-13 h-13 rounded-2xl flex items-center justify-center mb-5"
+                    className="rounded-2xl flex items-center justify-center mb-5"
                     style={{
                       width: "52px",
                       height: "52px",
@@ -384,8 +562,8 @@ export default function AdminDashboard() {
                   color: "#64748B",
                 }}
               >
-                We will create this editor page next. For now, this dashboard
-                is the control menu for all editable website sections.
+                Use this dashboard to open each admin editor. Messages from
+                public forms are shown in the Recent Messages panel above.
               </div>
             </div>
           </motion.aside>

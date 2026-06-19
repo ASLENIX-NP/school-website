@@ -38,6 +38,27 @@ const formatNoticeDate = (dateValue) => {
   });
 };
 
+function sortNoticesNewestFirst(notices = []) {
+  return [...notices].sort((a, b) => {
+    const pinnedA = a.pinned ? 1 : 0;
+    const pinnedB = b.pinned ? 1 : 0;
+
+    if (pinnedA !== pinnedB) {
+      return pinnedB - pinnedA;
+    }
+
+    const dateA = new Date(
+      a.notice_date || a.date || a.created_at || 0
+    ).getTime();
+
+    const dateB = new Date(
+      b.notice_date || b.date || b.created_at || 0
+    ).getTime();
+
+    return dateB - dateA;
+  });
+}
+
 function NoticeCard({ notice, index }) {
   const noticeDate = formatNoticeDate(notice.notice_date || notice.date);
   const isPinned = notice.pinned === true;
@@ -139,42 +160,42 @@ function NoticeCard({ notice, index }) {
         </div>
 
         <div className="flex md:justify-end">
-  {notice.pdf_url ? (
-    <div className="flex flex-col sm:flex-row md:flex-col gap-3 md:items-end">
-      <a
-        href={notice.pdf_url}
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex items-center justify-center px-5 py-3 rounded-2xl text-sm font-bold transition-all duration-300 hover:-translate-y-1"
-        style={{
-          color: "#0F172A",
-          background: "#FFFFFF",
-          border: "1px solid rgba(15,23,42,0.12)",
-          boxShadow: "0 10px 26px rgba(15,23,42,0.08)",
-        }}
-      >
-        View PDF
-      </a>
+          {notice.pdf_url ? (
+            <div className="flex flex-col sm:flex-row md:flex-col gap-3 md:items-end">
+              <a
+                href={notice.pdf_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center px-5 py-3 rounded-2xl text-sm font-bold transition-all duration-300 hover:-translate-y-1"
+                style={{
+                  color: "#0F172A",
+                  background: "#FFFFFF",
+                  border: "1px solid rgba(15,23,42,0.12)",
+                  boxShadow: "0 10px 26px rgba(15,23,42,0.08)",
+                }}
+              >
+                View PDF
+              </a>
 
-      <a
-        href={notice.pdf_url}
-        download
-        className="inline-flex items-center justify-center px-5 py-3 rounded-2xl text-sm font-bold transition-all duration-300 hover:-translate-y-1"
-        style={{
-          color: "#FFFFFF",
-          background: `linear-gradient(135deg, ${colors.green}, ${colors.purple})`,
-          boxShadow: "0 14px 34px rgba(22,138,58,0.2)",
-        }}
-      >
-        Download PDF
-      </a>
-    </div>
-  ) : (
-    <span className="text-sm font-semibold text-slate-400">
-      No PDF attached
-    </span>
-  )}
-</div>
+              <a
+                href={notice.pdf_url}
+                download
+                className="inline-flex items-center justify-center px-5 py-3 rounded-2xl text-sm font-bold transition-all duration-300 hover:-translate-y-1"
+                style={{
+                  color: "#FFFFFF",
+                  background: `linear-gradient(135deg, ${colors.green}, ${colors.purple})`,
+                  boxShadow: "0 14px 34px rgba(22,138,58,0.2)",
+                }}
+              >
+                Download PDF
+              </a>
+            </div>
+          ) : (
+            <span className="text-sm font-semibold text-slate-400">
+              No PDF attached
+            </span>
+          )}
+        </div>
       </div>
     </motion.div>
   );
@@ -195,7 +216,8 @@ export default function Notices() {
       const result = await response.json();
 
       if (result.success) {
-        setNotices(Array.isArray(result.data) ? result.data : []);
+        const noticeList = Array.isArray(result.data) ? result.data : [];
+        setNotices(sortNoticesNewestFirst(noticeList));
       }
     } catch (error) {
       console.error(error);
@@ -315,7 +337,11 @@ export default function Notices() {
               </div>
             ) : (
               notices.map((notice, index) => (
-                <NoticeCard key={notice.id || index} notice={notice} index={index} />
+                <NoticeCard
+                  key={notice.id || index}
+                  notice={notice}
+                  index={index}
+                />
               ))
             )}
           </div>

@@ -32,7 +32,8 @@ import AdminAdmissions from "../../admin/AdminAdmissions";
 import AdminFooter from "../../admin/AdminFooter";
 import AdminGallery from "../../admin/AdminGallery";
 import AdminSettings from "../../admin/AdminSettings";
-
+import AdminGalleryImages from "../../admin/AdminGalleryImages";
+import AdminContactMessages from "../../admin/AdminContactMessages";
 
 function HomePage() {
   return (
@@ -216,22 +217,27 @@ function SchoolApp() {
 />
 
           <Route
-            path="/admin/events"
-            element={
-              <ProtectedPage>
-                <AdminComingSoon
-                  title="Manage Events"
-                  description="Events editor will control school events, programs, dates, and activity details."
-                />
-              </ProtectedPage>
-            }
-          />
+  path="/admin/contact-messages"
+  element={
+    <ProtectedPage>
+      <AdminContactMessages />
+    </ProtectedPage>
+  }
+/>
 
           <Route
   path="/admin/gallery"
   element={
     <ProtectedPage>
       <AdminGallery />
+    </ProtectedPage>
+  }
+/>
+<Route
+  path="/admin/gallery-images"
+  element={
+    <ProtectedPage>
+      <AdminGalleryImages />
     </ProtectedPage>
   }
 />

@@ -67,6 +67,8 @@ const defaultAdmissionsContent = {
   phonePlaceholder: "+977 98XXXXXXXX",
   gradeLabel: "Applying for Grade",
   gradePlaceholder: "Select grade",
+  messageLabel: "Message",
+  messagePlaceholder: "Write any admission question or note here...",
   grades: [
     "Play Group",
     "LKG",
@@ -97,7 +99,21 @@ function mergeAdmissionsContent(saved = {}) {
     grades: Array.isArray(saved.grades)
       ? saved.grades
       : defaultAdmissionsContent.grades,
+    messageLabel: saved.messageLabel || defaultAdmissionsContent.messageLabel,
+    messagePlaceholder:
+      saved.messagePlaceholder || defaultAdmissionsContent.messagePlaceholder,
   };
+}
+
+function normalizePhone(phone = "") {
+  return String(phone).replace(/[^\d+]/g, "").trim();
+}
+
+function isValidPhone(phone = "") {
+  const cleaned = normalizePhone(phone);
+  const digitsOnly = cleaned.replace(/\D/g, "");
+
+  return digitsOnly.length >= 10 && digitsOnly.length <= 15;
 }
 
 function HighlightedTitle({ title, highlightedText }) {
@@ -116,14 +132,26 @@ function HighlightedTitle({ title, highlightedText }) {
   );
 }
 
+function ErrorText({ children }) {
+  if (!children) return null;
+
+  return (
+    <p className="text-xs font-semibold mt-2" style={{ color: colors.red }}>
+      {children}
+    </p>
+  );
+}
+
 function Admissions() {
   const [content, setContent] = useState(defaultAdmissionsContent);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { isSubmitting, isSubmitSuccessful },
+    formState: { isSubmitting, errors },
     reset,
   } = useForm();
 
@@ -147,22 +175,35 @@ function Admissions() {
 
   const onSubmit = async (data) => {
     setSubmitMessage("");
+    setSubmitError("");
+    setSubmitted(false);
+
+    const cleanPhone = normalizePhone(data.phone);
+    const grade = data.grade || "";
+    const extraMessage = String(data.message || "").trim();
+
+    const finalMessage = extraMessage
+      ? `Admission inquiry for ${grade}.\n\nMessage: ${extraMessage}`
+      : `Admission inquiry for ${grade}.`;
 
     try {
       await axios.post("http://localhost:5000/api/contact", {
+        source: "admission",
         name: data.name,
         email: data.email,
-        phone: data.phone,
-        subject: `Admission Inquiry - ${data.grade}`,
-        message: `Admission inquiry for ${data.grade}.`,
+        phone: cleanPhone,
+        subject: `Admission Inquiry - ${grade}`,
+        message: finalMessage,
       });
 
       setSubmitMessage(content.successMessage);
+      setSubmitted(true);
       reset();
     } catch (error) {
       console.error("Admission inquiry submit error:", error);
-      setSubmitMessage(
-        "Inquiry could not be submitted. Please contact the school office directly."
+      setSubmitError(
+        error.response?.data?.message ||
+          "Inquiry could not be submitted. Please contact the school office directly."
       );
     }
   };
@@ -362,7 +403,7 @@ function Admissions() {
               {content.formDescription}
             </p>
 
-            {isSubmitSuccessful ? (
+            {submitted ? (
               <div
                 className="py-8 text-center rounded-2xl"
                 style={{
@@ -383,9 +424,37 @@ function Admissions() {
                 <div className="text-sm mt-2 text-slate-500">
                   {submitMessage || content.successMessage}
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubmitted(false);
+                    setSubmitMessage("");
+                    setSubmitError("");
+                  }}
+                  className="mt-6 px-5 py-3 rounded-xl font-bold text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
+                  }}
+                >
+                  Send Another Inquiry
+                </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                {submitError && (
+                  <div
+                    className="p-4 rounded-xl text-sm font-semibold"
+                    style={{
+                      background: "rgba(215,25,32,0.1)",
+                      color: colors.red,
+                      border: "1px solid rgba(215,25,32,0.24)",
+                    }}
+                  >
+                    {submitError}
+                  </div>
+                )}
+
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold mb-2 text-slate-700">
@@ -393,10 +462,13 @@ function Admissions() {
                     </label>
 
                     <input
-                      {...register("name", { required: true })}
+                      {...register("name", {
+                        required: "Name is required.",
+                      })}
                       placeholder={content.namePlaceholder}
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10"
                     />
+                    <ErrorText>{errors.name?.message}</ErrorText>
                   </div>
 
                   <div>
@@ -405,11 +477,14 @@ function Admissions() {
                     </label>
 
                     <input
-                      {...register("email", { required: true })}
+                      {...register("email", {
+                        required: "Email is required.",
+                      })}
                       type="email"
                       placeholder={content.emailPlaceholder}
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10"
                     />
+                    <ErrorText>{errors.email?.message}</ErrorText>
                   </div>
                 </div>
 
@@ -420,10 +495,17 @@ function Admissions() {
                     </label>
 
                     <input
-                      {...register("phone")}
+                      {...register("phone", {
+                        required: "Phone number is required.",
+                        validate: (value) =>
+                          isValidPhone(value) ||
+                          "Please enter a valid phone number.",
+                      })}
+                      type="tel"
                       placeholder={content.phonePlaceholder}
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10"
                     />
+                    <ErrorText>{errors.phone?.message}</ErrorText>
                   </div>
 
                   <div>
@@ -432,7 +514,9 @@ function Admissions() {
                     </label>
 
                     <select
-                      {...register("grade", { required: true })}
+                      {...register("grade", {
+                        required: "Please select grade.",
+                      })}
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10"
                     >
                       <option value="">{content.gradePlaceholder}</option>
@@ -443,7 +527,21 @@ function Admissions() {
                         </option>
                       ))}
                     </select>
+                    <ErrorText>{errors.grade?.message}</ErrorText>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold mb-2 text-slate-700">
+                    {content.messageLabel}
+                  </label>
+
+                  <textarea
+                    {...register("message")}
+                    rows={4}
+                    placeholder={content.messagePlaceholder}
+                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 resize-none"
+                  />
                 </div>
 
                 <button

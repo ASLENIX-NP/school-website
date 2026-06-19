@@ -34,14 +34,51 @@ app.use("/api/notices", noticeRoutes);
 app.use("/api/notice-settings", noticeSettingsRoutes);
 app.use("/api/admin-settings", adminSettingsRoutes);
 
+function normalizePhone(phone = "") {
+  return String(phone).replace(/[^\d+]/g, "").trim();
+}
+
+function isValidPhone(phone = "") {
+  const cleaned = normalizePhone(phone);
+
+  // Accepts Nepal/international style numbers:
+  // 10 digits local, or +countrycode with 7 to 15 total digits.
+  const digitsOnly = cleaned.replace(/\D/g, "");
+
+  return digitsOnly.length >= 10 && digitsOnly.length <= 15;
+}
+
 app.post("/api/contact", async (req, res) => {
   try {
-    const { name, email, phone, subject, message } = req.body;
+    const {
+      name,
+      email,
+      phone,
+      subject,
+      message,
+      source = "contact",
+    } = req.body;
 
-    if (!name || !email || !message) {
+    const cleanName = String(name || "").trim();
+    const cleanEmail = String(email || "").trim();
+    const cleanPhone = normalizePhone(phone);
+    const cleanSubject = String(subject || "").trim();
+    const cleanMessage = String(message || "").trim();
+
+    const cleanSource =
+      source === "admission" || source === "contact" ? source : "contact";
+
+    if (!cleanName || !cleanEmail || !cleanPhone || !cleanMessage) {
       return res.status(400).json({
         success: false,
-        message: "Name, email, and message are required",
+        message: "Name, email, phone, and message are required.",
+      });
+    }
+
+    if (!isValidPhone(cleanPhone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid phone number.",
       });
     }
 
@@ -49,11 +86,13 @@ app.post("/api/contact", async (req, res) => {
       .from("contact_messages")
       .insert([
         {
-          name,
-          email,
-          phone,
-          subject,
-          message,
+          source: cleanSource,
+          name: cleanName,
+          email: cleanEmail,
+          phone: cleanPhone,
+          subject: cleanSubject,
+          message: cleanMessage,
+          is_read: false,
         },
       ])
       .select();
@@ -67,11 +106,102 @@ app.post("/api/contact", async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Contact message sent successfully",
+      message: "Message sent successfully.",
       data,
     });
   } catch (error) {
     console.error("Contact message server error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+});
+
+app.get("/api/contact-messages", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("contact_messages")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      data: data || [],
+    });
+  } catch (error) {
+    console.error("Get contact messages error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+});
+
+app.patch("/api/contact-messages/:id/read", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { is_read } = req.body;
+
+    const { data, error } = await supabase
+      .from("contact_messages")
+      .update({ is_read: Boolean(is_read) })
+      .eq("id", id)
+      .select();
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: Boolean(is_read) ? "Marked as read." : "Marked as unread.",
+      data,
+    });
+  } catch (error) {
+    console.error("Update message read status error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+});
+
+app.delete("/api/contact-messages/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { error } = await supabase
+      .from("contact_messages")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Message deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Delete contact message error:", error);
 
     res.status(500).json({
       success: false,
