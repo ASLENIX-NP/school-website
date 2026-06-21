@@ -37,7 +37,7 @@ const fallbackCategoryDescriptions = {
 
 const defaultGalleryContent = {
   badge: "Gallery",
-  title: "Campus in Action",
+  title: "School in Action",
   highlightedText: "in Action",
   description:
     "Explore moments from classrooms, activities, events, facilities, and student life at Baljagriti Secondary English School.",
@@ -76,7 +76,7 @@ const defaultGalleryContent = {
 
   bottomTitle: "School Memories",
   bottomDescription:
-    "Gallery images are updated by the school administration to highlight student life and campus activities.",
+    "Gallery images are updated by the school administration to highlight student life and School activities.",
   bottomNote: "Click image to preview",
 };
 
