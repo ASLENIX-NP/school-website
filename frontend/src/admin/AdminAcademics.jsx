@@ -18,6 +18,8 @@ import {
   Calendar,
   Target,
   Library,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 
 const colors = {
@@ -33,12 +35,21 @@ const colors = {
   gold: "#FACC15",
 };
 
+const ACCENT_SEQUENCE = [
+  colors.red,
+  colors.green,
+  colors.purple,
+  colors.softPurple,
+];
+
+const gradeAccent = (index) => ACCENT_SEQUENCE[index % ACCENT_SEQUENCE.length];
+
 const defaultAcademicsContent = {
   heroBadge: "Nurturing Excellence",
   heroTitle: "Academics at Baljagriti",
   heroHighlight: "Baljagriti",
   heroDescription:
-    "Comprehensive education from Play Group to Grade 10 under the National NEB Curriculum. We combine academic excellence, practical learning, critical thinking, and character development to prepare students for lifelong success.",
+    "Comprehensive education from Play Group to Grade 12 under the National NEB Curriculum. We combine academic excellence, practical learning, critical thinking, and character development to prepare students for lifelong success.",
 
   programs: [
     {
@@ -90,7 +101,7 @@ const defaultAcademicsContent = {
     {
       id: 4,
       level: "Secondary Level",
-      span: "Grade 9 – 10",
+      span: "Grade 9 – 12",
       badgeColor: colors.dark,
       border: "rgba(11,16,32,0.12)",
       classes: [
@@ -102,7 +113,7 @@ const defaultAcademicsContent = {
         "Optional Mathematics",
       ],
       highlight:
-        "Rigorous academic performance pipelines optimizing for exceptional SEE results.",
+        "Rigorous academic preparation for SEE and NEB Grade 11–12 learning pathways.",
       visible: true,
     },
   ],
@@ -212,12 +223,7 @@ const defaultAcademicsContent = {
       timeframe: "Mid-Session Progress Verification",
       visible: true,
     },
-    {
-      id: 3,
-      term: "Third Terminal",
-      timeframe: "Pre-Final Competency Benchmarking",
-      visible: true,
-    },
+    
     {
       id: 4,
       term: "Final Examination",
@@ -382,33 +388,192 @@ const defaultAcademicsContent = {
           { subject: "Optional Mathematics", publication: "CDC" },
         ],
       },
+      {
+        grade: "Grade 11",
+        books: [
+          { subject: "English", publication: "NEB / CDC" },
+          { subject: "Nepali", publication: "NEB / CDC" },
+          { subject: "Accountancy / Science Stream Subject", publication: "NEB / CDC" },
+          { subject: "Economics / Biology / Physics", publication: "NEB / CDC" },
+          { subject: "Computer Science / Mathematics", publication: "NEB / CDC" },
+        ],
+      },
+      {
+        grade: "Grade 12",
+        books: [
+          { subject: "English", publication: "NEB / CDC" },
+          { subject: "Nepali", publication: "NEB / CDC" },
+          { subject: "Accountancy / Science Stream Subject", publication: "NEB / CDC" },
+          { subject: "Economics / Biology / Physics", publication: "NEB / CDC" },
+          { subject: "Computer Science / Mathematics", publication: "NEB / CDC" },
+        ],
+      },
     ],
   },
 };
 
-function mergeAcademicsContent(saved = {}) {
+function isLegacyAcademicsContent(saved = {}) {
+  return Number(saved._contentVersion || 0) < 2;
+}
+
+function normalizeLegacyHeroDescription(description, shouldMigrate) {
+  const text = description || defaultAcademicsContent.heroDescription;
+
+  if (!shouldMigrate) return text;
+
+  return text
+    .replace("Play Group to Grade 10", "Play Group to Grade 12")
+    .replace("Play Group to Class 10", "Play Group to Class 12")
+    .replace("up to Grade 10", "up to Grade 12")
+    .replace("up to Class 10", "up to Class 12");
+}
+
+function normalizePrograms(programs = [], shouldMigrate = false) {
+  return programs.map((program) => {
+    const level = String(program.level || "").toLowerCase();
+
+    if (!level.includes("secondary") || !shouldMigrate) {
+      return {
+        ...program,
+        classes: Array.isArray(program.classes) ? program.classes : [],
+      };
+    }
+
+    const currentSpan = String(program.span || "").trim();
+
+    const isOldSecondarySpan =
+      currentSpan === "" ||
+      currentSpan === "Grade 9 – 10" ||
+      currentSpan === "Grade 9 - 10" ||
+      currentSpan === "9 – 10" ||
+      currentSpan === "9 - 10";
+
+    const oldHighlight =
+      "Rigorous academic performance pipelines optimizing for exceptional SEE results.";
+
+    return {
+      ...program,
+
+      // Only migrate old default data.
+      // After admin saves once, this will never override again.
+      span: isOldSecondarySpan ? "Grade 9 – 12" : program.span,
+
+      highlight:
+        !program.highlight || program.highlight === oldHighlight
+          ? "Rigorous academic preparation for SEE and NEB Grade 11–12 learning pathways."
+          : program.highlight,
+
+      classes: Array.isArray(program.classes)
+        ? program.classes
+        : defaultAcademicsContent.programs[3].classes,
+    };
+  });
+}
+
+function normalizeCurriculum(curriculum = {}, shouldMigrate = false) {
+  const hasSavedCurriculum =
+    curriculum &&
+    typeof curriculum === "object" &&
+    Object.keys(curriculum).length > 0;
+
+  const merged = hasSavedCurriculum
+    ? curriculum
+    : defaultAcademicsContent.curriculum;
+
+  if (!shouldMigrate) return merged;
+
+  const oldSecondary = Array.isArray(merged["Secondary Level"])
+    ? merged["Secondary Level"]
+    : [];
+
+  const secondaryGrades = [...oldSecondary];
+
+  const ensureGrade = (gradeName, books) => {
+    const exists = secondaryGrades.some((item) => item.grade === gradeName);
+
+    if (!exists) {
+      secondaryGrades.push({
+        grade: gradeName,
+        books,
+      });
+    }
+  };
+
+  ensureGrade("Grade 11", [
+    { subject: "English", publication: "NEB / CDC" },
+    { subject: "Nepali", publication: "NEB / CDC" },
+    {
+      subject: "Accountancy / Science Stream Subject",
+      publication: "NEB / CDC",
+    },
+    { subject: "Economics / Biology / Physics", publication: "NEB / CDC" },
+    {
+      subject: "Computer Science / Mathematics",
+      publication: "NEB / CDC",
+    },
+  ]);
+
+  ensureGrade("Grade 12", [
+    { subject: "English", publication: "NEB / CDC" },
+    { subject: "Nepali", publication: "NEB / CDC" },
+    {
+      subject: "Accountancy / Science Stream Subject",
+      publication: "NEB / CDC",
+    },
+    { subject: "Economics / Biology / Physics", publication: "NEB / CDC" },
+    {
+      subject: "Computer Science / Mathematics",
+      publication: "NEB / CDC",
+    },
+  ]);
+
   return {
-    ...defaultAcademicsContent,
-    ...saved,
-    programs: Array.isArray(saved.programs)
-      ? saved.programs
-      : defaultAcademicsContent.programs,
-    features: Array.isArray(saved.features)
-      ? saved.features
-      : defaultAcademicsContent.features,
-    stats: Array.isArray(saved.stats)
-      ? saved.stats
-      : defaultAcademicsContent.stats,
-    timelineTerms: Array.isArray(saved.timelineTerms)
-      ? saved.timelineTerms
-      : defaultAcademicsContent.timelineTerms,
-    ongoingAssessments: Array.isArray(saved.ongoingAssessments)
-      ? saved.ongoingAssessments
-      : defaultAcademicsContent.ongoingAssessments,
-    curriculum: saved.curriculum || defaultAcademicsContent.curriculum,
+    ...merged,
+    "Secondary Level": secondaryGrades,
   };
 }
 
+function mergeAcademicsContent(saved = {}) {
+  const shouldMigrate = isLegacyAcademicsContent(saved);
+
+  return {
+    ...defaultAcademicsContent,
+    ...saved,
+
+    // Version 2 means: admin edits are now respected.
+    _contentVersion: 2,
+
+    heroDescription: normalizeLegacyHeroDescription(
+      saved.heroDescription,
+      shouldMigrate
+    ),
+
+    programs: normalizePrograms(
+      Array.isArray(saved.programs)
+        ? saved.programs
+        : defaultAcademicsContent.programs,
+      shouldMigrate
+    ),
+
+    features: Array.isArray(saved.features)
+      ? saved.features
+      : defaultAcademicsContent.features,
+
+    stats: Array.isArray(saved.stats)
+      ? saved.stats
+      : defaultAcademicsContent.stats,
+
+    timelineTerms: Array.isArray(saved.timelineTerms)
+      ? saved.timelineTerms
+      : defaultAcademicsContent.timelineTerms,
+
+    ongoingAssessments: Array.isArray(saved.ongoingAssessments)
+      ? saved.ongoingAssessments
+      : defaultAcademicsContent.ongoingAssessments,
+
+    curriculum: normalizeCurriculum(saved.curriculum, shouldMigrate),
+  };
+}
 function Field({ label, value, onChange, placeholder = "", type = "text" }) {
   return (
     <div>
@@ -521,15 +686,19 @@ function VisibilityDeleteControls({ visible, onToggle, onDelete }) {
   );
 }
 
-// Preview component - shows ONLY program cards without curriculum books
 function AcademicsPreview({ form }) {
   const visiblePrograms = (form.programs || []).filter(
     (item) => item.visible !== false
   );
+
   const visibleFeatures = (form.features || []).filter(
     (item) => item.visible !== false
   );
-  const visibleStats = (form.stats || []).filter((item) => item.visible !== false);
+
+  const visibleStats = (form.stats || []).filter(
+    (item) => item.visible !== false
+  );
+
   const visibleTimeline = (form.timelineTerms || []).filter(
     (item) => item.visible !== false
   );
@@ -542,7 +711,6 @@ function AcademicsPreview({ form }) {
           "radial-gradient(circle at top right, rgba(124,92,196,0.18), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
       }}
     >
-      {/* Hero Section */}
       <div className="text-center mb-10">
         <span
           className="inline-block px-4 py-1.5 rounded-full text-sm font-bold mb-4"
@@ -570,7 +738,6 @@ function AcademicsPreview({ form }) {
         </p>
       </div>
 
-      {/* Academic Programs - Only shows program cards */}
       <div className="mb-10">
         <div className="text-xl font-black text-slate-950 mb-4">
           Academic Programs
@@ -618,7 +785,6 @@ function AcademicsPreview({ form }) {
         </div>
       </div>
 
-      {/* Features Section */}
       <div className="mb-10">
         <div className="text-xl font-black text-slate-950 mb-2">
           {form.featuresTitle}
@@ -666,7 +832,6 @@ function AcademicsPreview({ form }) {
         </div>
       </div>
 
-      {/* Statistics */}
       <div className="mb-10">
         <div className="text-xl font-black text-slate-950 mb-4">
           Statistics
@@ -706,7 +871,6 @@ function AcademicsPreview({ form }) {
         </div>
       </div>
 
-      {/* Examination System */}
       <div className="mb-10">
         <div className="text-xl font-black text-slate-950 mb-2">
           {form.examTitle}
@@ -786,7 +950,6 @@ function AcademicsPreview({ form }) {
         </div>
       </div>
 
-      {/* CTA */}
       <div className="bg-white rounded-3xl p-6 text-center border">
         <div
           className="w-20 h-1 rounded-full mx-auto mb-5"
@@ -854,12 +1017,32 @@ export default function AdminAcademics() {
   };
 
   const updateProgram = (id, field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      programs: prev.programs.map((item) =>
+    setForm((prev) => {
+      const oldProgram = prev.programs.find((item) => item.id === id);
+      const updatedPrograms = prev.programs.map((item) =>
         item.id === id ? { ...item, [field]: value } : item
-      ),
-    }));
+      );
+
+      if (field === "level" && oldProgram?.level && oldProgram.level !== value) {
+        const newCurriculum = { ...prev.curriculum };
+
+        if (newCurriculum[oldProgram.level]) {
+          newCurriculum[value] = newCurriculum[oldProgram.level];
+          delete newCurriculum[oldProgram.level];
+        }
+
+        return {
+          ...prev,
+          programs: updatedPrograms,
+          curriculum: newCurriculum,
+        };
+      }
+
+      return {
+        ...prev,
+        programs: updatedPrograms,
+      };
+    });
   };
 
   const addProgram = () => {
@@ -873,24 +1056,34 @@ export default function AdminAcademics() {
       highlight: "Short academic level description.",
       visible: true,
     };
-    
+
     setForm((prev) => ({
       ...prev,
       programs: [...prev.programs, newProgram],
       curriculum: {
         ...prev.curriculum,
-        [newProgram.level]: [{ grade: "New Grade", books: [{ subject: "New Subject", publication: "New Publication" }] }],
+        [newProgram.level]: [
+          {
+            grade: "New Grade",
+            books: [
+              { subject: "New Subject", publication: "New Publication" },
+            ],
+          },
+        ],
       },
     }));
   };
 
   const deleteProgram = (id) => {
-    const programToDelete = form.programs.find(p => p.id === id);
+    const programToDelete = form.programs.find((p) => p.id === id);
+
     setForm((prev) => {
       const newCurriculum = { ...prev.curriculum };
+
       if (programToDelete) {
         delete newCurriculum[programToDelete.level];
       }
+
       return {
         ...prev,
         programs: prev.programs.filter((item) => item.id !== id),
@@ -996,7 +1189,6 @@ export default function AdminAcademics() {
     }));
   };
 
-  // Curriculum management functions
   const updateCurriculumGrade = (level, gradeIndex, field, value) => {
     setForm((prev) => ({
       ...prev,
@@ -1015,9 +1207,13 @@ export default function AdminAcademics() {
         if (idx === gradeIndex) {
           return {
             ...item,
-            books: [...item.books, { subject: "New Subject", publication: "New Publication" }],
+            books: [
+              ...item.books,
+              { subject: "New Subject", publication: "New Publication" },
+            ],
           };
         }
+
         return item;
       });
 
@@ -1038,8 +1234,10 @@ export default function AdminAcademics() {
           const updatedBooks = item.books.map((book, bidx) =>
             bidx === bookIndex ? { ...book, [field]: value } : book
           );
+
           return { ...item, books: updatedBooks };
         }
+
         return item;
       });
 
@@ -1057,9 +1255,13 @@ export default function AdminAcademics() {
     setForm((prev) => {
       const updatedGrades = prev.curriculum[level].map((item, idx) => {
         if (idx === gradeIndex) {
-          const filteredBooks = item.books.filter((_, bidx) => bidx !== bookIndex);
+          const filteredBooks = item.books.filter(
+            (_, bidx) => bidx !== bookIndex
+          );
+
           return { ...item, books: filteredBooks };
         }
+
         return item;
       });
 
@@ -1080,7 +1282,12 @@ export default function AdminAcademics() {
         ...prev.curriculum,
         [level]: [
           ...prev.curriculum[level],
-          { grade: `New Grade`, books: [{ subject: "New Subject", publication: "New Publication" }] },
+          {
+            grade: "New Grade",
+            books: [
+              { subject: "New Subject", publication: "New Publication" },
+            ],
+          },
         ],
       },
     }));
@@ -1088,7 +1295,10 @@ export default function AdminAcademics() {
 
   const removeGrade = (level, gradeIndex) => {
     setForm((prev) => {
-      const filteredGrades = prev.curriculum[level].filter((_, idx) => idx !== gradeIndex);
+      const filteredGrades = prev.curriculum[level].filter(
+        (_, idx) => idx !== gradeIndex
+      );
+
       return {
         ...prev,
         curriculum: {
@@ -1098,33 +1308,63 @@ export default function AdminAcademics() {
       };
     });
   };
+const moveGrade = (level, gradeIndex, direction) => {
+  setForm((prev) => {
+    const grades = Array.isArray(prev.curriculum?.[level])
+      ? [...prev.curriculum[level]]
+      : [];
 
-  async function saveAcademicsContent() {
-    setSuccess("");
-    setError("");
-    setSaving(true);
+    const targetIndex = gradeIndex + direction;
 
-    try {
-      await axios.put(
-        "http://localhost:5000/api/site-content/academics",
-        { content: form },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setSuccess("Academics page content saved successfully.");
-    } catch (err) {
-      console.error("Save academics content error:", err);
-      setError(
-        err.response?.data?.message || "Could not save academics content."
-      );
-    } finally {
-      setSaving(false);
+    if (targetIndex < 0 || targetIndex >= grades.length) {
+      return prev;
     }
+
+    const temp = grades[gradeIndex];
+    grades[gradeIndex] = grades[targetIndex];
+    grades[targetIndex] = temp;
+
+    return {
+      ...prev,
+      curriculum: {
+        ...prev.curriculum,
+        [level]: grades,
+      },
+    };
+  });
+};
+  async function saveAcademicsContent() {
+  setSuccess("");
+  setError("");
+  setSaving(true);
+
+  try {
+    const contentToSave = {
+      ...form,
+      _contentVersion: 2,
+    };
+
+    await axios.put(
+      "http://localhost:5000/api/site-content/academics",
+      { content: contentToSave },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setForm(contentToSave);
+    setSuccess("Academics page content saved successfully.");
+  } catch (err) {
+    console.error("Save academics content error:", err);
+    setError(
+      err.response?.data?.message || "Could not save academics content."
+    );
+  } finally {
+    setSaving(false);
   }
+}
 
   if (loading) {
     return (
@@ -1139,12 +1379,9 @@ export default function AdminAcademics() {
     );
   }
 
-  const ACCENT_SEQUENCE = [colors.red, colors.green, colors.purple, colors.softPurple];
-  const gradeAccent = (index) => ACCENT_SEQUENCE[index % ACCENT_SEQUENCE.length];
-
   return (
     <section
-    className="min-h-screen relative"
+      className="min-h-screen relative"
       style={{
         background: `
           radial-gradient(circle at top right, rgba(56,189,248,0.16), transparent 34%),
@@ -1239,8 +1476,8 @@ export default function AdminAcademics() {
 
           <p className="text-slate-500 max-w-3xl text-lg">
             Edit academic hero, programs, features, statistics, examination
-            system, ongoing assessments, and CTA buttons. Manage curriculum books
-            and publications for each grade level.
+            system, ongoing assessments, and CTA buttons. Manage curriculum
+            books and publications for each grade level.
           </p>
         </motion.div>
 
@@ -1271,7 +1508,6 @@ export default function AdminAcademics() {
           </div>
         )}
 
-        {/* Changed to items-start with proper sticky positioning */}
         <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start relative">
           <div className="space-y-8">
             <EditorCard icon={Type} title="Hero Section" color={colors.purple}>
@@ -1337,6 +1573,7 @@ export default function AdminAcademics() {
                         <div className="font-black text-slate-950">
                           Program {index + 1}
                         </div>
+
                         <div className="text-sm text-slate-500">
                           {program.level}
                         </div>
@@ -1393,6 +1630,23 @@ export default function AdminAcademics() {
                         rows={3}
                       />
                     </div>
+                    <div className="mt-4">
+  <TextArea
+    label="Course Structure / Subjects - one per line"
+    value={(program.classes || []).join("\n")}
+    onChange={(value) =>
+      updateProgram(
+        program.id,
+        "classes",
+        value
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      )
+    }
+    rows={5}
+  />
+</div>
                   </div>
                 ))}
               </div>
@@ -1404,22 +1658,33 @@ export default function AdminAcademics() {
               color={colors.purple}
             >
               <p className="text-sm text-slate-500 mb-6">
-                Manage subjects and publications for each grade level across all academic programs.
-                These appear in the ledger modal on the public Academics page.
+                Manage subjects and publications for each grade level across all
+                academic programs. These appear in the ledger modal on the
+                public Academics page.
               </p>
 
               {Object.entries(form.curriculum || {}).map(([level, grades]) => {
                 const isExpanded = expandedCurriculumLevel === level;
-                const levelColor = form.programs.find(p => p.level === level)?.badgeColor || colors.purple;
+
+                const levelColor =
+                  form.programs.find((p) => p.level === level)?.badgeColor ||
+                  colors.purple;
 
                 return (
                   <div key={level} className="mb-6 last:mb-0">
                     <button
-                      onClick={() => setExpandedCurriculumLevel(isExpanded ? null : level)}
+                      type="button"
+                      onClick={() =>
+                        setExpandedCurriculumLevel(isExpanded ? null : level)
+                      }
                       className="w-full flex items-center justify-between p-4 rounded-2xl transition-all"
                       style={{
-                        background: isExpanded ? "rgba(75,46,131,0.08)" : "rgba(15,23,42,0.04)",
-                        border: `1px solid ${isExpanded ? levelColor : "rgba(15,23,42,0.08)"}`,
+                        background: isExpanded
+                          ? "rgba(75,46,131,0.08)"
+                          : "rgba(15,23,42,0.04)",
+                        border: `1px solid ${
+                          isExpanded ? levelColor : "rgba(15,23,42,0.08)"
+                        }`,
                       }}
                     >
                       <div className="flex items-center gap-3">
@@ -1427,11 +1692,16 @@ export default function AdminAcademics() {
                           className="w-3 h-3 rounded-full"
                           style={{ background: levelColor }}
                         />
-                        <span className="font-bold text-slate-950">{level}</span>
+
+                        <span className="font-bold text-slate-950">
+                          {level}
+                        </span>
+
                         <span className="text-sm text-slate-400">
                           ({grades.length} grades)
                         </span>
                       </div>
+
                       <span className="text-slate-400">
                         {isExpanded ? "−" : "+"}
                       </span>
@@ -1441,9 +1711,10 @@ export default function AdminAcademics() {
                       <div className="mt-4 space-y-4">
                         {grades.map((grade, gradeIndex) => {
                           const gradeAccentColor = gradeAccent(gradeIndex);
+
                           return (
                             <div
-                              key={gradeIndex}
+                              key={`${level}-grade-${gradeIndex}`}
                               className="rounded-2xl p-5"
                               style={{
                                 background: "rgba(255,255,255,0.6)",
@@ -1456,28 +1727,67 @@ export default function AdminAcademics() {
                                     label="Grade Name"
                                     value={grade.grade}
                                     onChange={(value) =>
-                                      updateCurriculumGrade(level, gradeIndex, "grade", value)
+                                      updateCurriculumGrade(
+                                        level,
+                                        gradeIndex,
+                                        "grade",
+                                        value
+                                      )
                                     }
                                   />
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => removeGrade(level, gradeIndex)}
-                                  className="p-2 rounded-xl mt-6"
-                                  style={{
-                                    background: "rgba(215,25,32,0.09)",
-                                    color: colors.red,
-                                    border: "1px solid rgba(215,25,32,0.18)",
-                                  }}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+
+                                <div className="flex items-center gap-2 mt-6">
+  <button
+    type="button"
+    onClick={() => moveGrade(level, gradeIndex, -1)}
+    disabled={gradeIndex === 0}
+    className="p-2 rounded-xl disabled:opacity-35 disabled:cursor-not-allowed"
+    style={{
+      background: "rgba(75,46,131,0.08)",
+      color: colors.purple,
+      border: "1px solid rgba(75,46,131,0.18)",
+    }}
+    title="Move grade up"
+  >
+    <ArrowUp className="w-4 h-4" />
+  </button>
+
+  <button
+    type="button"
+    onClick={() => moveGrade(level, gradeIndex, 1)}
+    disabled={gradeIndex === grades.length - 1}
+    className="p-2 rounded-xl disabled:opacity-35 disabled:cursor-not-allowed"
+    style={{
+      background: "rgba(22,138,58,0.08)",
+      color: colors.green,
+      border: "1px solid rgba(22,138,58,0.18)",
+    }}
+    title="Move grade down"
+  >
+    <ArrowDown className="w-4 h-4" />
+  </button>
+
+  <button
+    type="button"
+    onClick={() => removeGrade(level, gradeIndex)}
+    className="p-2 rounded-xl"
+    style={{
+      background: "rgba(215,25,32,0.09)",
+      color: colors.red,
+      border: "1px solid rgba(215,25,32,0.18)",
+    }}
+    title="Delete grade"
+  >
+    <Trash2 className="w-4 h-4" />
+  </button>
+</div>
                               </div>
 
                               <div className="space-y-3">
                                 {grade.books.map((book, bookIndex) => (
                                   <div
-                                    key={bookIndex}
+                                    key={`${level}-grade-${gradeIndex}-book-${bookIndex}`}
                                     className="grid md:grid-cols-12 gap-3 items-center p-3 rounded-xl"
                                     style={{
                                       background: "rgba(255,255,255,0.8)",
@@ -1489,28 +1799,49 @@ export default function AdminAcademics() {
                                         label="Subject"
                                         value={book.subject}
                                         onChange={(value) =>
-                                          updateBook(level, gradeIndex, bookIndex, "subject", value)
+                                          updateBook(
+                                            level,
+                                            gradeIndex,
+                                            bookIndex,
+                                            "subject",
+                                            value
+                                          )
                                         }
                                       />
                                     </div>
+
                                     <div className="md:col-span-5">
                                       <Field
                                         label="Publication"
                                         value={book.publication}
                                         onChange={(value) =>
-                                          updateBook(level, gradeIndex, bookIndex, "publication", value)
+                                          updateBook(
+                                            level,
+                                            gradeIndex,
+                                            bookIndex,
+                                            "publication",
+                                            value
+                                          )
                                         }
                                       />
                                     </div>
+
                                     <div className="md:col-span-2">
                                       <button
                                         type="button"
-                                        onClick={() => removeBook(level, gradeIndex, bookIndex)}
+                                        onClick={() =>
+                                          removeBook(
+                                            level,
+                                            gradeIndex,
+                                            bookIndex
+                                          )
+                                        }
                                         className="p-3 rounded-xl w-full"
                                         style={{
                                           background: "rgba(215,25,32,0.08)",
                                           color: colors.red,
-                                          border: "1px solid rgba(215,25,32,0.15)",
+                                          border:
+                                            "1px solid rgba(215,25,32,0.15)",
                                         }}
                                       >
                                         <Trash2 className="w-4 h-4 mx-auto" />
@@ -1521,7 +1852,9 @@ export default function AdminAcademics() {
 
                                 <button
                                   type="button"
-                                  onClick={() => addBookToGrade(level, gradeIndex)}
+                                  onClick={() =>
+                                    addBookToGrade(level, gradeIndex)
+                                  }
                                   className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105"
                                   style={{
                                     color: colors.purple,
@@ -1604,6 +1937,7 @@ export default function AdminAcademics() {
                         <div className="font-black text-slate-950">
                           Feature {index + 1}
                         </div>
+
                         <div className="text-sm text-slate-500">
                           {feature.title}
                         </div>
@@ -1686,6 +2020,7 @@ export default function AdminAcademics() {
                         <div className="font-black text-slate-950">
                           Stat {index + 1}
                         </div>
+
                         <div className="text-sm text-slate-500">
                           {stat.value} {stat.label}
                         </div>
@@ -1810,6 +2145,7 @@ export default function AdminAcademics() {
                         <div className="font-black text-slate-950">
                           Exam Term {index + 1}
                         </div>
+
                         <div className="text-sm text-slate-500">
                           {item.term}
                         </div>
@@ -1898,13 +2234,12 @@ export default function AdminAcademics() {
             </EditorCard>
           </div>
 
-          {/* Sticky preview - properly positioned */}
           <div
-  className="xl:sticky xl:top-24 self-start"
-  style={{
-    maxHeight: "calc(100vh - 120px)",
-  }}
->
+            className="xl:sticky xl:top-24 self-start"
+            style={{
+              maxHeight: "calc(100vh - 120px)",
+            }}
+          >
             <div
               className="rounded-3xl overflow-hidden"
               style={{
@@ -1926,11 +2261,11 @@ export default function AdminAcademics() {
               </div>
 
               <div
-  className="bg-white overflow-y-auto"
-  style={{
-    maxHeight: "calc(100vh - 180px)",
-  }}
->
+                className="bg-white overflow-y-auto"
+                style={{
+                  maxHeight: "calc(100vh - 180px)",
+                }}
+              >
                 <AcademicsPreview form={form} />
               </div>
             </div>

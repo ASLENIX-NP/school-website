@@ -50,10 +50,10 @@ const defaultHeroData = {
 function GlassStat({ value, label, color, delay }) {
   return (
     <motion.div
-    initial={{ opacity: 0, y: 18 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay, duration: 0.55 }}
-    className="group rounded-3xl p-5 cursor-pointer transition-all duration-300 hover:-translate-y-2"
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.55 }}
+      className="group rounded-3xl p-5 cursor-pointer transition-all duration-300 hover:-translate-y-2"
       style={{
         background:
           "linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055))",
@@ -63,10 +63,10 @@ function GlassStat({ value, label, color, delay }) {
         backdropFilter: "blur(18px)",
       }}
     >
-     <div
-  className="w-11 h-1 rounded-full mb-4 transition-all duration-200 ease-out group-hover:w-20"
-  style={{ background: color }}
-/>
+      <div
+        className="w-11 h-1 rounded-full mb-4 transition-all duration-200 ease-out group-hover:w-20"
+        style={{ background: color }}
+      />
 
       <div
         className="text-2xl font-black"
@@ -92,15 +92,15 @@ function GlassStat({ value, label, color, delay }) {
 function FloatingTextTag({ className, title, subtitle, color, delay }) {
   return (
     <motion.div
-  initial={{ opacity: 0, y: -10 }}
-  animate={{
-    opacity: 1,
-    y: [0, 9, 0],
-  }}
-  whileHover={{
-    y: -8,
-    scale: 1.03,
-  }}
+      initial={{ opacity: 0, y: -10 }}
+      animate={{
+        opacity: 1,
+        y: [0, 9, 0],
+      }}
+      whileHover={{
+        y: -8,
+        scale: 1.03,
+      }}
       transition={{
         opacity: { duration: 0.55, delay },
         y: {
@@ -119,10 +119,10 @@ function FloatingTextTag({ className, title, subtitle, color, delay }) {
         backdropFilter: "blur(20px)",
       }}
     >
-<div
-  className="w-12 h-1 rounded-full mb-3 transition-all duration-150 ease-out group-hover:w-24"
-  style={{ background: color }}
-/>
+      <div
+        className="w-12 h-1 rounded-full mb-3 transition-all duration-150 ease-out group-hover:w-24"
+        style={{ background: color }}
+      />
 
       <div className="text-white text-sm font-bold whitespace-nowrap">
         {title}
@@ -189,37 +189,6 @@ function HeroImageStage({ heroData }) {
           }}
         />
 
-        <div className="absolute top-5 left-5 right-5 flex items-center justify-between gap-4">
-          <div
-            className="px-4 py-3 rounded-2xl"
-            style={{
-              background: "rgba(2,6,23,0.42)",
-              border: "1px solid rgba(255,255,255,0.14)",
-              backdropFilter: "blur(16px)",
-              boxShadow: "0 16px 40px rgba(0,0,0,0.24)",
-            }}
-          >
-            <div className="text-white text-sm font-bold">
-              Baljagriti School
-            </div>
-
-            <div
-              className="text-xs mt-0.5"
-              style={{ color: "rgba(255,255,255,0.64)" }}
-            >
-              {heroData.imageLocation}
-            </div>
-          </div>
-
-          <div
-            className="hidden md:block w-20 h-1 rounded-full"
-            style={{
-              background:
-                "linear-gradient(90deg, rgba(250,204,21,0.95), rgba(56,189,248,0.95))",
-            }}
-          />
-        </div>
-
         <div
           className="absolute bottom-5 left-5 right-5 px-5 py-4 rounded-2xl"
           style={{
@@ -242,12 +211,12 @@ function HeroImageStage({ heroData }) {
       </motion.div>
 
       <FloatingTextTag
-  className="absolute left-[7%] top-3 z-20 hidden xl:block"
-  title={heroData.floating1Title}
-  subtitle={heroData.floating1Subtitle}
-  color={palette.gold}
-  delay={0.3}
-/>
+        className="absolute left-[7%] top-16 z-20 hidden xl:block"
+        title={heroData.floating1Title}
+        subtitle={heroData.floating1Subtitle}
+        color={palette.gold}
+        delay={0.3}
+      />
 
       <FloatingTextTag
         className="absolute right-[6%] top-12 z-20 hidden xl:block"
@@ -374,7 +343,7 @@ function Hero() {
                 "linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055))",
               border: "1px solid rgba(255,255,255,0.16)",
               boxShadow:
-              "0 25px 60px rgba(0,0,0,0.28), 0 0 30px rgba(56,189,248,0.08), inset 0 1px 0 rgba(255,255,255,0.13)",
+                "0 25px 60px rgba(0,0,0,0.28), 0 0 30px rgba(56,189,248,0.08), inset 0 1px 0 rgba(255,255,255,0.13)",
               backdropFilter: "blur(18px)",
               color: "rgba(255,255,255,0.88)",
             }}

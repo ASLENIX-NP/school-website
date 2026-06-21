@@ -15,10 +15,13 @@ const colors = {
   lightPurple: "#F1ECFF",
 };
 
-// Cycles through the brand palette for ledger row accents.
-// Kept as a single source of truth so the sidebar tabs and the
-// subject rows always reference the same sequence.
-const ACCENT_SEQUENCE = [colors.red, colors.green, colors.purple, colors.softPurple];
+const ACCENT_SEQUENCE = [
+  colors.red,
+  colors.green,
+  colors.purple,
+  colors.softPurple,
+];
+
 const gradeAccent = (index) => ACCENT_SEQUENCE[index % ACCENT_SEQUENCE.length];
 
 const defaultAcademicsContent = {
@@ -26,7 +29,7 @@ const defaultAcademicsContent = {
   heroTitle: "Academics at Baljagriti",
   heroHighlight: "Baljagriti",
   heroDescription:
-    "Comprehensive education from Play Group to Grade 10 under the National NEB Curriculum. We combine academic excellence, practical learning, critical thinking, and character development to prepare students for lifelong success.",
+    "Comprehensive education from Play Group to Grade 12 under the National NEB Curriculum. We combine academic excellence, practical learning, critical thinking, and character development to prepare students for lifelong success.",
 
   programs: [
     {
@@ -78,7 +81,7 @@ const defaultAcademicsContent = {
     {
       id: 4,
       level: "Secondary Level",
-      span: "Grade 9 – 10",
+      span: "Grade 9 – 12",
       badgeColor: colors.dark,
       border: "rgba(11,16,32,0.12)",
       classes: [
@@ -88,9 +91,11 @@ const defaultAcademicsContent = {
         "Science",
         "Computer Science",
         "Optional Mathematics",
+        "Grade 11",
+        "Grade 12",
       ],
       highlight:
-        "Rigorous academic performance pipelines optimizing for exceptional SEE results.",
+        "Rigorous academic preparation for SEE and NEB Grade 11–12 learning pathways.",
       visible: true,
     },
   ],
@@ -234,27 +239,92 @@ const defaultAcademicsContent = {
   curriculum: {},
 };
 
+function isLegacyAcademicsContent(saved = {}) {
+  return Number(saved._contentVersion || 0) < 2;
+}
+
+function normalizeLegacyHeroDescription(description, shouldMigrate) {
+  const text = description || defaultAcademicsContent.heroDescription;
+
+  if (!shouldMigrate) return text;
+
+  return text
+    .replace("Play Group to Grade 10", "Play Group to Grade 12")
+    .replace("Play Group to Class 10", "Play Group to Class 12")
+    .replace("up to Grade 10", "up to Grade 12")
+    .replace("up to Class 10", "up to Class 12");
+}
+
+function normalizePrograms(programs = [], shouldMigrate = false) {
+  return programs.map((program) => {
+    const level = String(program.level || "").toLowerCase();
+
+    if (!level.includes("secondary") || !shouldMigrate) {
+      return {
+        ...program,
+        classes: Array.isArray(program.classes) ? program.classes : [],
+      };
+    }
+
+    const currentSpan = String(program.span || "").trim();
+
+    const isOldSecondarySpan =
+      currentSpan === "" ||
+      currentSpan === "Grade 9 – 10" ||
+      currentSpan === "Grade 9 - 10" ||
+      currentSpan === "9 – 10" ||
+      currentSpan === "9 - 10";
+
+    const oldHighlight =
+      "Rigorous academic performance pipelines optimizing for exceptional SEE results.";
+
+    return {
+      ...program,
+      span: isOldSecondarySpan ? "Grade 9 – 12" : program.span,
+      highlight:
+        !program.highlight || program.highlight === oldHighlight
+          ? "Rigorous academic preparation for SEE and NEB Grade 11–12 learning pathways."
+          : program.highlight,
+      classes: Array.isArray(program.classes)
+        ? program.classes
+        : defaultAcademicsContent.programs[3].classes,
+    };
+  });
+}
+
 function mergeAcademicsContent(saved = {}) {
+  const shouldMigrate = isLegacyAcademicsContent(saved);
+
   return {
     ...defaultAcademicsContent,
     ...saved,
 
-    curriculum:
-      saved.curriculum ||
-      defaultAcademicsContent.curriculum,
+    heroDescription: normalizeLegacyHeroDescription(
+      saved.heroDescription,
+      shouldMigrate
+    ),
 
-    programs: Array.isArray(saved.programs)
-      ? saved.programs
-      : defaultAcademicsContent.programs,
+    curriculum: saved.curriculum || defaultAcademicsContent.curriculum,
+
+    programs: normalizePrograms(
+      Array.isArray(saved.programs)
+        ? saved.programs
+        : defaultAcademicsContent.programs,
+      shouldMigrate
+    ),
+
     features: Array.isArray(saved.features)
       ? saved.features
       : defaultAcademicsContent.features,
+
     stats: Array.isArray(saved.stats)
       ? saved.stats
       : defaultAcademicsContent.stats,
+
     timelineTerms: Array.isArray(saved.timelineTerms)
       ? saved.timelineTerms
       : defaultAcademicsContent.timelineTerms,
+
     ongoingAssessments: Array.isArray(saved.ongoingAssessments)
       ? saved.ongoingAssessments
       : defaultAcademicsContent.ongoingAssessments,
@@ -275,26 +345,10 @@ function HighlightedTitle({ title, highlight }) {
   );
 }
 
-// ---------------------------------------------------------------------
-// CurriculumLedgerModal
-// ---------------------------------------------------------------------
-// Replaces the old plain white "accordion list" popup. The new design
-// is framed as an open record ledger: a dark spine on the left lists
-// every grade as a numbered tab, and the right page lays out that
-// grade's subjects as ruled ledger rows with a dotted leader between
-// the subject name and its publisher — a layout that's specific to
-// "looking up a curriculum record" rather than a generic FAQ-style
-// accordion card.
-// ---------------------------------------------------------------------
-function CurriculumLedgerModal({
-  programLevel,
-  curriculum,
-  onClose,
-}) {
+function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
   const grades = curriculum?.[programLevel] || [];
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Reset to the first grade whenever a different program is opened.
   useEffect(() => {
     setActiveIndex(0);
   }, [programLevel]);
@@ -304,7 +358,10 @@ function CurriculumLedgerModal({
   return (
     <motion.div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-8"
-      style={{ background: "rgba(11,16,32,0.72)", backdropFilter: "blur(6px)" }}
+      style={{
+        background: "rgba(11,16,32,0.72)",
+        backdropFilter: "blur(6px)",
+      }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -336,7 +393,6 @@ function CurriculumLedgerModal({
           <X size={18} />
         </button>
 
-        {/* Spine — grade index */}
         <div
           className="md:w-64 shrink-0 flex md:flex-col overflow-x-auto md:overflow-y-auto"
           style={{
@@ -350,29 +406,41 @@ function CurriculumLedgerModal({
             >
               Curriculum Record
             </div>
+
             <h2
               className="text-[26px] font-black text-white mt-2 leading-[1.1]"
-              style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.03em" }}
+              style={{
+                fontFamily: "var(--font-display)",
+                letterSpacing: "-0.03em",
+              }}
             >
               {programLevel}
             </h2>
+
             <div
               className="w-12 h-1 rounded-full mt-4"
-              style={{ background: "linear-gradient(90deg,#D71920,#168A3A)" }}
+              style={{
+                background: "linear-gradient(90deg,#D71920,#168A3A)",
+              }}
             />
           </div>
 
           {grades.map((grade, idx) => {
             const active = idx === activeIndex;
             const tabColor = gradeAccent(idx);
+
             return (
               <button
                 key={grade.grade}
                 onClick={() => setActiveIndex(idx)}
                 className="shrink-0 md:shrink text-left px-7 py-5 flex items-center gap-4 transition-all duration-300"
                 style={{
-                  background: active ? "rgba(255,255,255,0.07)" : "transparent",
-                  borderLeft: active ? `3px solid ${tabColor}` : "3px solid transparent",
+                  background: active
+                    ? "rgba(255,255,255,0.07)"
+                    : "transparent",
+                  borderLeft: active
+                    ? `3px solid ${tabColor}`
+                    : "3px solid transparent",
                 }}
               >
                 <span
@@ -384,9 +452,12 @@ function CurriculumLedgerModal({
                 >
                   {String(idx + 1).padStart(2, "0")}
                 </span>
+
                 <span
                   className="font-bold text-sm whitespace-nowrap"
-                  style={{ color: active ? "#fff" : "rgba(255,255,255,0.55)" }}
+                  style={{
+                    color: active ? "#fff" : "rgba(255,255,255,0.55)",
+                  }}
                 >
                   {grade.grade}
                 </span>
@@ -395,7 +466,6 @@ function CurriculumLedgerModal({
           })}
         </div>
 
-        {/* Page — selected grade's ledger rows */}
         <div
           className="flex-1 overflow-y-auto px-7 md:px-12 py-9 relative"
           style={{
@@ -410,9 +480,13 @@ function CurriculumLedgerModal({
             >
               Curriculum Record
             </div>
+
             <h2
               className="text-3xl font-black mt-1"
-              style={{ color: colors.dark, fontFamily: "var(--font-display)" }}
+              style={{
+                color: colors.dark,
+                fontFamily: "var(--font-display)",
+              }}
             >
               {programLevel}
             </h2>
@@ -438,16 +512,25 @@ function CurriculumLedgerModal({
                     >
                       Entry
                     </div>
+
                     <div
                       className="text-3xl font-black"
-                      style={{ color: colors.dark, fontFamily: "var(--font-display)" }}
+                      style={{
+                        color: colors.dark,
+                        fontFamily: "var(--font-display)",
+                      }}
                     >
                       {currentGrade.grade}
                     </div>
                   </div>
-                  <div className="text-sm font-bold text-right" style={{ color: colors.purple }}>
+
+                  <div
+                    className="text-sm font-bold text-right"
+                    style={{ color: colors.purple }}
+                  >
                     {currentGrade.books.length}{" "}
-                    {currentGrade.books.length === 1 ? "subject" : "subjects"} on record
+                    {currentGrade.books.length === 1 ? "subject" : "subjects"}{" "}
+                    on record
                   </div>
                 </div>
 
@@ -455,11 +538,14 @@ function CurriculumLedgerModal({
                   <div>
                     {currentGrade.books.map((book, i) => {
                       const rowColor = gradeAccent(i);
+
                       return (
                         <div
                           key={`${book.subject}-${i}`}
                           className="group flex items-center gap-4 md:gap-5 py-4 transition-colors duration-300 hover:bg-black/[0.015] rounded-xl px-2 -mx-2"
-                          style={{ borderBottom: "1px solid rgba(15,23,42,0.08)" }}
+                          style={{
+                            borderBottom: "1px solid rgba(15,23,42,0.08)",
+                          }}
                         >
                           <span
                             className="text-xs font-black w-6 shrink-0"
@@ -467,17 +553,21 @@ function CurriculumLedgerModal({
                           >
                             {String(i + 1).padStart(2, "0")}
                           </span>
+
                           <span
                             className="w-2.5 h-2.5 rounded-full shrink-0"
                             style={{ background: rowColor }}
                           />
+
                           <span className="font-bold text-slate-900 text-base md:text-lg">
                             {book.subject}
                           </span>
+
                           <span
                             className="hidden md:block flex-1 border-b border-dotted self-end mb-1.5"
                             style={{ borderColor: "rgba(15,23,42,0.2)" }}
                           />
+
                           <span
                             className="ml-auto md:ml-0 text-sm font-bold text-right shrink-0"
                             style={{ color: rowColor }}
@@ -496,7 +586,10 @@ function CurriculumLedgerModal({
                       border: "1px dashed rgba(75,46,131,0.22)",
                     }}
                   >
-                    <p className="font-bold text-slate-600">Curriculum details coming soon.</p>
+                    <p className="font-bold text-slate-600">
+                      Curriculum details coming soon.
+                    </p>
+
                     <p className="text-sm text-slate-400 mt-1">
                       Check back closer to the academic session.
                     </p>
@@ -536,10 +629,13 @@ export function Academics() {
   const visiblePrograms = content.programs.filter(
     (item) => item.visible !== false
   );
+
   const visibleFeatures = content.features.filter(
     (item) => item.visible !== false
   );
+
   const visibleStats = content.stats.filter((item) => item.visible !== false);
+
   const visibleTimeline = content.timelineTerms.filter(
     (item) => item.visible !== false
   );
@@ -714,106 +810,143 @@ export function Academics() {
         </div>
       </section>
 
-      <section className="py-20 bg-white/60 backdrop-blur-md relative z-10">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <span
-              className="inline-block px-4 py-2 rounded-full text-sm font-bold mb-5"
+     <section className="py-24 relative z-10">
+  <div className="max-w-7xl mx-auto px-6">
+    <motion.div
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 0.55 }}
+      className="text-center mb-14"
+    >
+      <span
+        className="inline-flex items-center rounded-full px-5 py-2 text-sm font-bold mb-5"
+        style={{
+          background: "rgba(22,138,58,0.08)",
+          color: colors.green,
+          border: "1px solid rgba(22,138,58,0.16)",
+        }}
+      >
+        Academic Strengths
+      </span>
+
+      <h2
+        className="text-4xl md:text-5xl font-black mb-4"
+        style={{
+          fontFamily: "var(--font-display)",
+          color: colors.dark,
+          letterSpacing: "-0.045em",
+          lineHeight: 1.08,
+        }}
+      >
+        {content.featuresTitle}
+      </h2>
+
+      <div
+        className="w-20 h-1.5 rounded-full mx-auto mb-5"
+        style={{
+          background: "linear-gradient(90deg, #D71920, #FACC15, #168A3A)",
+        }}
+      />
+
+      <p className="text-slate-600 max-w-3xl mx-auto leading-relaxed text-base md:text-lg">
+        {content.featuresDescription}
+      </p>
+    </motion.div>
+
+    <div className="grid md:grid-cols-2 gap-7">
+      {visibleFeatures.map((feat, i) => {
+        const featureColor = feat.color || colors.green;
+
+        const cardStyles = [
+          {
+            bg: "linear-gradient(145deg, rgba(75,46,131,0.105), rgba(255,255,255,0.82))",
+            border: "rgba(75,46,131,0.24)",
+            glow: "rgba(75,46,131,0.14)",
+          },
+          {
+            bg: "linear-gradient(145deg, rgba(22,138,58,0.105), rgba(255,255,255,0.82))",
+            border: "rgba(22,138,58,0.24)",
+            glow: "rgba(22,138,58,0.14)",
+          },
+          {
+            bg: "linear-gradient(145deg, rgba(215,25,32,0.085), rgba(255,255,255,0.84))",
+            border: "rgba(215,25,32,0.22)",
+            glow: "rgba(215,25,32,0.13)",
+          },
+          {
+            bg: "linear-gradient(145deg, rgba(124,92,196,0.11), rgba(255,255,255,0.82))",
+            border: "rgba(124,92,196,0.24)",
+            glow: "rgba(124,92,196,0.14)",
+          },
+        ];
+
+        const styleSet = cardStyles[i % cardStyles.length];
+
+        return (
+          <motion.div
+            key={feat.id}
+            initial={{ opacity: 0, y: 26 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.45, delay: i * 0.07 }}
+            className="group relative overflow-hidden rounded-[2rem] p-8 md:p-10 transition-all duration-300 hover:-translate-y-2"
+            style={{
+              background: styleSet.bg,
+              border: `1px solid ${styleSet.border}`,
+              boxShadow:
+                "0 22px 58px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+              minHeight: "260px",
+            }}
+          >
+            <div
+              className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-80 transition-all duration-500 group-hover:scale-125"
               style={{
-                background: "rgba(22,138,58,0.08)",
-                color: colors.green,
-                border: "1px solid rgba(22,138,58,0.14)",
+                background: styleSet.glow,
+                filter: "blur(38px)",
               }}
-            >
-              Academic Strengths
-            </span>
+            />
 
-            <h2
-              className="text-3xl md:text-4xl font-black mb-4"
+            <div
+              className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
               style={{
-                fontFamily: "var(--font-display)",
-                color: colors.dark,
-                letterSpacing: "-0.04em",
+                background: `linear-gradient(135deg, ${featureColor}10, transparent 55%)`,
               }}
-            >
-              {content.featuresTitle}
-            </h2>
+            />
 
-            <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              {content.featuresDescription}
-            </p>
-          </div>
+            <div className="relative z-10">
+              <div
+                className="text-xl font-black tracking-[0.14em] mb-4"
+                style={{ color: featureColor }}
+              >
+                {String(i + 1).padStart(2, "0")}
+              </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibleFeatures.map((feat, i) => {
-              const featureColor = feat.color || colors.green;
+              <div
+                className="w-16 h-1.5 rounded-full mb-7 transition-all duration-300 group-hover:w-28"
+                style={{ background: featureColor }}
+              />
 
-              return (
-                <motion.div
-                  key={feat.id}
-                  initial={{ opacity: 0, y: 26 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.45, delay: i * 0.06 }}
-                  className="group relative overflow-hidden p-7 rounded-[28px] transition-all duration-300 hover:-translate-y-2 cursor-default"
-                  style={{
-                    background:
-                      "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.82))",
-                    border: `1px solid ${featureColor}24`,
-                    boxShadow: "0 16px 42px rgba(11,16,32,0.07)",
-                    backdropFilter: "blur(16px)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = `0 24px 56px rgba(11,16,32,0.13), 0 0 0 1px ${featureColor}22`;
-                    e.currentTarget.style.borderColor = `${featureColor}55`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow =
-                      "0 16px 42px rgba(11,16,32,0.07)";
-                    e.currentTarget.style.borderColor = `${featureColor}24`;
-                  }}
-                >
-                  <div
-                    className="absolute top-0 right-0 w-36 h-36 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700"
-                    style={{
-                      background: `${featureColor}12`,
-                      filter: "blur(62px)",
-                    }}
-                  />
+              <h3
+                className="text-3xl md:text-4xl font-black mb-5 text-slate-950 leading-tight"
+                style={{
+                  fontFamily: "var(--font-display)",
+                  letterSpacing: "-0.035em",
+                }}
+              >
+                {feat.title}
+              </h3>
 
-                  <div className="relative z-10">
-                    <div
-                      className="text-sm font-black tracking-widest mb-5 transition-all duration-300 group-hover:scale-105 origin-left"
-                      style={{ color: featureColor }}
-                    >
-                      {String(i + 1).padStart(2, "0")}
-                    </div>
-
-                    <div
-                      className="w-16 h-1 rounded-full mb-7 transition-all duration-300 group-hover:w-28"
-                      style={{ background: featureColor }}
-                    />
-
-                    <h3
-                      className="font-black text-2xl mb-4 text-slate-950"
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        letterSpacing: "-0.035em",
-                      }}
-                    >
-                      {feat.title}
-                    </h3>
-
-                    <p className="text-base leading-relaxed text-slate-500">
-                      {feat.desc}
-                    </p>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+              <p className="text-base md:text-lg leading-relaxed text-slate-600 max-w-xl">
+                {feat.desc}
+              </p>
+            </div>
+          </motion.div>
+        );
+      })}
+    </div>
+  </div>
+</section>
 
       <section
         className="py-20 relative z-10"
@@ -876,184 +1009,202 @@ export function Academics() {
         </div>
       </section>
 
-      <section className="pb-20 relative z-10">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <span
-              className="inline-block px-4 py-2 rounded-full text-sm font-bold mb-5"
-              style={{
-                background: "rgba(75,46,131,0.08)",
-                color: colors.purple,
-                border: "1px solid rgba(75,46,131,0.14)",
-              }}
-            >
-              Evaluation Framework
-            </span>
+     <section className="pb-24 relative z-10">
+  <div className="max-w-7xl mx-auto px-6">
+    <div className="text-center mb-14">
+      <span
+        className="inline-block px-5 py-2 rounded-full text-sm font-bold mb-5"
+        style={{
+          background: "rgba(75,46,131,0.08)",
+          color: colors.purple,
+          border: "1px solid rgba(75,46,131,0.14)",
+        }}
+      >
+        Evaluation Framework
+      </span>
 
-            <h2
-              className="text-3xl md:text-4xl font-black mb-4"
-              style={{
-                fontFamily: "var(--font-display)",
-                color: colors.dark,
-                letterSpacing: "-0.04em",
-              }}
-            >
-              {content.examTitle}
-            </h2>
+      <h2
+        className="text-4xl md:text-5xl font-black mb-4"
+        style={{
+          fontFamily: "var(--font-display)",
+          color: colors.dark,
+          letterSpacing: "-0.045em",
+          lineHeight: 1.08,
+        }}
+      >
+        {content.examTitle}
+      </h2>
 
-            <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              {content.examDescription}
-            </p>
-          </div>
+      <div
+        className="w-20 h-1.5 rounded-full mx-auto mb-5"
+        style={{
+          background: "linear-gradient(90deg, #D71920, #FACC15, #168A3A)",
+        }}
+      />
 
-          <div className="grid lg:grid-cols-12 gap-12 items-start">
-            <div className="lg:col-span-7 space-y-4 relative before:absolute before:left-6 before:top-4 before:bottom-4 before:w-0.5 before:bg-slate-200">
-              {visibleTimeline.map((t, index) => {
-                const termColor =
-                  index % 4 === 0
-                    ? colors.red
-                    : index % 4 === 1
-                    ? colors.green
-                    : index % 4 === 2
-                    ? colors.purple
-                    : colors.softPurple;
+      <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed">
+        {content.examDescription}
+      </p>
+    </div>
 
-                return (
-                  <motion.div
-                    key={t.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.05 }}
-                    className="group flex gap-5 relative z-10 p-5 rounded-3xl transition-all duration-300 hover:-translate-x-2 cursor-default"
+    <div className="grid lg:grid-cols-12 gap-10 items-stretch">
+      <div className="lg:col-span-7 space-y-5">
+        {visibleTimeline
+          .filter((t) => {
+            const term = String(t.term || "").toLowerCase();
+            return !term.includes("third terminal");
+          })
+          .map((t, index) => {
+            const termColor =
+              index === 0
+                ? colors.red
+                : index === 1
+                ? colors.green
+                : colors.purple;
+
+            return (
+              <motion.div
+                key={t.id}
+                initial={{ opacity: 0, x: -22 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.06 }}
+                className="group relative overflow-hidden rounded-[2rem] p-7 transition-all duration-300 hover:-translate-y-1"
+                style={{
+                  background:
+                    index === 0
+                      ? "linear-gradient(145deg, rgba(215,25,32,0.075), rgba(255,255,255,0.92))"
+                      : index === 1
+                      ? "linear-gradient(145deg, rgba(22,138,58,0.08), rgba(255,255,255,0.92))"
+                      : "linear-gradient(145deg, rgba(75,46,131,0.085), rgba(255,255,255,0.92))",
+                  border: `1px solid ${termColor}24`,
+                  boxShadow:
+                    "0 18px 48px rgba(15,23,42,0.07), inset 0 1px 0 rgba(255,255,255,0.9)",
+                }}
+              >
+                <div
+                  className="absolute -right-16 -top-16 h-44 w-44 rounded-full opacity-70 transition-all duration-500 group-hover:scale-125"
+                  style={{
+                    background: `${termColor}14`,
+                    filter: "blur(36px)",
+                  }}
+                />
+
+                <div className="relative z-10 flex items-center gap-6">
+                  <div
+                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-sm font-black text-white"
                     style={{
-                      background:
-                        "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.82))",
-                      border: `1px solid ${termColor}24`,
-                      boxShadow: "0 12px 32px rgba(11,16,32,0.06)",
-                      backdropFilter: "blur(16px)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.boxShadow =
-                        "0 20px 46px rgba(11,16,32,0.12)";
-                      e.currentTarget.style.borderColor = `${termColor}55`;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.boxShadow =
-                        "0 12px 32px rgba(11,16,32,0.06)";
-                      e.currentTarget.style.borderColor = `${termColor}24`;
+                      background: termColor,
+                      boxShadow: `0 16px 34px ${termColor}35`,
                     }}
                   >
+                    {String(index + 1).padStart(2, "0")}
+                  </div>
+
+                  <div>
                     <div
-                      className="w-12 h-12 rounded-full shrink-0 flex items-center justify-center text-sm font-black text-white"
+                      className="mb-4 h-1.5 w-20 rounded-full transition-all duration-300 group-hover:w-32"
+                      style={{ background: termColor }}
+                    />
+
+                    <h4
+                      className="text-2xl md:text-3xl font-black text-slate-950"
                       style={{
-                        background: termColor,
-                        boxShadow: `0 14px 32px ${termColor}30`,
+                        fontFamily: "var(--font-display)",
+                        letterSpacing: "-0.035em",
                       }}
                     >
-                      {String(index + 1).padStart(2, "0")}
-                    </div>
+                      {t.term}
+                    </h4>
 
-                    <div>
-                      <div
-                        className="w-14 h-1 rounded-full mb-3 transition-all duration-300 group-hover:w-24"
-                        style={{ background: termColor }}
-                      />
+                    <p className="text-base text-slate-500 mt-2">
+                      {t.timeframe}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+      </div>
 
-                      <h4
-                        className="font-black text-slate-950 text-xl"
-                        style={{
-                          fontFamily: "var(--font-display)",
-                          letterSpacing: "-0.025em",
-                        }}
-                      >
-                        {t.term}
-                      </h4>
+      <motion.div
+        className="group lg:col-span-5 h-full min-h-[420px] rounded-[2rem] p-8 md:p-9 flex flex-col justify-between overflow-hidden relative"
+        whileHover={{
+          y: -6,
+          scale: 1.01,
+        }}
+        style={{
+          background:
+            "radial-gradient(circle at top right, rgba(124,92,196,0.42), transparent 42%), linear-gradient(145deg, rgba(11,16,32,0.98), rgba(75,46,131,0.94))",
+          border: "1px solid rgba(255,255,255,0.16)",
+          boxShadow:
+            "0 28px 74px rgba(11,16,32,0.22), inset 0 1px 0 rgba(255,255,255,0.14)",
+        }}
+      >
+        <div
+          className="absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-70"
+          style={{
+            background: "rgba(124,92,196,0.24)",
+            filter: "blur(42px)",
+          }}
+        />
 
-                      <p className="text-sm text-slate-500 mt-1">
-                        {t.timeframe}
-                      </p>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+        <div
+          className="absolute -left-20 bottom-0 h-56 w-56 rounded-full opacity-50"
+          style={{
+            background: "rgba(22,138,58,0.14)",
+            filter: "blur(44px)",
+          }}
+        />
 
-            <motion.div
-              className="group lg:col-span-5 p-7 rounded-3xl space-y-6 transition-all duration-300 cursor-default"
-              whileHover={{
-                y: -8,
-                scale: 1.015,
-              }}
+        <div className="relative z-10">
+          <div
+            className="w-24 h-1.5 rounded-full mb-8 transition-all duration-300 group-hover:w-40"
+            style={{
+              background:
+                "linear-gradient(90deg, #D71920 0%, #FACC15 45%, #168A3A 100%)",
+            }}
+          />
+
+          <h3
+            className="font-black text-3xl md:text-4xl text-white leading-tight mb-6"
+            style={{
+              fontFamily: "var(--font-display)",
+              letterSpacing: "-0.045em",
+            }}
+          >
+            {content.continuousTitle}
+          </h3>
+
+          <p
+            className="text-base leading-relaxed max-w-md"
+            style={{ color: "rgba(255,255,255,0.72)" }}
+          >
+            {content.continuousDescription}
+          </p>
+        </div>
+
+        <div className="relative z-10 grid grid-cols-2 gap-4 mt-8">
+          {(content.ongoingAssessments || []).map((item) => (
+            <div
+              key={item}
+              className="rounded-2xl p-4 text-center font-black text-sm transition-all duration-300 hover:-translate-y-1"
               style={{
                 background:
-                  "linear-gradient(145deg, rgba(11,16,32,0.96), rgba(75,46,131,0.9))",
-                border: "1px solid rgba(255,255,255,0.12)",
-                boxShadow:
-                  "0 24px 64px rgba(11,16,32,0.18), inset 0 1px 0 rgba(255,255,255,0.12)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 32px 78px rgba(11,16,32,0.28), 0 0 0 1px rgba(255,255,255,0.16), inset 0 1px 0 rgba(255,255,255,0.14)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 24px 64px rgba(11,16,32,0.18), inset 0 1px 0 rgba(255,255,255,0.12)";
+                  "linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08))",
+                border: "1px solid rgba(255,255,255,0.16)",
+                color: "rgba(255,255,255,0.9)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12)",
               }}
             >
-              <div
-                className="w-20 h-1 rounded-full transition-all duration-300 group-hover:w-36"
-                style={{
-                  background: "linear-gradient(90deg, #D71920 0%, #168A3A 100%)",
-                }}
-              />
-
-              <h3
-                className="font-black text-2xl text-white"
-                style={{
-                  fontFamily: "var(--font-display)",
-                  letterSpacing: "-0.035em",
-                }}
-              >
-                {content.continuousTitle}
-              </h3>
-
-              <p
-                className="text-sm leading-relaxed"
-                style={{ color: "rgba(255,255,255,0.68)" }}
-              >
-                {content.continuousDescription}
-              </p>
-
-              <div className="grid grid-cols-2 gap-3">
-                {(content.ongoingAssessments || []).map((item) => (
-                  <div
-                    key={item}
-                    className="p-4 rounded-2xl text-center font-bold text-sm transition-all duration-300 hover:-translate-y-1"
-                    style={{
-                      background: "rgba(255,255,255,0.1)",
-                      border: "1px solid rgba(255,255,255,0.12)",
-                      color: "rgba(255,255,255,0.86)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.16)";
-                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)";
-                      e.currentTarget.style.boxShadow = "0 14px 30px rgba(0,0,0,0.18)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
+              {item}
+            </div>
+          ))}
         </div>
-      </section>
+      </motion.div>
+    </div>
+  </div>
+</section>
 
       <section className="pt-10 pb-24 text-center relative z-10">
         <motion.div
@@ -1075,7 +1226,8 @@ export function Academics() {
             e.currentTarget.style.borderColor = "rgba(22,138,58,0.2)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = "0 24px 70px rgba(11,16,32,0.09)";
+            e.currentTarget.style.boxShadow =
+              "0 24px 70px rgba(11,16,32,0.09)";
             e.currentTarget.style.borderColor = "rgba(15,23,42,0.08)";
           }}
         >
