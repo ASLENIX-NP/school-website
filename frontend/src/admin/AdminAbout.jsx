@@ -19,6 +19,7 @@ import {
   CalendarDays,
   Award,
   X,
+  MessageSquareText,
 } from "lucide-react";
 
 const colors = {
@@ -32,20 +33,14 @@ const colors = {
   lightPurple: "#F1ECFF",
   cyan: "#38BDF8",
   gold: "#FACC15",
+  orange: "#F97316",
 };
 
 const defaultAboutContent = {
   pageTitle: "About Us",
   pageSubtitle:
     "Learn about Baljagriti Secondary English School, our values, and our commitment to quality education.",
-  heroImageUrl:
-    "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=700&h=500&fit=crop&auto=format",
-  heroImageAlt: "Students in classroom with teacher",
-  floatingCardEmoji: "🏫",
-  floatingCardTitle: "Baljagriti Secondary English School",
-  floatingCardSubtitle: "Hetauda, Makwanpur",
-  topCardTitle: "PG to Grade 10",
-  topCardSubtitle: "Co-educational day school",
+  
   pillars: [
     {
       id: 1,
@@ -72,14 +67,7 @@ const defaultAboutContent = {
       visible: true,
     },
   ],
-  highlights: [
-    "Play Group to Grade 10",
-    "Co-educational day school",
-    "Located in Hetauda-2, Makwanpur",
-    "Child-friendly learning environment",
-    "Focus on academic and moral foundation",
-    "ECA, sports, arts, and competitions",
-  ],
+  
   storyBadge: "Our Story",
   storyTitle: "Building Tomorrow's Leaders Today",
   storyParagraphs: [
@@ -91,6 +79,34 @@ const defaultAboutContent = {
   storyImageAlt: "School campus",
   storyImageTitle: "School Campus",
   storyImageSubtitle: "Image can later be managed from admin dashboard",
+
+  // Section Headings
+  pillarBadge: "Our Core Values",
+  pillarTitle: "What Makes Us Different",
+  timelineBadge: "Timeline",
+
+  // Leadership Messages
+  messages: [
+    {
+      id: 1,
+      name: "Principal",
+      role: "Principal",
+      title: "Principal's Message",
+      message: "Welcome to Baljagriti Secondary English School. We are committed to nurturing every child into a confident, capable, disciplined, and compassionate individual. Our goal is to provide quality education with strong values, creativity, and academic excellence.",
+      image: "",
+      visible: true,
+    },
+    {
+      id: 2,
+      name: "Vice Principal",
+      role: "Vice Principal",
+      title: "Vice Principal's Message",
+      message: "Our team works tirelessly to provide a safe, inspiring, and academically rigorous environment for every student. We believe every child deserves care, guidance, and opportunities to grow academically, socially, and personally.",
+      image: "",
+      visible: true,
+    },
+  ],
+
   missionVision: [
     {
       id: 1,
@@ -109,6 +125,7 @@ const defaultAboutContent = {
       visible: true,
     },
   ],
+  
   journeyTitle: "Our Journey",
   journey: [
     {
@@ -149,9 +166,6 @@ function mergeAboutContent(saved = {}) {
     pillars: Array.isArray(saved.pillars)
       ? saved.pillars
       : defaultAboutContent.pillars,
-    highlights: Array.isArray(saved.highlights)
-      ? saved.highlights
-      : defaultAboutContent.highlights,
     storyParagraphs: Array.isArray(saved.storyParagraphs)
       ? saved.storyParagraphs
       : defaultAboutContent.storyParagraphs,
@@ -161,6 +175,12 @@ function mergeAboutContent(saved = {}) {
     journey: Array.isArray(saved.journey)
       ? saved.journey
       : defaultAboutContent.journey,
+    pillarBadge: saved.pillarBadge || defaultAboutContent.pillarBadge,
+    pillarTitle: saved.pillarTitle || defaultAboutContent.pillarTitle,
+    timelineBadge: saved.timelineBadge || defaultAboutContent.timelineBadge,
+    messages: Array.isArray(saved.messages)
+      ? saved.messages
+      : defaultAboutContent.messages,
   };
 }
 
@@ -361,33 +381,15 @@ function AboutPreview({ form }) {
   const visiblePillars = (form.pillars || []).filter(
     (item) => item.visible !== false
   );
-
+  const visibleMessages = (form.messages || []).filter(
+    (item) => item.visible !== false
+  );
   const visibleMissionVision = (form.missionVision || []).filter(
     (item) => item.visible !== false
   );
-
   const visibleJourney = (form.journey || []).filter(
     (item) => item.visible !== false
   );
-
-  const glanceItems = [
-    {
-      value: form.topCardTitle || "PG to Grade 10",
-      label: form.topCardSubtitle || "Co-educational day school",
-    },
-    {
-      value: visibleJourney[0]?.year || "2046 BS",
-      label: "Established",
-    },
-    {
-      value: form.floatingCardSubtitle || "Hetauda, Makwanpur",
-      label: "School Location",
-    },
-    {
-      value: "ECA",
-      label: "Sports, arts & activities",
-    },
-  ];
 
   return (
     <div
@@ -397,17 +399,19 @@ function AboutPreview({ form }) {
           "radial-gradient(circle at top right, rgba(124,92,196,0.18), transparent 34%), radial-gradient(circle at bottom left, rgba(22,138,58,0.14), transparent 32%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
       }}
     >
+      {/* Header */}
       <div className="text-center mb-8">
-        <span
-          className="inline-block px-4 py-1.5 rounded-full text-sm font-bold mb-4"
+        <div
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold mb-4"
           style={{
-            background: "rgba(215,25,32,0.08)",
+            background: "rgba(215,25,32,0.07)",
             color: colors.red,
             border: "1px solid rgba(215,25,32,0.14)",
           }}
         >
+          <span className="w-2 h-2 rounded-full" style={{ background: colors.red }} />
           School Profile
-        </span>
+        </div>
 
         <h3
           className="text-4xl text-slate-950"
@@ -420,137 +424,39 @@ function AboutPreview({ form }) {
           {form.pageTitle || "About Us"}
         </h3>
 
-        <p className="text-sm text-slate-500 mt-3 leading-relaxed">
+        <div 
+          className="w-20 h-1 rounded-full mx-auto my-4" 
+          style={{ background: `linear-gradient(90deg, ${colors.red}, ${colors.gold}, ${colors.green})` }} 
+        />
+
+        <p className="text-sm text-slate-500 mt-3 leading-relaxed max-w-2xl mx-auto">
           {form.pageSubtitle}
         </p>
       </div>
 
-      <div
-        className="rounded-3xl overflow-hidden bg-white mb-5 relative"
-        style={{
-          border: "1px solid rgba(15,23,42,0.08)",
-          boxShadow: "0 14px 34px rgba(15,23,42,0.08)",
-        }}
-      >
-        <PreviewImage
-          src={form.heroImageUrl}
-          alt={form.heroImageAlt || "About image"}
-        />
-
-        <div
-          className="absolute top-4 left-4 rounded-2xl px-4 py-3"
-          style={{
-            background: "rgba(255,255,255,0.92)",
-            border: "1px solid rgba(75,46,131,0.14)",
-            backdropFilter: "blur(12px)",
-          }}
-        >
-          <div
-            className="w-10 h-1 rounded-full mb-2"
-            style={{ background: colors.green }}
-          />
-
-          <div className="text-sm font-bold text-slate-950">
-            {form.topCardTitle}
-          </div>
-
-          <div className="text-xs text-slate-500">
-            {form.topCardSubtitle}
-          </div>
-        </div>
-      </div>
-
-      <div
-        className="rounded-3xl p-5 mb-8"
-        style={{
-          background: `linear-gradient(135deg, ${colors.dark}, ${colors.purple})`,
-          border: "1px solid rgba(255,255,255,0.12)",
-          boxShadow: "0 16px 42px rgba(11,16,32,0.16)",
-        }}
-      >
-        <div
-          className="w-16 h-1 rounded-full mb-5"
-          style={{
-            background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
-          }}
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          {glanceItems.map((item) => (
-            <div key={`${item.value}-${item.label}`}>
-              <div className="text-xl font-black text-white">{item.value}</div>
-              <div
-                className="text-xs mt-1"
-                style={{ color: "rgba(255,255,255,0.65)" }}
-              >
-                {item.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
+      {/* Story Section */}
       <div className="mb-8">
-        <div className="text-xl font-black text-slate-950 mb-4">
-          Pillar Cards
-        </div>
-
-        <div className="space-y-4">
-          {visiblePillars.map((item, index) => {
-            const pillarColor = item.color || colors.green;
-
-            return (
-              <div
-                key={item.id}
-                className="bg-white rounded-2xl p-4"
-                style={{
-                  border: `1px solid ${pillarColor}22`,
-                  boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-                }}
-              >
-                <div
-                  className="text-sm font-black tracking-widest mb-3"
-                  style={{ color: pillarColor }}
-                >
-                  {String(index + 1).padStart(2, "0")}
-                </div>
-
-                <div
-                  className="w-16 h-1 rounded-full mb-4"
-                  style={{ background: pillarColor }}
-                />
-
-                <div className="font-black text-slate-950">{item.label}</div>
-
-                <div className="text-sm text-slate-500 mt-1 leading-relaxed">
-                  {item.desc}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="mb-8">
-        <div
-          className="inline-flex px-4 py-1.5 rounded-full text-sm font-bold mb-4"
-          style={{
-            background: "rgba(75,46,131,0.09)",
-            color: colors.purple,
-            border: "1px solid rgba(75,46,131,0.18)",
-          }}
-        >
-          {form.storyBadge}
+        <div className="text-center mb-4">
+          <span
+            className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold"
+            style={{
+              background: "rgba(75,46,131,0.09)",
+              color: colors.purple,
+              border: "1px solid rgba(75,46,131,0.18)",
+            }}
+          >
+            {form.storyBadge}
+          </span>
         </div>
 
         <div
-          className="bg-white rounded-3xl p-5 mb-5"
+          className="bg-white rounded-3xl p-5 mb-4"
           style={{
-            border: "1px solid rgba(15,23,42,0.08)",
+            border: "1px solid rgba(75,46,131,0.08)",
             boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
           }}
         >
-          <div className="text-3xl font-black text-slate-950 leading-tight">
+          <div className="text-2xl font-black text-slate-950 leading-tight">
             {form.storyTitle}
           </div>
 
@@ -592,11 +498,130 @@ function AboutPreview({ form }) {
         </div>
       </div>
 
+      {/* Pillars - Our Core Values */}
       <div className="mb-8">
-        <div className="text-xl font-black text-slate-950 mb-4">
-          Mission / Vision
+        <div className="text-center mb-4">
+          <span
+            className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold"
+            style={{
+              background: "rgba(22,138,58,0.08)",
+              color: colors.green,
+              border: "1px solid rgba(22,138,58,0.14)",
+            }}
+          >
+            {form.pillarBadge || "Our Core Values"}
+          </span>
+          <div className="text-2xl font-black text-slate-950 mt-2">
+            {form.pillarTitle || "What Makes Us Different"}
+          </div>
         </div>
 
+        <div className="space-y-4">
+          {visiblePillars.map((item, index) => {
+            const pillarColor = item.color || colors.green;
+
+            return (
+              <div
+                key={item.id}
+                className="bg-white rounded-3xl p-5"
+                style={{
+                  border: `2px solid ${pillarColor}22`,
+                  boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
+                }}
+              >
+                <div
+                  className="text-2xl font-black tracking-widest mb-3"
+                  style={{ color: pillarColor }}
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </div>
+
+                <div
+                  className="w-16 h-1 rounded-full mb-4"
+                  style={{ background: pillarColor }}
+                />
+
+                <div className="font-bold text-xl text-slate-950">{item.label}</div>
+
+                <div className="text-sm text-slate-500 mt-2 leading-relaxed">
+                  {item.desc}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Leadership Messages */}
+      <div className="mb-8">
+        <div className="text-center mb-4">
+          <span
+            className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold"
+            style={{
+              background: "rgba(75,46,131,0.09)",
+              color: colors.purple,
+              border: "1px solid rgba(75,46,131,0.18)",
+            }}
+          >
+            Leadership Messages
+          </span>
+          <div className="text-2xl font-black text-slate-950 mt-2">
+            Messages From Leadership
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {visibleMessages.map((item, index) => (
+            <div
+              key={item.id}
+              className="bg-white rounded-3xl p-5"
+              style={{
+                border: "1px solid rgba(75,46,131,0.08)",
+                boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
+              }}
+            >
+              <div className="flex items-center gap-4 mb-4">
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-14 h-14 rounded-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center"
+                    style={{
+                      background: "rgba(75,46,131,0.1)",
+                      border: "1px solid rgba(75,46,131,0.2)",
+                    }}
+                  >
+                    <span className="text-lg font-bold" style={{ color: colors.purple }}>
+                      {item.name?.charAt(0) || "M"}
+                    </span>
+                  </div>
+                )}
+                <div>
+                  <div className="font-bold text-slate-950">{item.name}</div>
+                  <div className="text-sm" style={{ color: colors.green }}>
+                    {item.role}
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-xl font-black text-slate-950 mb-3">
+                {item.title}
+              </div>
+
+              <p className="text-sm text-slate-500 leading-relaxed">
+                {item.message}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Mission & Vision */}
+      <div className="mb-8">
         <div className="space-y-4">
           {visibleMissionVision.map((item, index) => {
             const cardColor = item.color || colors.green;
@@ -606,12 +631,12 @@ function AboutPreview({ form }) {
                 key={item.id}
                 className="bg-white rounded-3xl p-5"
                 style={{
-                  border: `1px solid ${cardColor}22`,
+                  border: `2px solid ${cardColor}22`,
                   boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
                 }}
               >
                 <div
-                  className="text-sm font-black tracking-widest mb-3"
+                  className="text-2xl font-black tracking-widest mb-3"
                   style={{ color: cardColor }}
                 >
                   {String(index + 1).padStart(2, "0")}
@@ -635,47 +660,69 @@ function AboutPreview({ form }) {
         </div>
       </div>
 
+      {/* Journey Timeline */}
       <div>
-        <div className="text-center mb-6">
-          <div className="text-3xl font-black text-slate-950">
+        <div className="text-center mb-4">
+          <span
+            className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold"
+            style={{
+              background: "rgba(215,25,32,0.08)",
+              color: colors.red,
+              border: "1px solid rgba(215,25,32,0.14)",
+            }}
+          >
+            {form.timelineBadge || "Timeline"}
+          </span>
+          <div className="text-2xl font-black text-slate-950 mt-2">
             {form.journeyTitle}
           </div>
         </div>
 
         <div className="space-y-4">
-          {visibleJourney.map((item, index) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-3xl p-5"
-              style={{
-                border: "1px solid rgba(15,23,42,0.08)",
-                boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-              }}
-            >
-              <div className="flex items-start gap-4">
-                <div
-                  className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-black"
-                  style={{ background: colors.dark }}
-                >
-                  {String(index + 1).padStart(2, "0")}
-                </div>
+          {visibleJourney.map((item, index) => {
+            const journeyColors = [colors.red, colors.orange, colors.gold, colors.green];
+            const journeyColor = journeyColors[index % journeyColors.length];
 
-                <div>
-                  <div className="font-bold" style={{ color: colors.green }}>
-                    {item.year}
+            return (
+              <div
+                key={item.id}
+                className="bg-white rounded-3xl p-5"
+                style={{
+                  border: `2px solid ${journeyColor}15`,
+                  boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
+                }}
+              >
+                <div className="flex items-start gap-4">
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-black"
+                    style={{
+                      background: `linear-gradient(135deg, ${journeyColor}, ${colors.dark})`,
+                      boxShadow: `0 8px 20px ${journeyColor}44`,
+                    }}
+                  >
+                    {String(index + 1).padStart(2, "0")}
                   </div>
 
-                  <div className="text-xl font-black text-slate-950 mt-1">
-                    {item.title}
-                  </div>
+                  <div>
+                    <div
+                      className="text-sm font-black tracking-widest"
+                      style={{ color: journeyColor }}
+                    >
+                      {item.year}
+                    </div>
 
-                  <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-                    {item.desc}
-                  </p>
+                    <div className="text-xl font-black text-slate-950 mt-1">
+                      {item.title}
+                    </div>
+
+                    <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                      {item.desc}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
@@ -747,6 +794,40 @@ export default function AdminAbout() {
     setForm((prev) => ({
       ...prev,
       pillars: prev.pillars.filter((item) => item.id !== id),
+    }));
+  };
+
+  const updateMessage = (id, field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      messages: prev.messages.map((item) =>
+        item.id === id ? { ...item, [field]: value } : item
+      ),
+    }));
+  };
+
+  const addMessage = () => {
+    setForm((prev) => ({
+      ...prev,
+      messages: [
+        ...prev.messages,
+        {
+          id: Date.now(),
+          name: "",
+          role: "",
+          title: "",
+          message: "",
+          image: "",
+          visible: true,
+        },
+      ],
+    }));
+  };
+
+  const deleteMessage = (id) => {
+    setForm((prev) => ({
+      ...prev,
+      messages: prev.messages.filter((item) => item.id !== id),
     }));
   };
 
@@ -1002,10 +1083,7 @@ export default function AdminAbout() {
           </h1>
 
           <p className="text-slate-500 max-w-3xl text-lg">
-            Edit about heading, school images, pillar cards, story, mission,
-            vision, and journey timeline. Icon and old highlight editing is
-            hidden because the public page now uses a cleaner number-and-line
-            layout.
+            Edit about heading, story section, leadership messages, pillar cards, mission, vision, and journey timeline.
           </p>
         </motion.div>
 
@@ -1038,9 +1116,10 @@ export default function AdminAbout() {
 
         <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start">
           <div className="space-y-8">
+            {/* Header Section */}
             <EditorCard
               icon={Type}
-              title="Top About Section"
+              title="Header Section"
               color={colors.purple}
             >
               <div className="grid gap-5">
@@ -1056,125 +1135,10 @@ export default function AdminAbout() {
                   onChange={(value) => updateField("pageSubtitle", value)}
                   rows={3}
                 />
-
-                <ImageUploadBox
-                  label="Main About Image"
-                  imageUrl={form.heroImageUrl}
-                  uploading={uploadingKey === "heroImageUrl"}
-                  instruction="Recommended: 1200×800 px landscape, PNG/JPG/WebP, max 3 MB."
-                  onUpload={(file) => uploadImage("heroImageUrl", file)}
-                  onRemove={() => updateField("heroImageUrl", "")}
-                />
-
-                <Field
-                  label="Image Alt Text"
-                  value={form.heroImageAlt}
-                  onChange={(value) => updateField("heroImageAlt", value)}
-                />
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <Field
-                    label="Top Small Card Title"
-                    value={form.topCardTitle}
-                    onChange={(value) => updateField("topCardTitle", value)}
-                  />
-
-                  <Field
-                    label="Top Small Card Subtitle"
-                    value={form.topCardSubtitle}
-                    onChange={(value) => updateField("topCardSubtitle", value)}
-                  />
-                </div>
-
-                <Field
-                  label="School Location Text"
-                  value={form.floatingCardSubtitle}
-                  onChange={(value) =>
-                    updateField("floatingCardSubtitle", value)
-                  }
-                  placeholder="Example: Hetauda, Makwanpur"
-                />
               </div>
             </EditorCard>
 
-            <EditorCard icon={Award} title="Pillar Cards" color={colors.red}>
-              <div className="flex justify-end mb-6">
-                <button
-                  type="button"
-                  onClick={addPillar}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
-                  style={{
-                    background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
-                  }}
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Pillar
-                </button>
-              </div>
-
-              <div className="space-y-5">
-                {form.pillars.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="rounded-3xl p-5"
-                    style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-5">
-                      <div>
-                        <div className="font-black text-slate-950">
-                          Pillar {index + 1}
-                        </div>
-
-                        <div className="text-sm text-slate-500">
-                          {item.label}
-                        </div>
-                      </div>
-
-                      <VisibilityDeleteControls
-                        visible={item.visible}
-                        onToggle={() =>
-                          updatePillar(item.id, "visible", !item.visible)
-                        }
-                        onDelete={() => deletePillar(item.id)}
-                      />
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <Field
-                        label="Label"
-                        value={item.label}
-                        onChange={(value) =>
-                          updatePillar(item.id, "label", value)
-                        }
-                      />
-
-                      <Field
-                        label="Accent Color"
-                        type="color"
-                        value={item.color}
-                        onChange={(value) =>
-                          updatePillar(item.id, "color", value)
-                        }
-                      />
-                    </div>
-
-                    <div className="mt-4">
-                      <TextArea
-                        label="Description"
-                        value={item.desc}
-                        onChange={(value) =>
-                          updatePillar(item.id, "desc", value)
-                        }
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </EditorCard>
-
+            {/* Story Section */}
             <EditorCard
               icon={BookOpen}
               title="Story Section"
@@ -1241,9 +1205,231 @@ export default function AdminAbout() {
               </div>
             </EditorCard>
 
+            {/* Section Headings */}
+            <EditorCard
+              icon={Award}
+              title="Section Headings"
+              color={colors.green}
+            >
+              <div className="grid gap-5">
+                <Field
+                  label="Pillar Badge"
+                  value={form.pillarBadge}
+                  onChange={(value) => updateField("pillarBadge", value)}
+                  placeholder="Our Core Values"
+                />
+
+                <Field
+                  label="Pillar Title"
+                  value={form.pillarTitle}
+                  onChange={(value) => updateField("pillarTitle", value)}
+                  placeholder="What Makes Us Different"
+                />
+
+                <Field
+                  label="Timeline Badge"
+                  value={form.timelineBadge}
+                  onChange={(value) => updateField("timelineBadge", value)}
+                  placeholder="Timeline"
+                />
+              </div>
+            </EditorCard>
+
+            {/* Pillar Cards - Our Core Values */}
+            <EditorCard icon={Award} title="Pillar Cards - Our Core Values" color={colors.red}>
+              <div className="flex justify-end mb-6">
+                <button
+                  type="button"
+                  onClick={addPillar}
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Pillar
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                {form.pillars.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="rounded-3xl p-5"
+                    style={{
+                      background: "rgba(15,23,42,0.04)",
+                      border: "1px solid rgba(15,23,42,0.08)",
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-5">
+                      <div>
+                        <div className="font-black text-slate-950">
+                          Pillar {index + 1}
+                        </div>
+
+                        <div className="text-sm text-slate-500">
+                          {item.label}
+                        </div>
+                      </div>
+
+                      <VisibilityDeleteControls
+                        visible={item.visible}
+                        onToggle={() =>
+                          updatePillar(item.id, "visible", !item.visible)
+                        }
+                        onDelete={() => deletePillar(item.id)}
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <Field
+                        label="Label"
+                        value={item.label}
+                        onChange={(value) =>
+                          updatePillar(item.id, "label", value)
+                        }
+                      />
+
+                      <Field
+                        label="Accent Color"
+                        type="color"
+                        value={item.color}
+                        onChange={(value) =>
+                          updatePillar(item.id, "color", value)
+                        }
+                      />
+                    </div>
+                    
+                  </div>
+                ))}
+              </div>
+            </EditorCard>
+
+            {/* Leadership Messages */}
+            <EditorCard
+              icon={MessageSquareText}
+              title="Leadership Messages"
+              color={colors.purple}
+            >
+              <div className="flex justify-end mb-6">
+                <button
+                  type="button"
+                  onClick={addMessage}
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Message
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                {form.messages?.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="rounded-3xl p-5"
+                    style={{
+                      background: "rgba(15,23,42,0.04)",
+                      border: "1px solid rgba(15,23,42,0.08)",
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-5">
+                      <div>
+                        <div className="font-black text-slate-950">
+                          Message {index + 1}
+                        </div>
+                        <div className="text-sm text-slate-500">
+                          {item.name}
+                        </div>
+                      </div>
+
+                      <VisibilityDeleteControls
+                        visible={item.visible}
+                        onToggle={() =>
+                          updateMessage(item.id, "visible", !item.visible)
+                        }
+                        onDelete={() => deleteMessage(item.id)}
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <Field
+                        label="Name"
+                        value={item.name}
+                        onChange={(value) =>
+                          updateMessage(item.id, "name", value)
+                        }
+                      />
+
+                      <Field
+                        label="Role"
+                        value={item.role}
+                        onChange={(value) =>
+                          updateMessage(item.id, "role", value)
+                        }
+                      />
+                    </div>
+
+                    <div className="mt-4">
+                      <Field
+                        label="Title"
+                        value={item.title}
+                        onChange={(value) =>
+                          updateMessage(item.id, "title", value)
+                        }
+                      />
+                    </div>
+
+                    <div className="mt-4">
+                      <TextArea
+                        label="Message"
+                        value={item.message}
+                        onChange={(value) =>
+                          updateMessage(item.id, "message", value)
+                        }
+                      />
+                    </div>
+
+                    <div className="mt-4">
+  <ImageUploadBox
+    label="Leadership Photo"
+    imageUrl={item.image}
+    uploading={uploadingKey === `message-${item.id}`}
+    instruction="Upload Principal/Vice Principal photo"
+    onUpload={async (file) => {
+      if (!file) return;
+    
+      const formData = new FormData();
+      formData.append("file", file);
+    
+      const res = await axios.post(
+        "http://localhost:5000/api/upload",
+        formData
+      );
+    
+      const uploadedUrl =
+        res.data?.url ||
+        res.data?.imageUrl ||
+        res.data?.data?.url;
+    
+      updateMessage(item.id, "image", uploadedUrl);
+    }}
+    onRemove={() =>
+      updateMessage(item.id, "image", "")
+    }
+  />
+</div>
+                  </div>
+                ))}
+              </div>
+            </EditorCard>
+
+            {/* Mission & Vision */}
             <EditorCard
               icon={Target}
-              title="Mission / Vision Cards"
+              title="Mission & Vision Cards"
               color={colors.green}
             >
               <div className="flex justify-end mb-6">
@@ -1284,11 +1470,7 @@ export default function AdminAbout() {
                       <VisibilityDeleteControls
                         visible={item.visible}
                         onToggle={() =>
-                          updateMissionVision(
-                            item.id,
-                            "visible",
-                            !item.visible
-                          )
+                          updateMissionVision(item.id, "visible", !item.visible)
                         }
                         onDelete={() => deleteMissionVision(item.id)}
                       />
@@ -1327,6 +1509,7 @@ export default function AdminAbout() {
               </div>
             </EditorCard>
 
+            {/* Journey Timeline */}
             <EditorCard
               icon={CalendarDays}
               title="Journey Timeline"
@@ -1416,7 +1599,7 @@ export default function AdminAbout() {
           </div>
 
           <aside
-            className="rounded-3xl overflow-hidden"
+            className="sticky top-28 self-start rounded-3xl overflow-hidden"
             style={{
               background:
                 "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
@@ -1431,11 +1614,11 @@ export default function AdminAbout() {
               </div>
 
               <div className="text-sm text-white/55">
-                Preview updates while editing.
+                Full preview updates while editing. Scroll to see all content.
               </div>
             </div>
 
-            <div className="bg-white">
+            <div className="bg-white max-h-[calc(100vh-200px)] overflow-y-auto">
               <AboutPreview form={form} />
             </div>
           </aside>

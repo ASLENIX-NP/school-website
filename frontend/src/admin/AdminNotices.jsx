@@ -575,14 +575,23 @@ export default function AdminNotices() {
         }}
       >
         <div className="max-w-[1600px] mx-auto px-6 h-20 flex items-center justify-between">
-          <Link
-            to="/admin/dashboard"
-            className="inline-flex items-center gap-2 text-white font-bold"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back to Dashboard
-          </Link>
-
+        <Link
+  to="/admin/dashboard"
+  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all hover:scale-105"
+  style={{
+    color: "#FFFFFF",
+    background: "rgba(255,255,255,0.08)",
+    border: "1px solid rgba(255,255,255,0.12)",
+  }}
+>
+  <ArrowLeft
+    className="w-5 h-5"
+    style={{ color: "#FFFFFF" }}
+  />
+  <span style={{ color: "#FFFFFF" }}>
+    Back to Dashboard
+  </span>
+</Link>
           <div className="flex items-center gap-3">
             <a
               href="/notices"
