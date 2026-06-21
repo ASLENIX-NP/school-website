@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Bell } from "lucide-react";
 
 const colors = {
   red: "#D71920",
@@ -8,6 +7,8 @@ const colors = {
   purple: "#4B2E83",
   dark: "#0B1020",
   cream: "#FFF8EE",
+  gold: "#FACC15",
+  cyan: "#38BDF8",
 };
 
 const defaultSettings = {
@@ -18,9 +19,9 @@ const defaultSettings = {
   calendar_title: "Nepali Calendar",
   calendar_subtitle: "Nepali date reference",
   calendar_embed_url: "https://www.hamropatro.com/widgets/calender-small.php",
-  sidebar_title: "Admin Ready",
+  sidebar_title: "Need Assistance?",
   sidebar_description:
-    "Notice title, date, category, description and PDF file can come directly from the admin dashboard.",
+    "For questions about notices, admissions, examinations, or official documents, please contact the school office.",
   sidebar_button_text: "Contact School Office",
   sidebar_button_link: "/contact",
 };
@@ -38,98 +39,92 @@ const formatNoticeDate = (dateValue) => {
   });
 };
 
+function normalizeNotice(notice = {}) {
+  return {
+    id: notice.id,
+    title: notice.title || "",
+    category: notice.category || "General",
+    notice_date: notice.notice_date || notice.date || "",
+    description: notice.description || "",
+    pdf_url: notice.pdf_url || notice.pdfUrl || "",
+    pinned: Boolean(notice.pinned),
+    created_at: notice.created_at || notice.createdAt || "",
+  };
+}
+
+function getTime(value) {
+  const time = new Date(value || 0).getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
+
 function sortNoticesNewestFirst(notices = []) {
   return [...notices].sort((a, b) => {
     const pinnedA = a.pinned ? 1 : 0;
     const pinnedB = b.pinned ? 1 : 0;
 
-    if (pinnedA !== pinnedB) {
-      return pinnedB - pinnedA;
-    }
+    if (pinnedA !== pinnedB) return pinnedB - pinnedA;
 
-    const dateA = new Date(
-      a.notice_date || a.date || a.created_at || 0
-    ).getTime();
+    const createdA = getTime(a.created_at);
+    const createdB = getTime(b.created_at);
 
-    const dateB = new Date(
-      b.notice_date || b.date || b.created_at || 0
-    ).getTime();
+    if (createdA !== createdB) return createdB - createdA;
+
+    const dateA = getTime(a.notice_date);
+    const dateB = getTime(b.notice_date);
 
     return dateB - dateA;
   });
 }
 
 function NoticeCard({ notice, index }) {
-  const noticeDate = formatNoticeDate(notice.notice_date || notice.date);
   const isPinned = notice.pinned === true;
   const accentColor = isPinned ? colors.red : colors.green;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 28 }}
+    <motion.article
+      initial={{ opacity: 0, y: 22 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.55, delay: index * 0.08 }}
-      className="group relative overflow-hidden rounded-3xl transition-all duration-300 hover:-translate-y-2 cursor-default"
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.45, delay: Math.min(index * 0.05, 0.25) }}
+      className="group relative overflow-hidden rounded-[28px] bg-white transition-all duration-300 hover:-translate-y-1"
       style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.82))",
-        border: `1px solid ${accentColor}22`,
+        border: "1px solid rgba(15,23,42,0.08)",
         boxShadow:
-          "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
-        backdropFilter: "blur(16px)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = `0 26px 64px rgba(11,16,32,0.14), 0 0 0 1px ${accentColor}22`;
-        e.currentTarget.style.borderColor = `${accentColor}55`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow =
-          "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)";
-        e.currentTarget.style.borderColor = `${accentColor}22`;
+          "0 16px 44px rgba(15,23,42,0.075), inset 0 1px 0 rgba(255,255,255,0.9)",
       }}
     >
-      <div className="grid md:grid-cols-[150px_1fr_auto] gap-6 items-start p-6 md:p-7">
-        <div
-          className="rounded-2xl p-4"
-          style={{
-            background:
-              "linear-gradient(145deg, rgba(248,250,252,0.96), rgba(255,255,255,0.86))",
-            border: "1px solid rgba(15,23,42,0.06)",
-          }}
-        >
-          <div
-            className="w-14 h-1 rounded-full mb-4 transition-all duration-300 group-hover:w-20"
-            style={{
-              background: isPinned
-                ? `linear-gradient(90deg, ${colors.red}, ${colors.green})`
-                : accentColor,
-            }}
-          />
+      <div
+        className="absolute left-0 top-0 h-full w-1.5 transition-all duration-300 group-hover:w-2"
+        style={{
+          background: `linear-gradient(180deg, ${accentColor}, ${colors.purple})`,
+        }}
+      />
 
-          <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400 mb-2">
-            Notice Date
+      <div className="grid gap-5 p-6 pl-8 md:grid-cols-[145px_1fr_170px] md:items-center">
+        <div>
+          <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+            Date
           </div>
 
-          <div className="text-sm font-bold text-slate-800">{noticeDate}</div>
-        </div>
+          <div className="mt-2 text-base font-black text-slate-900">
+            {formatNoticeDate(notice.notice_date)}
+          </div>
 
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-3">
+          <div className="mt-4 flex flex-wrap gap-2">
             <span
-              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
+              className="rounded-full px-3 py-1 text-xs font-black"
               style={{
                 background: `${accentColor}10`,
                 color: accentColor,
-                border: `1px solid ${accentColor}22`,
+                border: `1px solid ${accentColor}24`,
               }}
             >
-              {notice.category || "Notice"}
+              {notice.category || "General"}
             </span>
 
             {isPinned && (
               <span
-                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
+                className="rounded-full px-3 py-1 text-xs font-black"
                 style={{
                   background: "rgba(215,25,32,0.08)",
                   color: colors.red,
@@ -140,74 +135,119 @@ function NoticeCard({ notice, index }) {
               </span>
             )}
           </div>
+        </div>
 
+        <div className="min-w-0">
           <h3
-            className="text-2xl md:text-3xl mb-3 transition-colors duration-300 group-hover:text-green-700"
+            className="text-2xl text-slate-950 transition-colors duration-300 group-hover:text-green-700"
             style={{
               fontFamily: "var(--font-display)",
               fontWeight: 850,
-              color: colors.dark,
               letterSpacing: "-0.035em",
-              lineHeight: 1.1,
+              lineHeight: 1.12,
             }}
           >
             {notice.title || "School Notice"}
           </h3>
 
-          <p className="text-base leading-relaxed text-slate-500">
+          <p className="mt-3 text-base leading-relaxed text-slate-500">
             {notice.description || "Please open this notice for more details."}
           </p>
         </div>
 
-        <div className="flex md:justify-end">
+        <div className="flex flex-col gap-3 md:items-end">
           {notice.pdf_url ? (
-            <div className="flex flex-col sm:flex-row md:flex-col gap-3 md:items-end">
+            <>
               <a
                 href={notice.pdf_url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center px-5 py-3 rounded-2xl text-sm font-bold transition-all duration-300 hover:-translate-y-1"
+                className="inline-flex w-full items-center justify-center rounded-2xl px-5 py-3 text-sm font-black transition-all duration-300 hover:-translate-y-0.5 md:w-auto"
                 style={{
-                  color: "#0F172A",
+                  color: colors.dark,
                   background: "#FFFFFF",
                   border: "1px solid rgba(15,23,42,0.12)",
-                  boxShadow: "0 10px 26px rgba(15,23,42,0.08)",
+                  boxShadow: "0 10px 24px rgba(15,23,42,0.07)",
                 }}
               >
                 View PDF
               </a>
 
               <a
-                href={notice.pdf_url}
-                download
-                className="inline-flex items-center justify-center px-5 py-3 rounded-2xl text-sm font-bold transition-all duration-300 hover:-translate-y-1"
-                style={{
-                  color: "#FFFFFF",
-                  background: `linear-gradient(135deg, ${colors.green}, ${colors.purple})`,
-                  boxShadow: "0 14px 34px rgba(22,138,58,0.2)",
-                }}
-              >
-                Download PDF
-              </a>
-            </div>
+  href={notice.pdf_url}
+  download
+  className="inline-flex w-full items-center justify-center rounded-2xl px-5 py-3 text-sm font-black transition-all duration-300 hover:-translate-y-0.5 md:w-auto"
+  style={{
+    color: "#FFFFFF",
+    background: colors.dark,
+    border: "1px solid rgba(15,23,42,0.14)",
+    boxShadow: "0 12px 28px rgba(15,23,42,0.18)",
+  }}
+>
+  Download
+</a>
+            </>
           ) : (
-            <span className="text-sm font-semibold text-slate-400">
-              No PDF attached
+            <span className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-400">
+              No PDF
             </span>
           )}
         </div>
       </div>
-    </motion.div>
+    </motion.article>
+  );
+}
+
+function EmptyNotice() {
+  return (
+    <div
+      className="rounded-[30px] p-10 text-center"
+      style={{
+        background:
+          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.82))",
+        border: "1px solid rgba(15,23,42,0.08)",
+        boxShadow:
+          "0 16px 44px rgba(15,23,42,0.075), inset 0 1px 0 rgba(255,255,255,0.9)",
+      }}
+    >
+      <div
+        className="mx-auto mb-5 h-1.5 w-24 rounded-full"
+        style={{
+          background: `linear-gradient(90deg, ${colors.red}, ${colors.green}, ${colors.purple})`,
+        }}
+      />
+
+      <h3
+        className="text-3xl text-slate-950"
+        style={{
+          fontFamily: "var(--font-display)",
+          fontWeight: 850,
+          letterSpacing: "-0.04em",
+        }}
+      >
+        No notices available
+      </h3>
+
+      <p className="mx-auto mt-3 max-w-xl text-slate-500">
+        New school notices will appear here once they are added from the admin
+        dashboard.
+      </p>
+    </div>
   );
 }
 
 export default function Notices() {
   const [notices, setNotices] = useState([]);
   const [settings, setSettings] = useState(defaultSettings);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchNotices();
-    fetchSettings();
+    const loadNoticePage = async () => {
+      await Promise.all([fetchNotices(), fetchSettings()]);
+      setLoading(false);
+    };
+
+    loadNoticePage();
   }, []);
 
   const fetchNotices = async () => {
@@ -216,11 +256,14 @@ export default function Notices() {
       const result = await response.json();
 
       if (result.success) {
-        const noticeList = Array.isArray(result.data) ? result.data : [];
+        const noticeList = Array.isArray(result.data)
+          ? result.data.map(normalizeNotice)
+          : [];
+
         setNotices(sortNoticesNewestFirst(noticeList));
       }
     } catch (error) {
-      console.error(error);
+      console.error("Fetch notices error:", error);
     }
   };
 
@@ -236,105 +279,178 @@ export default function Notices() {
         });
       }
     } catch (error) {
-      console.error(error);
+      console.error("Fetch notice settings error:", error);
     }
   };
+
+  const latestNoticeDate = notices.length
+    ? formatNoticeDate(notices[0].notice_date)
+    : "No notices";
+
+  const importantCount = notices.filter((notice) => notice.pinned).length;
 
   return (
     <section
       className="min-h-screen pt-32 pb-24 relative overflow-hidden"
       style={{
         background: `
-          radial-gradient(circle at top right, rgba(124,92,196,0.18), transparent 34%),
-          radial-gradient(circle at bottom left, rgba(22,138,58,0.14), transparent 32%),
-          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
+          radial-gradient(circle at top right, rgba(75,46,131,0.12), transparent 34%),
+          radial-gradient(circle at bottom left, rgba(22,138,58,0.10), transparent 32%),
+          linear-gradient(180deg, #FFF8EE 0%, #F8FAFC 58%, #F1ECFF 100%)
         `,
       }}
     >
       <div
-        className="absolute top-0 right-0 w-[520px] h-[520px] rounded-full pointer-events-none"
+        className="absolute top-24 right-10 h-72 w-72 rounded-full pointer-events-none"
         style={{
           background:
-            "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
-          filter: "blur(8px)",
+            "radial-gradient(circle, rgba(75,46,131,0.10), transparent 70%)",
+          filter: "blur(10px)",
         }}
       />
 
       <div
-        className="absolute bottom-0 left-0 w-[420px] h-[420px] rounded-full pointer-events-none"
+        className="absolute bottom-16 left-8 h-72 w-72 rounded-full pointer-events-none"
         style={{
           background:
-            "radial-gradient(circle, rgba(22,138,58,0.11), transparent 70%)",
-          filter: "blur(8px)",
+            "radial-gradient(circle, rgba(22,138,58,0.09), transparent 70%)",
+          filter: "blur(10px)",
         }}
       />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 28 }}
+          initial={{ opacity: 0, y: 26 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.65 }}
-          className="text-center mb-14"
+          transition={{ duration: 0.55 }}
+          className="mb-12"
         >
-          <span
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-5"
-            style={{
-              background: "rgba(215,25,32,0.08)",
-              color: colors.red,
-              border: "1px solid rgba(215,25,32,0.16)",
-            }}
-          >
-            <Bell className="w-4 h-4" />
-            {settings.page_badge}
-          </span>
+          <div className="grid gap-8 lg:grid-cols-[1fr_390px] lg:items-end">
+            <div>
+              <span
+                className="inline-flex rounded-full px-4 py-1.5 text-sm font-black uppercase tracking-[0.14em] mb-5"
+                style={{
+                  background: "rgba(215,25,32,0.08)",
+                  color: colors.red,
+                  border: "1px solid rgba(215,25,32,0.16)",
+                }}
+              >
+                {settings.page_badge}
+              </span>
 
-          <h1
-            className="text-4xl md:text-6xl mb-4"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 850,
-              color: colors.dark,
-              letterSpacing: "-0.045em",
-            }}
-          >
-            {settings.page_title}
-          </h1>
+              <h1
+                className="text-5xl md:text-7xl text-slate-950 leading-[0.95]"
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 900,
+                  letterSpacing: "-0.065em",
+                }}
+              >
+                {settings.page_title}
+              </h1>
 
-          <p className="max-w-3xl mx-auto text-base md:text-lg text-slate-500 leading-relaxed">
-            {settings.page_description}
-          </p>
+              <p className="mt-6 max-w-3xl text-lg leading-relaxed text-slate-500">
+                {settings.page_description}
+              </p>
+            </div>
+
+            <div
+              className="rounded-[28px] p-5"
+              style={{
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72))",
+                border: "1px solid rgba(15,23,42,0.08)",
+                boxShadow:
+                  "0 18px 46px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+                backdropFilter: "blur(18px)",
+              }}
+            >
+              <div
+                className="h-1.5 w-20 rounded-full mb-5"
+                style={{
+                  background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
+                }}
+              />
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <div className="text-3xl font-black text-slate-950">
+                    {notices.length}
+                  </div>
+                  <div className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                    Notices
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-3xl font-black text-slate-950">
+                    {importantCount}
+                  </div>
+                  <div className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                    Important
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm font-black text-slate-950 leading-tight">
+                    {latestNoticeDate}
+                  </div>
+                  <div className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                    Latest
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </motion.div>
 
         <div className="grid lg:grid-cols-[1fr_330px] gap-8 items-start">
-          <div className="space-y-6">
-            {notices.length === 0 ? (
+          <div className="space-y-5">
+            <div
+              className="rounded-[28px] px-6 py-5"
+              style={{
+                background:
+                  "linear-gradient(145deg, rgba(15,23,42,0.97), rgba(30,41,59,0.94))",
+                border: "1px solid rgba(255,255,255,0.12)",
+                boxShadow: "0 18px 46px rgba(15,23,42,0.18)",
+              }}
+            >
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div className="text-sm font-black uppercase tracking-[0.18em] text-white/45">
+                    Notice Board
+                  </div>
+
+                  <h2
+                    className="mt-1 text-2xl text-white"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontWeight: 850,
+                      letterSpacing: "-0.035em",
+                    }}
+                  >
+                    Latest School Announcements
+                  </h2>
+                </div>
+
+                <div className="text-sm font-semibold text-white/55">
+                  Newest notices appear first
+                </div>
+              </div>
+            </div>
+
+            {loading ? (
               <div
-                className="rounded-3xl p-10 text-center"
+                className="rounded-[30px] p-10 text-center font-bold text-slate-500"
                 style={{
-                  background:
-                    "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.82))",
-                  border: "1px solid rgba(11,16,32,0.08)",
-                  boxShadow:
-                    "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
+                  background: "rgba(255,255,255,0.82)",
+                  border: "1px solid rgba(15,23,42,0.08)",
                 }}
               >
-                <h3
-                  className="text-2xl mb-2"
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 850,
-                    color: colors.dark,
-                    letterSpacing: "-0.03em",
-                  }}
-                >
-                  No notices available
-                </h3>
-
-                <p className="text-slate-500">
-                  New school notices will appear here once added from the admin
-                  dashboard.
-                </p>
+                Loading notices...
               </div>
+            ) : notices.length === 0 ? (
+              <EmptyNotice />
             ) : (
               notices.map((notice, index) => (
                 <NoticeCard
@@ -347,100 +463,100 @@ export default function Notices() {
           </div>
 
           <motion.aside
-            initial={{ opacity: 0, x: 32 }}
+            initial={{ opacity: 0, x: 24 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="lg:sticky lg:top-28 rounded-3xl overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
-              border: "1px solid rgba(11,16,32,0.08)",
-              boxShadow:
-                "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
-              backdropFilter: "blur(16px)",
-            }}
+            transition={{ duration: 0.5 }}
+            className="lg:sticky lg:top-28 space-y-6"
           >
-            <div className="p-5">
-              <div className="mb-5">
+            <div
+              className="rounded-[28px] overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.94), rgba(255,255,255,0.76))",
+                border: "1px solid rgba(15,23,42,0.08)",
+                boxShadow:
+                  "0 18px 46px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+                backdropFilter: "blur(16px)",
+              }}
+            >
+              <div className="p-5">
                 <div
-                  className="w-16 h-1 rounded-full mb-4"
+                  className="w-16 h-1.5 rounded-full mb-4"
                   style={{
-                    background:
-                      "linear-gradient(90deg, #D71920 0%, #168A3A 100%)",
+                    background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
                   }}
                 />
 
                 <h3
-                  className="text-2xl leading-tight"
+                  className="text-2xl text-slate-950"
                   style={{
                     fontFamily: "var(--font-display)",
                     fontWeight: 850,
-                    color: colors.dark,
-                    letterSpacing: "-0.03em",
+                    letterSpacing: "-0.035em",
                   }}
                 >
                   {settings.calendar_title}
                 </h3>
 
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-sm text-slate-500 mt-1">
                   {settings.calendar_subtitle}
                 </p>
-              </div>
 
-              <div
-                className="rounded-2xl overflow-hidden flex justify-center items-start"
-                style={{
-                  background: "#FFFFFF",
-                  border: "1px solid rgba(11,16,32,0.08)",
-                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.8)",
-                  height: "345px",
-                  paddingTop: "10px",
-                }}
-              >
-                <iframe
-                  title="Nepali Calendar"
-                  src={settings.calendar_embed_url}
+                <div
+                  className="rounded-2xl overflow-hidden flex justify-center items-start mt-5"
                   style={{
-                    width: "245px",
-                    height: "330px",
-                    border: "0",
-                    transform: "scale(1.03)",
-                    transformOrigin: "top center",
                     background: "#FFFFFF",
+                    border: "1px solid rgba(15,23,42,0.08)",
+                    height: "345px",
+                    paddingTop: "10px",
                   }}
-                />
+                >
+                  <iframe
+                    title="Nepali Calendar"
+                    src={settings.calendar_embed_url}
+                    style={{
+                      width: "245px",
+                      height: "330px",
+                      border: "0",
+                      transform: "scale(1.03)",
+                      transformOrigin: "top center",
+                      background: "#FFFFFF",
+                    }}
+                  />
+                </div>
               </div>
             </div>
 
             <div
-              className="p-6"
+              className="rounded-[28px] p-6"
               style={{
                 background: `linear-gradient(135deg, ${colors.dark}, ${colors.purple})`,
+                border: "1px solid rgba(255,255,255,0.12)",
+                boxShadow: "0 18px 46px rgba(15,23,42,0.2)",
               }}
             >
               <div
-                className="w-16 h-1 rounded-full mb-5"
+                className="w-16 h-1.5 rounded-full mb-5"
                 style={{
-                  background:
-                    "linear-gradient(90deg, rgba(250,204,21,0.95), rgba(56,189,248,0.95))",
+                  background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan})`,
                 }}
               />
 
-              <div className="text-white font-bold text-xl">
+              <h3 className="text-white font-black text-xl">
                 {settings.sidebar_title}
-              </div>
+              </h3>
 
-              <p
-                className="text-sm leading-relaxed mt-3 mb-5"
-                style={{ color: "rgba(255,255,255,0.72)" }}
-              >
+              <p className="text-sm leading-relaxed mt-3 mb-5 text-white/70">
                 {settings.sidebar_description}
               </p>
 
               <a
                 href={settings.sidebar_button_link}
-                className="inline-flex items-center text-sm font-bold text-white transition-all duration-300 hover:tracking-wide"
+                className="inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-black transition-all duration-300 hover:-translate-y-0.5"
+                style={{
+                  color: colors.dark,
+                }}
               >
                 {settings.sidebar_button_text}
               </a>
