@@ -34,6 +34,7 @@ import AdminGallery from "../../admin/AdminGallery";
 import AdminSettings from "../../admin/AdminSettings";
 import AdminGalleryImages from "../../admin/AdminGalleryImages";
 import AdminContactMessages from "../../admin/AdminContactMessages";
+import AdminAddNotice from "../../admin/AdminAddNotice";
 
 function HomePage() {
   return (
@@ -178,7 +179,14 @@ function SchoolApp() {
               </ProtectedPage>
             }
           />
-
+<Route
+  path="/admin/notices/new"
+  element={
+    <ProtectedPage>
+      <AdminAddNotice />
+    </ProtectedPage>
+  }
+/>
           <Route
             path="/admin/contact"
             element={

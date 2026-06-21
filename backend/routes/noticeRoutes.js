@@ -3,15 +3,28 @@ import { supabase } from "../config/supabase.js";
 
 const router = express.Router();
 
+function cleanNoticePayload(body = {}) {
+  return {
+    title: String(body.title || "").trim(),
+    category: String(body.category || "").trim(),
+    notice_date: body.notice_date || null,
+    description: String(body.description || "").trim(),
+    pdf_url: body.pdf_url || "",
+    pinned: Boolean(body.pinned),
+  };
+}
+
 /* ==========================================
    GET ALL NOTICES
+   Newest added notice first
 ========================================== */
 router.get("/", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("notices")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .order("notice_date", { ascending: false });
 
     if (error) {
       return res.status(500).json({
@@ -22,9 +35,11 @@ router.get("/", async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data,
+      data: data || [],
     });
   } catch (error) {
+    console.error("Fetch notices error:", error);
+
     res.status(500).json({
       success: false,
       message: "Failed to fetch notices",
@@ -33,7 +48,8 @@ router.get("/", async (req, res) => {
 });
 
 /* ==========================================
-   GET TOP 3 NOTICES (Homepage)
+   GET TOP 3 NOTICES FOR HOMEPAGE
+   Newest added notices only
 ========================================== */
 router.get("/latest/top3", async (req, res) => {
   try {
@@ -41,6 +57,7 @@ router.get("/latest/top3", async (req, res) => {
       .from("notices")
       .select("*")
       .order("created_at", { ascending: false })
+      .order("notice_date", { ascending: false })
       .limit(3);
 
     if (error) {
@@ -52,9 +69,11 @@ router.get("/latest/top3", async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data,
+      data: data || [],
     });
   } catch (error) {
+    console.error("Fetch latest notices error:", error);
+
     res.status(500).json({
       success: false,
       message: "Failed to fetch latest notices",
@@ -85,6 +104,8 @@ router.get("/:id", async (req, res) => {
       data,
     });
   } catch (error) {
+    console.error("Fetch single notice error:", error);
+
     res.status(500).json({
       success: false,
       message: "Failed to fetch notice",
@@ -92,50 +113,23 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.delete("/", async (req, res) => {
-    const { error } = await supabase
-      .from("notices")
-      .delete()
-      .neq("id", 0);
-  
-    if (error) {
-      return res.status(500).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  
-    res.json({
-      success: true,
-    });
-  });
-
 /* ==========================================
    CREATE NOTICE
 ========================================== */
 router.post("/", async (req, res) => {
   try {
-    const {
-      title,
-      category,
-      notice_date,
-      description,
-      pdf_url,
-      pinned,
-    } = req.body;
+    const notice = cleanNoticePayload(req.body);
+
+    if (!notice.title) {
+      return res.status(400).json({
+        success: false,
+        message: "Notice title is required",
+      });
+    }
 
     const { data, error } = await supabase
       .from("notices")
-      .insert([
-        {
-          title,
-          category,
-          notice_date,
-          description,
-          pdf_url,
-          pinned,
-        },
-      ])
+      .insert([notice])
       .select();
 
     if (error) {
@@ -151,6 +145,8 @@ router.post("/", async (req, res) => {
       data,
     });
   } catch (error) {
+    console.error("Create notice error:", error);
+
     res.status(500).json({
       success: false,
       message: "Failed to create notice",
@@ -163,25 +159,18 @@ router.post("/", async (req, res) => {
 ========================================== */
 router.put("/:id", async (req, res) => {
   try {
-    const {
-      title,
-      category,
-      notice_date,
-      description,
-      pdf_url,
-      pinned,
-    } = req.body;
+    const notice = cleanNoticePayload(req.body);
+
+    if (!notice.title) {
+      return res.status(400).json({
+        success: false,
+        message: "Notice title is required",
+      });
+    }
 
     const { data, error } = await supabase
       .from("notices")
-      .update({
-        title,
-        category,
-        notice_date,
-        description,
-        pdf_url,
-        pinned,
-      })
+      .update(notice)
       .eq("id", req.params.id)
       .select();
 
@@ -198,6 +187,8 @@ router.put("/:id", async (req, res) => {
       data,
     });
   } catch (error) {
+    console.error("Update notice error:", error);
+
     res.status(500).json({
       success: false,
       message: "Failed to update notice",
@@ -206,7 +197,8 @@ router.put("/:id", async (req, res) => {
 });
 
 /* ==========================================
-   DELETE NOTICE
+   DELETE ONE NOTICE
+   Used by AdminNotices delete button
 ========================================== */
 router.delete("/:id", async (req, res) => {
   try {
@@ -227,9 +219,43 @@ router.delete("/:id", async (req, res) => {
       message: "Notice deleted successfully",
     });
   } catch (error) {
+    console.error("Delete notice error:", error);
+
     res.status(500).json({
       success: false,
       message: "Failed to delete notice",
+    });
+  }
+});
+
+/* ==========================================
+   DELETE ALL NOTICES
+   Keep this only for emergency/admin bulk logic
+========================================== */
+router.delete("/", async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from("notices")
+      .delete()
+      .not("id", "is", null);
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "All notices deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete all notices error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete notices",
     });
   }
 });
