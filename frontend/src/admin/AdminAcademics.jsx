@@ -17,6 +17,7 @@ import {
   Users,
   Calendar,
   Target,
+  Library,
 } from "lucide-react";
 
 const colors = {
@@ -241,6 +242,148 @@ const defaultAcademicsContent = {
   primaryButtonLink: "/admissions",
   secondaryButtonText: "Contact Administration",
   secondaryButtonLink: "/contact",
+
+  curriculum: {
+    "Pre-Primary Level": [
+      {
+        grade: "Nursery",
+        books: [
+          { subject: "English Readiness", publication: "Ekta Publication" },
+          { subject: "Nepali Readiness", publication: "Janak Publication" },
+          { subject: "Numbers & Counting", publication: "Buddha Publication" },
+          { subject: "Creative Activities", publication: "Creative Publication" },
+          { subject: "Rhymes & Storytelling", publication: "Story Publication" },
+        ],
+      },
+      {
+        grade: "LKG",
+        books: [
+          { subject: "English Readiness", publication: "Ekta Publication" },
+          { subject: "Nepali Readiness", publication: "Janak Publication" },
+          { subject: "Numbers & Counting", publication: "Buddha Publication" },
+        ],
+      },
+      {
+        grade: "UKG",
+        books: [
+          { subject: "English Readiness", publication: "Ekta Publication" },
+          { subject: "Nepali Readiness", publication: "Janak Publication" },
+          { subject: "Numbers & Counting", publication: "Buddha Publication" },
+        ],
+      },
+    ],
+    "Primary Level": [
+      {
+        grade: "Grade 1",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 2",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 3",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 4",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 5",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+    ],
+    "Lower Secondary Level": [
+      {
+        grade: "Grade 6",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Computer Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 7",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Computer Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 8",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Computer Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+    ],
+    "Secondary Level": [
+      {
+        grade: "Grade 9",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Computer Science", publication: "CDC" },
+          { subject: "Optional Mathematics", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 10",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Computer Science", publication: "CDC" },
+          { subject: "Optional Mathematics", publication: "CDC" },
+        ],
+      },
+    ],
+  },
 };
 
 function mergeAcademicsContent(saved = {}) {
@@ -262,6 +405,7 @@ function mergeAcademicsContent(saved = {}) {
     ongoingAssessments: Array.isArray(saved.ongoingAssessments)
       ? saved.ongoingAssessments
       : defaultAcademicsContent.ongoingAssessments,
+    curriculum: saved.curriculum || defaultAcademicsContent.curriculum,
   };
 }
 
@@ -377,6 +521,7 @@ function VisibilityDeleteControls({ visible, onToggle, onDelete }) {
   );
 }
 
+// Preview component - shows ONLY program cards without curriculum books
 function AcademicsPreview({ form }) {
   const visiblePrograms = (form.programs || []).filter(
     (item) => item.visible !== false
@@ -397,6 +542,7 @@ function AcademicsPreview({ form }) {
           "radial-gradient(circle at top right, rgba(124,92,196,0.18), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
       }}
     >
+      {/* Hero Section */}
       <div className="text-center mb-10">
         <span
           className="inline-block px-4 py-1.5 rounded-full text-sm font-bold mb-4"
@@ -424,6 +570,7 @@ function AcademicsPreview({ form }) {
         </p>
       </div>
 
+      {/* Academic Programs - Only shows program cards */}
       <div className="mb-10">
         <div className="text-xl font-black text-slate-950 mb-4">
           Academic Programs
@@ -465,27 +612,13 @@ function AcademicsPreview({ form }) {
                 <p className="text-sm text-slate-500 mt-2">
                   {program.highlight}
                 </p>
-
-                <div className="grid grid-cols-1 gap-2 mt-4">
-                  {(program.classes || []).map((item) => (
-                    <div
-                      key={item}
-                      className="flex items-center gap-2 text-sm text-slate-600"
-                    >
-                      <span
-                        className="w-1.5 h-1.5 rounded-full"
-                        style={{ background: programColor }}
-                      />
-                      {item}
-                    </div>
-                  ))}
-                </div>
               </div>
             );
           })}
         </div>
       </div>
 
+      {/* Features Section */}
       <div className="mb-10">
         <div className="text-xl font-black text-slate-950 mb-2">
           {form.featuresTitle}
@@ -533,6 +666,7 @@ function AcademicsPreview({ form }) {
         </div>
       </div>
 
+      {/* Statistics */}
       <div className="mb-10">
         <div className="text-xl font-black text-slate-950 mb-4">
           Statistics
@@ -572,6 +706,7 @@ function AcademicsPreview({ form }) {
         </div>
       </div>
 
+      {/* Examination System */}
       <div className="mb-10">
         <div className="text-xl font-black text-slate-950 mb-2">
           {form.examTitle}
@@ -651,6 +786,7 @@ function AcademicsPreview({ form }) {
         </div>
       </div>
 
+      {/* CTA */}
       <div className="bg-white rounded-3xl p-6 text-center border">
         <div
           className="w-20 h-1 rounded-full mx-auto mb-5"
@@ -687,6 +823,7 @@ export default function AdminAcademics() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [expandedCurriculumLevel, setExpandedCurriculumLevel] = useState(null);
 
   const token = localStorage.getItem("adminToken");
 
@@ -726,29 +863,40 @@ export default function AdminAcademics() {
   };
 
   const addProgram = () => {
+    const newProgram = {
+      id: Date.now(),
+      level: "New Academic Level",
+      span: "Grade",
+      badgeColor: colors.green,
+      border: "rgba(22,138,58,0.15)",
+      classes: ["Subject 1", "Subject 2"],
+      highlight: "Short academic level description.",
+      visible: true,
+    };
+    
     setForm((prev) => ({
       ...prev,
-      programs: [
-        ...prev.programs,
-        {
-          id: Date.now(),
-          level: "New Academic Level",
-          span: "Grade",
-          badgeColor: colors.green,
-          border: "rgba(22,138,58,0.15)",
-          classes: ["Subject 1", "Subject 2"],
-          highlight: "Short academic level description.",
-          visible: true,
-        },
-      ],
+      programs: [...prev.programs, newProgram],
+      curriculum: {
+        ...prev.curriculum,
+        [newProgram.level]: [{ grade: "New Grade", books: [{ subject: "New Subject", publication: "New Publication" }] }],
+      },
     }));
   };
 
   const deleteProgram = (id) => {
-    setForm((prev) => ({
-      ...prev,
-      programs: prev.programs.filter((item) => item.id !== id),
-    }));
+    const programToDelete = form.programs.find(p => p.id === id);
+    setForm((prev) => {
+      const newCurriculum = { ...prev.curriculum };
+      if (programToDelete) {
+        delete newCurriculum[programToDelete.level];
+      }
+      return {
+        ...prev,
+        programs: prev.programs.filter((item) => item.id !== id),
+        curriculum: newCurriculum,
+      };
+    });
   };
 
   const updateFeature = (id, field, value) => {
@@ -848,6 +996,109 @@ export default function AdminAcademics() {
     }));
   };
 
+  // Curriculum management functions
+  const updateCurriculumGrade = (level, gradeIndex, field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      curriculum: {
+        ...prev.curriculum,
+        [level]: prev.curriculum[level].map((item, idx) =>
+          idx === gradeIndex ? { ...item, [field]: value } : item
+        ),
+      },
+    }));
+  };
+
+  const addBookToGrade = (level, gradeIndex) => {
+    setForm((prev) => {
+      const updatedGrades = prev.curriculum[level].map((item, idx) => {
+        if (idx === gradeIndex) {
+          return {
+            ...item,
+            books: [...item.books, { subject: "New Subject", publication: "New Publication" }],
+          };
+        }
+        return item;
+      });
+
+      return {
+        ...prev,
+        curriculum: {
+          ...prev.curriculum,
+          [level]: updatedGrades,
+        },
+      };
+    });
+  };
+
+  const updateBook = (level, gradeIndex, bookIndex, field, value) => {
+    setForm((prev) => {
+      const updatedGrades = prev.curriculum[level].map((item, idx) => {
+        if (idx === gradeIndex) {
+          const updatedBooks = item.books.map((book, bidx) =>
+            bidx === bookIndex ? { ...book, [field]: value } : book
+          );
+          return { ...item, books: updatedBooks };
+        }
+        return item;
+      });
+
+      return {
+        ...prev,
+        curriculum: {
+          ...prev.curriculum,
+          [level]: updatedGrades,
+        },
+      };
+    });
+  };
+
+  const removeBook = (level, gradeIndex, bookIndex) => {
+    setForm((prev) => {
+      const updatedGrades = prev.curriculum[level].map((item, idx) => {
+        if (idx === gradeIndex) {
+          const filteredBooks = item.books.filter((_, bidx) => bidx !== bookIndex);
+          return { ...item, books: filteredBooks };
+        }
+        return item;
+      });
+
+      return {
+        ...prev,
+        curriculum: {
+          ...prev.curriculum,
+          [level]: updatedGrades,
+        },
+      };
+    });
+  };
+
+  const addGradeToLevel = (level) => {
+    setForm((prev) => ({
+      ...prev,
+      curriculum: {
+        ...prev.curriculum,
+        [level]: [
+          ...prev.curriculum[level],
+          { grade: `New Grade`, books: [{ subject: "New Subject", publication: "New Publication" }] },
+        ],
+      },
+    }));
+  };
+
+  const removeGrade = (level, gradeIndex) => {
+    setForm((prev) => {
+      const filteredGrades = prev.curriculum[level].filter((_, idx) => idx !== gradeIndex);
+      return {
+        ...prev,
+        curriculum: {
+          ...prev.curriculum,
+          [level]: filteredGrades,
+        },
+      };
+    });
+  };
+
   async function saveAcademicsContent() {
     setSuccess("");
     setError("");
@@ -888,9 +1139,12 @@ export default function AdminAcademics() {
     );
   }
 
+  const ACCENT_SEQUENCE = [colors.red, colors.green, colors.purple, colors.softPurple];
+  const gradeAccent = (index) => ACCENT_SEQUENCE[index % ACCENT_SEQUENCE.length];
+
   return (
     <section
-      className="min-h-screen relative overflow-hidden"
+    className="min-h-screen relative"
       style={{
         background: `
           radial-gradient(circle at top right, rgba(56,189,248,0.16), transparent 34%),
@@ -985,9 +1239,8 @@ export default function AdminAcademics() {
 
           <p className="text-slate-500 max-w-3xl text-lg">
             Edit academic hero, programs, features, statistics, examination
-            system, ongoing assessments, and CTA buttons. Emoji and icon editing
-            is hidden because the public page now uses a cleaner number-and-line
-            design.
+            system, ongoing assessments, and CTA buttons. Manage curriculum books
+            and publications for each grade level.
           </p>
         </motion.div>
 
@@ -1018,7 +1271,8 @@ export default function AdminAcademics() {
           </div>
         )}
 
-        <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start">
+        {/* Changed to items-start with proper sticky positioning */}
+        <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start relative">
           <div className="space-y-8">
             <EditorCard icon={Type} title="Hero Section" color={colors.purple}>
               <div className="grid gap-5">
@@ -1139,27 +1393,168 @@ export default function AdminAcademics() {
                         rows={3}
                       />
                     </div>
-
-                    <div className="mt-4">
-                      <TextArea
-                        label="Subjects / Classes - one per line"
-                        value={(program.classes || []).join("\n")}
-                        onChange={(value) =>
-                          updateProgram(
-                            program.id,
-                            "classes",
-                            value
-                              .split("\n")
-                              .map((item) => item.trim())
-                              .filter(Boolean)
-                          )
-                        }
-                        rows={6}
-                      />
-                    </div>
                   </div>
                 ))}
               </div>
+            </EditorCard>
+
+            <EditorCard
+              icon={Library}
+              title="Curriculum & Books"
+              color={colors.purple}
+            >
+              <p className="text-sm text-slate-500 mb-6">
+                Manage subjects and publications for each grade level across all academic programs.
+                These appear in the ledger modal on the public Academics page.
+              </p>
+
+              {Object.entries(form.curriculum || {}).map(([level, grades]) => {
+                const isExpanded = expandedCurriculumLevel === level;
+                const levelColor = form.programs.find(p => p.level === level)?.badgeColor || colors.purple;
+
+                return (
+                  <div key={level} className="mb-6 last:mb-0">
+                    <button
+                      onClick={() => setExpandedCurriculumLevel(isExpanded ? null : level)}
+                      className="w-full flex items-center justify-between p-4 rounded-2xl transition-all"
+                      style={{
+                        background: isExpanded ? "rgba(75,46,131,0.08)" : "rgba(15,23,42,0.04)",
+                        border: `1px solid ${isExpanded ? levelColor : "rgba(15,23,42,0.08)"}`,
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ background: levelColor }}
+                        />
+                        <span className="font-bold text-slate-950">{level}</span>
+                        <span className="text-sm text-slate-400">
+                          ({grades.length} grades)
+                        </span>
+                      </div>
+                      <span className="text-slate-400">
+                        {isExpanded ? "−" : "+"}
+                      </span>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="mt-4 space-y-4">
+                        {grades.map((grade, gradeIndex) => {
+                          const gradeAccentColor = gradeAccent(gradeIndex);
+                          return (
+                            <div
+                              key={gradeIndex}
+                              className="rounded-2xl p-5"
+                              style={{
+                                background: "rgba(255,255,255,0.6)",
+                                border: `1px solid ${gradeAccentColor}22`,
+                              }}
+                            >
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex-1 mr-4">
+                                  <Field
+                                    label="Grade Name"
+                                    value={grade.grade}
+                                    onChange={(value) =>
+                                      updateCurriculumGrade(level, gradeIndex, "grade", value)
+                                    }
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => removeGrade(level, gradeIndex)}
+                                  className="p-2 rounded-xl mt-6"
+                                  style={{
+                                    background: "rgba(215,25,32,0.09)",
+                                    color: colors.red,
+                                    border: "1px solid rgba(215,25,32,0.18)",
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+
+                              <div className="space-y-3">
+                                {grade.books.map((book, bookIndex) => (
+                                  <div
+                                    key={bookIndex}
+                                    className="grid md:grid-cols-12 gap-3 items-center p-3 rounded-xl"
+                                    style={{
+                                      background: "rgba(255,255,255,0.8)",
+                                      border: "1px solid rgba(15,23,42,0.06)",
+                                    }}
+                                  >
+                                    <div className="md:col-span-5">
+                                      <Field
+                                        label="Subject"
+                                        value={book.subject}
+                                        onChange={(value) =>
+                                          updateBook(level, gradeIndex, bookIndex, "subject", value)
+                                        }
+                                      />
+                                    </div>
+                                    <div className="md:col-span-5">
+                                      <Field
+                                        label="Publication"
+                                        value={book.publication}
+                                        onChange={(value) =>
+                                          updateBook(level, gradeIndex, bookIndex, "publication", value)
+                                        }
+                                      />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => removeBook(level, gradeIndex, bookIndex)}
+                                        className="p-3 rounded-xl w-full"
+                                        style={{
+                                          background: "rgba(215,25,32,0.08)",
+                                          color: colors.red,
+                                          border: "1px solid rgba(215,25,32,0.15)",
+                                        }}
+                                      >
+                                        <Trash2 className="w-4 h-4 mx-auto" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+
+                                <button
+                                  type="button"
+                                  onClick={() => addBookToGrade(level, gradeIndex)}
+                                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105"
+                                  style={{
+                                    color: colors.purple,
+                                    background: "rgba(75,46,131,0.08)",
+                                    border: `1px dashed ${colors.purple}44`,
+                                  }}
+                                >
+                                  <Plus className="w-4 h-4" />
+                                  Add Subject
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        <button
+                          type="button"
+                          onClick={() => addGradeToLevel(level)}
+                          className="flex items-center gap-2 px-4 py-3 rounded-2xl font-bold transition-all hover:scale-105 w-full justify-center"
+                          style={{
+                            color: colors.green,
+                            background: "rgba(22,138,58,0.08)",
+                            border: `2px dashed ${colors.green}44`,
+                          }}
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add New Grade
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </EditorCard>
 
             <EditorCard icon={Award} title="Features Section" color={colors.red}>
@@ -1503,30 +1898,43 @@ export default function AdminAcademics() {
             </EditorCard>
           </div>
 
-          <aside
-            className="rounded-3xl overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
-              border: "1px solid rgba(255,255,255,0.14)",
-              boxShadow: "0 22px 58px rgba(11,16,32,0.25)",
-            }}
-          >
-            <div className="p-5 border-b border-white/10">
-              <div className="text-white font-bold text-lg flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                Academics Page Preview
+          {/* Sticky preview - properly positioned */}
+          <div
+  className="xl:sticky xl:top-24 self-start"
+  style={{
+    maxHeight: "calc(100vh - 120px)",
+  }}
+>
+            <div
+              className="rounded-3xl overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
+                border: "1px solid rgba(255,255,255,0.14)",
+                boxShadow: "0 22px 58px rgba(11,16,32,0.25)",
+              }}
+            >
+              <div className="p-5 border-b border-white/10">
+                <div className="text-white font-bold text-lg flex items-center gap-2">
+                  <Eye className="w-5 h-5" />
+                  Academics Page Preview
+                </div>
+
+                <div className="text-sm text-white/55">
+                  Full preview updates while editing. Scroll to see all content.
+                </div>
               </div>
 
-              <div className="text-sm text-white/55">
-                Full preview updates while editing.
+              <div
+  className="bg-white overflow-y-auto"
+  style={{
+    maxHeight: "calc(100vh - 180px)",
+  }}
+>
+                <AcademicsPreview form={form} />
               </div>
             </div>
-
-            <div className="bg-white">
-              <AcademicsPreview form={form} />
-            </div>
-          </aside>
+          </div>
         </div>
       </main>
     </section>
