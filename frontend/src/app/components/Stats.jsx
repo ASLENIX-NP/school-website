@@ -13,8 +13,8 @@ const palette = {
 const statsData = {
   eyebrow: "School Highlights",
   title: "Numbers that reflect our journey.",
-  description:
-    "These highlights can later be updated directly from the admin dashboard without changing frontend code.",
+ 
+   
 
   stats: [
     {
