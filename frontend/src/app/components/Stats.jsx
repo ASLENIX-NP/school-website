@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { ArrowRight, X } from "lucide-react";
+import PdfNoticePreview from "./PdfNoticePreview";
 
 const palette = {
   cyan: "#38BDF8",
@@ -797,9 +798,7 @@ function Stats() {
         (() => {
           const pdfUrl = selectedNotice.pdf_url || selectedNotice.pdfUrl;
           const hasPdf = Boolean(pdfUrl);
-          const pdfViewerUrl = hasPdf
-            ? `${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=Fit`
-            : "";
+          const pdfViewerUrl = pdfUrl;
 
           return (
             <div
@@ -920,26 +919,11 @@ function Stats() {
                     </div>
 
                     <div className="min-h-0 flex-1 p-4">
-                      <div
-                        className="h-full overflow-hidden rounded-[22px]"
-                        style={{
-                          background: "#E5E7EB",
-                          border: "1px solid rgba(15,23,42,0.10)",
-                          boxShadow:
-                            "inset 0 1px 0 rgba(255,255,255,0.9)",
-                        }}
-                      >
-                        <iframe
-                          title={selectedNotice.title || "Notice PDF"}
-                          src={pdfViewerUrl}
-                          className="h-full w-full"
-                          style={{
-                            border: 0,
-                            background: "#FFFFFF",
-                          }}
-                        />
-                      </div>
-                    </div>
+  <PdfNoticePreview
+    fileUrl={pdfViewerUrl}
+    title={selectedNotice.title || "Notice PDF"}
+  />
+</div>
                   </div>
                 ) : (
                   <div className="p-7 md:p-9">

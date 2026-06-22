@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import PdfNoticePreview from "../app/components/PdfNoticePreview";
 import { X } from "lucide-react";
 
 const colors = {
@@ -730,11 +731,12 @@ export default function Notices() {
                         />
                       ) : hasPdf ? (
                         <>
-                          <iframe
-                            src={pdfSrc}
-                            title="Notice Preview"
-                            className="w-full h-[70vh] rounded-xl border border-slate-100"
-                          />
+                          <div className="h-[70vh] rounded-[24px] overflow-hidden">
+  <PdfNoticePreview
+    fileUrl={pdfSrc}
+    title={selectedNotice.title || "Notice PDF"}
+  />
+</div>
 
                           <div
                             className="mt-5 rounded-2xl px-5 py-5"
