@@ -53,11 +53,11 @@ const defaultContactContent = {
     },
   ],
   mapCard: {
-    title: "Baljagriti Campus",
-    address: "Basudev Marga, Hetauda, Makawanpur",
+    title: "Baljagriti Secondary English Boarding School",
+    address: "Basudev Marga, Hetauda-2, Makawanpur, Nepal",
     buttonText: "Open in Maps",
     mapUrl:
-      "https://www.google.com/maps/search/?api=1&query=Basudev+Marga+Hetauda+Makwanpur+Nepal",
+      "https://www.google.com/maps/place/Bal+Jagriti+Boarding+School/@27.4312792,85.0379093,19z/data=!4m6!3m5!1s0x39eb4991159e4289:0x8707a51c9add8d8e!8m2!3d27.4312792!4d85.0379093!16s%2Fg%2F11bw3f8rbl",
   },
   form: {
     title: "Send a Message",
