@@ -53,7 +53,7 @@ function GlassStat({ value, label, color, delay }) {
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.55 }}
-      className="group rounded-3xl p-5 cursor-pointer transition-all duration-300 hover:-translate-y-2"
+      className="group min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl px-3 py-4 sm:p-5 cursor-pointer transition-all duration-300 hover:-translate-y-2"
       style={{
         background:
           "linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055))",
@@ -64,23 +64,24 @@ function GlassStat({ value, label, color, delay }) {
       }}
     >
       <div
-        className="w-11 h-1 rounded-full mb-4 transition-all duration-200 ease-out group-hover:w-20"
+        className="w-8 sm:w-11 h-1 rounded-full mb-3 sm:mb-4 transition-all duration-200 ease-out group-hover:w-14 sm:group-hover:w-20"
         style={{ background: color }}
       />
 
       <div
-        className="text-2xl font-black"
+        className="max-w-full text-[17px] min-[390px]:text-[18px] sm:text-2xl font-black leading-[1.05] break-words"
         style={{
           color: "#FFFFFF",
           fontFamily: "var(--font-display)",
           letterSpacing: "-0.035em",
+          overflowWrap: "anywhere",
         }}
       >
         {value}
       </div>
 
       <div
-        className="text-xs mt-1 font-medium"
+        className="text-[9px] sm:text-xs mt-1 font-medium leading-tight break-words"
         style={{ color: "rgba(255,255,255,0.62)" }}
       >
         {label}

@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import ScrollToTop from "./ScrollToTop";
 import AdminContact from "../../admin/AdminContact";
 import { Navbar } from "./Navbar";
 import { Hero } from "./Hero";
@@ -10,6 +11,7 @@ import { Events } from "./Events";
 import { Gallery } from "./Gallery";
 import { Contact } from "./Contact";
 import { Footer } from "./Footer";
+
 
 import Messages from "../../pages/Messages";
 import Notices from "../../pages/Notices";
@@ -81,9 +83,11 @@ function SchoolApp() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
 
-  return (
-    <div className="min-h-screen" style={{ fontFamily: "var(--font-body)" }}>
-      {!isAdminRoute && <Navbar />}
+ return (
+  <div className="min-h-screen" style={{ fontFamily: "var(--font-body)" }}>
+    <ScrollToTop />
+
+    {!isAdminRoute && <Navbar />}
 
       <main>
         <Routes>
