@@ -6,7 +6,6 @@ import {
   Sparkles,
   X,
   Layers,
-  CalendarDays,
   Image as ImageIcon,
   ChevronLeft,
   ChevronRight,
@@ -22,17 +21,51 @@ const colors = {
   cream: "#FFF8EE",
 };
 
+const DEFAULT_GALLERY_CATEGORIES = ["Classroom", "Events", "Certificate"];
+const SUBCATEGORY_PARENT_CATEGORIES = ["Events", "Certificate"];
+
 const fallbackCategoryDescriptions = {
   Classroom:
-    "Students participate in active classroom learning, discussion, collaboration, and academic activities.",
+    "Classroom moments show students learning, discussing, writing, presenting, and growing through daily academic activities.",
   Events:
-    "School events highlight student participation, celebration, leadership, and community involvement.",
-  Sports:
-    "Sports activities encourage teamwork, discipline, confidence, fitness, and healthy competition.",
-  ECA:
-    "Extra-curricular activities help students explore creativity, leadership, teamwork, and personal growth.",
-  Facilities:
-    "School facilities support practical learning, technology use, science activities, and overall student development.",
+    "School events highlight celebrations, programs, competitions, cultural activities, student participation, and community moments.",
+  Certificate:
+    "Certificates and awards recognize student achievement, participation, discipline, excellence, and school accomplishments.",
+};
+
+const fallbackSubcategories = {
+  Events: [
+    {
+      id: "annual-program",
+      name: "Annual Program",
+      description:
+        "Photos from annual programs, performances, celebrations, and school-wide events.",
+      visible: true,
+    },
+    {
+      id: "sports-events",
+      name: "Sports Events",
+      description:
+        "Photos from sports competitions, games, student teamwork, and athletic participation.",
+      visible: true,
+    },
+  ],
+  Certificate: [
+    {
+      id: "student-certificates",
+      name: "Student Certificates",
+      description:
+        "Certificates awarded to students for academic, creative, sports, and extracurricular achievements.",
+      visible: true,
+    },
+    {
+      id: "school-awards",
+      name: "School Awards",
+      description:
+        "Awards and recognitions received by the school, staff, and student groups.",
+      visible: true,
+    },
+  ],
 };
 
 const defaultGalleryContent = {
@@ -40,73 +73,115 @@ const defaultGalleryContent = {
   title: "School in Action",
   highlightedText: "in Action",
   description:
-    "Explore moments from classrooms, activities, events, facilities, and student life at Baljagriti Secondary English School.",
+    "Explore classroom learning, school events, certificates, achievements, and student life at Baljagriti Secondary English School.",
 
-  categories: ["All", "Classroom", "Events", "Sports", "ECA", "Facilities"],
-
+  categories: DEFAULT_GALLERY_CATEGORIES,
   categoryDescriptions: fallbackCategoryDescriptions,
+  subcategories: fallbackSubcategories,
 
-  images: [
-    {
-      id: 1,
-      title: "Classroom Learning",
-      category: "Classroom",
-      date: "Academic Session",
-      image:
-        "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200",
-      images: [
-        "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200",
-        "https://images.unsplash.com/photo-1588072432836-e10032774350?w=1200",
-      ],
-      visible: true,
-    },
-    {
-      id: 2,
-      title: "School Event",
-      category: "Events",
-      date: "Annual Program",
-      image:
-        "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=900&h=700&fit=crop&auto=format",
-      images: [
-        "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=900&h=700&fit=crop&auto=format",
-      ],
-      visible: true,
-    },
-  ],
+  images: [],
 
   bottomTitle: "School Memories",
   bottomDescription:
-    "Gallery images are updated by the school administration to highlight student life and School activities.",
+    "Gallery images are updated by the school administration to highlight student life and school activities.",
   bottomNote: "Click image to preview",
 };
 
 function normalizeCategories(categories = []) {
-  const cleaned = categories
+  const cleaned = (Array.isArray(categories) ? categories : [])
     .map((item) => String(item || "").trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((item) => item.toLowerCase() !== "all");
 
-  const withoutAll = cleaned.filter((item) => item.toLowerCase() !== "all");
+  const combined = [...DEFAULT_GALLERY_CATEGORIES, ...cleaned];
 
-  return ["All", ...(withoutAll.length ? withoutAll : ["Classroom"])];
+  return Array.from(new Set(combined));
+}
+
+function normalizeImageCategory(category) {
+  const clean = String(category || "").trim();
+
+  if (DEFAULT_GALLERY_CATEGORIES.includes(clean)) {
+    return clean;
+  }
+
+  const legacyMap = {
+    Sports: "Events",
+    ECA: "Events",
+    Facilities: "Classroom",
+  };
+
+  return legacyMap[clean] || "Classroom";
+}
+
+function normalizeCategoryDescriptions(descriptions = {}) {
+  return DEFAULT_GALLERY_CATEGORIES.reduce((acc, category) => {
+    acc[category] =
+      descriptions?.[category] || fallbackCategoryDescriptions[category] || "";
+    return acc;
+  }, {});
+}
+
+function normalizeSubcategories(subcategories = {}) {
+  return SUBCATEGORY_PARENT_CATEGORIES.reduce((acc, category) => {
+    const source = Array.isArray(subcategories?.[category])
+      ? subcategories[category]
+      : fallbackSubcategories[category];
+
+    acc[category] = source
+      .map((item, index) => {
+        const name =
+          typeof item === "string" ? item : String(item?.name || "").trim();
+
+        if (!name) return null;
+
+        return {
+          id:
+            item?.id ||
+            `${category.toLowerCase()}-${index}-${name
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")}`,
+          name,
+          description:
+            typeof item === "string"
+              ? ""
+              : item?.description ||
+                `Photos and memories from ${name.toLowerCase()}.`,
+          visible: item?.visible !== false,
+        };
+      })
+      .filter(Boolean);
+
+    return acc;
+  }, {});
 }
 
 function mergeGalleryContent(saved = {}) {
+  const categoryDescriptions = normalizeCategoryDescriptions(
+    saved.categoryDescriptions
+  );
+
+  const subcategories = normalizeSubcategories(saved.subcategories);
+
   return {
     ...defaultGalleryContent,
     ...saved,
-    categories: Array.isArray(saved.categories)
-      ? normalizeCategories(saved.categories)
-      : defaultGalleryContent.categories,
-    categoryDescriptions:
-      saved.categoryDescriptions && typeof saved.categoryDescriptions === "object"
-        ? {
-            ...fallbackCategoryDescriptions,
-            ...saved.categoryDescriptions,
-          }
-        : fallbackCategoryDescriptions,
+    categories: MAIN_GALLERY_CATEGORIES,
+    categoryDescriptions,
+    subcategories,
     images: Array.isArray(saved.images)
-      ? saved.images
-      : defaultGalleryContent.images,
+      ? saved.images.map((image) => ({
+          ...image,
+          category: normalizeImageCategory(image.category),
+          subcategory: image.subcategory || "",
+          images:
+            Array.isArray(image.images) && image.images.length > 0
+              ? image.images
+              : image.image
+              ? [image.image]
+              : [],
+        }))
+      : [],
   };
 }
 
@@ -128,69 +203,158 @@ function HighlightedTitle({ title, highlightedText }) {
   );
 }
 
-function buildCategoryAlbums(content) {
-  const categories = normalizeCategories(content.categories).filter(
-    (category) => category !== "All"
-  );
+function getImageUrls(item) {
+  if (Array.isArray(item.images) && item.images.length > 0) {
+    return item.images.filter(Boolean);
+  }
 
+  return item.image ? [item.image] : [];
+}
+
+function collectAlbumPhotos(items, fallbackCategory, fallbackTitle) {
+  const seen = new Set();
+  const photos = [];
+
+  items.forEach((item) => {
+    getImageUrls(item).forEach((url) => {
+      if (!url || seen.has(url)) return;
+
+      seen.add(url);
+
+      photos.push({
+        url,
+        title: item.title || fallbackTitle,
+        date: item.date || "School Activity",
+        category: fallbackCategory,
+        subcategory: item.subcategory || "",
+      });
+    });
+  });
+
+  return photos;
+}
+
+function buildSingleCategoryAlbum(content, category) {
   const visibleImages = (content.images || []).filter(
     (item) => item.visible !== false
   );
 
-  return categories
-    .map((category) => {
-      const categoryItems = visibleImages.filter(
-        (item) => item.category === category
+  const categoryItems = visibleImages.filter(
+    (item) => normalizeImageCategory(item.category) === category
+  );
+
+  const photos = collectAlbumPhotos(categoryItems, category, category);
+
+  const cover =
+    categoryItems.find((item) => item.image)?.image || photos[0]?.url || "";
+
+  return {
+    category,
+    subcategory: "",
+    title: category,
+    date: categoryItems[0]?.date || "School Gallery",
+    description:
+      content.categoryDescriptions?.[category] ||
+      fallbackCategoryDescriptions[category] ||
+      "Explore school moments from this category.",
+    cover,
+    photos,
+    total: photos.length,
+  };
+}
+
+function buildMainCategoryAlbums(content) {
+  return normalizeCategories().map((category) =>
+    buildSingleCategoryAlbum(content, category)
+  );
+}
+
+function buildSubcategoryAlbums(content, parentCategory) {
+  const visibleImages = (content.images || []).filter(
+    (item) => item.visible !== false
+  );
+
+  const parentItems = visibleImages.filter(
+    (item) => normalizeImageCategory(item.category) === parentCategory
+  );
+
+  const subcategoryList =
+    normalizeSubcategories(content.subcategories)[parentCategory] || [];
+
+  if (subcategoryList.length === 0) {
+    return [buildSingleCategoryAlbum(content, parentCategory)];
+  }
+
+  const albums = subcategoryList
+    .filter((sub) => sub.visible !== false)
+    .map((sub) => {
+      const subItems = parentItems.filter(
+        (item) => String(item.subcategory || "").trim() === sub.name
       );
 
-      const seen = new Set();
-      const photos = [];
-
-      categoryItems.forEach((item) => {
-        const urls =
-          Array.isArray(item.images) && item.images.length > 0
-            ? item.images
-            : item.image
-            ? [item.image]
-            : [];
-
-        urls.forEach((url) => {
-          if (!url || seen.has(url)) return;
-
-          seen.add(url);
-          photos.push({
-            url,
-            title: item.title || category,
-            date: item.date || "School Activity",
-            category,
-          });
-        });
-      });
+      const photos = collectAlbumPhotos(subItems, parentCategory, sub.name);
 
       const cover =
-        categoryItems.find((item) => item.image)?.image ||
-        photos[0]?.url ||
-        "";
+        subItems.find((item) => item.image)?.image || photos[0]?.url || "";
 
       return {
-        category,
-        title: category,
-        date: categoryItems[0]?.date || "School Activity",
+        category: parentCategory,
+        subcategory: sub.name,
+        title: sub.name,
+        date: subItems[0]?.date || parentCategory,
         description:
-          content.categoryDescriptions?.[category] ||
-          fallbackCategoryDescriptions[category] ||
-          "Explore school moments, activities, learning experiences, and student participation from this category.",
+          sub.description ||
+          `Photos and memories from ${sub.name.toLowerCase()}.`,
         cover,
         photos,
         total: photos.length,
       };
-    })
-    .filter((album) => album.total > 0);
+    });
+
+  const uncategorizedItems = parentItems.filter(
+    (item) => !String(item.subcategory || "").trim()
+  );
+
+  if (uncategorizedItems.length > 0) {
+    const photos = collectAlbumPhotos(
+      uncategorizedItems,
+      parentCategory,
+      parentCategory
+    );
+
+    albums.push({
+      category: parentCategory,
+      subcategory: "",
+      title: `General ${parentCategory}`,
+      date: uncategorizedItems[0]?.date || parentCategory,
+      description:
+        content.categoryDescriptions?.[parentCategory] ||
+        fallbackCategoryDescriptions[parentCategory],
+      cover:
+        uncategorizedItems.find((item) => item.image)?.image ||
+        photos[0]?.url ||
+        "",
+      photos,
+      total: photos.length,
+    });
+  }
+
+  return albums;
+}
+
+function buildCategoryAlbums(content, activeCategory) {
+  if (activeCategory === "All") {
+    return buildMainCategoryAlbums(content);
+  }
+
+  if (SUBCATEGORY_PARENT_CATEGORIES.includes(activeCategory)) {
+    return buildSubcategoryAlbums(content, activeCategory);
+  }
+
+  return [buildSingleCategoryAlbum(content, activeCategory)];
 }
 
 function GalleryCategoryCard({ album, index, onClick }) {
-  const isLarge = index === 0 || index === 4;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }}
@@ -216,9 +380,17 @@ function GalleryCategoryCard({ album, index, onClick }) {
       </div>
 
       <div>
-        <span className="px-4 py-2 rounded-full bg-green-100 text-green-700 font-semibold">
-          {album.category}
-        </span>
+        <div className="flex flex-wrap gap-2">
+          <span className="px-4 py-2 rounded-full bg-green-100 text-green-700 font-semibold">
+            {album.category}
+          </span>
+
+          {album.subcategory && (
+            <span className="px-4 py-2 rounded-full bg-purple-100 text-purple-700 font-semibold">
+              {album.subcategory}
+            </span>
+          )}
+        </div>
 
         <h2 className="text-5xl font-black text-slate-900 mt-5">
           {album.title}
@@ -232,10 +404,19 @@ function GalleryCategoryCard({ album, index, onClick }) {
 
         <button
           type="button"
-          onClick={() => onClick(album)}
-          className="mt-8 px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-green-600 text-white font-bold relative z-50"
+          disabled={album.total === 0}
+          onClick={() => {
+            if (album.total > 0) onClick(album);
+          }}
+          className="mt-8 px-6 py-3 rounded-xl text-white font-bold relative z-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            background:
+              album.total > 0
+                ? `linear-gradient(135deg, ${colors.red}, ${colors.green})`
+                : "rgba(100,116,139,0.75)",
+          }}
         >
-          View Album ({album.total})
+          {album.total > 0 ? `View Album (${album.total})` : "No Images Added"}
         </button>
       </div>
     </motion.div>
@@ -268,14 +449,12 @@ function Gallery() {
     loadGalleryContent();
   }, []);
 
-  const categories = normalizeCategories(content.categories);
+  const categories = ["All", ...normalizeCategories()];
 
-  const categoryAlbums = useMemo(() => buildCategoryAlbums(content), [content]);
-
-  const filteredAlbums =
-    activeCategory === "All"
-      ? categoryAlbums
-      : categoryAlbums.filter((album) => album.category === activeCategory);
+  const filteredAlbums = useMemo(
+    () => buildCategoryAlbums(content, activeCategory),
+    [content, activeCategory]
+  );
 
   const currentPhoto = selectedAlbum?.photos?.[currentImageIndex];
 
@@ -430,7 +609,7 @@ function Gallery() {
             <div className="space-y-24">
               {filteredAlbums.map((album, index) => (
                 <GalleryCategoryCard
-                  key={album.category}
+                  key={`${album.category}-${album.subcategory || album.title}`}
                   album={album}
                   index={index}
                   onClick={openAlbum}
@@ -582,6 +761,19 @@ function Gallery() {
                     >
                       {selectedAlbum.category}
                     </span>
+
+                    {selectedAlbum.subcategory && (
+                      <span
+                        className="px-3 py-1 rounded-full text-xs font-bold"
+                        style={{
+                          background: "rgba(75,46,131,0.09)",
+                          color: colors.purple,
+                          border: "1px solid rgba(75,46,131,0.16)",
+                        }}
+                      >
+                        {selectedAlbum.subcategory}
+                      </span>
+                    )}
 
                     <span className="text-sm text-slate-500">
                       {currentPhoto?.date || selectedAlbum.date}

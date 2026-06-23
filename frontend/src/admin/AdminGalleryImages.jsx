@@ -22,58 +22,171 @@ const colors = {
   gold: "#FACC15",
 };
 
+const DEFAULT_GALLERY_CATEGORIES = ["Classroom", "Events", "Certificate"];
+const SUBCATEGORY_PARENT_CATEGORIES = ["Events", "Certificate"];
+
 const fallbackCategoryDescriptions = {
   Classroom:
-    "Students participate in active classroom learning, discussion, collaboration, and academic activities.",
+    "Classroom moments show students learning, discussing, writing, presenting, and growing through daily academic activities.",
   Events:
-    "School events highlight student participation, celebration, leadership, and community involvement.",
-  Sports:
-    "Sports activities encourage teamwork, discipline, confidence, fitness, and healthy competition.",
-  ECA:
-    "Extra-curricular activities help students explore creativity, leadership, teamwork, and personal growth.",
-  Facilities:
-    "School facilities support practical learning, technology use, science activities, and overall student development.",
+    "School events highlight celebrations, programs, competitions, cultural activities, student participation, and community moments.",
+  Certificate:
+    "Certificates and awards recognize student achievement, participation, discipline, excellence, and school accomplishments.",
+};
+
+const fallbackSubcategories = {
+  Events: [
+    {
+      id: "annual-program",
+      name: "Annual Program",
+      description:
+        "Photos from annual programs, performances, celebrations, and school-wide events.",
+      visible: true,
+    },
+    {
+      id: "sports-events",
+      name: "Sports Events",
+      description:
+        "Photos from sports competitions, games, student teamwork, and athletic participation.",
+      visible: true,
+    },
+  ],
+  Certificate: [
+    {
+      id: "student-certificates",
+      name: "Student Certificates",
+      description:
+        "Certificates awarded to students for academic, creative, sports, and extracurricular achievements.",
+      visible: true,
+    },
+    {
+      id: "school-awards",
+      name: "School Awards",
+      description:
+        "Awards and recognitions received by the school, staff, and student groups.",
+      visible: true,
+    },
+  ],
 };
 
 const defaultGalleryContent = {
   badge: "Gallery",
-  title: "Campus in Action",
+  title: "School in Action",
   highlightedText: "in Action",
   description:
-    "Explore moments from classrooms, activities, events, facilities, and student life at Baljagriti Secondary English School.",
-  categories: ["Classroom", "Events", "Sports", "ECA", "Facilities"],
+    "Explore classroom learning, school events, certificates, achievements, and student life at Baljagriti Secondary English School.",
+
+  categories: DEFAULT_GALLERY_CATEGORIES,
   categoryDescriptions: fallbackCategoryDescriptions,
+  subcategories: fallbackSubcategories,
+
   images: [],
+
   bottomTitle: "School Memories",
   bottomDescription:
-    "Gallery images are updated by the school administration to highlight student life and campus activities.",
+    "Gallery images are updated by the school administration to highlight student life and school activities.",
   bottomNote: "Click image to preview",
 };
 
 function normalizeCategories(categories = []) {
-  const cleaned = categories
+  const cleaned = (Array.isArray(categories) ? categories : [])
     .map((item) => String(item || "").trim())
     .filter(Boolean)
     .filter((item) => item.toLowerCase() !== "all");
 
-  return cleaned.length > 0 ? cleaned : ["Classroom"];
+  const combined = [...DEFAULT_GALLERY_CATEGORIES, ...cleaned];
+
+  return Array.from(new Set(combined));
+}
+
+function normalizeImageCategory(category, categories = []) {
+  const clean = String(category || "").trim();
+  const validCategories = normalizeCategories(categories);
+
+  if (validCategories.includes(clean)) {
+    return clean;
+  }
+
+  const legacyMap = {
+    Sports: "Events",
+    ECA: "Events",
+    Facilities: "Classroom",
+  };
+
+  return legacyMap[clean] || "Classroom";
+}
+
+function normalizeCategoryDescriptions(descriptions = {}, categories = []) {
+  return normalizeCategories(categories).reduce((acc, category) => {
+    acc[category] =
+      descriptions?.[category] || fallbackCategoryDescriptions[category] || "";
+    return acc;
+  }, {});
+}
+
+function normalizeSubcategories(subcategories = {}) {
+  return SUBCATEGORY_PARENT_CATEGORIES.reduce((acc, category) => {
+    const source = Array.isArray(subcategories?.[category])
+      ? subcategories[category]
+      : fallbackSubcategories[category];
+
+    acc[category] = source
+      .map((item, index) => {
+        const name =
+          typeof item === "string" ? item : String(item?.name || "").trim();
+
+        if (!name) return null;
+
+        return {
+          id:
+            item?.id ||
+            `${category.toLowerCase()}-${index}-${name
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")}`,
+          name,
+          description:
+            typeof item === "string"
+              ? ""
+              : item?.description ||
+                `Photos and memories from ${name.toLowerCase()}.`,
+          visible: item?.visible !== false,
+        };
+      })
+      .filter(Boolean);
+
+    return acc;
+  }, {});
 }
 
 function mergeGalleryContent(saved = {}) {
+  const categories = normalizeCategories(saved.categories);
+
+  const categoryDescriptions = normalizeCategoryDescriptions(
+    saved.categoryDescriptions,
+    categories
+  );
+
+  const subcategories = normalizeSubcategories(saved.subcategories);
+
   return {
     ...defaultGalleryContent,
     ...saved,
-    categories: Array.isArray(saved.categories)
-      ? normalizeCategories(saved.categories)
-      : defaultGalleryContent.categories,
-    categoryDescriptions:
-      saved.categoryDescriptions && typeof saved.categoryDescriptions === "object"
-        ? {
-            ...fallbackCategoryDescriptions,
-            ...saved.categoryDescriptions,
-          }
-        : fallbackCategoryDescriptions,
-    images: Array.isArray(saved.images) ? saved.images : [],
+    categories,
+    categoryDescriptions,
+    subcategories,
+    images: Array.isArray(saved.images)
+      ? saved.images.map((image) => ({
+          ...image,
+          category: normalizeImageCategory(image.category, categories),
+          subcategory: image.subcategory || "",
+          images:
+            Array.isArray(image.images) && image.images.length > 0
+              ? image.images
+              : image.image
+              ? [image.image]
+              : [],
+        }))
+      : [],
   };
 }
 
@@ -94,6 +207,7 @@ async function uploadGalleryImage(file) {
     headers: {
       "Content-Type": "multipart/form-data",
     },
+    timeout: 20000,
   });
 
   const uploadedUrl =
@@ -161,6 +275,7 @@ export default function AdminGalleryImages() {
 
   const [form, setForm] = useState(defaultGalleryContent);
   const [selectedCategory, setSelectedCategory] = useState("Classroom");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -171,33 +286,74 @@ export default function AdminGalleryImages() {
   const token = localStorage.getItem("adminToken");
 
   useEffect(() => {
+    let alive = true;
+
     const loadGalleryContent = async () => {
+      setLoading(true);
+
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/gallery"
+          "http://localhost:5000/api/site-content/gallery",
+          {
+            timeout: 5000,
+          }
         );
+
+        if (!alive) return;
 
         const savedContent = res.data?.data?.content || {};
         const merged = mergeGalleryContent(savedContent);
+
         const categories = normalizeCategories(merged.categories);
+        const initialCategory = categories[0];
+        const initialSubcategories =
+          normalizeSubcategories(merged.subcategories)[initialCategory] || [];
 
         setForm(merged);
-        setSelectedCategory(categories[0]);
+        setSelectedCategory(initialCategory);
+        setSelectedSubcategory(initialSubcategories[0]?.name || "");
+        setError("");
       } catch (err) {
         console.error("Load gallery content error:", err);
-        setError("Could not load gallery content.");
+
+        if (!alive) return;
+
+        const fallback = mergeGalleryContent(defaultGalleryContent);
+        const categories = normalizeCategories(fallback.categories);
+        const initialCategory = categories[0];
+        const initialSubcategories =
+          normalizeSubcategories(fallback.subcategories)[initialCategory] || [];
+
+        setForm(fallback);
+        setSelectedCategory(initialCategory);
+        setSelectedSubcategory(initialSubcategories[0]?.name || "");
+        setError(
+          "Gallery content took too long to load. Default image manager is shown. Check backend if saved content is missing."
+        );
       } finally {
-        setLoading(false);
+        if (alive) {
+          setLoading(false);
+        }
       }
     };
 
     loadGalleryContent();
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const categoryOptions = normalizeCategories(form.categories);
+  const normalizedSubcategories = normalizeSubcategories(form.subcategories);
+
+  const selectedSubcategoryOptions =
+    normalizedSubcategories[selectedCategory] || [];
 
   const selectedCategoryImages = (form.images || []).filter(
-    (item) => item.category === selectedCategory
+    (item) =>
+      normalizeImageCategory(item.category, form.categories) ===
+      selectedCategory
   );
 
   const allSelected =
@@ -209,6 +365,25 @@ export default function AdminGalleryImages() {
       ...prev,
       images: prev.images.map((item) =>
         item.id === id ? { ...item, [field]: value } : item
+      ),
+    }));
+  };
+
+  const updateImageCategory = (id, category) => {
+    const nextCategory = normalizeImageCategory(category, form.categories);
+    const subcategoryOptions =
+      normalizeSubcategories(form.subcategories)[nextCategory] || [];
+
+    setForm((prev) => ({
+      ...prev,
+      images: prev.images.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              category: nextCategory,
+              subcategory: subcategoryOptions[0]?.name || "",
+            }
+          : item
       ),
     }));
   };
@@ -312,6 +487,15 @@ export default function AdminGalleryImages() {
     setUploading(true);
 
     try {
+      const activeSubcategory =
+        selectedSubcategoryOptions.length > 0
+          ? selectedSubcategoryOptions.some(
+              (item) => item.name === selectedSubcategory
+            )
+            ? selectedSubcategory
+            : selectedSubcategoryOptions[0]?.name || ""
+          : "";
+
       const uploadedImages = await Promise.all(
         selectedFiles.map(async (file, index) => {
           const imageUrl = await uploadGalleryImage(file);
@@ -322,6 +506,7 @@ export default function AdminGalleryImages() {
               .substring(2)}`,
             title: cleanFileName(file.name) || `Gallery Image ${index + 1}`,
             category: selectedCategory,
+            subcategory: activeSubcategory,
             date: "School Activity",
             description: "",
             image: imageUrl,
@@ -339,7 +524,9 @@ export default function AdminGalleryImages() {
       setSuccess(
         `${uploadedImages.length} image${
           uploadedImages.length > 1 ? "s" : ""
-        } uploaded to ${selectedCategory}. Click Save Changes to publish.`
+        } uploaded to ${selectedCategory}${
+          activeSubcategory ? ` / ${activeSubcategory}` : ""
+        }. Click Save Changes to publish.`
       );
     } catch (err) {
       console.error("Gallery upload error:", err);
@@ -405,32 +592,48 @@ export default function AdminGalleryImages() {
 
     try {
       const cleanedCategories = normalizeCategories(form.categories);
+      const cleanedDescriptions = normalizeCategoryDescriptions(
+        form.categoryDescriptions,
+        cleanedCategories
+      );
+      const cleanedSubcategories = normalizeSubcategories(form.subcategories);
 
-      const cleanedDescriptions = cleanedCategories.reduce((acc, category) => {
-        acc[category] =
-          form.categoryDescriptions?.[category] ||
-          fallbackCategoryDescriptions[category] ||
-          "";
-        return acc;
-      }, {});
+      const cleanedImages = form.images.map((image) => {
+        const category = normalizeImageCategory(
+          image.category,
+          cleanedCategories
+        );
+        const subcategoryOptions = cleanedSubcategories[category] || [];
 
-      const cleanedForm = {
-        ...form,
-        categories: cleanedCategories,
-        categoryDescriptions: cleanedDescriptions,
-        images: form.images.map((image) => ({
+        const validSubcategory = subcategoryOptions.some(
+          (item) => item.name === image.subcategory
+        );
+
+        return {
           ...image,
           description: "",
-          category: cleanedCategories.includes(image.category)
-            ? image.category
-            : cleanedCategories[0],
+          category,
+          subcategory:
+            subcategoryOptions.length > 0
+              ? validSubcategory
+                ? image.subcategory
+                : subcategoryOptions[0]?.name || ""
+              : "",
           images:
             Array.isArray(image.images) && image.images.length > 0
               ? image.images
               : image.image
               ? [image.image]
               : [],
-        })),
+        };
+      });
+
+      const cleanedForm = {
+        ...form,
+        categories: cleanedCategories,
+        categoryDescriptions: cleanedDescriptions,
+        subcategories: cleanedSubcategories,
+        images: cleanedImages,
       };
 
       await axios.put(
@@ -440,15 +643,13 @@ export default function AdminGalleryImages() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          timeout: 10000,
         }
       );
 
       setForm(cleanedForm);
-      setSuccess("Gallery images saved successfully. Redirecting...");
-
-      setTimeout(() => {
-        navigate("/admin/gallery");
-      }, 900);
+      setSuccess("Gallery images saved successfully.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error("Save gallery images error:", err);
       setError(
@@ -554,8 +755,9 @@ export default function AdminGalleryImages() {
           </h1>
 
           <p className="text-slate-500 max-w-3xl text-lg">
-            Select a category, write one category description, upload one or
-            multiple images, select multiple images, and delete selected images.
+            Select a category and subcategory, upload one or multiple images,
+            select multiple images, delete selected images, and edit image
+            details.
           </p>
         </motion.div>
 
@@ -605,7 +807,13 @@ export default function AdminGalleryImages() {
               <select
                 value={selectedCategory}
                 onChange={(e) => {
-                  setSelectedCategory(e.target.value);
+                  const nextCategory = e.target.value;
+                  const nextSubcategories =
+                    normalizeSubcategories(form.subcategories)[nextCategory] ||
+                    [];
+
+                  setSelectedCategory(nextCategory);
+                  setSelectedSubcategory(nextSubcategories[0]?.name || "");
                   setSelectedIds([]);
                 }}
                 className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
@@ -622,9 +830,43 @@ export default function AdminGalleryImages() {
                 ))}
               </select>
 
+              {selectedSubcategoryOptions.length > 0 && (
+                <div className="mt-5">
+                  <label className="block text-sm font-bold mb-2 text-slate-700">
+                    Select Subcategory
+                  </label>
+
+                  <select
+                    value={selectedSubcategory}
+                    onChange={(e) => setSelectedSubcategory(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
+                    style={{
+                      background: "rgba(255,255,255,0.88)",
+                      border: "1px solid rgba(75,46,131,0.16)",
+                      color: colors.dark,
+                    }}
+                  >
+                    {selectedSubcategoryOptions.map((sub) => (
+                      <option key={sub.id} value={sub.name}>
+                        {sub.name}
+                        {sub.visible === false ? " (Hidden)" : ""}
+                      </option>
+                    ))}
+                  </select>
+
+                  <p className="text-xs text-slate-500 mt-2">
+                    Uploaded images will go inside this subcategory.
+                  </p>
+                </div>
+              )}
+
               <p className="text-xs text-slate-500 mt-2">
-                Upload one or many images. All selected images will go inside{" "}
-                <b>{selectedCategory}</b>.
+                Upload one or many images. Selected images will go inside{" "}
+                <b>{selectedCategory}</b>
+                {selectedSubcategoryOptions.length > 0 && selectedSubcategory
+                  ? ` / ${selectedSubcategory}`
+                  : ""}
+                .
               </p>
             </div>
 
@@ -663,8 +905,8 @@ export default function AdminGalleryImages() {
             />
 
             <p className="text-xs text-slate-500 mt-2">
-              This single description will be shown for the whole{" "}
-              <b>{selectedCategory}</b> album on the public gallery page.
+              This description is shared with the Gallery Editor and appears on
+              the public gallery page.
             </p>
           </div>
         </div>
@@ -675,7 +917,8 @@ export default function AdminGalleryImages() {
               {selectedCategory} Images
             </h2>
             <p className="text-slate-500">
-              {selectedCategoryImages.length} total · {selectedIds.length} selected
+              {selectedCategoryImages.length} total · {selectedIds.length}{" "}
+              selected
             </p>
           </div>
 
@@ -725,6 +968,8 @@ export default function AdminGalleryImages() {
             {selectedCategoryImages.map((item) => {
               const checked = selectedIds.includes(item.id);
               const displayImage = item.image || item.images?.[0];
+              const itemSubcategoryOptions =
+                normalizeSubcategories(form.subcategories)[item.category] || [];
 
               return (
                 <div
@@ -803,6 +1048,8 @@ export default function AdminGalleryImages() {
                           <img
                             src={displayImage}
                             alt={item.title}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -852,7 +1099,7 @@ export default function AdminGalleryImages() {
                         <select
                           value={item.category || ""}
                           onChange={(e) =>
-                            updateImage(item.id, "category", e.target.value)
+                            updateImageCategory(item.id, e.target.value)
                           }
                           className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
                           style={{
@@ -872,6 +1119,43 @@ export default function AdminGalleryImages() {
                           Changing this moves the image to another category.
                         </p>
                       </div>
+
+                      {itemSubcategoryOptions.length > 0 && (
+                        <div>
+                          <label className="block text-sm font-bold mb-2 text-slate-700">
+                            Image Subcategory
+                          </label>
+
+                          <select
+                            value={item.subcategory || ""}
+                            onChange={(e) =>
+                              updateImage(
+                                item.id,
+                                "subcategory",
+                                e.target.value
+                              )
+                            }
+                            className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
+                            style={{
+                              background: "rgba(255,255,255,0.88)",
+                              border: "1px solid rgba(75,46,131,0.16)",
+                              color: colors.dark,
+                            }}
+                          >
+                            {itemSubcategoryOptions.map((sub) => (
+                              <option key={sub.id} value={sub.name}>
+                                {sub.name}
+                                {sub.visible === false ? " (Hidden)" : ""}
+                              </option>
+                            ))}
+                          </select>
+
+                          <p className="text-xs text-slate-500 mt-2">
+                            This controls which subcategory album the image
+                            appears in.
+                          </p>
+                        </div>
+                      )}
 
                       <Field
                         label="Date / Label"
