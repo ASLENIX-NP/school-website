@@ -116,13 +116,13 @@ function StaffImage({ src, name }) {
       <img
         src={src}
         alt={name}
-        className="w-full h-96 object-cover transition-transform duration-500 group-hover:scale-105"
+        className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-105"
       />
     );
   }
 
   return (
-    <div className="w-full h-96 bg-slate-100 flex items-center justify-center">
+    <div className="w-full h-80 bg-slate-100 flex items-center justify-center">
       <UserRound className="w-20 h-20 text-slate-300" />
     </div>
   );
@@ -489,7 +489,6 @@ export default function Staff() {
                 transition={{ duration: 0.45, delay: index * 0.05 }}
                 className="group bg-white rounded-[2rem] overflow-hidden transition-all duration-300 hover:-translate-y-2 cursor-pointer"
                 style={{
-                  minHeight: "760px",
                   border: "1px solid rgba(15,23,42,0.08)",
                   boxShadow:
                     "0 22px 54px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.85)",
@@ -500,9 +499,9 @@ export default function Staff() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
                 </div>
 
-                <div className="p-8 flex flex-col">
-                  <h3 className="text-[2rem] leading-tight font-black text-slate-950">{staff.name}</h3>
-                  <p className="text-green-700 font-bold mt-2 text-lg">{staff.position}</p>
+                <div className="p-7">
+                  <h3 className="text-2xl font-black text-slate-950">{staff.name}</h3>
+                  <p className="text-green-700 font-bold mt-1">{staff.position}</p>
 
                   {staff.description && (
                     <p className="mt-3 text-slate-500 text-sm leading-relaxed line-clamp-2">
