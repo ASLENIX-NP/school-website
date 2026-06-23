@@ -271,6 +271,7 @@ export default function Facilities() {
                 transition={{ duration: 0.45, delay: index * 0.06 }}
                 className="group rounded-[2rem] overflow-hidden transition-all duration-300 cursor-pointer"
                 style={{
+                  minHeight: "760px",
                   background:
                     "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.82))",
                   border: `1px solid ${facilityColor}24`,
@@ -290,7 +291,7 @@ export default function Facilities() {
                   e.currentTarget.style.borderColor = `${facilityColor}24`;
                 }}
               >
-                <div className="h-56 relative overflow-hidden">
+                <div className="h-96 relative overflow-hidden">
                   <FacilityVisual
                     facility={facility}
                     className="transition-transform duration-500 group-hover:scale-105"
@@ -298,9 +299,7 @@ export default function Facilities() {
 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
 
-                  <div
-                    className="absolute bottom-5 left-5 right-5"
-                  >
+                  <div className="absolute bottom-5 left-5 right-5">
                     <div
                       className="w-16 h-1 rounded-full mb-4 transition-all duration-300 group-hover:w-28"
                       style={{
@@ -321,9 +320,9 @@ export default function Facilities() {
                   </div>
                 </div>
 
-                <div className="p-8">
+                <div className="p-8 flex flex-col">
                   <h3
-                    className="text-3xl font-black text-slate-950 leading-tight"
+                    className="text-[2rem] leading-tight font-black text-slate-950"
                     style={{
                       fontFamily: "var(--font-display)",
                       letterSpacing: "-0.04em",
@@ -375,7 +374,7 @@ export default function Facilities() {
               stiffness: 120,
               damping: 16,
             }}
-            className="relative max-w-3xl w-full overflow-hidden rounded-[32px]"
+            className="relative max-w-[1800px] w-full overflow-hidden rounded-[42px]"
             style={{
               background:
                 "linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,250,252,0.95))",
@@ -397,18 +396,18 @@ export default function Facilities() {
             <button
               type="button"
               onClick={() => setSelectedFacility(null)}
-              className="absolute top-5 right-5 z-[99999] w-12 h-12 rounded-full bg-white shadow-2xl cursor-pointer font-bold hover:bg-red-500 hover:text-white hover:rotate-180 hover:scale-110 transition-all duration-500 flex items-center justify-center"
+              className="absolute top-8 right-8 z-[99999] w-16 h-16 rounded-full bg-white shadow-2xl cursor-pointer font-bold hover:bg-red-500 hover:text-white hover:rotate-180 hover:scale-110 transition-all duration-500 flex items-center justify-center"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="grid md:grid-cols-[300px_1fr] relative z-10">
-              <div className="h-72 md:h-full min-h-[360px] relative overflow-hidden">
+            <div className="grid md:grid-cols-[700px_1fr] relative z-10">
+              <div className="h-[900px] md:h-[900px] relative overflow-hidden">
                 <FacilityVisual facility={selectedFacility} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
               </div>
 
-              <div className="p-8 md:p-10">
+              <div className="p-16 md:p-16 flex flex-col justify-center">
                 <div
                   className="w-20 h-1 rounded-full mb-6"
                   style={{
@@ -430,7 +429,7 @@ export default function Facilities() {
                 </span>
 
                 <h2
-                  className="text-4xl md:text-5xl font-black mt-5 text-slate-950 leading-tight"
+                  className="text-7xl font-black mt-5 text-slate-950 leading-tight"
                   style={{
                     fontFamily: "var(--font-display)",
                     letterSpacing: "-0.055em",
@@ -439,12 +438,12 @@ export default function Facilities() {
                   {selectedFacility.title}
                 </h2>
 
-                <p className="mt-5 text-lg text-slate-600 leading-relaxed">
+                <p className="mt-6 text-xl text-slate-600 leading-relaxed">
                   {selectedFacility.description}
                 </p>
 
                 <div
-                  className="mt-8 p-5 rounded-2xl"
+                  className="mt-10 p-8 rounded-3xl"
                   style={{
                     background: `${selectedFacility.color || colors.green}08`,
                     border: `1px solid ${

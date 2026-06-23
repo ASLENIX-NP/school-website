@@ -66,6 +66,8 @@ const defaultStaffContent = {
       imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
       qualification: "M.Ed",
       phone: "+977-9800000000",
+      description:
+        "Mr. Binod Subedi has been leading Baljagriti Secondary English School with vision and dedication for over a decade. His commitment to academic excellence and student welfare has transformed the school into a centre of quality education in the region.",
       visible: true,
     },
     {
@@ -75,6 +77,8 @@ const defaultStaffContent = {
       imageUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
       qualification: "M.Ed",
       phone: "+977-9800000000",
+      description:
+        "Mr. Amul Shrestha brings years of administrative and academic expertise to Baljagriti. As Vice Principal, he oversees daily operations, faculty coordination, and student discipline, ensuring a productive and inspiring learning environment.",
       visible: true,
     },
     {
@@ -84,6 +88,8 @@ const defaultStaffContent = {
       imageUrl: "https://images.unsplash.com/photo-1504593811423-6dd665756598",
       qualification: "B.Sc, B.Ed",
       phone: "+977-9800000000",
+      description:
+        "Mr. Prem Hamal is a passionate science educator who brings curiosity and innovation into the classroom. With expertise in Physics, Chemistry, and Biology, he makes complex concepts accessible and exciting for every student.",
       visible: true,
     },
   ],
@@ -110,7 +116,6 @@ function Field({ label, value, onChange, placeholder = "", type = "text" }) {
       <label className="block text-sm font-bold mb-2 text-slate-700">
         {label}
       </label>
-
       <input
         type={type}
         value={value || ""}
@@ -127,18 +132,17 @@ function Field({ label, value, onChange, placeholder = "", type = "text" }) {
   );
 }
 
-function TextArea({ label, value, onChange, placeholder = "" }) {
+function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
   return (
     <div>
       <label className="block text-sm font-bold mb-2 text-slate-700">
         {label}
       </label>
-
       <textarea
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        rows={4}
+        rows={rows}
         className="w-full px-4 py-3 rounded-2xl outline-none text-sm resize-none"
         style={{
           background: "rgba(255,255,255,0.88)",
@@ -166,7 +170,6 @@ function EditorCard({ icon: Icon, title, color, children }) {
         <Icon className="w-5 h-5" style={{ color }} />
         <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
       </div>
-
       {children}
     </div>
   );
@@ -222,9 +225,7 @@ function StaffPreview({ form }) {
               boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
             }}
           >
-            <div className="text-2xl font-black text-slate-950">
-              {stat.value}
-            </div>
+            <div className="text-2xl font-black text-slate-950">{stat.value}</div>
             <div className="text-xs text-slate-500">{stat.label}</div>
           </div>
         ))}
@@ -244,22 +245,23 @@ function StaffPreview({ form }) {
               <img
                 src={staff.imageUrl}
                 alt={staff.name}
-                className="w-28 h-32 object-cover"
+                className="w-28 h-32 object-cover flex-shrink-0"
               />
             ) : (
-              <div className="w-28 h-32 bg-slate-100 flex items-center justify-center">
+              <div className="w-28 h-32 bg-slate-100 flex items-center justify-center flex-shrink-0">
                 <UserRound className="w-10 h-10 text-slate-300" />
               </div>
             )}
 
             <div className="py-4 pr-4">
               <div className="font-black text-slate-950">{staff.name}</div>
-              <div className="text-green-700 font-bold text-sm">
-                {staff.position}
-              </div>
-              <div className="text-slate-500 text-sm mt-2">
-                {staff.qualification}
-              </div>
+              <div className="text-green-700 font-bold text-sm">{staff.position}</div>
+              {staff.description && (
+                <div className="text-slate-400 text-xs mt-1 line-clamp-2 leading-relaxed">
+                  {staff.description}
+                </div>
+              )}
+              <div className="text-slate-500 text-sm mt-2">{staff.qualification}</div>
               <div className="text-slate-500 text-sm flex items-center gap-2 mt-1">
                 <Phone className="w-3 h-3" />
                 {staff.phone}
@@ -301,22 +303,14 @@ export default function AdminStaff() {
   }, []);
 
   const updateField = (name, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const updateStat = (id, name, value) => {
     setForm((prev) => ({
       ...prev,
       stats: prev.stats.map((stat) =>
-        stat.id === id
-          ? {
-              ...stat,
-              [name]: value,
-            }
-          : stat
+        stat.id === id ? { ...stat, [name]: value } : stat
       ),
     }));
   };
@@ -325,12 +319,7 @@ export default function AdminStaff() {
     setForm((prev) => ({
       ...prev,
       staff: prev.staff.map((member) =>
-        member.id === id
-          ? {
-              ...member,
-              [name]: value,
-            }
-          : member
+        member.id === id ? { ...member, [name]: value } : member
       ),
     }));
   };
@@ -343,13 +332,10 @@ export default function AdminStaff() {
       imageUrl: "",
       qualification: "",
       phone: "",
+      description: "",
       visible: true,
     };
-
-    setForm((prev) => ({
-      ...prev,
-      staff: [...prev.staff, newMember],
-    }));
+    setForm((prev) => ({ ...prev, staff: [...prev.staff, newMember] }));
   };
 
   const deleteStaffMember = (id) => {
@@ -369,7 +355,6 @@ export default function AdminStaff() {
       setError("Please upload only PNG, JPG, or WebP image.");
       return;
     }
-
     if (file.size > maxSize) {
       setError("Staff photo must be less than 2 MB.");
       return;
@@ -384,9 +369,7 @@ export default function AdminStaff() {
       formData.append("file", file);
 
       const res = await axios.post("http://localhost:5000/api/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       const uploadedUrl =
@@ -420,16 +403,9 @@ export default function AdminStaff() {
     try {
       await axios.put(
         "http://localhost:5000/api/site-content/staff",
-        {
-          content: form,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { content: form },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setSuccess("Staff page content saved successfully.");
     } catch (err) {
       console.error("Save staff content error:", err);
@@ -445,9 +421,7 @@ export default function AdminStaff() {
         className="min-h-screen flex items-center justify-center"
         style={{ background: "#FFF8EE" }}
       >
-        <div className="text-slate-600 font-semibold">
-          Loading staff editor...
-        </div>
+        <div className="text-slate-600 font-semibold">Loading staff editor...</div>
       </div>
     );
   }
@@ -596,7 +570,6 @@ export default function AdminStaff() {
                     value={form.title}
                     onChange={(value) => updateField("title", value)}
                   />
-
                   <Field
                     label="Green Highlight Word"
                     value={form.highlightedWord}
@@ -627,14 +600,12 @@ export default function AdminStaff() {
                     <div className="font-bold text-slate-900 mb-4">
                       Number Card {index + 1}
                     </div>
-
                     <div className="grid md:grid-cols-2 gap-4">
                       <Field
                         label="Number"
                         value={stat.value}
                         onChange={(value) => updateStat(stat.id, "value", value)}
                       />
-
                       <Field
                         label="Label"
                         value={stat.label}
@@ -727,9 +698,7 @@ export default function AdminStaff() {
                       <div>
                         <div
                           className="rounded-2xl overflow-hidden bg-white mb-4"
-                          style={{
-                            border: "1px solid rgba(15,23,42,0.08)",
-                          }}
+                          style={{ border: "1px solid rgba(15,23,42,0.08)" }}
                         >
                           {member.imageUrl ? (
                             <img
@@ -755,18 +724,14 @@ export default function AdminStaff() {
                             className="w-6 h-6"
                             style={{ color: colors.purple }}
                           />
-
                           <span className="text-sm font-bold text-slate-800">
                             {uploadingId === member.id
                               ? "Uploading..."
                               : "Upload Photo"}
                           </span>
-
                           <span className="text-xs text-slate-500 leading-relaxed">
-                            Recommended: 800×1000 px portrait, PNG/JPG/WebP,
-                            max 2 MB.
+                            Recommended: 800×1000 px portrait, PNG/JPG/WebP, max 2 MB.
                           </span>
-
                           <input
                             type="file"
                             accept="image/*"
@@ -789,7 +754,6 @@ export default function AdminStaff() {
                               updateStaff(member.id, "name", value)
                             }
                           />
-
                           <Field
                             label="Position"
                             value={member.position}
@@ -807,7 +771,6 @@ export default function AdminStaff() {
                               updateStaff(member.id, "qualification", value)
                             }
                           />
-
                           <Field
                             label="Phone Number"
                             value={member.phone}
@@ -817,6 +780,16 @@ export default function AdminStaff() {
                             placeholder="+977-98XXXXXXXX"
                           />
                         </div>
+
+                        <TextArea
+                          label="Description / About"
+                          value={member.description}
+                          onChange={(value) =>
+                            updateStaff(member.id, "description", value)
+                          }
+                          placeholder="Write a short bio about this staff member. This appears in the popup when visitors click on their card."
+                          rows={4}
+                        />
 
                         <label className="flex items-center gap-3 text-sm font-bold text-slate-700">
                           <input
@@ -851,19 +824,12 @@ export default function AdminStaff() {
                 <Eye className="w-5 h-5" />
                 Staff Page Preview
               </div>
-
               <div className="text-sm text-white/55">
                 Preview updates while editing.
               </div>
             </div>
 
-            <div
-              className="bg-white overflow-y-auto"
-              style={{
-                height: "760px",
-              }}
-              
-            >
+            <div className="bg-white overflow-y-auto" style={{ height: "760px" }}>
               <StaffPreview form={form} />
             </div>
           </aside>

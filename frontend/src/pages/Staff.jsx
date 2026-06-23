@@ -7,8 +7,12 @@ import {
   Phone,
   BookOpen,
   UserRound,
+  X,
+  Mail,
+  Star,
+  FileText,
 } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 
 const colors = {
   red: "#D71920",
@@ -56,6 +60,8 @@ const defaultStaffContent = {
       imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
       qualification: "M.Ed",
       phone: "+977-9800000000",
+      description:
+        "Mr. Binod Subedi has been leading Baljagriti Secondary English School with vision and dedication for over a decade. His commitment to academic excellence and student welfare has transformed the school into a centre of quality education in the region.",
       visible: true,
     },
     {
@@ -65,6 +71,8 @@ const defaultStaffContent = {
       imageUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
       qualification: "M.Ed",
       phone: "+977-9800000000",
+      description:
+        "Mr. Amul Shrestha brings years of administrative and academic expertise to Baljagriti. As Vice Principal, he oversees daily operations, faculty coordination, and student discipline, ensuring a productive and inspiring learning environment.",
       visible: true,
     },
     {
@@ -74,6 +82,8 @@ const defaultStaffContent = {
       imageUrl: "https://images.unsplash.com/photo-1504593811423-6dd665756598",
       qualification: "B.Sc, B.Ed",
       phone: "+977-9800000000",
+      description:
+        "Mr. Prem Hamal is a passionate science educator who brings curiosity and innovation into the classroom. With expertise in Physics, Chemistry, and Biology, he makes complex concepts accessible and exciting for every student.",
       visible: true,
     },
   ],
@@ -106,26 +116,273 @@ function StaffImage({ src, name }) {
       <img
         src={src}
         alt={name}
-        className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-105"
+        className="w-full h-96 object-cover transition-transform duration-500 group-hover:scale-105"
       />
     );
   }
 
   return (
-    <div className="w-full h-80 bg-slate-100 flex items-center justify-center">
+    <div className="w-full h-96 bg-slate-100 flex items-center justify-center">
       <UserRound className="w-20 h-20 text-slate-300" />
     </div>
+  );
+}
+
+function StaffPopup({ staff, onClose }) {
+  return (
+    <AnimatePresence>
+      {staff && (
+        <motion.div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-8"
+          style={{
+            background: "rgba(5,8,20,0.75)",
+            backdropFilter: "blur(14px)",
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        >
+          <motion.div
+            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, scale: 0.82, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.88, y: 30 }}
+            transition={{ type: "spring", stiffness: 110, damping: 15 }}
+            className="relative w-full max-w-[1800px] overflow-hidden rounded-[42px]"
+            style={{
+              background: "linear-gradient(145deg, #ffffff, #f8fafc)",
+              boxShadow:
+                "0 80px 160px rgba(0,0,0,0.35), 0 30px 60px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.8)",
+            }}
+          >
+            {/* decorative blobs */}
+            <div
+              className="absolute top-0 right-0 w-72 h-72 rounded-full pointer-events-none"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(22,138,58,0.10) 0%, transparent 70%)",
+                transform: "translate(30%, -30%)",
+              }}
+            />
+            <div
+              className="absolute bottom-0 left-0 w-64 h-64 rounded-full pointer-events-none"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(215,25,32,0.08) 0%, transparent 70%)",
+                transform: "translate(-30%, 30%)",
+              }}
+            />
+
+            {/* Close button */}
+            <motion.button
+              type="button"
+              onClick={onClose}
+              whileHover={{ rotate: 180, scale: 1.15 }}
+              transition={{ duration: 0.35 }}
+              className="absolute top-5 right-5 z-50 w-12 h-12 rounded-full flex items-center justify-center shadow-2xl"
+              style={{ background: colors.red, color: "#fff" }}
+            >
+              <X className="w-5 h-5" strokeWidth={3} />
+            </motion.button>
+
+            <div className="grid md:grid-cols-[700px_1fr]">
+              {/* Left — image */}
+              <div className="relative h-[900px] md:h-[900px] overflow-hidden">
+                {staff.imageUrl ? (
+                  <img
+                    src={staff.imageUrl}
+                    alt={staff.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="w-full h-full flex items-center justify-center"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, rgba(11,16,32,0.96), rgba(75,46,131,0.9))",
+                    }}
+                  >
+                    <UserRound className="w-32 h-32 text-white/30" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6 md:hidden text-center">
+                  <h2 className="text-3xl font-black text-white leading-tight">
+                    {staff.name}
+                  </h2>
+                  <p className="text-green-400 font-bold mt-1">{staff.position}</p>
+                </div>
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-1"
+                  style={{
+                    background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
+                  }}
+                />
+              </div>
+
+              {/* Right — ALL CENTERED */}
+              <div className="p-16 md:p-16 flex flex-col items-center justify-center relative z-10 overflow-y-auto max-h-[900px] text-center">
+
+                {/* accent line — centered */}
+                <div
+                  className="w-16 h-1 rounded-full mb-6 mx-auto"
+                  style={{
+                    background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
+                  }}
+                />
+
+                {/* position badge — centered */}
+                <span
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-4"
+                  style={{
+                    background: "rgba(22,138,58,0.10)",
+                    color: colors.green,
+                    border: "1px solid rgba(22,138,58,0.22)",
+                  }}
+                >
+                  <Star className="w-3.5 h-3.5" fill={colors.green} />
+                  {staff.position}
+                </span>
+
+                {/* name — centered */}
+                <h2
+                  className="hidden md:block text-7xl font-black text-slate-950 leading-tight mb-2"
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    letterSpacing: "-0.05em",
+                  }}
+                >
+                  {staff.name}
+                </h2>
+
+                {/* description — centered */}
+                {staff.description && (
+                  <div
+                    className="mt-8 p-8 rounded-3xl w-full"
+                    style={{
+                      background: "rgba(75,46,131,0.05)",
+                      border: "1px solid rgba(75,46,131,0.10)",
+                    }}
+                  >
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <FileText className="w-4 h-4" style={{ color: colors.purple }} />
+                      <p
+                        className="text-xs font-bold uppercase tracking-widest"
+                        style={{ color: colors.purple }}
+                      >
+                        About
+                      </p>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed text-sm">
+                      {staff.description}
+                    </p>
+                  </div>
+                )}
+
+                <div
+                  className="w-full h-px my-5"
+                  style={{ background: "rgba(15,23,42,0.08)" }}
+                />
+
+                {/* info cards — centered */}
+                <div className="space-y-3 w-full">
+                  {staff.qualification && (
+                    <div
+                      className="flex items-center gap-4 p-4 rounded-2xl"
+                      style={{
+                        background: "rgba(75,46,131,0.06)",
+                        border: "1px solid rgba(75,46,131,0.12)",
+                      }}
+                    >
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: "rgba(75,46,131,0.12)" }}
+                      >
+                        <BookOpen className="w-5 h-5" style={{ color: colors.purple }} />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-0.5">
+                          Qualification
+                        </p>
+                        <p className="font-bold text-slate-800">{staff.qualification}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {staff.phone && (
+                    <div
+                      className="flex items-center gap-4 p-4 rounded-2xl"
+                      style={{
+                        background: "rgba(22,138,58,0.06)",
+                        border: "1px solid rgba(22,138,58,0.12)",
+                      }}
+                    >
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: "rgba(22,138,58,0.12)" }}
+                      >
+                        <Phone className="w-5 h-5" style={{ color: colors.green }} />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-0.5">
+                          Contact
+                        </p>
+                        <p className="font-bold text-slate-800">{staff.phone}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {staff.email && (
+                    <div
+                      className="flex items-center gap-4 p-4 rounded-2xl"
+                      style={{
+                        background: "rgba(215,25,32,0.05)",
+                        border: "1px solid rgba(215,25,32,0.10)",
+                      }}
+                    >
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: "rgba(215,25,32,0.10)" }}
+                      >
+                        <Mail className="w-5 h-5" style={{ color: colors.red }} />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-0.5">
+                          Email
+                        </p>
+                        <p className="font-bold text-slate-800">{staff.email}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* bottom accent — centered */}
+                <div className="mt-8 flex items-center justify-center gap-3">
+                  <div className="h-1 w-8 rounded-full" style={{ background: colors.red }} />
+                  <div className="h-1 w-16 rounded-full" style={{ background: colors.green }} />
+                  <div className="h-1 w-4 rounded-full" style={{ background: colors.purple }} />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
 export default function Staff() {
   const [content, setContent] = useState(defaultStaffContent);
   const [loading, setLoading] = useState(true);
+  const [selectedStaff, setSelectedStaff] = useState(null);
 
   useEffect(() => {
     const loadStaffContent = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/site-content/staff");
+        const res = await axios.get(
+          "http://localhost:5000/api/site-content/staff"
+        );
         const savedContent = res.data?.data?.content || {};
         setContent(mergeStaffContent(savedContent));
       } catch (error) {
@@ -195,7 +452,6 @@ export default function Staff() {
         <div className="grid md:grid-cols-3 gap-6 mb-16">
           {content.stats.map((stat, index) => {
             const Icon = getStatIcon(stat.icon);
-
             return (
               <motion.div
                 key={stat.id || index}
@@ -209,16 +465,8 @@ export default function Staff() {
                     "0 22px 54px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.85)",
                 }}
               >
-                <Icon
-                  className="mx-auto mb-4"
-                  size={42}
-                  style={{ color: stat.color || colors.green }}
-                />
-
-                <h3 className="text-4xl font-black text-slate-950">
-                  {stat.value}
-                </h3>
-
+                <Icon className="mx-auto mb-4" size={42} style={{ color: stat.color || colors.green }} />
+                <h3 className="text-4xl font-black text-slate-950">{stat.value}</h3>
                 <p className="text-slate-500 mt-1">{stat.label}</p>
               </motion.div>
             );
@@ -234,12 +482,14 @@ export default function Staff() {
             {visibleStaff.map((staff, index) => (
               <motion.div
                 key={staff.id}
+                onClick={() => setSelectedStaff(staff)}
                 initial={{ opacity: 0, y: 26 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.25 }}
                 transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="group bg-white rounded-[2rem] overflow-hidden transition-all duration-300 hover:-translate-y-2"
+                className="group bg-white rounded-[2rem] overflow-hidden transition-all duration-300 hover:-translate-y-2 cursor-pointer"
                 style={{
+                  minHeight: "760px",
                   border: "1px solid rgba(15,23,42,0.08)",
                   boxShadow:
                     "0 22px 54px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.85)",
@@ -250,14 +500,15 @@ export default function Staff() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
                 </div>
 
-                <div className="p-7">
-                  <h3 className="text-2xl font-black text-slate-950">
-                    {staff.name}
-                  </h3>
+                <div className="p-8 flex flex-col">
+                  <h3 className="text-[2rem] leading-tight font-black text-slate-950">{staff.name}</h3>
+                  <p className="text-green-700 font-bold mt-2 text-lg">{staff.position}</p>
 
-                  <p className="text-green-700 font-bold mt-1">
-                    {staff.position}
-                  </p>
+                  {staff.description && (
+                    <p className="mt-3 text-slate-500 text-sm leading-relaxed line-clamp-2">
+                      {staff.description}
+                    </p>
+                  )}
 
                   <div className="mt-5 space-y-3">
                     {staff.qualification && (
@@ -266,7 +517,6 @@ export default function Staff() {
                         <span>{staff.qualification}</span>
                       </div>
                     )}
-
                     {staff.phone && (
                       <div className="flex items-center gap-3 text-slate-600">
                         <Phone className="w-4 h-4 text-green-700" />
@@ -280,6 +530,8 @@ export default function Staff() {
           </div>
         )}
       </div>
+
+      <StaffPopup staff={selectedStaff} onClose={() => setSelectedStaff(null)} />
     </section>
   );
 }
