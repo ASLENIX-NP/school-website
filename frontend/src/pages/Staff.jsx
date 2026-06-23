@@ -133,7 +133,7 @@ function StaffPopup({ staff, onClose }) {
     <AnimatePresence>
       {staff && (
         <motion.div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-8"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-2 md:p-8 overflow-y-auto"
           style={{
             background: "rgba(5,8,20,0.75)",
             backdropFilter: "blur(14px)",
@@ -149,7 +149,7 @@ function StaffPopup({ staff, onClose }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.88, y: 30 }}
             transition={{ type: "spring", stiffness: 110, damping: 15 }}
-            className="relative w-full max-w-[1800px] overflow-hidden rounded-[42px]"
+            className="relative w-full max-w-[1800px] max-h-[95vh] overflow-y-auto rounded-[42px]"
             style={{
               background: "linear-gradient(145deg, #ffffff, #f8fafc)",
               boxShadow:
@@ -186,9 +186,9 @@ function StaffPopup({ staff, onClose }) {
               <X className="w-5 h-5" strokeWidth={3} />
             </motion.button>
 
-            <div className="grid md:grid-cols-[700px_1fr]">
+            <div className="grid grid-cols-1 md:grid-cols-[700px_1fr]">
               {/* Left — image */}
-              <div className="relative h-[900px] md:h-[900px] overflow-hidden">
+              <div className="relative h-[320px] sm:h-[400px] md:h-[900px] overflow-hidden">
                 {staff.imageUrl ? (
                   <img
                     src={staff.imageUrl}
@@ -222,8 +222,7 @@ function StaffPopup({ staff, onClose }) {
               </div>
 
               {/* Right — ALL CENTERED */}
-              <div className="p-16 md:p-16 flex flex-col items-center justify-center relative z-10 overflow-y-auto max-h-[900px] text-center">
-
+              <div className="p-6 sm:p-8 md:p-16 flex flex-col items-center md:justify-center relative z-10 text-center">
                 {/* accent line — centered */}
                 <div
                   className="w-16 h-1 rounded-full mb-6 mx-auto"
@@ -247,7 +246,7 @@ function StaffPopup({ staff, onClose }) {
 
                 {/* name — centered */}
                 <h2
-                  className="hidden md:block text-7xl font-black text-slate-950 leading-tight mb-2"
+                  className="hidden md:block text-5xl lg:text-7xl font-black text-slate-950 leading-tight mb-2"
                   style={{
                     fontFamily: "var(--font-display)",
                     letterSpacing: "-0.05em",
@@ -274,7 +273,7 @@ function StaffPopup({ staff, onClose }) {
                         About
                       </p>
                     </div>
-                    <p className="text-slate-600 leading-relaxed text-sm">
+                    <p className="text-slate-600 leading-relaxed text-sm md:text-base">
                       {staff.description}
                     </p>
                   </div>
@@ -395,6 +394,19 @@ export default function Staff() {
 
     loadStaffContent();
   }, []);
+
+  // Body scroll lock when popup is open
+  useEffect(() => {
+    if (selectedStaff) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [selectedStaff]);
 
   const visibleStaff = content.staff.filter((staff) => staff.visible !== false);
 

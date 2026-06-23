@@ -202,6 +202,19 @@ export default function Facilities() {
     loadFacilitiesContent();
   }, []);
 
+  // Body scroll lock when popup is open
+  useEffect(() => {
+    if (selectedFacility) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [selectedFacility]);
+
   const visibleFacilities = content.facilities.filter(
     (facility) => facility.visible !== false
   );
@@ -350,7 +363,7 @@ export default function Facilities() {
 
       {selectedFacility && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-6"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-2 md:p-8 overflow-y-auto"
           style={{
             background: "rgba(0,0,0,0.48)",
             backdropFilter: "blur(12px)",
@@ -374,7 +387,7 @@ export default function Facilities() {
               stiffness: 120,
               damping: 16,
             }}
-            className="relative max-w-[1800px] w-full overflow-hidden rounded-[42px]"
+            className="relative w-full max-w-[1800px] max-h-[95vh] overflow-y-auto rounded-[42px]"
             style={{
               background:
                 "linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,250,252,0.95))",
@@ -396,18 +409,18 @@ export default function Facilities() {
             <button
               type="button"
               onClick={() => setSelectedFacility(null)}
-              className="absolute top-8 right-8 z-[99999] w-16 h-16 rounded-full bg-white shadow-2xl cursor-pointer font-bold hover:bg-red-500 hover:text-white hover:rotate-180 hover:scale-110 transition-all duration-500 flex items-center justify-center"
+              className="absolute top-5 right-5 z-[99999] w-12 h-12 md:w-16 md:h-16 rounded-full bg-white shadow-2xl cursor-pointer font-bold hover:bg-red-500 hover:text-white hover:rotate-180 hover:scale-110 transition-all duration-500 flex items-center justify-center"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="grid md:grid-cols-[700px_1fr] relative z-10">
-              <div className="h-[900px] md:h-[900px] relative overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-[700px_1fr] relative z-10">
+              <div className="h-[320px] sm:h-[400px] md:h-[900px] relative overflow-hidden">
                 <FacilityVisual facility={selectedFacility} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
               </div>
 
-              <div className="p-16 md:p-16 flex flex-col justify-center">
+              <div className="p-6 sm:p-8 md:p-16 flex flex-col justify-center">
                 <div
                   className="w-20 h-1 rounded-full mb-6"
                   style={{
@@ -416,7 +429,7 @@ export default function Facilities() {
                 />
 
                 <span
-                  className="px-4 py-2 rounded-full text-sm font-bold"
+                  className="px-4 py-2 rounded-full text-sm font-bold inline-block w-fit"
                   style={{
                     background: `${selectedFacility.color || colors.green}12`,
                     color: selectedFacility.color || colors.green,
@@ -429,7 +442,7 @@ export default function Facilities() {
                 </span>
 
                 <h2
-                  className="text-7xl font-black mt-5 text-slate-950 leading-tight"
+                  className="text-4xl sm:text-5xl md:text-7xl font-black mt-5 text-slate-950 leading-tight"
                   style={{
                     fontFamily: "var(--font-display)",
                     letterSpacing: "-0.055em",
@@ -438,12 +451,12 @@ export default function Facilities() {
                   {selectedFacility.title}
                 </h2>
 
-                <p className="mt-6 text-xl text-slate-600 leading-relaxed">
+                <p className="mt-6 text-base sm:text-lg md:text-xl text-slate-600 leading-relaxed">
                   {selectedFacility.description}
                 </p>
 
                 <div
-                  className="mt-10 p-8 rounded-3xl"
+                  className="mt-8 md:mt-10 p-6 sm:p-8 rounded-3xl"
                   style={{
                     background: `${selectedFacility.color || colors.green}08`,
                     border: `1px solid ${
@@ -455,7 +468,7 @@ export default function Facilities() {
                     {content.highlightsTitle}
                   </h4>
 
-                  <p className="text-slate-600 leading-relaxed">
+                  <p className="text-slate-600 leading-relaxed text-sm sm:text-base">
                     {selectedFacility.details}
                   </p>
                 </div>
