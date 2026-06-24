@@ -16,6 +16,8 @@ import {
   ExternalLink,
   Megaphone,
   Edit2,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 
 const colors = {
@@ -27,24 +29,32 @@ const colors = {
   gold: "#FACC15",
 };
 
-function Field({ label, value, onChange, placeholder = "", type = "text", required = false }) {
+function Field({ label, value, onChange, placeholder = "", type = "text", required = false, icon: Icon }) {
   return (
     <div>
       <label className="block text-sm font-bold mb-2 text-slate-700">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      <input
-        type={type}
-        value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
-        style={{
-          background: "rgba(255,255,255,0.88)",
-          border: "1px solid rgba(75,46,131,0.16)",
-          color: colors.dark,
-        }}
-      />
+      <div className="relative">
+        {Icon && (
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+            <Icon className="w-4 h-4" />
+          </div>
+        )}
+        <input
+          type={type}
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="w-full px-4 py-3 rounded-2xl outline-none text-sm transition-all focus:ring-2 focus:ring-red-200"
+          style={{
+            background: "rgba(255,255,255,0.88)",
+            border: "1px solid rgba(75,46,131,0.16)",
+            color: colors.dark,
+            paddingLeft: Icon ? "44px" : "16px",
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -60,7 +70,7 @@ function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full px-4 py-3 rounded-2xl outline-none text-sm resize-none"
+        className="w-full px-4 py-3 rounded-2xl outline-none text-sm resize-none transition-all focus:ring-2 focus:ring-red-200"
         style={{
           background: "rgba(255,255,255,0.88)",
           border: "1px solid rgba(75,46,131,0.16)",
@@ -71,20 +81,24 @@ function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
   );
 }
 
-function EditorCard({ icon: Icon, title, color, children }) {
+function EditorCard({ icon: Icon, title, color, children, gradient }) {
   return (
     <div
-      className="rounded-3xl p-6 md:p-8"
+      className="rounded-3xl p-6 md:p-8 transition-all duration-300 hover:shadow-xl"
       style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+        background: gradient || "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
         border: "1px solid rgba(11,16,32,0.08)",
         boxShadow:
           "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
       }}
     >
       <div className="flex items-center gap-3 mb-6">
-        <Icon className="w-5 h-5" style={{ color }} />
+        <div
+          className="p-2 rounded-xl"
+          style={{ background: `${color}15` }}
+        >
+          <Icon className="w-5 h-5" style={{ color }} />
+        </div>
         <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
       </div>
       {children}
@@ -97,7 +111,7 @@ function AnnouncementCard({ announcement, onDelete, onToggleVisibility, onEdit }
   
   return (
     <div
-      className="rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
+      className="rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
       style={{
         background: "rgba(255,255,255,0.9)",
         border: "1px solid rgba(75,46,131,0.10)",
@@ -113,24 +127,32 @@ function AnnouncementCard({ announcement, onDelete, onToggleVisibility, onEdit }
             className="w-full h-full object-cover"
             onError={(e) => {
               e.target.style.display = 'none';
-              e.target.parentElement.innerHTML = `
-                <div class="w-full h-full flex items-center justify-center bg-slate-100">
-                  <span class="text-slate-400 text-sm">Image not available</span>
-                </div>
-              `;
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-          <div className="absolute bottom-3 left-3 right-3">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+          <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2">
             <span
-              className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold"
+              className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold"
               style={{
-                background: "rgba(215,25,32,0.85)",
+                background: "rgba(215,25,32,0.9)",
                 color: "#fff",
               }}
             >
+              <Zap className="w-3 h-3" />
               {announcement.active !== false ? "Active" : "Inactive"}
             </span>
+            {announcement.show_on_homepage && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold"
+                style={{
+                  background: "rgba(250,204,21,0.9)",
+                  color: "#0B1020",
+                }}
+              >
+                <Sparkles className="w-3 h-3" />
+                Homepage
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -155,7 +177,7 @@ function AnnouncementCard({ announcement, onDelete, onToggleVisibility, onEdit }
             <button
               type="button"
               onClick={() => onEdit(announcement)}
-              className="p-2 rounded-xl"
+              className="p-2 rounded-xl transition-all hover:scale-110"
               style={{
                 background: "rgba(75,46,131,0.08)",
                 color: colors.purple,
@@ -167,7 +189,7 @@ function AnnouncementCard({ announcement, onDelete, onToggleVisibility, onEdit }
             <button
               type="button"
               onClick={() => onToggleVisibility(announcement)}
-              className="p-2 rounded-xl transition-all"
+              className="p-2 rounded-xl transition-all hover:scale-110"
               style={{
                 background: announcement.visible !== false ? "rgba(22,138,58,0.08)" : "rgba(100,116,139,0.1)",
                 color: announcement.visible !== false ? colors.green : "#64748B",
@@ -179,7 +201,7 @@ function AnnouncementCard({ announcement, onDelete, onToggleVisibility, onEdit }
             <button
               type="button"
               onClick={() => onDelete(announcement.id)}
-              className="p-2 rounded-xl"
+              className="p-2 rounded-xl transition-all hover:scale-110"
               style={{
                 background: "rgba(215,25,32,0.08)",
                 color: colors.red,
@@ -251,10 +273,10 @@ function AnnouncementPreview({ announcements }) {
           {visible.slice(0, 3).map((item) => (
             <div
               key={item.id}
-              className="bg-white rounded-2xl overflow-hidden"
+              className="bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
               style={{
-                border: "1px solid rgba(15,23,42,0.08)",
-                boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
+                border: "1px solid rgba(215,25,32,0.08)",
+                boxShadow: "0 12px 32px rgba(215,25,32,0.08)",
               }}
             >
               {item.image_url && (
@@ -432,8 +454,6 @@ export default function AdminAnnouncements() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      console.log("Upload response:", res.data);
-
       const uploadedUrl =
         res.data?.url ||
         res.data?.imageUrl ||
@@ -445,8 +465,7 @@ export default function AdminAnnouncements() {
         res.data?.data?.secure_url;
 
       if (!uploadedUrl) {
-        setError("Image uploaded but URL not returned. Check server response.");
-        console.error("No URL in response:", res.data);
+        setError("Image uploaded but URL not returned.");
         return null;
       }
 
@@ -551,6 +570,10 @@ export default function AdminAnnouncements() {
         `,
       }}
     >
+      {/* Decorative floating elements */}
+      <div className="absolute top-40 right-20 w-64 h-64 rounded-full bg-red-500/5 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-40 left-20 w-72 h-72 rounded-full bg-purple-500/5 blur-3xl pointer-events-none" />
+
       <header
         className="sticky top-0 z-40"
         style={{
@@ -565,7 +588,7 @@ export default function AdminAnnouncements() {
           <button
             type="button"
             onClick={() => navigate("/admin/dashboard")}
-            className="inline-flex items-center gap-2 text-white font-bold"
+            className="inline-flex items-center gap-2 text-white font-bold hover:text-red-400 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             Back to Dashboard
@@ -597,17 +620,20 @@ export default function AdminAnnouncements() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <span
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-5"
-            style={{
-              background: "rgba(215,25,32,0.08)",
-              color: colors.red,
-              border: "1px solid rgba(215,25,32,0.15)",
-            }}
-          >
-            <Megaphone className="w-4 h-4" />
-            Manage Announcements
-          </span>
+          <div className="flex items-center gap-3 mb-5">
+            <span
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold"
+              style={{
+                background: "rgba(215,25,32,0.08)",
+                color: colors.red,
+                border: "1px solid rgba(215,25,32,0.15)",
+              }}
+            >
+              <Megaphone className="w-4 h-4" />
+              Manage Announcements
+            </span>
+            <div className="h-px flex-1 bg-gradient-to-r from-red-200 to-transparent" />
+          </div>
 
           <h1
             className="text-4xl md:text-6xl mb-4"
@@ -627,7 +653,9 @@ export default function AdminAnnouncements() {
         </motion.div>
 
         {success && (
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
             className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold"
             style={{
               background: "rgba(22,138,58,0.1)",
@@ -637,11 +665,13 @@ export default function AdminAnnouncements() {
           >
             <CheckCircle2 className="w-5 h-5" />
             {success}
-          </div>
+          </motion.div>
         )}
 
         {error && (
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
             className="mb-6 rounded-2xl px-5 py-4 font-semibold"
             style={{
               background: "rgba(215,25,32,0.1)",
@@ -650,12 +680,17 @@ export default function AdminAnnouncements() {
             }}
           >
             {error}
-          </div>
+          </motion.div>
         )}
 
         <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start">
           <div className="space-y-8">
-            <EditorCard icon={editingId ? Edit2 : Plus} title={editingId ? "Edit Announcement" : "Add New Announcement"} color={colors.red}>
+            <EditorCard 
+              icon={editingId ? Edit2 : Plus} 
+              title={editingId ? "Edit Announcement" : "Add New Announcement"} 
+              color={colors.red}
+              gradient="linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,245,245,0.92))"
+            >
               <form onSubmit={handleSubmit} className="space-y-5">
                 <Field
                   label="Announcement Title"
@@ -663,6 +698,7 @@ export default function AdminAnnouncements() {
                   onChange={(value) => setFormData({ ...formData, title: value })}
                   placeholder="e.g., Vacancy Announcement 2026"
                   required
+                  icon={Edit2}
                 />
 
                 <div>
@@ -670,10 +706,10 @@ export default function AdminAnnouncements() {
                     Image / Banner
                   </label>
                   <div
-                    className="rounded-2xl p-4"
+                    className="rounded-2xl p-4 transition-all hover:border-purple-300"
                     style={{
                       background: "rgba(255,255,255,0.88)",
-                      border: "1px solid rgba(75,46,131,0.16)",
+                      border: "2px dashed rgba(75,46,131,0.16)",
                     }}
                   >
                     {(imagePreview || formData.image_url) && formData.image_url !== "Uploading..." ? (
@@ -694,20 +730,22 @@ export default function AdminAnnouncements() {
                               setImagePreview(null);
                               setImageFile(null);
                             }}
-                            className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                            className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg"
                           >
                             <X className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <label className="flex flex-col items-center justify-center gap-2 cursor-pointer py-6">
-                        <UploadCloud className="w-10 h-10" style={{ color: colors.purple }} />
+                      <label className="flex flex-col items-center justify-center gap-2 cursor-pointer py-6 hover:bg-purple-50/50 rounded-xl transition-colors">
+                        <div className="p-3 rounded-full" style={{ background: "rgba(75,46,131,0.08)" }}>
+                          <UploadCloud className="w-8 h-8" style={{ color: colors.purple }} />
+                        </div>
                         <span className="text-sm font-bold text-slate-800">
-                          {uploading ? "Uploading..." : "Upload Image"}
+                          {uploading ? "Uploading..." : "Click to Upload Image"}
                         </span>
-                        <span className="text-xs text-slate-500 text-center">
-                          Upload an image (PNG, JPG, WebP) - max 5MB
+                        <span className="text-xs text-slate-500">
+                          PNG, JPG, WebP, GIF • Max 5MB
                         </span>
                         <input
                           type="file"
@@ -735,31 +773,31 @@ export default function AdminAnnouncements() {
                   rows={5}
                 />
 
-                <div className="flex flex-wrap items-center gap-6">
-                  <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                <div className="flex flex-wrap items-center gap-6 p-4 rounded-2xl" style={{ background: "rgba(15,23,42,0.03)" }}>
+                  <label className="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={formData.active}
                       onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                      className="w-4 h-4"
+                      className="w-4 h-4 accent-red-500"
                     />
                     Active
                   </label>
-                  <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                  <label className="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={formData.visible}
                       onChange={(e) => setFormData({ ...formData, visible: e.target.checked })}
-                      className="w-4 h-4"
+                      className="w-4 h-4 accent-green-500"
                     />
                     Visible on website
                   </label>
-                  <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                  <label className="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={formData.show_on_homepage}
                       onChange={(e) => setFormData({ ...formData, show_on_homepage: e.target.checked })}
-                      className="w-4 h-4"
+                      className="w-4 h-4 accent-yellow-500"
                     />
                     Show on homepage
                   </label>
@@ -770,7 +808,7 @@ export default function AdminAnnouncements() {
                     <button
                       type="button"
                       onClick={resetForm}
-                      className="px-6 py-3 rounded-2xl font-bold transition-all"
+                      className="px-6 py-3 rounded-2xl font-bold transition-all hover:scale-105"
                       style={{
                         background: "rgba(100,116,139,0.1)",
                         color: "#64748B",
@@ -783,7 +821,7 @@ export default function AdminAnnouncements() {
                   <button
                     type="submit"
                     disabled={saving || uploading}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all hover:scale-105 disabled:opacity-60"
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all hover:scale-105 disabled:opacity-60 hover:shadow-xl"
                     style={{
                       color: "#fff",
                       background: `linear-gradient(135deg, ${colors.red}, #9B1117)`,
@@ -797,12 +835,17 @@ export default function AdminAnnouncements() {
               </form>
             </EditorCard>
 
-            <EditorCard icon={Megaphone} title="All Announcements" color={colors.green}>
+            <EditorCard 
+              icon={Megaphone} 
+              title="All Announcements" 
+              color={colors.green}
+              gradient="linear-gradient(145deg, rgba(255,255,255,0.96), rgba(245,255,245,0.92))"
+            >
               <div className="space-y-4">
                 {announcements.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500">
-                    <Megaphone className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-                    <p className="font-semibold">No announcements added yet</p>
+                  <div className="text-center py-12 text-slate-500">
+                    <Megaphone className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+                    <p className="font-semibold text-lg">No announcements added yet</p>
                     <p className="text-sm">Add your first announcement using the form.</p>
                   </div>
                 ) : (
@@ -831,7 +874,9 @@ export default function AdminAnnouncements() {
           >
             <div className="p-5 border-b border-white/10">
               <div className="text-white font-bold text-lg flex items-center gap-2">
-                <Eye className="w-5 h-5" />
+                <div className="p-1.5 rounded-lg bg-white/10">
+                  <Eye className="w-5 h-5" />
+                </div>
                 Homepage Preview
               </div>
               <div className="text-sm text-white/55">
