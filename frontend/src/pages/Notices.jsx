@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import PdfNoticePreview from "../app/components/PdfNoticePreview";
-import { X } from "lucide-react";
+import { X, Megaphone } from "lucide-react";
 
 const colors = {
   red: "#D71920",
@@ -98,7 +98,6 @@ function NoticeCard({ notice, index, onClick }) {
 
       const a = document.createElement("a");
       a.href = url;
-      // Extract filename from URL or use default
       const filename = fileUrl.split('/').pop() || "notice.pdf";
       a.download = filename;
       document.body.appendChild(a);
@@ -108,7 +107,6 @@ function NoticeCard({ notice, index, onClick }) {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Download failed:", error);
-      // Fallback: open in new tab
       window.open(fileUrl, '_blank');
     }
   };
@@ -222,6 +220,221 @@ function NoticeCard({ notice, index, onClick }) {
   );
 }
 
+// ─── Announcement Card Component ──────────────────────────────────────
+function AnnouncementCard({ announcement, index, onClick }) {
+  const fileUrl = announcement.image_url;
+
+  const handleDownload = async (e) => {
+    e.stopPropagation();
+
+    if (!fileUrl) return;
+
+    try {
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      const filename = fileUrl.split('/').pop() || "announcement.jpg";
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+      window.open(fileUrl, '_blank');
+    }
+  };
+
+  return (
+    <motion.article
+      onClick={onClick}
+      initial={{ opacity: 0, y: 22 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.45, delay: Math.min(index * 0.05, 0.25) }}
+      className="group relative overflow-hidden rounded-[28px] bg-white transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+      style={{
+        border: "1px solid rgba(215,25,32,0.12)",
+        boxShadow:
+          "0 16px 44px rgba(215,25,32,0.075), inset 0 1px 0 rgba(255,255,255,0.9)",
+      }}
+    >
+      <div
+        className="absolute left-0 top-0 h-full w-1.5 transition-all duration-300 group-hover:w-2"
+        style={{
+          background: `linear-gradient(180deg, ${colors.red}, ${colors.gold})`,
+        }}
+      />
+
+      <div className="grid gap-5 p-6 pl-8 md:grid-cols-[145px_1fr_170px] md:items-center">
+        <div>
+          <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+            Announcement
+          </div>
+
+          <div className="mt-2 text-base font-black text-slate-900">
+            {announcement.created_at
+              ? formatNoticeDate(announcement.created_at)
+              : "No date"}
+          </div>
+
+          <div className="mt-4">
+            <span
+              className="rounded-full px-3 py-1 text-xs font-black"
+              style={{
+                background: "rgba(215,25,32,0.08)",
+                color: colors.red,
+                border: "1px solid rgba(215,25,32,0.16)",
+              }}
+            >
+              Announcement
+            </span>
+          </div>
+        </div>
+
+        <div className="min-w-0">
+          <h3
+            className="text-2xl text-slate-950 transition-colors duration-300 group-hover:text-red-600"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 850,
+              letterSpacing: "-0.035em",
+              lineHeight: 1.12,
+            }}
+          >
+            {announcement.title || "Announcement"}
+          </h3>
+
+          <p className="mt-3 text-base leading-relaxed text-slate-500 line-clamp-2">
+            {announcement.description || "Click to view full announcement."}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3 md:items-end">
+          <span
+            className="rounded-2xl px-5 py-3 text-sm font-black text-center"
+            style={{
+              background: fileUrl ? "rgba(215,25,32,0.08)" : "rgba(100,116,139,0.08)",
+              color: fileUrl ? colors.red : "#94A3B8",
+              border: fileUrl ? "1px solid rgba(215,25,32,0.15)" : "1px solid rgba(100,116,139,0.1)",
+            }}
+          >
+            {fileUrl ? "Click to View" : "No Image"}
+          </span>
+
+          {fileUrl && (
+            <button
+              onClick={handleDownload}
+              className="rounded-2xl px-5 py-3 text-sm font-black text-center transition-all duration-300 hover:-translate-y-0.5"
+              style={{
+                background: colors.dark,
+                color: "#FFFFFF",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              Download
+            </button>
+          )}
+        </div>
+      </div>
+    </motion.article>
+  );
+}
+
+// ─── Announcement Popup Modal ─────────────────────────────────────────
+function AnnouncementPopup({ announcement, onClose }) {
+  if (!announcement) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 z-[99999] flex items-center justify-center p-4 md:p-8"
+        style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)" }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92, y: 30 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ type: "spring", stiffness: 120, damping: 16 }}
+          className="relative w-[95vw] max-w-[1400px] rounded-[32px] overflow-hidden flex flex-col"
+          style={{
+            background: "#ffffff",
+            border: "1px solid rgba(255,255,255,0.15)",
+            boxShadow: "0 60px 160px rgba(0,0,0,0.45)",
+            maxHeight: "95vh",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Red gradient bar */}
+          <div
+            className="h-1.5 w-full flex-shrink-0"
+            style={{ background: "linear-gradient(90deg, #D71920, #FACC15, #168A3A)" }}
+          />
+
+          {/* Header */}
+          <div
+            className="flex items-center justify-between px-6 py-4 flex-shrink-0"
+            style={{ borderBottom: "1px solid rgba(0,0,0,0.06)", background: "#fafafa" }}
+          >
+            <div className="min-w-0 flex-1">
+              <h2
+                className="text-xl md:text-2xl font-black text-slate-950 truncate"
+                style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.035em" }}
+              >
+                {announcement.title || "Announcement"}
+              </h2>
+            </div>
+
+            <motion.button
+              type="button"
+              onClick={onClose}
+              whileHover={{ rotate: 180, scale: 1.15 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              className="flex h-12 w-12 items-center justify-center rounded-full shadow-lg flex-shrink-0 ml-4"
+              style={{
+                background: "#D71920",
+                color: "#ffffff",
+                boxShadow: "0 8px 24px rgba(215,25,32,0.35)",
+              }}
+            >
+              <X className="h-6 w-6" strokeWidth={2.5} />
+            </motion.button>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+          {announcement.image_url && (
+  <div className="mb-6 flex justify-center">
+    <img
+      src={announcement.image_url}
+      alt={announcement.title}
+      className="max-w-full max-h-[80vh] object-contain rounded-xl"
+    />
+  </div>
+)}
+            <div className="prose prose-lg max-w-none">
+              <p className="text-slate-600 leading-relaxed whitespace-pre-line">
+                {announcement.description}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// ─── Empty State ──────────────────────────────────────────────────────
 function EmptyNotice() {
   return (
     <div
@@ -260,19 +473,22 @@ function EmptyNotice() {
   );
 }
 
+// ─── Main Component ──────────────────────────────────────────────────
 export default function Notices() {
   const [notices, setNotices] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
   const [settings, setSettings] = useState(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [selectedNotice, setSelectedNotice] = useState(null);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
 
   useEffect(() => {
-    const loadNoticePage = async () => {
-      await Promise.all([fetchNotices(), fetchSettings()]);
+    const loadData = async () => {
+      await Promise.all([fetchNotices(), fetchAnnouncements(), fetchSettings()]);
       setLoading(false);
     };
 
-    loadNoticePage();
+    loadData();
   }, []);
 
   const fetchNotices = async () => {
@@ -289,6 +505,22 @@ export default function Notices() {
       }
     } catch (error) {
       console.error("Fetch notices error:", error);
+    }
+  };
+
+  const fetchAnnouncements = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/announcements");
+      const result = await response.json();
+
+      if (result.success) {
+        const visibleAnnouncements = (result.data || []).filter(
+          (a) => a.visible !== false && a.active !== false
+        );
+        setAnnouncements(visibleAnnouncements);
+      }
+    } catch (error) {
+      console.error("Fetch announcements error:", error);
     }
   };
 
@@ -314,7 +546,6 @@ export default function Notices() {
 
   const importantCount = notices.filter((notice) => notice.pinned).length;
 
-  // Download handler for modal
   const handleModalDownload = async (fileUrl) => {
     if (!fileUrl) return;
 
@@ -338,6 +569,10 @@ export default function Notices() {
       window.open(fileUrl, '_blank');
     }
   };
+
+  const hasAnnouncements = announcements.length > 0;
+  const hasNotices = notices.length > 0;
+  const hasContent = hasAnnouncements || hasNotices;
 
   return (
     <>
@@ -423,36 +658,74 @@ export default function Notices() {
                   }}
                 />
 
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <div className="text-3xl font-black text-slate-950">
-                      {notices.length}
-                    </div>
-                    <div className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                      Notices
-                    </div>
-                  </div>
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+  <div
+    className="rounded-3xl p-4 text-center"
+    style={{
+      background: "#fff",
+      border: "1px solid rgba(15,23,42,0.08)",
+    }}
+  >
+    <h3 className="text-4xl font-black text-slate-950">
+      {notices.length}
+    </h3>
 
-                  <div>
-                    <div className="text-3xl font-black text-slate-950">
-                      {importantCount}
-                    </div>
-                    <div className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                      Important
-                    </div>
-                  </div>
+    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-2">
+      Notices
+    </p>
+  </div>
 
-                  <div>
-                    <div className="text-sm font-black text-slate-950 leading-tight">
-                      {latestNoticeDate}
-                    </div>
-                    <div className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                      Latest
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+  <div
+    className="rounded-3xl p-4 text-center"
+    style={{
+      background: "#fff",
+      border: "1px solid rgba(15,23,42,0.08)",
+    }}
+  >
+    <h3 className="text-4xl font-black text-slate-950">
+      {importantCount}
+    </h3>
+
+    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-2">
+      Important
+    </p>
+  </div>
+
+  <div
+    className="rounded-3xl p-4 text-center"
+    style={{
+      background: "#fff",
+      border: "1px solid rgba(15,23,42,0.08)",
+    }}
+  >
+    <h3 className="text-4xl font-black text-slate-950">
+      {announcements.length}
+    </h3>
+
+    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-2">
+      Announcements
+    </p>
+  </div>
+
+  <div
+    className="rounded-3xl p-4 text-center"
+    style={{
+      background: "#fff",
+      border: "1px solid rgba(15,23,42,0.08)",
+    }}
+  >
+    <h3 className="text-lg font-black text-slate-950">
+      {latestNoticeDate}
+    </h3>
+
+    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-2">
+      Latest
+    </p>
+  </div>
+</div>
+</div>
+</div>
+
           </motion.div>
 
           <div className="grid lg:grid-cols-[1fr_330px] gap-8 items-start">
@@ -480,12 +753,12 @@ export default function Notices() {
                         letterSpacing: "-0.035em",
                       }}
                     >
-                      Latest School Announcements
+                      Latest School Updates
                     </h2>
                   </div>
 
                   <div className="text-sm font-semibold text-white/55">
-                    Newest notices appear first
+                    Newest appears first
                   </div>
                 </div>
               </div>
@@ -498,19 +771,77 @@ export default function Notices() {
                     border: "1px solid rgba(15,23,42,0.08)",
                   }}
                 >
-                  Loading notices...
+                  Loading...
                 </div>
-              ) : notices.length === 0 ? (
+              ) : !hasContent ? (
                 <EmptyNotice />
               ) : (
-                notices.map((notice, index) => (
-                  <NoticeCard
-                    key={notice.id || index}
-                    notice={notice}
-                    index={index}
-                    onClick={() => setSelectedNotice(notice)}
-                  />
-                ))
+                <>
+                  {/* Announcements Section */}
+                  {hasAnnouncements && (
+                    <div className="mb-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Megaphone className="w-5 h-5" style={{ color: colors.red }} />
+                        <h3
+                          className="text-lg font-black text-slate-950"
+                          style={{
+                            fontFamily: "var(--font-display)",
+                            letterSpacing: "-0.03em",
+                          }}
+                        >
+                          Announcements
+                        </h3>
+                        <div
+                          className="h-px flex-1"
+                          style={{ background: "rgba(215,25,32,0.15)" }}
+                        />
+                      </div>
+                      {announcements.map((announcement, index) => (
+                        <AnnouncementCard
+                          key={announcement.id || index}
+                          announcement={announcement}
+                          index={index}
+                          onClick={() => setSelectedAnnouncement(announcement)}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Notices Section */}
+                  {hasNotices && (
+                    <div>
+                      {hasAnnouncements && (
+                        <div className="flex items-center gap-2 mb-4 mt-6">
+                          <div
+                            className="h-px flex-1"
+                            style={{ background: "rgba(22,138,58,0.15)" }}
+                          />
+                          <h3
+                            className="text-lg font-black text-slate-950"
+                            style={{
+                              fontFamily: "var(--font-display)",
+                              letterSpacing: "-0.03em",
+                            }}
+                          >
+                            Notices
+                          </h3>
+                          <div
+                            className="h-px flex-1"
+                            style={{ background: "rgba(22,138,58,0.15)" }}
+                          />
+                        </div>
+                      )}
+                      {notices.map((notice, index) => (
+                        <NoticeCard
+                          key={notice.id || index}
+                          notice={notice}
+                          index={index}
+                          onClick={() => setSelectedNotice(notice)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -732,11 +1063,11 @@ export default function Notices() {
                       ) : hasPdf ? (
                         <>
                           <div className="h-[70vh] rounded-[24px] overflow-hidden">
-  <PdfNoticePreview
-    fileUrl={pdfSrc}
-    title={selectedNotice.title || "Notice PDF"}
-  />
-</div>
+                            <PdfNoticePreview
+                              fileUrl={pdfSrc}
+                              title={selectedNotice.title || "Notice PDF"}
+                            />
+                          </div>
 
                           <div
                             className="mt-5 rounded-2xl px-5 py-5"
@@ -792,6 +1123,16 @@ export default function Notices() {
               })()}
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Announcement Popup Modal */}
+      <AnimatePresence>
+        {selectedAnnouncement && (
+          <AnnouncementPopup
+            announcement={selectedAnnouncement}
+            onClose={() => setSelectedAnnouncement(null)}
+          />
         )}
       </AnimatePresence>
     </>

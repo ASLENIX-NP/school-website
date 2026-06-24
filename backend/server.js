@@ -10,6 +10,7 @@ import siteContentRoutes from "./routes/siteContentRoutes.js";
 import noticeRoutes from "./routes/noticeRoutes.js";
 import noticeSettingsRoutes from "./routes/noticeSettingsRoutes.js";
 import adminSettingsRoutes from "./routes/adminSettingsRoutes.js";
+import announcementRoutes from "./routes/announcementRoutes.js";
 
 
 dotenv.config();
@@ -33,6 +34,7 @@ app.use("/api/site-content", siteContentRoutes);
 app.use("/api/notices", noticeRoutes);
 app.use("/api/notice-settings", noticeSettingsRoutes);
 app.use("/api/admin-settings", adminSettingsRoutes);
+app.use("/api/announcements", announcementRoutes);
 
 function normalizePhone(phone = "") {
   return String(phone).replace(/[^\d+]/g, "").trim();

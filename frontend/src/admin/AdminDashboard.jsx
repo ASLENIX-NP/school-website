@@ -84,6 +84,13 @@ const adminSections = [
     path: "/admin/notices",
   },
   {
+    title: "Manage Announcements",
+    description: "Add homepage announcements, vacancy notices and important updates.",
+    icon: Newspaper,
+    color: "#F97316",
+    path: "/admin/announcements",
+  },
+  {
     title: "Manage Staff",
     description: "Add teachers, departments, roles, and staff profile images.",
     icon: Users,
