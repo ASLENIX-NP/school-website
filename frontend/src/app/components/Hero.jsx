@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 const palette = {
   cyan: "#38BDF8",
   gold: "#FACC15",
   green: "#22C55E",
+  purple: "#8B5CF6",
+  navy: "#0B1020",
+  cream: "#FFF8EE",
 };
 
 const defaultHeroData = {
@@ -47,6 +50,11 @@ const defaultHeroData = {
   floating4Subtitle: "Learning Resources",
 };
 
+function safeLink(link, fallback) {
+  const clean = String(link || "").trim();
+  return clean.startsWith("/") ? clean : fallback;
+}
+
 function GlassStat({ value, label, color, delay }) {
   return (
     <motion.div
@@ -56,10 +64,10 @@ function GlassStat({ value, label, color, delay }) {
       className="group min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl px-3 py-4 sm:p-5 cursor-pointer transition-all duration-300 hover:-translate-y-2"
       style={{
         background:
-          "linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055))",
-        border: "1px solid rgba(255,255,255,0.16)",
+          "linear-gradient(145deg, rgba(255,255,255,0.82), rgba(255,255,255,0.50))",
+        border: "1px solid rgba(15,23,42,0.10)",
         boxShadow:
-          "0 20px 46px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.13)",
+          "0 20px 46px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.75)",
         backdropFilter: "blur(18px)",
       }}
     >
@@ -71,7 +79,7 @@ function GlassStat({ value, label, color, delay }) {
       <div
         className="max-w-full text-[17px] min-[390px]:text-[18px] sm:text-2xl font-black leading-[1.05] break-words"
         style={{
-          color: "#FFFFFF",
+          color: palette.navy,
           fontFamily: "var(--font-display)",
           letterSpacing: "-0.035em",
           overflowWrap: "anywhere",
@@ -81,8 +89,8 @@ function GlassStat({ value, label, color, delay }) {
       </div>
 
       <div
-        className="text-[9px] sm:text-xs mt-1 font-medium leading-tight break-words"
-        style={{ color: "rgba(255,255,255,0.62)" }}
+        className="text-[9px] sm:text-xs mt-1 font-bold leading-tight break-words"
+        style={{ color: "rgba(15,23,42,0.58)" }}
       >
         {label}
       </div>
@@ -114,9 +122,9 @@ function FloatingTextTag({ className, title, subtitle, color, delay }) {
       className={`group rounded-3xl px-5 py-4 cursor-pointer transition-all duration-300 ${className}`}
       style={{
         background:
-          "linear-gradient(145deg, rgba(15,23,42,0.64), rgba(15,23,42,0.36))",
+          "linear-gradient(145deg, rgba(255,255,255,0.90), rgba(255,255,255,0.58))",
         border: `1px solid ${color}55`,
-        boxShadow: "0 24px 60px rgba(0,0,0,0.28)",
+        boxShadow: "0 22px 52px rgba(15,23,42,0.12)",
         backdropFilter: "blur(20px)",
       }}
     >
@@ -125,17 +133,220 @@ function FloatingTextTag({ className, title, subtitle, color, delay }) {
         style={{ background: color }}
       />
 
-      <div className="text-white text-sm font-bold whitespace-nowrap">
+      <div className="text-slate-950 text-sm font-black whitespace-nowrap">
         {title}
       </div>
 
       <div
-        className="text-xs mt-1 whitespace-nowrap"
-        style={{ color: "rgba(255,255,255,0.66)" }}
+        className="text-xs mt-1 font-semibold whitespace-nowrap"
+        style={{ color: "rgba(15,23,42,0.58)" }}
       >
         {subtitle}
       </div>
     </motion.div>
+  );
+}
+
+function Premium3DBackground() {
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[1] overflow-hidden">
+      <motion.div
+        animate={{
+          x: [0, 42, -16, 0],
+          y: [0, -28, 22, 0],
+          rotate: [0, 12, -8, 0],
+          scale: [1, 1.08, 0.98, 1],
+        }}
+        transition={{
+          duration: 18,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute left-[-8%] top-[18%] hidden lg:block w-[420px] h-[420px] rounded-full"
+        style={{
+          opacity: 0.18,
+          background:
+            "radial-gradient(circle at 35% 35%, rgba(56,189,248,0.52), rgba(255,255,255,0.22) 38%, transparent 72%)",
+          filter: "blur(6px)",
+        }}
+      />
+
+      <motion.div
+        animate={{
+          x: [0, -36, 24, 0],
+          y: [0, 30, -20, 0],
+          rotate: [0, -14, 10, 0],
+          scale: [1, 1.05, 0.96, 1],
+        }}
+        transition={{
+          duration: 22,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute right-[-10%] top-[12%] hidden lg:block w-[520px] h-[520px] rounded-full"
+        style={{
+          opacity: 0.20,
+          background:
+            "radial-gradient(circle at 45% 35%, rgba(250,204,21,0.48), rgba(255,255,255,0.20) 40%, transparent 72%)",
+          filter: "blur(8px)",
+        }}
+      />
+
+      <motion.div
+        animate={{
+          rotateX: [52, 64, 52],
+          rotateY: [-14, 18, -14],
+          rotateZ: [-18, 8, -18],
+          x: [0, 34, 0],
+          y: [0, -22, 0],
+        }}
+        transition={{
+          duration: 17,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute left-[4%] bottom-[8%] hidden xl:block w-[360px] h-[180px] rounded-[3rem]"
+        style={{
+          perspective: "1200px",
+          transformStyle: "preserve-3d",
+          opacity: 0.22,
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.56), rgba(56,189,248,0.18), rgba(255,255,255,0.12))",
+          border: "1px solid rgba(255,255,255,0.64)",
+          boxShadow:
+            "0 34px 90px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.82)",
+          backdropFilter: "blur(16px)",
+        }}
+      />
+
+      <motion.div
+        animate={{
+          rotateX: [58, 46, 58],
+          rotateY: [16, -18, 16],
+          rotateZ: [12, -10, 12],
+          x: [0, -26, 0],
+          y: [0, 26, 0],
+        }}
+        transition={{
+          duration: 19,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 0.7,
+        }}
+        className="absolute right-[5%] bottom-[10%] hidden xl:block w-[300px] h-[150px] rounded-[2.5rem]"
+        style={{
+          perspective: "1200px",
+          transformStyle: "preserve-3d",
+          opacity: 0.20,
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.52), rgba(250,204,21,0.20), rgba(255,255,255,0.10))",
+          border: "1px solid rgba(255,255,255,0.64)",
+          boxShadow:
+            "0 34px 90px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.82)",
+          backdropFilter: "blur(16px)",
+        }}
+      />
+
+      <motion.div
+        animate={{
+          rotate: 360,
+        }}
+        transition={{
+          duration: 55,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+        className="absolute left-[45%] top-[16%] hidden lg:block w-[380px] h-[380px] rounded-full"
+        style={{
+          opacity: 0.13,
+          border: "1px solid rgba(56,189,248,0.70)",
+          boxShadow:
+            "0 0 80px rgba(56,189,248,0.18), inset 0 0 80px rgba(255,255,255,0.10)",
+        }}
+      />
+
+      <motion.div
+        animate={{
+          rotate: -360,
+        }}
+        transition={{
+          duration: 68,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+        className="absolute left-[50%] top-[20%] hidden lg:block w-[260px] h-[260px] rounded-full"
+        style={{
+          opacity: 0.12,
+          border: "1px solid rgba(250,204,21,0.70)",
+          boxShadow:
+            "0 0 80px rgba(250,204,21,0.18), inset 0 0 80px rgba(255,255,255,0.10)",
+        }}
+      />
+
+      <motion.div
+        animate={{
+          backgroundPosition: ["0px 0px", "140px 140px"],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+        className="absolute inset-0 hidden lg:block"
+        style={{
+          opacity: 0.10,
+          backgroundImage:
+            "linear-gradient(rgba(75,46,131,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(75,46,131,0.18) 1px, transparent 1px)",
+          backgroundSize: "140px 140px",
+          maskImage:
+            "radial-gradient(circle at 50% 45%, black 0%, black 38%, transparent 76%)",
+          WebkitMaskImage:
+            "radial-gradient(circle at 50% 45%, black 0%, black 38%, transparent 76%)",
+          transform: "perspective(800px) rotateX(62deg) translateY(240px)",
+          transformOrigin: "center bottom",
+        }}
+      />
+
+      <motion.div
+        animate={{
+          x: ["-20%", "120%"],
+        }}
+        transition={{
+          duration: 13,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 2.5,
+        }}
+        className="absolute top-[18%] hidden lg:block w-[420px] h-[180px]"
+        style={{
+          opacity: 0.12,
+          background:
+            "linear-gradient(90deg, transparent, rgba(255,255,255,0.58), rgba(56,189,248,0.28), transparent)",
+          filter: "blur(18px)",
+          transform: "rotate(-12deg)",
+        }}
+      />
+
+      <motion.div
+        animate={{
+          x: ["115%", "-25%"],
+        }}
+        transition={{
+          duration: 16,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 3,
+        }}
+        className="absolute bottom-[18%] hidden lg:block w-[460px] h-[190px]"
+        style={{
+          opacity: 0.10,
+          background:
+            "linear-gradient(90deg, transparent, rgba(250,204,21,0.42), rgba(255,255,255,0.50), transparent)",
+          filter: "blur(20px)",
+          transform: "rotate(10deg)",
+        }}
+      />
+    </div>
   );
 }
 
@@ -151,10 +362,10 @@ function HeroImageStage({ heroData }) {
         className="absolute w-[88%] h-[68%] xl:h-[66%] rounded-[3rem]"
         style={{
           background:
-            "linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.035))",
-          border: "1px solid rgba(255,255,255,0.14)",
+            "linear-gradient(145deg, rgba(255,255,255,0.68), rgba(255,255,255,0.34))",
+          border: "1px solid rgba(255,255,255,0.76)",
           boxShadow:
-            "0 38px 100px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.1)",
+            "0 34px 90px rgba(15,23,42,0.14), inset 0 1px 0 rgba(255,255,255,0.65)",
           backdropFilter: "blur(22px)",
           transform: "perspective(1200px) rotateY(-3deg) rotateX(2deg)",
         }}
@@ -172,8 +383,8 @@ function HeroImageStage({ heroData }) {
         className="relative z-10 w-[88%] h-[360px] lg:h-[395px] rounded-[2.5rem] overflow-hidden"
         style={{
           boxShadow:
-            "0 42px 110px rgba(0,0,0,0.52), 0 0 70px rgba(56,189,248,0.1)",
-          border: "1px solid rgba(255,255,255,0.16)",
+            "0 38px 92px rgba(15,23,42,0.20), 0 0 60px rgba(56,189,248,0.12)",
+          border: "1px solid rgba(255,255,255,0.76)",
         }}
       >
         <img
@@ -186,25 +397,26 @@ function HeroImageStage({ heroData }) {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to top, rgba(2,6,23,0.68) 0%, rgba(2,6,23,0.18) 48%, transparent 100%)",
+              "linear-gradient(to top, rgba(15,23,42,0.58) 0%, rgba(15,23,42,0.10) 52%, transparent 100%)",
           }}
         />
 
         <div
           className="absolute bottom-5 left-5 right-5 px-5 py-4 rounded-2xl"
           style={{
-            background: "rgba(2,6,23,0.42)",
-            border: "1px solid rgba(255,255,255,0.14)",
-            backdropFilter: "blur(14px)",
+            background: "rgba(255,255,255,0.82)",
+            border: "1px solid rgba(255,255,255,0.76)",
+            boxShadow: "0 18px 42px rgba(15,23,42,0.18)",
+            backdropFilter: "blur(16px)",
           }}
         >
-          <div className="text-white font-bold text-base">
+          <div className="font-black text-base" style={{ color: palette.navy }}>
             {heroData.imageBottomTitle}
           </div>
 
           <div
-            className="text-sm mt-1 leading-relaxed"
-            style={{ color: "rgba(255,255,255,0.66)" }}
+            className="text-sm mt-1 leading-relaxed font-medium"
+            style={{ color: "rgba(15,23,42,0.62)" }}
           >
             {heroData.imageBottomDescription}
           </div>
@@ -231,7 +443,7 @@ function HeroImageStage({ heroData }) {
         className="absolute left-[12%] bottom-2 z-20 hidden xl:block"
         title={heroData.floating3Title}
         subtitle={heroData.floating3Subtitle}
-        color="#8B5CF6"
+        color={palette.purple}
         delay={0.6}
       />
 
@@ -278,7 +490,7 @@ function Hero() {
       className="relative overflow-hidden pt-20 pb-20 lg:pb-14"
       style={{
         background:
-          "radial-gradient(circle at 10% 18%, rgba(56,189,248,0.24), transparent 32%), radial-gradient(circle at 85% 12%, rgba(250,204,21,0.18), transparent 30%), radial-gradient(circle at 60% 78%, rgba(139,92,246,0.2), transparent 38%), linear-gradient(135deg, #020617 0%, #07111F 45%, #111827 100%)",
+          "radial-gradient(circle at 9% 18%, rgba(56,189,248,0.30), transparent 32%), radial-gradient(circle at 86% 14%, rgba(250,204,21,0.28), transparent 31%), radial-gradient(circle at 58% 78%, rgba(139,92,246,0.16), transparent 38%), linear-gradient(135deg, #F8FCFF 0%, #FFF8EE 45%, #F1F7FF 100%)",
       }}
     >
       <style>{`
@@ -293,17 +505,24 @@ function Hero() {
         }
 
         @keyframes pulseGlow {
-          0%, 100% { opacity: 0.35; transform: scale(1); }
-          50% { opacity: 0.65; transform: scale(1.05); }
+          0%, 100% { opacity: 0.45; transform: scale(1); }
+          50% { opacity: 0.75; transform: scale(1.05); }
+        }
+
+        @keyframes miniFloat {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-14px); }
         }
       `}</style>
 
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <Premium3DBackground />
+
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-[2]">
         <div
-          className="absolute inset-0 opacity-[0.08]"
+          className="absolute inset-0 opacity-[0.20]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(255,255,255,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.16) 1px, transparent 1px)",
+              "linear-gradient(rgba(75,46,131,.13) 1px, transparent 1px), linear-gradient(90deg, rgba(75,46,131,.13) 1px, transparent 1px)",
             backgroundSize: "90px 90px",
             animation: "gridDrift 24s linear infinite",
             transform: "perspective(700px) rotateX(63deg) translateY(160px)",
@@ -315,7 +534,7 @@ function Hero() {
           className="absolute -top-40 -left-32 w-[620px] h-[620px] rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(56,189,248,0.35), transparent 68%)",
+              "radial-gradient(circle, rgba(56,189,248,0.28), transparent 68%)",
             filter: "blur(18px)",
             animation: "pulseGlow 7s ease-in-out infinite",
           }}
@@ -325,9 +544,31 @@ function Hero() {
           className="absolute -top-32 -right-32 w-[560px] h-[560px] rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(250,204,21,0.24), transparent 68%)",
+              "radial-gradient(circle, rgba(250,204,21,0.30), transparent 68%)",
             filter: "blur(18px)",
             animation: "pulseGlow 8s ease-in-out infinite",
+          }}
+        />
+
+        <div
+          className="absolute left-[8%] bottom-[12%] w-20 h-20 rounded-3xl hidden lg:block"
+          style={{
+            background:
+              "linear-gradient(145deg, rgba(255,255,255,0.78), rgba(255,255,255,0.28))",
+            border: "1px solid rgba(255,255,255,0.72)",
+            boxShadow: "0 20px 50px rgba(15,23,42,0.08)",
+            animation: "miniFloat 6s ease-in-out infinite",
+          }}
+        />
+
+        <div
+          className="absolute right-[12%] top-[24%] w-14 h-14 rounded-full hidden lg:block"
+          style={{
+            background:
+              "linear-gradient(145deg, rgba(250,204,21,0.40), rgba(255,255,255,0.45))",
+            border: "1px solid rgba(255,255,255,0.78)",
+            boxShadow: "0 20px 50px rgba(15,23,42,0.08)",
+            animation: "miniFloat 7s ease-in-out infinite",
           }}
         />
       </div>
@@ -338,18 +579,19 @@ function Hero() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65 }}
-            className="inline-flex items-center rounded-full px-5 py-2 mb-6"
+            className="inline-flex items-center gap-2 rounded-full px-5 py-2 mb-6"
             style={{
               background:
-                "linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055))",
-              border: "1px solid rgba(255,255,255,0.16)",
+                "linear-gradient(145deg, rgba(255,255,255,0.86), rgba(255,255,255,0.55))",
+              border: "1px solid rgba(15,23,42,0.08)",
               boxShadow:
-                "0 25px 60px rgba(0,0,0,0.28), 0 0 30px rgba(56,189,248,0.08), inset 0 1px 0 rgba(255,255,255,0.13)",
+                "0 18px 42px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.70)",
               backdropFilter: "blur(18px)",
-              color: "rgba(255,255,255,0.88)",
+              color: palette.navy,
             }}
           >
-            <span className="text-sm font-semibold">{heroData.badge}</span>
+            <Sparkles className="w-4 h-4" color={palette.gold} />
+            <span className="text-sm font-black">{heroData.badge}</span>
           </motion.div>
 
           <motion.h1
@@ -358,11 +600,11 @@ function Hero() {
             transition={{ duration: 0.75, delay: 0.08 }}
             className="text-4xl md:text-5xl xl:text-6xl leading-[1.02] mb-5"
             style={{
-              color: "#FFFFFF",
+              color: palette.navy,
               fontFamily: "var(--font-display)",
-              fontWeight: 850,
-              letterSpacing: "-0.055em",
-              textShadow: "0 22px 60px rgba(0,0,0,0.45)",
+              fontWeight: 900,
+              letterSpacing: "-0.06em",
+              textShadow: "0 14px 38px rgba(255,255,255,0.65)",
             }}
           >
             <span>{heroData.titleLine1}</span>
@@ -371,11 +613,10 @@ function Hero() {
               style={{
                 display: "inline-block",
                 background:
-                  "linear-gradient(135deg, #6EE7B7 0%, #FACC15 50%, #C4B5FD 100%)",
+                  "linear-gradient(135deg, #168A3A 0%, #FACC15 50%, #4B2E83 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 textShadow: "none",
-                filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.18))",
               }}
             >
               {heroData.titleLine2}
@@ -389,7 +630,7 @@ function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.16 }}
             className="text-lg md:text-xl max-w-xl leading-relaxed mb-7"
-            style={{ color: "rgba(226,232,240,0.78)" }}
+            style={{ color: "rgba(15,23,42,0.68)" }}
           >
             {heroData.description}
           </motion.p>
@@ -401,13 +642,13 @@ function Hero() {
             className="flex flex-wrap gap-4 mb-8"
           >
             <Link
-              to={heroData.primaryButtonLink}
-              className="relative overflow-hidden px-8 py-4 rounded-2xl font-bold text-slate-950 transition-all duration-300 hover:scale-105"
+              to={safeLink(heroData.primaryButtonLink, "/admissions")}
+              className="relative overflow-hidden px-8 py-4 rounded-2xl font-black text-slate-950 transition-all duration-300 hover:scale-105"
               style={{
                 background:
                   "linear-gradient(135deg, #FACC15 0%, #38BDF8 100%)",
                 boxShadow:
-                  "0 24px 60px rgba(56,189,248,0.35), inset 0 1px 0 rgba(255,255,255,0.45)",
+                  "0 20px 48px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.55)",
               }}
             >
               <span className="relative z-10 flex items-center gap-2">
@@ -415,7 +656,7 @@ function Hero() {
               </span>
 
               <span
-                className="absolute top-0 bottom-0 w-24 opacity-40"
+                className="absolute top-0 bottom-0 w-24 opacity-50"
                 style={{
                   left: 0,
                   background:
@@ -426,14 +667,14 @@ function Hero() {
             </Link>
 
             <Link
-              to={heroData.secondaryButtonLink}
-              className="px-8 py-4 rounded-2xl font-bold flex items-center gap-2 transition-all duration-300 hover:scale-105"
+              to={safeLink(heroData.secondaryButtonLink, "/facilities")}
+              className="px-8 py-4 rounded-2xl font-black flex items-center gap-2 transition-all duration-300 hover:scale-105"
               style={{
-                color: "#FFFFFF",
+                color: palette.navy,
                 background:
-                  "linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055))",
-                border: "1px solid rgba(255,255,255,0.18)",
-                boxShadow: "0 20px 52px rgba(0,0,0,0.26)",
+                  "linear-gradient(145deg, rgba(255,255,255,0.86), rgba(255,255,255,0.55))",
+                border: "1px solid rgba(15,23,42,0.10)",
+                boxShadow: "0 18px 42px rgba(15,23,42,0.08)",
                 backdropFilter: "blur(18px)",
               }}
             >

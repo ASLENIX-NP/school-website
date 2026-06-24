@@ -98,10 +98,11 @@ function normalizeCategories(categories = []) {
   return Array.from(new Set(combined));
 }
 
-function normalizeImageCategory(category) {
+function normalizeImageCategory(category, categories = []) {
   const clean = String(category || "").trim();
+  const validCategories = normalizeCategories(categories);
 
-  if (DEFAULT_GALLERY_CATEGORIES.includes(clean)) {
+  if (validCategories.includes(clean)) {
     return clean;
   }
 
@@ -114,8 +115,8 @@ function normalizeImageCategory(category) {
   return legacyMap[clean] || "Classroom";
 }
 
-function normalizeCategoryDescriptions(descriptions = {}) {
-  return DEFAULT_GALLERY_CATEGORIES.reduce((acc, category) => {
+function normalizeCategoryDescriptions(descriptions = {}, categories = []) {
+  return normalizeCategories(categories).reduce((acc, category) => {
     acc[category] =
       descriptions?.[category] || fallbackCategoryDescriptions[category] || "";
     return acc;
@@ -157,8 +158,11 @@ function normalizeSubcategories(subcategories = {}) {
 }
 
 function mergeGalleryContent(saved = {}) {
+  const categories = normalizeCategories(saved.categories);
+
   const categoryDescriptions = normalizeCategoryDescriptions(
-    saved.categoryDescriptions
+    saved.categoryDescriptions,
+    categories
   );
 
   const subcategories = normalizeSubcategories(saved.subcategories);
@@ -166,13 +170,13 @@ function mergeGalleryContent(saved = {}) {
   return {
     ...defaultGalleryContent,
     ...saved,
-    categories: MAIN_GALLERY_CATEGORIES,
+    categories,
     categoryDescriptions,
     subcategories,
     images: Array.isArray(saved.images)
       ? saved.images.map((image) => ({
           ...image,
-          category: normalizeImageCategory(image.category),
+          category: normalizeImageCategory(image.category, categories),
           subcategory: image.subcategory || "",
           images:
             Array.isArray(image.images) && image.images.length > 0
@@ -240,8 +244,9 @@ function buildSingleCategoryAlbum(content, category) {
   );
 
   const categoryItems = visibleImages.filter(
-    (item) => normalizeImageCategory(item.category) === category
-  );
+  (item) =>
+    normalizeImageCategory(item.category, content.categories) === category
+);
 
   const photos = collectAlbumPhotos(categoryItems, category, category);
 
@@ -264,7 +269,7 @@ function buildSingleCategoryAlbum(content, category) {
 }
 
 function buildMainCategoryAlbums(content) {
-  return normalizeCategories().map((category) =>
+  return normalizeCategories(content.categories).map((category) =>
     buildSingleCategoryAlbum(content, category)
   );
 }
@@ -275,8 +280,9 @@ function buildSubcategoryAlbums(content, parentCategory) {
   );
 
   const parentItems = visibleImages.filter(
-    (item) => normalizeImageCategory(item.category) === parentCategory
-  );
+  (item) =>
+    normalizeImageCategory(item.category, content.categories) === parentCategory
+);
 
   const subcategoryList =
     normalizeSubcategories(content.subcategories)[parentCategory] || [];
@@ -435,8 +441,11 @@ function Gallery() {
     const loadGalleryContent = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/gallery"
-        );
+  "http://localhost:5000/api/site-content/gallery",
+  {
+    timeout: 20000,
+  }
+);
 
         const savedContent = res.data?.data?.content || {};
         setContent(mergeGalleryContent(savedContent));
@@ -449,7 +458,7 @@ function Gallery() {
     loadGalleryContent();
   }, []);
 
-  const categories = ["All", ...normalizeCategories()];
+  const categories = ["All", ...normalizeCategories(content.categories)];
 
   const filteredAlbums = useMemo(
     () => buildCategoryAlbums(content, activeCategory),
@@ -677,79 +686,81 @@ function Gallery() {
       <AnimatePresence>
         {selectedAlbum && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeAlbum}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-5"
-            style={{
-              background: "rgba(2,6,23,0.82)",
-              backdropFilter: "blur(12px)",
-            }}
-          >
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  exit={{ opacity: 0 }}
+  onClick={closeAlbum}
+  className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-2 sm:p-5 overflow-y-auto"
+  style={{
+    background: "rgba(2,6,23,0.82)",
+    backdropFilter: "blur(12px)",
+  }}
+>
             <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 24 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 24 }}
-              transition={{ duration: 0.25 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative max-w-6xl w-full rounded-[2rem] overflow-hidden"
-              style={{
-                background: "#FFFFFF",
-                boxShadow: "0 35px 100px rgba(0,0,0,0.42)",
-              }}
-            >
+  initial={{ opacity: 0, scale: 0.92, y: 24 }}
+  animate={{ opacity: 1, scale: 1, y: 0 }}
+  exit={{ opacity: 0, scale: 0.92, y: 24 }}
+  transition={{ duration: 0.25 }}
+  onClick={(e) => e.stopPropagation()}
+  className="relative w-full max-w-6xl rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden max-h-[96vh] overflow-y-auto"
+  style={{
+    background: "#FFFFFF",
+    boxShadow: "0 35px 100px rgba(0,0,0,0.42)",
+  }}
+>
               <button
-                type="button"
-                onClick={closeAlbum}
-                className="absolute top-5 right-5 z-[99999] w-12 h-12 rounded-full bg-white shadow-2xl cursor-pointer font-bold hover:bg-red-500 hover:text-white hover:rotate-180 hover:scale-110 transition-all duration-500 flex items-center justify-center"
-              >
-                <X className="w-5 h-5" />
-              </button>
+  type="button"
+  onClick={closeAlbum}
+  className="absolute top-3 right-3 sm:top-5 sm:right-5 z-[99999] w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white shadow-2xl cursor-pointer font-bold hover:bg-red-500 hover:text-white hover:rotate-180 hover:scale-110 transition-all duration-500 flex items-center justify-center"
+>
+  <X className="w-4 h-4 sm:w-5 sm:h-5" />
+</button>
 
-              <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-0">
-                <div className="relative bg-slate-950 min-h-[520px] flex items-center justify-center p-5">
-                  {currentPhoto?.url ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setZoomOpen(true);
-                        setZoomScale(1);
-                      }}
-                      className="w-full h-full"
-                    >
-                      <img
-                        src={currentPhoto.url}
-                        alt={currentPhoto.title || selectedAlbum.title}
-                        className="max-h-[560px] w-full object-contain rounded-2xl"
-                      />
-                    </button>
-                  ) : (
-                    <ImageIcon className="w-16 h-16 text-slate-500" />
-                  )}
+             <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-0">
+               <div className="relative bg-slate-950 min-h-[220px] sm:min-h-[320px] lg:min-h-[520px] flex items-center justify-center p-3 sm:p-5">
+  {currentPhoto?.url ? (
+    <button
+      type="button"
+      onClick={() => {
+        setZoomOpen(true);
+        setZoomScale(1);
+      }}
+      className="w-full flex items-center justify-center"
+    >
+      <img
+        src={currentPhoto.url}
+        alt={currentPhoto.title || selectedAlbum.title}
+        loading="lazy"
+        decoding="async"
+        className="w-full max-h-[220px] sm:max-h-[420px] lg:max-h-[560px] object-contain rounded-2xl"
+      />
+    </button>
+  ) : (
+    <ImageIcon className="w-12 h-12 sm:w-16 sm:h-16 text-slate-500" />
+  )}
 
-                  {selectedAlbum.photos.length > 1 && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={previousImage}
-                        className="absolute left-5 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white shadow-2xl hover:scale-110 transition-all flex items-center justify-center"
-                      >
-                        <ChevronLeft size={26} />
-                      </button>
+  {selectedAlbum.photos.length > 1 && (
+    <>
+      <button
+        type="button"
+        onClick={previousImage}
+        className="absolute left-2 sm:left-5 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-white shadow-2xl hover:scale-110 transition-all flex items-center justify-center"
+      >
+        <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
+      </button>
 
-                      <button
-                        type="button"
-                        onClick={nextImage}
-                        className="absolute right-5 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white shadow-2xl hover:scale-110 transition-all flex items-center justify-center"
-                      >
-                        <ChevronRight size={26} />
-                      </button>
-                    </>
-                  )}
-                </div>
+      <button
+        type="button"
+        onClick={nextImage}
+        className="absolute right-2 sm:right-5 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-white shadow-2xl hover:scale-110 transition-all flex items-center justify-center"
+      >
+        <ChevronRight size={20} className="sm:w-6 sm:h-6" />
+      </button>
+    </>
+  )}
+</div>
 
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   <div className="flex flex-wrap items-center gap-3 mb-2">
                     <span
                       className="px-3 py-1 rounded-full text-xs font-bold"
@@ -781,7 +792,7 @@ function Gallery() {
                   </div>
 
                   <h2
-                    className="text-3xl"
+  className="text-2xl sm:text-3xl"
                     style={{
                       fontFamily: "var(--font-display)",
                       fontWeight: 850,
@@ -800,7 +811,7 @@ function Gallery() {
                     {currentImageIndex + 1} of {selectedAlbum.photos.length}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3 mt-5 max-h-[300px] overflow-y-auto pr-1">
+                 <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-5 max-h-[220px] sm:max-h-[300px] overflow-y-auto pr-1">
                     {selectedAlbum.photos.map((photo, index) => (
                       <button
                         key={`${photo.url}-${index}`}
@@ -820,7 +831,7 @@ function Gallery() {
                         <img
                           src={photo.url}
                           alt=""
-                          className="w-full h-24 object-cover"
+                          className="w-full h-16 sm:h-24 object-cover"
                         />
                       </button>
                     ))}

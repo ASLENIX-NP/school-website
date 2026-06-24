@@ -518,11 +518,11 @@ export default function AdminGallery() {
 
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/site-content/gallery",
-        {
-          timeout: 5000,
-        }
-      );
+  "http://localhost:5000/api/site-content/gallery",
+  {
+    timeout: 20000,
+  }
+);
 
       if (!alive) return;
 
