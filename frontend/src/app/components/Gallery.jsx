@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -9,6 +9,7 @@ import {
   Image as ImageIcon,
   ChevronLeft,
   ChevronRight,
+  Download,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
@@ -244,9 +245,9 @@ function buildSingleCategoryAlbum(content, category) {
   );
 
   const categoryItems = visibleImages.filter(
-  (item) =>
-    normalizeImageCategory(item.category, content.categories) === category
-);
+    (item) =>
+      normalizeImageCategory(item.category, content.categories) === category
+  );
 
   const photos = collectAlbumPhotos(categoryItems, category, category);
 
@@ -280,9 +281,10 @@ function buildSubcategoryAlbums(content, parentCategory) {
   );
 
   const parentItems = visibleImages.filter(
-  (item) =>
-    normalizeImageCategory(item.category, content.categories) === parentCategory
-);
+    (item) =>
+      normalizeImageCategory(item.category, content.categories) ===
+      parentCategory
+  );
 
   const subcategoryList =
     normalizeSubcategories(content.subcategories)[parentCategory] || [];
@@ -437,15 +439,20 @@ function Gallery() {
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
 
+  const lastThumbnailTapRef = useRef({
+    index: null,
+    time: 0,
+  });
+
   useEffect(() => {
     const loadGalleryContent = async () => {
       try {
         const res = await axios.get(
-  "http://localhost:5000/api/site-content/gallery",
-  {
-    timeout: 20000,
-  }
-);
+          "http://localhost:5000/api/site-content/gallery",
+          {
+            timeout: 20000,
+          }
+        );
 
         const savedContent = res.data?.data?.content || {};
         setContent(mergeGalleryContent(savedContent));
@@ -497,6 +504,98 @@ function Gallery() {
 
     setCurrentImageIndex((prev) => (prev + 1) % selectedAlbum.photos.length);
     setZoomScale(1);
+  };
+
+  const openImageInsidePage = (index = currentImageIndex) => {
+    setCurrentImageIndex(index);
+    setZoomOpen(true);
+    setZoomScale(1);
+  };
+  const handleThumbnailClick = (e, index) => {
+  const isTouchScreen =
+    window.matchMedia?.("(hover: none), (pointer: coarse)")?.matches || false;
+
+  if (!isTouchScreen) {
+    setCurrentImageIndex(index);
+    setZoomScale(1);
+    return;
+  }
+
+  const now = Date.now();
+  const lastTap = lastThumbnailTapRef.current;
+  const tappedSameImage = lastTap.index === index;
+  const tappedFastEnough = now - lastTap.time <= 420;
+
+  if (tappedSameImage && tappedFastEnough) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    openImageInsidePage(index);
+
+    lastThumbnailTapRef.current = {
+      index: null,
+      time: 0,
+    };
+
+    return;
+  }
+
+  setCurrentImageIndex(index);
+  setZoomScale(1);
+
+  lastThumbnailTapRef.current = {
+    index,
+    time: now,
+  };
+};
+
+  const downloadImage = async (photo = currentPhoto) => {
+    if (!photo?.url) return;
+
+    const cleanTitle = String(photo.title || selectedAlbum?.title || "gallery")
+      .trim()
+      .replace(/[^a-z0-9]+/gi, "-")
+      .replace(/^-+|-+$/g, "")
+      .toLowerCase();
+
+    const fileName = `${cleanTitle || "gallery-image"}-${
+      currentImageIndex + 1
+    }.jpg`;
+
+    try {
+      const response = await fetch(photo.url, {
+        mode: "cors",
+      });
+
+      if (!response.ok) {
+        throw new Error("Image fetch failed");
+      }
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Image download failed:", error);
+
+      const link = document.createElement("a");
+      link.href = photo.url;
+      link.download = fileName;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
   };
 
   return (
@@ -686,79 +785,80 @@ function Gallery() {
       <AnimatePresence>
         {selectedAlbum && (
           <motion.div
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  exit={{ opacity: 0 }}
-  onClick={closeAlbum}
-  className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-2 sm:p-5 overflow-y-auto"
-  style={{
-    background: "rgba(2,6,23,0.82)",
-    backdropFilter: "blur(12px)",
-  }}
->
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeAlbum}
+            className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-2 sm:p-5 overflow-y-auto"
+            style={{
+              background: "rgba(2,6,23,0.82)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
             <motion.div
-  initial={{ opacity: 0, scale: 0.92, y: 24 }}
-  animate={{ opacity: 1, scale: 1, y: 0 }}
-  exit={{ opacity: 0, scale: 0.92, y: 24 }}
-  transition={{ duration: 0.25 }}
-  onClick={(e) => e.stopPropagation()}
-  className="relative w-full max-w-6xl rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden max-h-[96vh] overflow-y-auto"
-  style={{
-    background: "#FFFFFF",
-    boxShadow: "0 35px 100px rgba(0,0,0,0.42)",
-  }}
->
+              initial={{ opacity: 0, scale: 0.92, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 24 }}
+              transition={{ duration: 0.25 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-6xl rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden max-h-[96vh] overflow-y-auto"
+              style={{
+                background: "#FFFFFF",
+                boxShadow: "0 35px 100px rgba(0,0,0,0.42)",
+              }}
+            >
               <button
-  type="button"
-  onClick={closeAlbum}
-  className="absolute top-3 right-3 sm:top-5 sm:right-5 z-[99999] w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white shadow-2xl cursor-pointer font-bold hover:bg-red-500 hover:text-white hover:rotate-180 hover:scale-110 transition-all duration-500 flex items-center justify-center"
->
-  <X className="w-4 h-4 sm:w-5 sm:h-5" />
-</button>
+                type="button"
+                onClick={closeAlbum}
+                className="absolute top-3 right-3 sm:top-5 sm:right-5 z-[99999] w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white shadow-2xl cursor-pointer font-bold hover:bg-red-500 hover:text-white hover:rotate-180 hover:scale-110 transition-all duration-500 flex items-center justify-center"
+              >
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
 
-             <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-0">
-               <div className="relative bg-slate-950 min-h-[220px] sm:min-h-[320px] lg:min-h-[520px] flex items-center justify-center p-3 sm:p-5">
-  {currentPhoto?.url ? (
-    <button
-      type="button"
-      onClick={() => {
-        setZoomOpen(true);
-        setZoomScale(1);
-      }}
-      className="w-full flex items-center justify-center"
-    >
-      <img
-        src={currentPhoto.url}
-        alt={currentPhoto.title || selectedAlbum.title}
-        loading="lazy"
-        decoding="async"
-        className="w-full max-h-[220px] sm:max-h-[420px] lg:max-h-[560px] object-contain rounded-2xl"
-      />
-    </button>
-  ) : (
-    <ImageIcon className="w-12 h-12 sm:w-16 sm:h-16 text-slate-500" />
-  )}
+              <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-0">
+                <div className="relative bg-slate-950 min-h-[220px] sm:min-h-[320px] lg:min-h-[520px] flex items-center justify-center p-3 sm:p-5">
+                  {currentPhoto?.url ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openImageInsidePage(currentImageIndex);
+                      }}
+                      title="Click to view this image"
+                      className="w-full flex items-center justify-center cursor-zoom-in"
+                    >
+                      <img
+                        src={currentPhoto.url}
+                        alt={currentPhoto.title || selectedAlbum.title}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full max-h-[220px] sm:max-h-[420px] lg:max-h-[560px] object-contain rounded-2xl"
+                      />
+                    </button>
+                  ) : (
+                    <ImageIcon className="w-12 h-12 sm:w-16 sm:h-16 text-slate-500" />
+                  )}
 
-  {selectedAlbum.photos.length > 1 && (
-    <>
-      <button
-        type="button"
-        onClick={previousImage}
-        className="absolute left-2 sm:left-5 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-white shadow-2xl hover:scale-110 transition-all flex items-center justify-center"
-      >
-        <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
-      </button>
+                  {selectedAlbum.photos.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={previousImage}
+                        className="absolute left-2 sm:left-5 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-white shadow-2xl hover:scale-110 transition-all flex items-center justify-center"
+                      >
+                        <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
+                      </button>
 
-      <button
-        type="button"
-        onClick={nextImage}
-        className="absolute right-2 sm:right-5 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-white shadow-2xl hover:scale-110 transition-all flex items-center justify-center"
-      >
-        <ChevronRight size={20} className="sm:w-6 sm:h-6" />
-      </button>
-    </>
-  )}
-</div>
+                      <button
+                        type="button"
+                        onClick={nextImage}
+                        className="absolute right-2 sm:right-5 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-white shadow-2xl hover:scale-110 transition-all flex items-center justify-center"
+                      >
+                        <ChevronRight size={20} className="sm:w-6 sm:h-6" />
+                      </button>
+                    </>
+                  )}
+                </div>
 
                 <div className="p-4 sm:p-6">
                   <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -792,7 +892,7 @@ function Gallery() {
                   </div>
 
                   <h2
-  className="text-2xl sm:text-3xl"
+                    className="text-2xl sm:text-3xl"
                     style={{
                       fontFamily: "var(--font-display)",
                       fontWeight: 850,
@@ -811,16 +911,19 @@ function Gallery() {
                     {currentImageIndex + 1} of {selectedAlbum.photos.length}
                   </div>
 
-                 <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-5 max-h-[220px] sm:max-h-[300px] overflow-y-auto pr-1">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-5 max-h-[220px] sm:max-h-[300px] overflow-y-auto pr-1">
                     {selectedAlbum.photos.map((photo, index) => (
                       <button
-                        key={`${photo.url}-${index}`}
-                        type="button"
-                        onClick={() => {
-                          setCurrentImageIndex(index);
-                          setZoomScale(1);
-                        }}
-                        className="rounded-2xl overflow-hidden border-2 bg-slate-100"
+  key={`${photo.url}-${index}`}
+  type="button"
+  onClick={(e) => handleThumbnailClick(e, index)}
+  onDoubleClick={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openImageInsidePage(index);
+  }}
+  title="Double tap to view this image"
+  className="rounded-2xl overflow-hidden border-2 bg-slate-100"
                         style={{
                           borderColor:
                             currentImageIndex === index
@@ -839,17 +942,18 @@ function Gallery() {
 
                   <button
                     type="button"
-                    onClick={() => {
-                      setZoomOpen(true);
-                      setZoomScale(1);
+                    disabled={!currentPhoto?.url}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadImage(currentPhoto);
                     }}
-                    className="mt-6 w-full px-5 py-3 rounded-2xl font-bold text-white flex items-center justify-center gap-2"
+                    className="mt-6 w-full px-5 py-3 rounded-2xl font-bold text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
                     }}
                   >
-                    <ZoomIn className="w-4 h-4" />
-                    Open Full Image
+                    <Download className="w-4 h-4" />
+                    Download Image
                   </button>
                 </div>
               </div>
@@ -859,7 +963,7 @@ function Gallery() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {zoomOpen && currentPhoto?.url && (
+        {zoomOpen && currentPhoto?.url && selectedAlbum && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -868,38 +972,39 @@ function Gallery() {
               setZoomOpen(false);
               setZoomScale(1);
             }}
-            className="fixed inset-0 z-[999999] bg-black/92 flex items-center justify-center p-6 overflow-hidden"
+            className="fixed inset-0 z-[999999] bg-black/92 flex items-center justify-center p-3 sm:p-6 overflow-hidden"
           >
-            {selectedAlbum?.photos?.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={previousImage}
-                  className="absolute left-8 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white shadow-2xl hover:scale-110 transition-all z-50 flex items-center justify-center"
-                >
-                  <ChevronLeft size={32} />
-                </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setZoomOpen(false);
+                setZoomScale(1);
+              }}
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white flex items-center justify-center hover:bg-red-500 hover:text-white hover:rotate-180 transition-all duration-500 z-50"
+            >
+              <X size={24} />
+            </button>
 
-                <button
-                  type="button"
-                  onClick={nextImage}
-                  className="absolute right-8 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white shadow-2xl hover:scale-110 transition-all z-50 flex items-center justify-center"
-                >
-                  <ChevronRight size={32} />
-                </button>
-              </>
-            )}
+            <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50 rounded-2xl px-4 py-3 bg-white/95 shadow-2xl max-w-[70vw]">
+              <div className="text-sm sm:text-base font-black text-slate-950 truncate">
+                {currentPhoto.title || selectedAlbum.title}
+              </div>
+              <div className="text-xs sm:text-sm text-slate-500 mt-1">
+                {currentImageIndex + 1} of {selectedAlbum.photos.length}
+              </div>
+            </div>
 
-            <div className="absolute top-6 right-6 flex items-center gap-3 z-50">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-white/95 rounded-2xl p-2 shadow-2xl">
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setZoomScale((prev) => Math.max(1, prev - 0.25));
                 }}
-                className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-2xl"
+                className="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200"
               >
-                <ZoomOut size={22} />
+                <ZoomOut size={20} />
               </button>
 
               <button
@@ -908,34 +1013,64 @@ function Gallery() {
                   e.stopPropagation();
                   setZoomScale((prev) => Math.min(3, prev + 0.25));
                 }}
-                className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-2xl"
+                className="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200"
               >
-                <ZoomIn size={22} />
+                <ZoomIn size={20} />
               </button>
 
               <button
                 type="button"
+                disabled={!currentPhoto?.url}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setZoomOpen(false);
-                  setZoomScale(1);
+                  downloadImage(currentPhoto);
                 }}
-                className="w-14 h-14 rounded-full bg-white flex items-center justify-center hover:bg-red-500 hover:text-white hover:rotate-180 transition-all duration-500"
+                className="h-11 px-4 rounded-xl text-white font-bold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
+                }}
               >
-                <X size={24} />
+                <Download size={19} />
+                <span className="hidden sm:inline">Download</span>
               </button>
             </div>
 
-            <motion.img
-              initial={{ scale: 0.8 }}
-              animate={{ scale: zoomScale }}
-              exit={{ scale: 0.8 }}
-              transition={{ duration: 0.2 }}
-              onClick={(e) => e.stopPropagation()}
-              src={currentPhoto.url}
-              alt=""
-              className="max-w-[92vw] max-h-[86vh] rounded-3xl shadow-2xl object-contain cursor-zoom-in"
-            />
+            {selectedAlbum.photos.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={previousImage}
+                  className="absolute left-3 sm:left-8 top-1/2 -translate-y-1/2 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white shadow-2xl hover:scale-110 transition-all z-50 flex items-center justify-center"
+                >
+                  <ChevronLeft size={32} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={nextImage}
+                  className="absolute right-3 sm:right-8 top-1/2 -translate-y-1/2 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white shadow-2xl hover:scale-110 transition-all z-50 flex items-center justify-center"
+                >
+                  <ChevronRight size={32} />
+                </button>
+              </>
+            )}
+
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={currentPhoto.url}
+                initial={{ opacity: 0, scale: 0.86, x: 30 }}
+                animate={{ opacity: 1, scale: zoomScale, x: 0 }}
+                exit={{ opacity: 0, scale: 0.86, x: -30 }}
+                transition={{ duration: 0.22 }}
+                onClick={(e) => e.stopPropagation()}
+                src={currentPhoto.url}
+                alt={currentPhoto.title || selectedAlbum.title}
+                className="max-w-[92vw] max-h-[82vh] rounded-3xl shadow-2xl object-contain"
+                style={{
+                  cursor: zoomScale > 1 ? "grab" : "default",
+                }}
+              />
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
