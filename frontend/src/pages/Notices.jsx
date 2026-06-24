@@ -540,10 +540,6 @@ export default function Notices() {
     }
   };
 
-  const latestNoticeDate = notices.length
-    ? formatNoticeDate(notices[0].notice_date)
-    : "No notices";
-
   const importantCount = notices.filter((notice) => notice.pinned).length;
 
   const handleModalDownload = async (fileUrl) => {
@@ -658,7 +654,7 @@ export default function Notices() {
                   }}
                 />
 
-<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div className="grid grid-cols-3 gap-4">
   <div
     className="rounded-3xl p-4 text-center"
     style={{
@@ -707,21 +703,7 @@ export default function Notices() {
     </p>
   </div>
 
-  <div
-    className="rounded-3xl p-4 text-center"
-    style={{
-      background: "#fff",
-      border: "1px solid rgba(15,23,42,0.08)",
-    }}
-  >
-    <h3 className="text-lg font-black text-slate-950">
-      {latestNoticeDate}
-    </h3>
-
-    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-2">
-      Latest
-    </p>
-  </div>
+ 
 </div>
 </div>
 </div>
