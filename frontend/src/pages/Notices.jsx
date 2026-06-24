@@ -11,6 +11,9 @@ const colors = {
   cream: "#FFF8EE",
   gold: "#FACC15",
   cyan: "#38BDF8",
+  blue: "#1877F2",
+  pink: "#E4405F",
+  orange: "#F97316",
 };
 
 const defaultSettings = {
@@ -80,10 +83,114 @@ function sortNoticesNewestFirst(notices = []) {
   });
 }
 
+// ─── Facebook-style Reaction Buttons ──────────────────────────────────
+function ReactionButton({ type, emoji, count, isActive, onClick }) {
+  return (
+    <motion.button
+      whileHover={{ scale: 1.15 }}
+      whileTap={{ scale: 0.85 }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick(type);
+      }}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200 text-sm ${
+        isActive ? "bg-blue-50 border-blue-200" : "hover:bg-gray-100 border-transparent"
+      }`}
+      style={{
+        background: isActive ? "rgba(24,119,242,0.08)" : "rgba(15,23,42,0.04)",
+        border: isActive ? "1px solid rgba(24,119,242,0.25)" : "1px solid transparent",
+        color: isActive ? colors.blue : "#64748B",
+      }}
+    >
+      <span className="text-base">{emoji}</span>
+      {count > 0 && (
+        <span className="text-xs font-bold" style={{ color: isActive ? colors.blue : "#64748B" }}>
+          {count}
+        </span>
+      )}
+    </motion.button>
+  );
+}
+
 function NoticeCard({ notice, index, onClick }) {
   const isPinned = notice.pinned === true;
   const accentColor = isPinned ? colors.red : colors.green;
   const fileUrl = notice.pdf_url || notice.file_url;
+  const noticeId = notice.id || `notice-${index}`;
+
+  // Reaction emojis like Facebook
+  const reactionTypes = [
+    { type: 'like', emoji: '👍', label: 'Like' },
+    { type: 'heart', emoji: '❤️', label: 'Love' },
+    { type: 'laugh', emoji: '😂', label: 'Haha' },
+    { type: 'sad', emoji: '😢', label: 'Sad' },
+    { type: 'fire', emoji: '🔥', label: 'Fire' },
+  ];
+
+  // Load reactions from localStorage
+  const [reactions, setReactions] = useState({
+    like: 0,
+    heart: 0,
+    laugh: 0,
+    sad: 0,
+    fire: 0,
+  });
+  
+  const [userReaction, setUserReaction] = useState(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`notice_reactions_${noticeId}`);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setReactions(parsed.counts || { like: 0, heart: 0, laugh: 0, sad: 0, fire: 0 });
+        setUserReaction(parsed.user || null);
+      } catch (e) {
+        console.error('Error loading reactions:', e);
+      }
+    }
+  }, [noticeId]);
+
+  const handleReaction = (type) => {
+    const newReactions = { ...reactions };
+    
+    if (userReaction === type) {
+      // Remove reaction
+      newReactions[type] = Math.max(0, newReactions[type] - 1);
+      setUserReaction(null);
+    } else {
+      // Remove old reaction if exists
+      if (userReaction) {
+        newReactions[userReaction] = Math.max(0, newReactions[userReaction] - 1);
+      }
+      // Add new reaction
+      newReactions[type] = (newReactions[type] || 0) + 1;
+      setUserReaction(type);
+    }
+    
+    setReactions(newReactions);
+    
+    // Save to localStorage
+    localStorage.setItem(`notice_reactions_${noticeId}`, JSON.stringify({
+      counts: newReactions,
+      user: userReaction === type ? null : type,
+    }));
+  };
+
+  const totalReactions = Object.values(reactions).reduce((a, b) => a + b, 0);
+
+  // Get top reaction emoji for display
+  const getTopReaction = () => {
+    const sorted = Object.entries(reactions).sort((a, b) => b[1] - a[1]);
+    const top = sorted.find(([_, count]) => count > 0);
+    if (top) {
+      const emoji = reactionTypes.find(r => r.type === top[0])?.emoji || '';
+      return emoji;
+    }
+    return null;
+  };
+
+  const topEmoji = getTopReaction();
 
   const handleDownload = async (e) => {
     e.stopPropagation();
@@ -133,7 +240,7 @@ function NoticeCard({ notice, index, onClick }) {
         }}
       />
 
-      <div className="grid gap-5 p-6 pl-8 md:grid-cols-[145px_1fr_170px] md:items-center">
+      <div className="grid gap-4 p-6 pl-8 md:grid-cols-[145px_1fr_170px] md:items-center">
         <div>
           <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
             Date
@@ -183,9 +290,32 @@ function NoticeCard({ notice, index, onClick }) {
             {notice.title || "School Notice"}
           </h3>
 
-          <p className="mt-3 text-base leading-relaxed text-slate-500">
+          <p className="mt-2 text-sm leading-relaxed text-slate-500 line-clamp-2">
             {notice.description || "Please open this notice for more details."}
           </p>
+
+          {/* ─── Facebook-style Reactions ─────────────────────────── */}
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            {reactionTypes.map(({ type, emoji }) => (
+              <ReactionButton
+                key={type}
+                type={type}
+                emoji={emoji}
+                count={reactions[type] || 0}
+                isActive={userReaction === type}
+                onClick={handleReaction}
+              />
+            ))}
+            
+            {totalReactions > 0 && (
+              <div className="flex items-center gap-1 ml-1 text-xs text-slate-400">
+                <span className="text-sm">{topEmoji}</span>
+                <span className="font-medium">
+                  {totalReactions}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col gap-3 md:items-end">
@@ -375,13 +505,11 @@ function AnnouncementPopup({ announcement, onClose }) {
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Red gradient bar */}
           <div
             className="h-1.5 w-full flex-shrink-0"
             style={{ background: "linear-gradient(90deg, #D71920, #FACC15, #168A3A)" }}
           />
 
-          {/* Header */}
           <div
             className="flex items-center justify-between px-6 py-4 flex-shrink-0"
             style={{ borderBottom: "1px solid rgba(0,0,0,0.06)", background: "#fafafa" }}
@@ -411,17 +539,16 @@ function AnnouncementPopup({ announcement, onClose }) {
             </motion.button>
           </div>
 
-          {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">
-          {announcement.image_url && (
-  <div className="mb-6 flex justify-center">
-    <img
-      src={announcement.image_url}
-      alt={announcement.title}
-      className="max-w-full max-h-[80vh] object-contain rounded-xl"
-    />
-  </div>
-)}
+            {announcement.image_url && (
+              <div className="mb-6 flex justify-center">
+                <img
+                  src={announcement.image_url}
+                  alt={announcement.title}
+                  className="max-w-full max-h-[80vh] object-contain rounded-xl"
+                />
+              </div>
+            )}
             <div className="prose prose-lg max-w-none">
               <p className="text-slate-600 leading-relaxed whitespace-pre-line">
                 {announcement.description}
@@ -654,60 +781,57 @@ export default function Notices() {
                   }}
                 />
 
-<div className="grid grid-cols-3 gap-4">
-  <div
-    className="rounded-3xl p-4 text-center"
-    style={{
-      background: "#fff",
-      border: "1px solid rgba(15,23,42,0.08)",
-    }}
-  >
-    <h3 className="text-4xl font-black text-slate-950">
-      {notices.length}
-    </h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div
+                    className="rounded-3xl p-4 text-center"
+                    style={{
+                      background: "#fff",
+                      border: "1px solid rgba(15,23,42,0.08)",
+                    }}
+                  >
+                    <h3 className="text-4xl font-black text-slate-950">
+                      {notices.length}
+                    </h3>
 
-    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-2">
-      Notices
-    </p>
-  </div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-2">
+                      Notices
+                    </p>
+                  </div>
 
-  <div
-    className="rounded-3xl p-4 text-center"
-    style={{
-      background: "#fff",
-      border: "1px solid rgba(15,23,42,0.08)",
-    }}
-  >
-    <h3 className="text-4xl font-black text-slate-950">
-      {importantCount}
-    </h3>
+                  <div
+                    className="rounded-3xl p-4 text-center"
+                    style={{
+                      background: "#fff",
+                      border: "1px solid rgba(15,23,42,0.08)",
+                    }}
+                  >
+                    <h3 className="text-4xl font-black text-slate-950">
+                      {importantCount}
+                    </h3>
 
-    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-2">
-      Important
-    </p>
-  </div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-2">
+                      Important
+                    </p>
+                  </div>
 
-  <div
-    className="rounded-3xl p-4 text-center"
-    style={{
-      background: "#fff",
-      border: "1px solid rgba(15,23,42,0.08)",
-    }}
-  >
-    <h3 className="text-4xl font-black text-slate-950">
-      {announcements.length}
-    </h3>
+                  <div
+                    className="rounded-3xl p-4 text-center"
+                    style={{
+                      background: "#fff",
+                      border: "1px solid rgba(15,23,42,0.08)",
+                    }}
+                  >
+                    <h3 className="text-4xl font-black text-slate-950">
+                      {announcements.length}
+                    </h3>
 
-    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-2">
-      Announcements
-    </p>
-  </div>
-
- 
-</div>
-</div>
-</div>
-
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-2">
+                      Announcements
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </motion.div>
 
           <div className="grid lg:grid-cols-[1fr_330px] gap-8 items-start">
