@@ -419,39 +419,111 @@ export default function AdminDashboard() {
                   })}
                 </div>
 
-                {/* Manage Sections Grid */}
-                <div>
-                  <h3 className="font-black text-slate-950 text-sm mb-3 flex items-center gap-2">
-                    <Star className="w-4 h-4" style={{ color: colors.gold }} />
-                    Manage Sections
-                  </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
-                    {adminSections.map((section, i) => {
-                      const Icon = section.icon;
-                      return (
-                        <motion.button
-                          key={section.title}
-                          initial={{ opacity: 0, scale: 0.92 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.25, delay: i * 0.025 }}
-                          onClick={() => setActiveEditor(section.editorKey)}
-                          className="group flex flex-col items-center gap-2 p-3.5 rounded-2xl transition-all duration-200 hover:-translate-y-1 text-center"
-                          style={{ background: bg.card, border: `1px solid ${bg.border}` }}
-                          onMouseEnter={e => { e.currentTarget.style.border = `1px solid ${section.color}28`; e.currentTarget.style.background = bg.cardHover; }}
-                          onMouseLeave={e => { e.currentTarget.style.border = `1px solid ${bg.border}`; e.currentTarget.style.background = bg.card; }}
-                        >
+                {/* ── Two Column Layout: Recent Messages + Quick Stats ── */}
+                <div className="grid lg:grid-cols-3 gap-4">
+                  {/* Recent Messages - takes 2/3 */}
+                  <div className="lg:col-span-2 rounded-2xl overflow-hidden" style={{ background: bg.card, border: `1px solid ${bg.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+                    <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${bg.borderSoft}` }}>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl" style={{ background: "rgba(75,46,131,0.08)" }}>
+                          <Mail className="w-4 h-4" style={{ color: colors.purple }} />
+                        </div>
+                        <div>
+                          <h3 className="font-black text-slate-950 text-sm">Recent Messages</h3>
+                          <p className="text-[11px] text-slate-400">Latest inquiries from visitors</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => navigate("/admin/contact-messages")}
+                        className="flex items-center gap-1 text-xs font-bold transition-colors text-slate-400 hover:text-slate-950"
+                      >
+                        View All <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="p-4 space-y-2">
+                      {messagesLoading ? (
+                        <div className="py-8 text-center text-sm text-slate-400">Loading messages...</div>
+                      ) : latestMessages.length === 0 ? (
+                        <div className="py-8 text-center">
+                          <Mail className="w-8 h-8 mx-auto mb-2 text-slate-200" />
+                          <p className="text-sm text-slate-400">No messages yet</p>
+                        </div>
+                      ) : (
+                        latestMessages.map((message) => (
                           <div
-                            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 group-hover:scale-110"
-                            style={{ background: `${section.color}12` }}
+                            key={message.id}
+                            className="rounded-xl p-4 transition-all duration-200 cursor-pointer"
+                            style={{
+                              background: message.is_read ? "rgba(15,23,42,0.02)" : "rgba(75,46,131,0.06)",
+                              border: message.is_read ? `1px solid ${bg.borderSoft}` : "1px solid rgba(75,46,131,0.12)",
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = "rgba(15,23,42,0.04)"}
+                            onMouseLeave={e => e.currentTarget.style.background = message.is_read ? "rgba(15,23,42,0.02)" : "rgba(75,46,131,0.06)"}
                           >
-                            <Icon className="w-4 h-4" style={{ color: section.color }} />
+                            <div className="flex items-start justify-between gap-3 mb-1.5">
+                              <div className="flex items-center gap-2">
+                                {!message.is_read && <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: colors.green }} />}
+                                <span className="font-black text-slate-950 text-sm">{message.name || "Unknown Sender"}</span>
+                              </div>
+                              <span
+                                className="px-2 py-0.5 rounded-full text-[10px] font-black flex-shrink-0"
+                                style={{
+                                  background: message.source === "admission" ? "rgba(75,46,131,0.1)" : "rgba(215,25,32,0.08)",
+                                  color: message.source === "admission" ? colors.purple : colors.red,
+                                }}
+                              >
+                                {getSourceLabel(message.source)}
+                              </span>
+                            </div>
+                            <p className="text-xs leading-relaxed line-clamp-2 text-slate-500">{message.message || "No message text."}</p>
+                            <p className="text-[10px] mt-1.5 text-slate-400">{formatDate(message.created_at)}</p>
                           </div>
-                          <span className="text-[11px] font-bold leading-tight text-slate-500">
-                            {section.title.replace("Manage ", "")}
-                          </span>
-                        </motion.button>
-                      );
-                    })}
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right sidebar - Quick Stats + Recent Activity */}
+                  <div className="space-y-3">
+                    {/* Quick stats */}
+                    <div className="rounded-2xl p-5" style={{ background: "linear-gradient(145deg, #E8EDF5, #E8E0F0)", border: `1px solid ${bg.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+                      <div className="flex items-center gap-2 mb-4">
+                        <Zap className="w-4 h-4" style={{ color: colors.gold }} />
+                        <span className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Quick Stats</span>
+                      </div>
+                      {[
+                        { label: "Total Notices", value: noticeCount, color: colors.red },
+                        { label: "Announcements", value: announcementCount, color: colors.orange },
+                        { label: "Unread Messages", value: unreadCount, color: unreadCount > 0 ? colors.green : "rgba(15,23,42,0.3)" },
+                        { label: "Staff Members", value: "12", color: colors.cyan },
+                      ].map((item, i, arr) => (
+                        <div key={i} className="flex items-center justify-between py-2.5" style={{ borderBottom: i < arr.length - 1 ? `1px solid ${bg.borderSoft}` : "none" }}>
+                          <span className="text-xs text-slate-500">{item.label}</span>
+                          <span className="text-sm font-black" style={{ color: item.color }}>{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Recent activity */}
+                    <div className="rounded-2xl p-5" style={{ background: bg.card, border: `1px solid ${bg.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+                      <div className="flex items-center gap-2 mb-4">
+                        <Clock className="w-3.5 h-3.5" style={{ color: "rgba(15,23,42,0.3)" }} />
+                        <span className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Recent Activity</span>
+                      </div>
+                      {[
+                        { dot: colors.green,  text: "Notice added",            time: "2 min ago"  },
+                        { dot: colors.blue,   text: "Announcement published",  time: "1 hr ago"   },
+                        { dot: colors.purple, text: "New message received",    time: "3 hrs ago"  },
+                        { dot: colors.gold,   text: "Gallery updated",         time: "Yesterday"  },
+                      ].map((item, i, arr) => (
+                        <div key={i} className="flex items-center gap-3 py-2" style={{ borderBottom: i < arr.length - 1 ? `1px solid ${bg.borderSoft}` : "none" }}>
+                          <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.dot }} />
+                          <span className="text-xs flex-1 truncate text-slate-500">{item.text}</span>
+                          <span className="text-[10px] flex-shrink-0 text-slate-400">{item.time}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
