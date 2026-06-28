@@ -7,10 +7,12 @@ import {
   Bell, Images, Users, Phone, Footprints, LogOut, ArrowRight,
   Settings, School, Newspaper, Inbox, Mail, Menu, X, FileText,
   Megaphone, Clock, Star, ChevronRight, Zap, Globe, Shield,
+  Navigation,
 } from "lucide-react";
 
 // ── IMPORT ALL YOUR EXISTING ADMIN PAGES ──
 import AdminHome from "./AdminHome";
+import AdminNavbar from "./AdminNavbar";
 import AdminAbout from "./AdminAbout";
 import AdminMessages from "./AdminMessages";
 import AdminAcademics from "./AdminAcademics";
@@ -49,6 +51,7 @@ const adminSections = [
 // ── Sidebar navigation items ──────────────────────────────────────
 const navigationItems = [
   { title: "Dashboard", icon: LayoutDashboard, editorKey: null },
+  { title: "Manage Navbar", icon: Navigation, editorKey: "navbar" },
   { title: "Manage Home", icon: Home, editorKey: "home" },
   { title: "Manage About", icon: Info, editorKey: "about" },
   { title: "Manage Messages", icon: MessageSquareText, editorKey: "messages" },
@@ -530,8 +533,9 @@ export default function AdminDashboard() {
             ) : (
               // ── Editor View ──
               <div>
-                {activeEditor === "home" && <AdminHome />}
-                {activeEditor === "about" && <AdminAbout />}
+  {activeEditor === "navbar" && <AdminNavbar />}
+  {activeEditor === "home" && <AdminHome />}
+  {activeEditor === "about" && <AdminAbout />}
                 {activeEditor === "messages" && <AdminMessages />}
                 {activeEditor === "academics" && <AdminAcademics />}
                 {activeEditor === "admissions" && <AdminAdmissions />}

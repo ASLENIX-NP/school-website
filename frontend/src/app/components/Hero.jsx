@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Camera, Pencil, Sparkles } from "lucide-react";
 
 const palette = {
   cyan: "#38BDF8",
@@ -13,7 +13,7 @@ const palette = {
   cream: "#FFF8EE",
 };
 
-const defaultHeroData = {
+export const defaultHeroData = {
   badge: "Admissions Open for New Academic Session",
   titleLine1: "Baljagriti Secondary",
   titleLine2: "English School",
@@ -50,113 +50,232 @@ const defaultHeroData = {
   floating4Subtitle: "Learning Resources",
 };
 
+export function mergeHeroData(saved = {}) {
+  return {
+    ...defaultHeroData,
+    ...(saved || {}),
+  };
+}
+
 function safeLink(link, fallback) {
   const clean = String(link || "").trim();
   return clean.startsWith("/") ? clean : fallback;
 }
 
-function GlassStat({ value, label, color, delay }) {
+function EditIconButton({
+  editMode,
+  target,
+  onEditTarget,
+  icon: Icon = Pencil,
+  label = "Edit",
+  className = "",
+}) {
+  if (!editMode) return null;
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.55 }}
-      className="group min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl px-3 py-4 sm:p-5 cursor-pointer transition-all duration-300 hover:-translate-y-2"
-      style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.82), rgba(255,255,255,0.50))",
-        border: "1px solid rgba(15,23,42,0.10)",
-        boxShadow:
-          "0 20px 46px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.75)",
-        backdropFilter: "blur(18px)",
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onEditTarget(target);
       }}
+      className={`absolute -top-3 -right-3 z-[80] opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 rounded-full w-9 h-9 flex items-center justify-center shadow-xl ${className}`}
+      style={{
+        background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
+        color: "#020617",
+        border: "1px solid rgba(255,255,255,0.84)",
+      }}
+      title={label}
     >
-      <div
-        className="w-8 sm:w-11 h-1 rounded-full mb-3 sm:mb-4 transition-all duration-200 ease-out group-hover:w-14 sm:group-hover:w-20"
-        style={{ background: color }}
-      />
-
-      <div
-        className="max-w-full text-[17px] min-[390px]:text-[18px] sm:text-2xl font-black leading-[1.05] break-words"
-        style={{
-          color: palette.navy,
-          fontFamily: "var(--font-display)",
-          letterSpacing: "-0.035em",
-          overflowWrap: "anywhere",
-        }}
-      >
-        {value}
-      </div>
-
-      <div
-        className="text-[9px] sm:text-xs mt-1 font-bold leading-tight break-words"
-        style={{ color: "rgba(15,23,42,0.58)" }}
-      >
-        {label}
-      </div>
-    </motion.div>
+      <Icon className="w-4 h-4" />
+    </button>
   );
 }
 
-function FloatingTextTag({ className, title, subtitle, color, delay }) {
+function EditableWrap({
+  editMode,
+  target,
+  onEditTarget,
+  icon = Pencil,
+  label = "Edit",
+  className = "",
+  children,
+}) {
+  if (!editMode) return children;
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{
-        opacity: 1,
-        y: [0, 9, 0],
-      }}
-      whileHover={{
-        y: -8,
-        scale: 1.03,
-      }}
-      transition={{
-        opacity: { duration: 0.55, delay },
-        y: {
-          duration: 7,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay,
-        },
-      }}
-      className={`group rounded-3xl px-5 py-4 cursor-pointer transition-all duration-300 ${className}`}
-      style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.90), rgba(255,255,255,0.58))",
-        border: `1px solid ${color}55`,
-        boxShadow: "0 22px 52px rgba(15,23,42,0.12)",
-        backdropFilter: "blur(20px)",
-      }}
-    >
-      <div
-        className="w-12 h-1 rounded-full mb-3 transition-all duration-150 ease-out group-hover:w-24"
-        style={{ background: color }}
+    <div className={`relative group ${className}`}>
+      {children}
+      <EditIconButton
+        editMode={editMode}
+        target={target}
+        onEditTarget={onEditTarget}
+        icon={icon}
+        label={label}
       />
-
-      <div className="text-slate-950 text-sm font-black whitespace-nowrap">
-        {title}
-      </div>
-
-      <div
-        className="text-xs mt-1 font-semibold whitespace-nowrap"
-        style={{ color: "rgba(15,23,42,0.58)" }}
-      >
-        {subtitle}
-      </div>
-    </motion.div>
+    </div>
   );
 }
 
-function Premium3DBackground() {
+function GlassStat({
+  value,
+  label,
+  color,
+  delay,
+  editMode,
+  onEditTarget,
+  index,
+}) {
   return (
-    <div className="fixed inset-0 pointer-events-none z-[1] overflow-hidden">
+    <EditableWrap
+      editMode={editMode}
+      target={{ type: "heroStat", index }}
+      onEditTarget={onEditTarget}
+      label="Edit stat"
+    >
       <motion.div
-        animate={{
-          x: [0, 42, -16, 0],
-          y: [0, -28, 22, 0],
-          rotate: [0, 12, -8, 0],
-          scale: [1, 1.08, 0.98, 1],
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay, duration: 0.55 }}
+        className="group min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl px-3 py-4 sm:p-5 cursor-pointer transition-all duration-300 hover:-translate-y-2"
+        style={{
+          background:
+            "linear-gradient(145deg, rgba(255,255,255,0.82), rgba(255,255,255,0.50))",
+          border: editMode
+            ? "1px dashed rgba(56,189,248,0.55)"
+            : "1px solid rgba(15,23,42,0.10)",
+          boxShadow:
+            "0 20px 46px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.75)",
+          backdropFilter: "blur(18px)",
         }}
+      >
+        <div
+          className="w-8 sm:w-11 h-1 rounded-full mb-3 sm:mb-4 transition-all duration-200 ease-out group-hover:w-14 sm:group-hover:w-20"
+          style={{ background: color }}
+        />
+
+        <div
+          className="max-w-full text-[17px] min-[390px]:text-[18px] sm:text-2xl font-black leading-[1.05] break-words"
+          style={{
+            color: palette.navy,
+            fontFamily: "var(--font-display)",
+            letterSpacing: "-0.035em",
+            overflowWrap: "anywhere",
+          }}
+        >
+          {value}
+        </div>
+
+        <div
+          className="text-[9px] sm:text-xs mt-1 font-bold leading-tight break-words"
+          style={{ color: "rgba(15,23,42,0.58)" }}
+        >
+          {label}
+        </div>
+      </motion.div>
+    </EditableWrap>
+  );
+}
+
+function FloatingTextTag({
+  className,
+  title,
+  subtitle,
+  color,
+  delay,
+  editMode,
+  onEditTarget,
+  index,
+}) {
+  const adminPositions = [
+    "absolute left-[9%] top-20 z-20 hidden xl:block",
+    "absolute right-[9%] top-24 z-20 hidden xl:block",
+    "absolute left-[13%] bottom-12 z-20 hidden xl:block",
+    "absolute right-[13%] bottom-14 z-20 hidden xl:block",
+  ];
+
+  const positionClass = editMode
+    ? adminPositions[index] || className
+    : className;
+
+  return (
+    <div className={`${positionClass} group`}>
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{
+          opacity: 1,
+          y: editMode ? 0 : [0, 9, 0],
+        }}
+        whileHover={{
+          y: -8,
+          scale: 1.03,
+        }}
+        transition={{
+          opacity: { duration: 0.55, delay },
+          y: {
+            duration: 7,
+            repeat: editMode ? 0 : Infinity,
+            ease: "easeInOut",
+            delay,
+          },
+        }}
+        className="rounded-3xl px-4 py-3 xl:px-5 xl:py-4 cursor-pointer transition-all duration-300"
+        style={{
+          background:
+            "linear-gradient(145deg, rgba(255,255,255,0.92), rgba(255,255,255,0.62))",
+          border: editMode
+            ? "1px dashed rgba(56,189,248,0.75)"
+            : `1px solid ${color}55`,
+          boxShadow: "0 22px 52px rgba(15,23,42,0.12)",
+          backdropFilter: "blur(20px)",
+          maxWidth: editMode ? "190px" : "none",
+        }}
+      >
+        <div
+          className="w-12 h-1 rounded-full mb-3 transition-all duration-150 ease-out group-hover:w-20"
+          style={{ background: color }}
+        />
+
+        <div className="text-slate-950 text-sm font-black whitespace-nowrap">
+          {title}
+        </div>
+
+        <div
+          className="text-xs mt-1 font-semibold whitespace-nowrap"
+          style={{ color: "rgba(15,23,42,0.58)" }}
+        >
+          {subtitle}
+        </div>
+      </motion.div>
+
+      <EditIconButton
+        editMode={editMode}
+        target={{ type: "heroFloating", index }}
+        onEditTarget={onEditTarget}
+        label="Edit floating label"
+      />
+    </div>
+  );
+}
+
+function Premium3DBackground({ editMode = false }) {
+  return (
+    <div
+      className={`${
+        editMode ? "absolute" : "fixed"
+      } inset-0 pointer-events-none z-[1] overflow-hidden`}
+    >
+      <motion.div
+        animate={
+          editMode
+            ? false
+            : {
+                x: [0, 42, -16, 0],
+                y: [0, -28, 22, 0],
+                scale: [1, 1.08, 0.98, 1],
+              }
+        }
         transition={{
           duration: 18,
           repeat: Infinity,
@@ -172,12 +291,15 @@ function Premium3DBackground() {
       />
 
       <motion.div
-        animate={{
-          x: [0, -36, 24, 0],
-          y: [0, 30, -20, 0],
-          rotate: [0, -14, 10, 0],
-          scale: [1, 1.05, 0.96, 1],
-        }}
+        animate={
+          editMode
+            ? false
+            : {
+                x: [0, -36, 24, 0],
+                y: [0, 30, -20, 0],
+                scale: [1, 1.05, 0.96, 1],
+              }
+        }
         transition={{
           duration: 22,
           repeat: Infinity,
@@ -185,116 +307,17 @@ function Premium3DBackground() {
         }}
         className="absolute right-[-10%] top-[12%] hidden lg:block w-[520px] h-[520px] rounded-full"
         style={{
-          opacity: 0.20,
+          opacity: 0.2,
           background:
             "radial-gradient(circle at 45% 35%, rgba(250,204,21,0.48), rgba(255,255,255,0.20) 40%, transparent 72%)",
           filter: "blur(8px)",
         }}
       />
 
-      <motion.div
-        animate={{
-          rotateX: [52, 64, 52],
-          rotateY: [-14, 18, -14],
-          rotateZ: [-18, 8, -18],
-          x: [0, 34, 0],
-          y: [0, -22, 0],
-        }}
-        transition={{
-          duration: 17,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="absolute left-[4%] bottom-[8%] hidden xl:block w-[360px] h-[180px] rounded-[3rem]"
-        style={{
-          perspective: "1200px",
-          transformStyle: "preserve-3d",
-          opacity: 0.22,
-          background:
-            "linear-gradient(135deg, rgba(255,255,255,0.56), rgba(56,189,248,0.18), rgba(255,255,255,0.12))",
-          border: "1px solid rgba(255,255,255,0.64)",
-          boxShadow:
-            "0 34px 90px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.82)",
-          backdropFilter: "blur(16px)",
-        }}
-      />
-
-      <motion.div
-        animate={{
-          rotateX: [58, 46, 58],
-          rotateY: [16, -18, 16],
-          rotateZ: [12, -10, 12],
-          x: [0, -26, 0],
-          y: [0, 26, 0],
-        }}
-        transition={{
-          duration: 19,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 0.7,
-        }}
-        className="absolute right-[5%] bottom-[10%] hidden xl:block w-[300px] h-[150px] rounded-[2.5rem]"
-        style={{
-          perspective: "1200px",
-          transformStyle: "preserve-3d",
-          opacity: 0.20,
-          background:
-            "linear-gradient(135deg, rgba(255,255,255,0.52), rgba(250,204,21,0.20), rgba(255,255,255,0.10))",
-          border: "1px solid rgba(255,255,255,0.64)",
-          boxShadow:
-            "0 34px 90px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.82)",
-          backdropFilter: "blur(16px)",
-        }}
-      />
-
-      <motion.div
-        animate={{
-          rotate: 360,
-        }}
-        transition={{
-          duration: 55,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-        className="absolute left-[45%] top-[16%] hidden lg:block w-[380px] h-[380px] rounded-full"
-        style={{
-          opacity: 0.13,
-          border: "1px solid rgba(56,189,248,0.70)",
-          boxShadow:
-            "0 0 80px rgba(56,189,248,0.18), inset 0 0 80px rgba(255,255,255,0.10)",
-        }}
-      />
-
-      <motion.div
-        animate={{
-          rotate: -360,
-        }}
-        transition={{
-          duration: 68,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-        className="absolute left-[50%] top-[20%] hidden lg:block w-[260px] h-[260px] rounded-full"
-        style={{
-          opacity: 0.12,
-          border: "1px solid rgba(250,204,21,0.70)",
-          boxShadow:
-            "0 0 80px rgba(250,204,21,0.18), inset 0 0 80px rgba(255,255,255,0.10)",
-        }}
-      />
-
-      <motion.div
-        animate={{
-          backgroundPosition: ["0px 0px", "140px 140px"],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "linear",
-        }}
+      <div
         className="absolute inset-0 hidden lg:block"
         style={{
-          opacity: 0.10,
+          opacity: 0.09,
           backgroundImage:
             "linear-gradient(rgba(75,46,131,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(75,46,131,0.18) 1px, transparent 1px)",
           backgroundSize: "140px 140px",
@@ -306,51 +329,11 @@ function Premium3DBackground() {
           transformOrigin: "center bottom",
         }}
       />
-
-      <motion.div
-        animate={{
-          x: ["-20%", "120%"],
-        }}
-        transition={{
-          duration: 13,
-          repeat: Infinity,
-          ease: "easeInOut",
-          repeatDelay: 2.5,
-        }}
-        className="absolute top-[18%] hidden lg:block w-[420px] h-[180px]"
-        style={{
-          opacity: 0.12,
-          background:
-            "linear-gradient(90deg, transparent, rgba(255,255,255,0.58), rgba(56,189,248,0.28), transparent)",
-          filter: "blur(18px)",
-          transform: "rotate(-12deg)",
-        }}
-      />
-
-      <motion.div
-        animate={{
-          x: ["115%", "-25%"],
-        }}
-        transition={{
-          duration: 16,
-          repeat: Infinity,
-          ease: "easeInOut",
-          repeatDelay: 3,
-        }}
-        className="absolute bottom-[18%] hidden lg:block w-[460px] h-[190px]"
-        style={{
-          opacity: 0.10,
-          background:
-            "linear-gradient(90deg, transparent, rgba(250,204,21,0.42), rgba(255,255,255,0.50), transparent)",
-          filter: "blur(20px)",
-          transform: "rotate(10deg)",
-        }}
-      />
     </div>
   );
 }
 
-function HeroImageStage({ heroData }) {
+function HeroImageStage({ heroData, editMode, onEditTarget }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96, y: 24 }}
@@ -371,57 +354,81 @@ function HeroImageStage({ heroData }) {
         }}
       />
 
-      <motion.div
-        animate={{
-          y: [0, -7, 0],
-        }}
-        transition={{
-          duration: 7,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="relative z-10 w-[88%] h-[360px] lg:h-[395px] rounded-[2.5rem] overflow-hidden"
-        style={{
-          boxShadow:
-            "0 38px 92px rgba(15,23,42,0.20), 0 0 60px rgba(56,189,248,0.12)",
-          border: "1px solid rgba(255,255,255,0.76)",
-        }}
+      <EditableWrap
+        editMode={editMode}
+        target={{ type: "heroImage" }}
+        onEditTarget={onEditTarget}
+        icon={Camera}
+        label="Change hero image"
+        className="relative z-10 w-[88%]"
       >
-        <img
-          src={heroData.image}
-          alt="Baljagriti school students"
-          className="w-full h-full object-cover"
-        />
-
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(to top, rgba(15,23,42,0.58) 0%, rgba(15,23,42,0.10) 52%, transparent 100%)",
+        <motion.div
+          animate={{
+            y: editMode ? 0 : [0, -7, 0],
           }}
-        />
-
-        <div
-          className="absolute bottom-5 left-5 right-5 px-5 py-4 rounded-2xl"
+          transition={{
+            duration: 7,
+            repeat: editMode ? 0 : Infinity,
+            ease: "easeInOut",
+          }}
+          className="relative h-[360px] lg:h-[395px] rounded-[2.5rem] overflow-hidden"
           style={{
-            background: "rgba(255,255,255,0.82)",
-            border: "1px solid rgba(255,255,255,0.76)",
-            boxShadow: "0 18px 42px rgba(15,23,42,0.18)",
-            backdropFilter: "blur(16px)",
+            boxShadow:
+              "0 38px 92px rgba(15,23,42,0.20), 0 0 60px rgba(56,189,248,0.12)",
+            border: editMode
+              ? "1px dashed rgba(56,189,248,0.65)"
+              : "1px solid rgba(255,255,255,0.76)",
           }}
         >
-          <div className="font-black text-base" style={{ color: palette.navy }}>
-            {heroData.imageBottomTitle}
-          </div>
+          <img
+            src={heroData.image}
+            alt="Baljagriti school students"
+            className="w-full h-full object-cover"
+          />
 
           <div
-            className="text-sm mt-1 leading-relaxed font-medium"
-            style={{ color: "rgba(15,23,42,0.62)" }}
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(to top, rgba(15,23,42,0.58) 0%, rgba(15,23,42,0.10) 52%, transparent 100%)",
+            }}
+          />
+
+          <EditableWrap
+            editMode={editMode}
+            target={{ type: "heroImageText" }}
+            onEditTarget={onEditTarget}
+            label="Edit image text"
+            className="absolute bottom-5 left-5 right-5"
           >
-            {heroData.imageBottomDescription}
-          </div>
-        </div>
-      </motion.div>
+            <div
+              className="px-5 py-4 rounded-2xl"
+              style={{
+                background: "rgba(255,255,255,0.82)",
+                border: editMode
+                  ? "1px dashed rgba(56,189,248,0.65)"
+                  : "1px solid rgba(255,255,255,0.76)",
+                boxShadow: "0 18px 42px rgba(15,23,42,0.18)",
+                backdropFilter: "blur(16px)",
+              }}
+            >
+              <div
+                className="font-black text-base"
+                style={{ color: palette.navy }}
+              >
+                {heroData.imageBottomTitle}
+              </div>
+
+              <div
+                className="text-sm mt-1 leading-relaxed font-medium"
+                style={{ color: "rgba(15,23,42,0.62)" }}
+              >
+                {heroData.imageBottomDescription}
+              </div>
+            </div>
+          </EditableWrap>
+        </motion.div>
+      </EditableWrap>
 
       <FloatingTextTag
         className="absolute left-[7%] top-16 z-20 hidden xl:block"
@@ -429,6 +436,9 @@ function HeroImageStage({ heroData }) {
         subtitle={heroData.floating1Subtitle}
         color={palette.gold}
         delay={0.3}
+        editMode={editMode}
+        onEditTarget={onEditTarget}
+        index={0}
       />
 
       <FloatingTextTag
@@ -437,6 +447,9 @@ function HeroImageStage({ heroData }) {
         subtitle={heroData.floating2Subtitle}
         color={palette.cyan}
         delay={0.45}
+        editMode={editMode}
+        onEditTarget={onEditTarget}
+        index={1}
       />
 
       <FloatingTextTag
@@ -445,6 +458,9 @@ function HeroImageStage({ heroData }) {
         subtitle={heroData.floating3Subtitle}
         color={palette.purple}
         delay={0.6}
+        editMode={editMode}
+        onEditTarget={onEditTarget}
+        index={2}
       />
 
       <FloatingTextTag
@@ -453,15 +469,29 @@ function HeroImageStage({ heroData }) {
         subtitle={heroData.floating4Subtitle}
         color={palette.green}
         delay={0.75}
+        editMode={editMode}
+        onEditTarget={onEditTarget}
+        index={3}
       />
     </motion.div>
   );
 }
 
-function Hero() {
-  const [heroData, setHeroData] = useState(defaultHeroData);
+function Hero({
+  editMode = false,
+  contentOverride = null,
+  onEditTarget = () => {},
+}) {
+  const [heroData, setHeroData] = useState(
+    mergeHeroData(contentOverride || defaultHeroData)
+  );
 
   useEffect(() => {
+    if (contentOverride) {
+      setHeroData(mergeHeroData(contentOverride));
+      return;
+    }
+
     const loadHeroContent = async () => {
       try {
         const res = await axios.get(
@@ -471,10 +501,7 @@ function Hero() {
         const savedHero = res.data?.data?.content?.hero;
 
         if (savedHero) {
-          setHeroData({
-            ...defaultHeroData,
-            ...savedHero,
-          });
+          setHeroData(mergeHeroData(savedHero));
         }
       } catch (error) {
         console.error("Hero content load error:", error);
@@ -482,7 +509,7 @@ function Hero() {
     };
 
     loadHeroContent();
-  }, []);
+  }, [contentOverride]);
 
   return (
     <section
@@ -498,45 +525,17 @@ function Hero() {
           0% { transform: translateX(-120%) rotate(18deg); }
           100% { transform: translateX(140%) rotate(18deg); }
         }
-
-        @keyframes gridDrift {
-          from { background-position: 0 0; }
-          to { background-position: 90px 90px; }
-        }
-
-        @keyframes pulseGlow {
-          0%, 100% { opacity: 0.45; transform: scale(1); }
-          50% { opacity: 0.75; transform: scale(1.05); }
-        }
-
-        @keyframes miniFloat {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-14px); }
-        }
       `}</style>
 
-      <Premium3DBackground />
+      <Premium3DBackground editMode={editMode} />
 
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-[2]">
-        <div
-          className="absolute inset-0 opacity-[0.20]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(75,46,131,.13) 1px, transparent 1px), linear-gradient(90deg, rgba(75,46,131,.13) 1px, transparent 1px)",
-            backgroundSize: "90px 90px",
-            animation: "gridDrift 24s linear infinite",
-            transform: "perspective(700px) rotateX(63deg) translateY(160px)",
-            transformOrigin: "center bottom",
-          }}
-        />
-
         <div
           className="absolute -top-40 -left-32 w-[620px] h-[620px] rounded-full"
           style={{
             background:
               "radial-gradient(circle, rgba(56,189,248,0.28), transparent 68%)",
             filter: "blur(18px)",
-            animation: "pulseGlow 7s ease-in-out infinite",
           }}
         />
 
@@ -546,141 +545,170 @@ function Hero() {
             background:
               "radial-gradient(circle, rgba(250,204,21,0.30), transparent 68%)",
             filter: "blur(18px)",
-            animation: "pulseGlow 8s ease-in-out infinite",
-          }}
-        />
-
-        <div
-          className="absolute left-[8%] bottom-[12%] w-20 h-20 rounded-3xl hidden lg:block"
-          style={{
-            background:
-              "linear-gradient(145deg, rgba(255,255,255,0.78), rgba(255,255,255,0.28))",
-            border: "1px solid rgba(255,255,255,0.72)",
-            boxShadow: "0 20px 50px rgba(15,23,42,0.08)",
-            animation: "miniFloat 6s ease-in-out infinite",
-          }}
-        />
-
-        <div
-          className="absolute right-[12%] top-[24%] w-14 h-14 rounded-full hidden lg:block"
-          style={{
-            background:
-              "linear-gradient(145deg, rgba(250,204,21,0.40), rgba(255,255,255,0.45))",
-            border: "1px solid rgba(255,255,255,0.78)",
-            boxShadow: "0 20px 50px rgba(15,23,42,0.08)",
-            animation: "miniFloat 7s ease-in-out infinite",
           }}
         />
       </div>
 
       <div className="max-w-[1450px] mx-auto px-8 py-8 lg:py-6 grid lg:grid-cols-[0.95fr_1.05fr] gap-8 items-center relative z-10">
         <div>
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65 }}
-            className="inline-flex items-center gap-2 rounded-full px-5 py-2 mb-6"
-            style={{
-              background:
-                "linear-gradient(145deg, rgba(255,255,255,0.86), rgba(255,255,255,0.55))",
-              border: "1px solid rgba(15,23,42,0.08)",
-              boxShadow:
-                "0 18px 42px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.70)",
-              backdropFilter: "blur(18px)",
-              color: palette.navy,
-            }}
+          <EditableWrap
+            editMode={editMode}
+            target={{ type: "heroBadge" }}
+            onEditTarget={onEditTarget}
+            label="Edit badge"
+            className="inline-block"
           >
-            <Sparkles className="w-4 h-4" color={palette.gold} />
-            <span className="text-sm font-black">{heroData.badge}</span>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 36 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, delay: 0.08 }}
-            className="text-4xl md:text-5xl xl:text-6xl leading-[1.02] mb-5"
-            style={{
-              color: palette.navy,
-              fontFamily: "var(--font-display)",
-              fontWeight: 900,
-              letterSpacing: "-0.06em",
-              textShadow: "0 14px 38px rgba(255,255,255,0.65)",
-            }}
-          >
-            <span>{heroData.titleLine1}</span>
-            <br />
-            <span
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65 }}
+              className="inline-flex items-center gap-2 rounded-full px-5 py-2 mb-6"
               style={{
-                display: "inline-block",
-                background:
-                  "linear-gradient(135deg, #168A3A 0%, #FACC15 50%, #4B2E83 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                textShadow: "none",
-              }}
-            >
-              {heroData.titleLine2}
-            </span>
-            <br />
-            <span>{heroData.titleLine3}</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 26 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.16 }}
-            className="text-lg md:text-xl max-w-xl leading-relaxed mb-7"
-            style={{ color: "rgba(15,23,42,0.68)" }}
-          >
-            {heroData.description}
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 22 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.24 }}
-            className="flex flex-wrap gap-4 mb-8"
-          >
-            <Link
-              to={safeLink(heroData.primaryButtonLink, "/admissions")}
-              className="relative overflow-hidden px-8 py-4 rounded-2xl font-black text-slate-950 transition-all duration-300 hover:scale-105"
-              style={{
-                background:
-                  "linear-gradient(135deg, #FACC15 0%, #38BDF8 100%)",
-                boxShadow:
-                  "0 20px 48px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.55)",
-              }}
-            >
-              <span className="relative z-10 flex items-center gap-2">
-                {heroData.primaryButtonText} <ArrowRight className="w-4 h-4" />
-              </span>
-
-              <span
-                className="absolute top-0 bottom-0 w-24 opacity-50"
-                style={{
-                  left: 0,
-                  background:
-                    "linear-gradient(90deg, transparent, rgba(255,255,255,0.85), transparent)",
-                  animation: "beamMove 2.8s ease-in-out infinite",
-                }}
-              />
-            </Link>
-
-            <Link
-              to={safeLink(heroData.secondaryButtonLink, "/facilities")}
-              className="px-8 py-4 rounded-2xl font-black flex items-center gap-2 transition-all duration-300 hover:scale-105"
-              style={{
-                color: palette.navy,
                 background:
                   "linear-gradient(145deg, rgba(255,255,255,0.86), rgba(255,255,255,0.55))",
-                border: "1px solid rgba(15,23,42,0.10)",
-                boxShadow: "0 18px 42px rgba(15,23,42,0.08)",
+                border: editMode
+                  ? "1px dashed rgba(56,189,248,0.65)"
+                  : "1px solid rgba(15,23,42,0.08)",
+                boxShadow:
+                  "0 18px 42px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.70)",
                 backdropFilter: "blur(18px)",
+                color: palette.navy,
               }}
             >
-              {heroData.secondaryButtonText} <ArrowRight className="w-4 h-4" />
-            </Link>
-          </motion.div>
+              <Sparkles className="w-4 h-4" color={palette.gold} />
+              <span className="text-sm font-black">{heroData.badge}</span>
+            </motion.div>
+          </EditableWrap>
+
+          <EditableWrap
+            editMode={editMode}
+            target={{ type: "heroTitle" }}
+            onEditTarget={onEditTarget}
+            label="Edit title"
+          >
+            <motion.h1
+              initial={{ opacity: 0, y: 36 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.75, delay: 0.08 }}
+              className="text-4xl md:text-5xl xl:text-6xl leading-[1.02] mb-5"
+              style={{
+                color: palette.navy,
+                fontFamily: "var(--font-display)",
+                fontWeight: 900,
+                letterSpacing: "-0.06em",
+                textShadow: "0 14px 38px rgba(255,255,255,0.65)",
+                outline: editMode ? "1px dashed rgba(56,189,248,0.45)" : "none",
+                outlineOffset: editMode ? "8px" : "0",
+                borderRadius: editMode ? "18px" : "0",
+              }}
+            >
+              <span>{heroData.titleLine1}</span>
+              <br />
+              <span
+                style={{
+                  display: "inline-block",
+                  background:
+                    "linear-gradient(135deg, #168A3A 0%, #FACC15 50%, #4B2E83 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  textShadow: "none",
+                }}
+              >
+                {heroData.titleLine2}
+              </span>
+              <br />
+              <span>{heroData.titleLine3}</span>
+            </motion.h1>
+          </EditableWrap>
+
+          <EditableWrap
+            editMode={editMode}
+            target={{ type: "heroDescription" }}
+            onEditTarget={onEditTarget}
+            label="Edit description"
+          >
+            <motion.p
+              initial={{ opacity: 0, y: 26 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.16 }}
+              className="text-lg md:text-xl max-w-xl leading-relaxed mb-7 rounded-2xl"
+              style={{
+                color: "rgba(15,23,42,0.68)",
+                outline: editMode ? "1px dashed rgba(56,189,248,0.45)" : "none",
+                outlineOffset: editMode ? "6px" : "0",
+              }}
+            >
+              {heroData.description}
+            </motion.p>
+          </EditableWrap>
+
+          <EditableWrap
+            editMode={editMode}
+            target={{ type: "heroButtons" }}
+            onEditTarget={onEditTarget}
+            label="Edit buttons"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 22 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.24 }}
+              className="flex flex-wrap gap-4 mb-8 rounded-2xl"
+              style={{
+                outline: editMode ? "1px dashed rgba(56,189,248,0.45)" : "none",
+                outlineOffset: editMode ? "8px" : "0",
+              }}
+            >
+              <Link
+                to={safeLink(heroData.primaryButtonLink, "/admissions")}
+                onClick={(e) => {
+                  if (editMode) e.preventDefault();
+                }}
+                className="relative overflow-hidden px-8 py-4 rounded-2xl font-black text-slate-950 transition-all duration-300 hover:scale-105"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #FACC15 0%, #38BDF8 100%)",
+                  boxShadow:
+                    "0 20px 48px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.55)",
+                }}
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  {heroData.primaryButtonText}{" "}
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+
+                <span
+                  className="absolute top-0 bottom-0 w-24 opacity-50"
+                  style={{
+                    left: 0,
+                    background:
+                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.85), transparent)",
+                    animation: editMode
+                      ? "none"
+                      : "beamMove 2.8s ease-in-out infinite",
+                  }}
+                />
+              </Link>
+
+              <Link
+                to={safeLink(heroData.secondaryButtonLink, "/facilities")}
+                onClick={(e) => {
+                  if (editMode) e.preventDefault();
+                }}
+                className="px-8 py-4 rounded-2xl font-black flex items-center gap-2 transition-all duration-300 hover:scale-105"
+                style={{
+                  color: palette.navy,
+                  background:
+                    "linear-gradient(145deg, rgba(255,255,255,0.86), rgba(255,255,255,0.55))",
+                  border: "1px solid rgba(15,23,42,0.10)",
+                  boxShadow: "0 18px 42px rgba(15,23,42,0.08)",
+                  backdropFilter: "blur(18px)",
+                }}
+              >
+                {heroData.secondaryButtonText}{" "}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </motion.div>
+          </EditableWrap>
 
           <div className="grid grid-cols-3 gap-3 max-w-xl">
             <GlassStat
@@ -688,6 +716,9 @@ function Hero() {
               label={heroData.stat1Label}
               color={palette.gold}
               delay={0.3}
+              editMode={editMode}
+              onEditTarget={onEditTarget}
+              index={0}
             />
 
             <GlassStat
@@ -695,6 +726,9 @@ function Hero() {
               label={heroData.stat2Label}
               color={palette.cyan}
               delay={0.38}
+              editMode={editMode}
+              onEditTarget={onEditTarget}
+              index={1}
             />
 
             <GlassStat
@@ -702,11 +736,18 @@ function Hero() {
               label={heroData.stat3Label}
               color={palette.green}
               delay={0.46}
+              editMode={editMode}
+              onEditTarget={onEditTarget}
+              index={2}
             />
           </div>
         </div>
 
-        <HeroImageStage heroData={heroData} />
+        <HeroImageStage
+          heroData={heroData}
+          editMode={editMode}
+          onEditTarget={onEditTarget}
+        />
       </div>
 
       <div

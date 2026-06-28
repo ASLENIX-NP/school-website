@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import PdfNoticePreview from "../app/components/PdfNoticePreview";
-import { X, Megaphone } from "lucide-react";
+import {
+  X,
+  Megaphone,
+  Pencil,
+  Trash2,
+  Plus,
+} from "lucide-react";
 
 const colors = {
   red: "#D71920",
@@ -16,7 +22,7 @@ const colors = {
   orange: "#F97316",
 };
 
-const defaultSettings = {
+export const defaultNoticeSettings = {
   page_badge: "School Updates",
   page_title: "School Notices",
   page_description:
@@ -31,7 +37,7 @@ const defaultSettings = {
   sidebar_button_link: "/contact",
 };
 
-const formatNoticeDate = (dateValue) => {
+export const formatNoticeDate = (dateValue) => {
   if (!dateValue) return "No date";
 
   const date = new Date(dateValue);
@@ -44,7 +50,7 @@ const formatNoticeDate = (dateValue) => {
   });
 };
 
-function normalizeNotice(notice = {}) {
+export function normalizeNotice(notice = {}) {
   return {
     id: notice.id,
     title: notice.title || "",
@@ -64,7 +70,7 @@ function getTime(value) {
   return Number.isNaN(time) ? 0 : time;
 }
 
-function sortNoticesNewestFirst(notices = []) {
+export function sortNoticesNewestFirst(notices = []) {
   return [...notices].sort((a, b) => {
     const pinnedA = a.pinned ? 1 : 0;
     const pinnedB = b.pinned ? 1 : 0;
@@ -83,7 +89,107 @@ function sortNoticesNewestFirst(notices = []) {
   });
 }
 
-// ─── Facebook-style Reaction Buttons ──────────────────────────────────
+function ActionButtons({
+  editMode,
+  target,
+  onEditTarget,
+  onDeleteTarget,
+  canDelete = false,
+}) {
+  if (!editMode) return null;
+
+  return (
+    <div className="absolute -top-3 -right-3 z-[90] flex items-center gap-2 opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200">
+      <button
+        type="button"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onEditTarget(target);
+        }}
+        className="w-9 h-9 rounded-full flex items-center justify-center shadow-xl"
+        style={{
+          background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+          color: "#020617",
+          border: "1px solid rgba(255,255,255,0.85)",
+        }}
+        title="Edit"
+      >
+        <Pencil className="w-4 h-4" />
+      </button>
+
+      {canDelete && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onDeleteTarget(target);
+          }}
+          className="w-9 h-9 rounded-full flex items-center justify-center shadow-xl"
+          style={{
+            background: "linear-gradient(135deg, #FEE2E2, #FCA5A5)",
+            color: colors.red,
+            border: "1px solid rgba(255,255,255,0.85)",
+          }}
+          title="Delete"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function EditableWrap({
+  editMode,
+  target,
+  onEditTarget,
+  onDeleteTarget = () => {},
+  canDelete = false,
+  className = "",
+  children,
+}) {
+  if (!editMode) return children;
+
+  return (
+    <div className={`relative group ${className}`}>
+      {children}
+      <ActionButtons
+        editMode={editMode}
+        target={target}
+        onEditTarget={onEditTarget}
+        onDeleteTarget={onDeleteTarget}
+        canDelete={canDelete}
+      />
+    </div>
+  );
+}
+
+function AddNoticeButton({ editMode, onAddNotice }) {
+  if (!editMode) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onAddNotice();
+      }}
+      className="inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-black transition-all hover:-translate-y-0.5"
+      style={{
+        background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+        color: "#020617",
+        boxShadow: "0 14px 34px rgba(56,189,248,0.24)",
+      }}
+    >
+      <Plus className="w-4 h-4" />
+      Add Notice
+    </button>
+  );
+}
+
 function ReactionButton({ type, emoji, count, isActive, onClick }) {
   return (
     <motion.button
@@ -93,18 +199,23 @@ function ReactionButton({ type, emoji, count, isActive, onClick }) {
         e.stopPropagation();
         onClick(type);
       }}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200 text-sm ${
-        isActive ? "bg-blue-50 border-blue-200" : "hover:bg-gray-100 border-transparent"
-      }`}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200 text-sm"
       style={{
-        background: isActive ? "rgba(24,119,242,0.08)" : "rgba(15,23,42,0.04)",
-        border: isActive ? "1px solid rgba(24,119,242,0.25)" : "1px solid transparent",
+        background: isActive
+          ? "rgba(24,119,242,0.08)"
+          : "rgba(15,23,42,0.04)",
+        border: isActive
+          ? "1px solid rgba(24,119,242,0.25)"
+          : "1px solid transparent",
         color: isActive ? colors.blue : "#64748B",
       }}
     >
       <span className="text-base">{emoji}</span>
       {count > 0 && (
-        <span className="text-xs font-bold" style={{ color: isActive ? colors.blue : "#64748B" }}>
+        <span
+          className="text-xs font-bold"
+          style={{ color: isActive ? colors.blue : "#64748B" }}
+        >
           {count}
         </span>
       )}
@@ -112,22 +223,27 @@ function ReactionButton({ type, emoji, count, isActive, onClick }) {
   );
 }
 
-function NoticeCard({ notice, index, onClick }) {
+function NoticeCard({
+  notice,
+  index,
+  onClick,
+  editMode = false,
+  onEditTarget = () => {},
+  onDeleteTarget = () => {},
+}) {
   const isPinned = notice.pinned === true;
   const accentColor = isPinned ? colors.red : colors.green;
   const fileUrl = notice.pdf_url || notice.file_url;
   const noticeId = notice.id || `notice-${index}`;
 
-  // Reaction emojis like Facebook
   const reactionTypes = [
-    { type: 'like', emoji: '👍', label: 'Like' },
-    { type: 'heart', emoji: '❤️', label: 'Love' },
-    { type: 'laugh', emoji: '😂', label: 'Haha' },
-    { type: 'sad', emoji: '😢', label: 'Sad' },
-    { type: 'fire', emoji: '🔥', label: 'Fire' },
+    { type: "like", emoji: "👍", label: "Like" },
+    { type: "heart", emoji: "❤️", label: "Love" },
+    { type: "laugh", emoji: "😂", label: "Haha" },
+    { type: "sad", emoji: "😢", label: "Sad" },
+    { type: "fire", emoji: "🔥", label: "Fire" },
   ];
 
-  // Load reactions from localStorage
   const [reactions, setReactions] = useState({
     like: 0,
     heart: 0,
@@ -135,7 +251,7 @@ function NoticeCard({ notice, index, onClick }) {
     sad: 0,
     fire: 0,
   });
-  
+
   const [userReaction, setUserReaction] = useState(null);
 
   useEffect(() => {
@@ -143,50 +259,57 @@ function NoticeCard({ notice, index, onClick }) {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setReactions(parsed.counts || { like: 0, heart: 0, laugh: 0, sad: 0, fire: 0 });
+        setReactions(
+          parsed.counts || { like: 0, heart: 0, laugh: 0, sad: 0, fire: 0 }
+        );
         setUserReaction(parsed.user || null);
-      } catch (e) {
-        console.error('Error loading reactions:', e);
+      } catch (error) {
+        console.error("Error loading reactions:", error);
       }
     }
   }, [noticeId]);
 
   const handleReaction = (type) => {
+    if (editMode) return;
+
     const newReactions = { ...reactions };
-    
+
     if (userReaction === type) {
-      // Remove reaction
       newReactions[type] = Math.max(0, newReactions[type] - 1);
       setUserReaction(null);
     } else {
-      // Remove old reaction if exists
       if (userReaction) {
-        newReactions[userReaction] = Math.max(0, newReactions[userReaction] - 1);
+        newReactions[userReaction] = Math.max(
+          0,
+          newReactions[userReaction] - 1
+        );
       }
-      // Add new reaction
+
       newReactions[type] = (newReactions[type] || 0) + 1;
       setUserReaction(type);
     }
-    
+
     setReactions(newReactions);
-    
-    // Save to localStorage
-    localStorage.setItem(`notice_reactions_${noticeId}`, JSON.stringify({
-      counts: newReactions,
-      user: userReaction === type ? null : type,
-    }));
+
+    localStorage.setItem(
+      `notice_reactions_${noticeId}`,
+      JSON.stringify({
+        counts: newReactions,
+        user: userReaction === type ? null : type,
+      })
+    );
   };
 
   const totalReactions = Object.values(reactions).reduce((a, b) => a + b, 0);
 
-  // Get top reaction emoji for display
   const getTopReaction = () => {
     const sorted = Object.entries(reactions).sort((a, b) => b[1] - a[1]);
-    const top = sorted.find(([_, count]) => count > 0);
+    const top = sorted.find(([, count]) => count > 0);
+
     if (top) {
-      const emoji = reactionTypes.find(r => r.type === top[0])?.emoji || '';
-      return emoji;
+      return reactionTypes.find((item) => item.type === top[0])?.emoji || "";
     }
+
     return null;
   };
 
@@ -200,157 +323,165 @@ function NoticeCard({ notice, index, onClick }) {
     try {
       const response = await fetch(fileUrl);
       const blob = await response.blob();
-
       const url = window.URL.createObjectURL(blob);
-
       const a = document.createElement("a");
       a.href = url;
-      const filename = fileUrl.split('/').pop() || "notice.pdf";
-      a.download = filename;
+      a.download = fileUrl.split("/").pop() || "notice.pdf";
       document.body.appendChild(a);
       a.click();
-
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Download failed:", error);
-      window.open(fileUrl, '_blank');
+      window.open(fileUrl, "_blank");
     }
   };
 
   return (
-    <motion.article
-      onClick={onClick}
-      initial={{ opacity: 0, y: 22 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.45, delay: Math.min(index * 0.05, 0.25) }}
-      className="group relative overflow-hidden rounded-[28px] bg-white transition-all duration-300 hover:-translate-y-1"
-      style={{
-        cursor: "pointer",
-        border: "1px solid rgba(15,23,42,0.08)",
-        boxShadow:
-          "0 16px 44px rgba(15,23,42,0.075), inset 0 1px 0 rgba(255,255,255,0.9)",
-      }}
+    <EditableWrap
+      editMode={editMode}
+      target={{ type: "notice", id: notice.id, index }}
+      onEditTarget={onEditTarget}
+      onDeleteTarget={onDeleteTarget}
+      canDelete
     >
-      <div
-        className="absolute left-0 top-0 h-full w-1.5 transition-all duration-300 group-hover:w-2"
+      <motion.article
+        onClick={editMode ? () => onEditTarget({ type: "notice", id: notice.id, index }) : onClick}
+        initial={{ opacity: 0, y: 22 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.45, delay: Math.min(index * 0.05, 0.25) }}
+        className="group relative overflow-hidden rounded-[28px] bg-white transition-all duration-300 hover:-translate-y-1"
         style={{
-          background: `linear-gradient(180deg, ${accentColor}, ${colors.purple})`,
+          cursor: "pointer",
+          border: editMode
+            ? "1px dashed rgba(56,189,248,0.65)"
+            : "1px solid rgba(15,23,42,0.08)",
+          boxShadow:
+            "0 16px 44px rgba(15,23,42,0.075), inset 0 1px 0 rgba(255,255,255,0.9)",
         }}
-      />
+      >
+        <div
+          className="absolute left-0 top-0 h-full w-1.5 transition-all duration-300 group-hover:w-2"
+          style={{
+            background: `linear-gradient(180deg, ${accentColor}, ${colors.purple})`,
+          }}
+        />
 
-      <div className="grid gap-4 p-6 pl-8 md:grid-cols-[145px_1fr_170px] md:items-center">
-        <div>
-          <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
-            Date
-          </div>
+        <div className="grid gap-4 p-6 pl-8 md:grid-cols-[145px_1fr_170px] md:items-center">
+          <div>
+            <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+              Date
+            </div>
 
-          <div className="mt-2 text-base font-black text-slate-900">
-            {formatNoticeDate(notice.notice_date)}
-          </div>
+            <div className="mt-2 text-base font-black text-slate-900">
+              {formatNoticeDate(notice.notice_date)}
+            </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span
-              className="rounded-full px-3 py-1 text-xs font-black"
-              style={{
-                background: `${accentColor}10`,
-                color: accentColor,
-                border: `1px solid ${accentColor}24`,
-              }}
-            >
-              {notice.category || "General"}
-            </span>
-
-            {isPinned && (
+            <div className="mt-4 flex flex-wrap gap-2">
               <span
                 className="rounded-full px-3 py-1 text-xs font-black"
                 style={{
-                  background: "rgba(215,25,32,0.08)",
-                  color: colors.red,
-                  border: "1px solid rgba(215,25,32,0.16)",
+                  background: `${accentColor}10`,
+                  color: accentColor,
+                  border: `1px solid ${accentColor}24`,
                 }}
               >
-                Important
+                {notice.category || "General"}
               </span>
-            )}
-          </div>
-        </div>
 
-        <div className="min-w-0">
-          <h3
-            className="text-2xl text-slate-950 transition-colors duration-300 group-hover:text-green-700"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 850,
-              letterSpacing: "-0.035em",
-              lineHeight: 1.12,
-            }}
-          >
-            {notice.title || "School Notice"}
-          </h3>
-
-          <p className="mt-2 text-sm leading-relaxed text-slate-500 line-clamp-2">
-            {notice.description || "Please open this notice for more details."}
-          </p>
-
-          {/* ─── Facebook-style Reactions ─────────────────────────── */}
-          <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            {reactionTypes.map(({ type, emoji }) => (
-              <ReactionButton
-                key={type}
-                type={type}
-                emoji={emoji}
-                count={reactions[type] || 0}
-                isActive={userReaction === type}
-                onClick={handleReaction}
-              />
-            ))}
-            
-            {totalReactions > 0 && (
-              <div className="flex items-center gap-1 ml-1 text-xs text-slate-400">
-                <span className="text-sm">{topEmoji}</span>
-                <span className="font-medium">
-                  {totalReactions}
+              {isPinned && (
+                <span
+                  className="rounded-full px-3 py-1 text-xs font-black"
+                  style={{
+                    background: "rgba(215,25,32,0.08)",
+                    color: colors.red,
+                    border: "1px solid rgba(215,25,32,0.16)",
+                  }}
+                >
+                  Important
                 </span>
+              )}
+            </div>
+          </div>
+
+          <div className="min-w-0">
+            <h3
+              className="text-2xl text-slate-950 transition-colors duration-300 group-hover:text-green-700"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 850,
+                letterSpacing: "-0.035em",
+                lineHeight: 1.12,
+              }}
+            >
+              {notice.title || "School Notice"}
+            </h3>
+
+            <p className="mt-2 text-sm leading-relaxed text-slate-500 line-clamp-2">
+              {notice.description || "Please open this notice for more details."}
+            </p>
+
+            {!editMode && (
+              <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                {reactionTypes.map(({ type, emoji }) => (
+                  <ReactionButton
+                    key={type}
+                    type={type}
+                    emoji={emoji}
+                    count={reactions[type] || 0}
+                    isActive={userReaction === type}
+                    onClick={handleReaction}
+                  />
+                ))}
+
+                {totalReactions > 0 && (
+                  <div className="flex items-center gap-1 ml-1 text-xs text-slate-400">
+                    <span className="text-sm">{topEmoji}</span>
+                    <span className="font-medium">{totalReactions}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
-        </div>
 
-        <div className="flex flex-col gap-3 md:items-end">
-          <span
-            className="rounded-2xl px-5 py-3 text-sm font-black text-center"
-            style={{
-              background: fileUrl ? "rgba(75,46,131,0.08)" : "rgba(100,116,139,0.08)",
-              color: fileUrl ? colors.purple : "#94A3B8",
-              border: fileUrl ? "1px solid rgba(75,46,131,0.15)" : "1px solid rgba(100,116,139,0.1)",
-            }}
-          >
-            {fileUrl ? "Click to View" : "No File"}
-          </span>
-
-          {fileUrl && (
-            <button
-              onClick={handleDownload}
-              className="rounded-2xl px-5 py-3 text-sm font-black text-center transition-all duration-300 hover:-translate-y-0.5"
+          <div className="flex flex-col gap-3 md:items-end">
+            <span
+              className="rounded-2xl px-5 py-3 text-sm font-black text-center"
               style={{
-                background: colors.dark,
-                color: "#FFFFFF",
-                border: "none",
-                cursor: "pointer",
+                background: fileUrl
+                  ? "rgba(75,46,131,0.08)"
+                  : "rgba(100,116,139,0.08)",
+                color: fileUrl ? colors.purple : "#94A3B8",
+                border: fileUrl
+                  ? "1px solid rgba(75,46,131,0.15)"
+                  : "1px solid rgba(100,116,139,0.1)",
               }}
             >
-              Download
-            </button>
-          )}
+              {fileUrl ? (editMode ? "Edit Notice" : "Click to View") : "No File"}
+            </span>
+
+            {fileUrl && !editMode && (
+              <button
+                onClick={handleDownload}
+                className="rounded-2xl px-5 py-3 text-sm font-black text-center transition-all duration-300 hover:-translate-y-0.5"
+                style={{
+                  background: colors.dark,
+                  color: "#FFFFFF",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Download
+              </button>
+            )}
+          </div>
         </div>
-      </div>
-    </motion.article>
+      </motion.article>
+    </EditableWrap>
   );
 }
 
-// ─── Announcement Card Component ──────────────────────────────────────
 function AnnouncementCard({ announcement, index, onClick }) {
   const fileUrl = announcement.image_url;
 
@@ -362,21 +493,17 @@ function AnnouncementCard({ announcement, index, onClick }) {
     try {
       const response = await fetch(fileUrl);
       const blob = await response.blob();
-
       const url = window.URL.createObjectURL(blob);
-
       const a = document.createElement("a");
       a.href = url;
-      const filename = fileUrl.split('/').pop() || "announcement.jpg";
-      a.download = filename;
+      a.download = fileUrl.split("/").pop() || "announcement.jpg";
       document.body.appendChild(a);
       a.click();
-
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Download failed:", error);
-      window.open(fileUrl, '_blank');
+      window.open(fileUrl, "_blank");
     }
   };
 
@@ -449,9 +576,13 @@ function AnnouncementCard({ announcement, index, onClick }) {
           <span
             className="rounded-2xl px-5 py-3 text-sm font-black text-center"
             style={{
-              background: fileUrl ? "rgba(215,25,32,0.08)" : "rgba(100,116,139,0.08)",
+              background: fileUrl
+                ? "rgba(215,25,32,0.08)"
+                : "rgba(100,116,139,0.08)",
               color: fileUrl ? colors.red : "#94A3B8",
-              border: fileUrl ? "1px solid rgba(215,25,32,0.15)" : "1px solid rgba(100,116,139,0.1)",
+              border: fileUrl
+                ? "1px solid rgba(215,25,32,0.15)"
+                : "1px solid rgba(100,116,139,0.1)",
             }}
           >
             {fileUrl ? "Click to View" : "No Image"}
@@ -477,7 +608,6 @@ function AnnouncementCard({ announcement, index, onClick }) {
   );
 }
 
-// ─── Announcement Popup Modal ─────────────────────────────────────────
 function AnnouncementPopup({ announcement, onClose }) {
   if (!announcement) return null;
 
@@ -561,8 +691,7 @@ function AnnouncementPopup({ announcement, onClose }) {
   );
 }
 
-// ─── Empty State ──────────────────────────────────────────────────────
-function EmptyNotice() {
+function EmptyNotice({ editMode, onAddNotice }) {
   return (
     <div
       className="rounded-[30px] p-10 text-center"
@@ -596,27 +725,52 @@ function EmptyNotice() {
         New school notices will appear here once they are added from the admin
         dashboard.
       </p>
+
+      <div className="mt-6 flex justify-center">
+        <AddNoticeButton editMode={editMode} onAddNotice={onAddNotice} />
+      </div>
     </div>
   );
 }
 
-// ─── Main Component ──────────────────────────────────────────────────
-export default function Notices() {
+export default function Notices({
+  editMode = false,
+  noticesOverride = null,
+  announcementsOverride = null,
+  settingsOverride = null,
+  loadingOverride = false,
+  onEditTarget = () => {},
+  onDeleteTarget = () => {},
+  onAddNotice = () => {},
+  onViewAllNotices = () => {},
+}) {
   const [notices, setNotices] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
-  const [settings, setSettings] = useState(defaultSettings);
+  const [settings, setSettings] = useState(defaultNoticeSettings);
   const [loading, setLoading] = useState(true);
   const [selectedNotice, setSelectedNotice] = useState(null);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
 
   useEffect(() => {
+    if (editMode) {
+      const noticeList = Array.isArray(noticesOverride)
+        ? noticesOverride.map(normalizeNotice)
+        : [];
+
+      setNotices(sortNoticesNewestFirst(noticeList));
+      setAnnouncements(Array.isArray(announcementsOverride) ? announcementsOverride : []);
+      setSettings({ ...defaultNoticeSettings, ...(settingsOverride || {}) });
+      setLoading(Boolean(loadingOverride));
+      return;
+    }
+
     const loadData = async () => {
       await Promise.all([fetchNotices(), fetchAnnouncements(), fetchSettings()]);
       setLoading(false);
     };
 
     loadData();
-  }, []);
+  }, [editMode, noticesOverride, announcementsOverride, settingsOverride, loadingOverride]);
 
   const fetchNotices = async () => {
     try {
@@ -658,7 +812,7 @@ export default function Notices() {
 
       if (result.success) {
         setSettings({
-          ...defaultSettings,
+          ...defaultNoticeSettings,
           ...(result.data || {}),
         });
       }
@@ -675,27 +829,25 @@ export default function Notices() {
     try {
       const response = await fetch(fileUrl);
       const blob = await response.blob();
-
       const url = window.URL.createObjectURL(blob);
-
       const a = document.createElement("a");
       a.href = url;
-      const filename = fileUrl.split('/').pop() || "notice.pdf";
-      a.download = filename;
+      a.download = fileUrl.split("/").pop() || "notice.pdf";
       document.body.appendChild(a);
       a.click();
-
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Download failed:", error);
-      window.open(fileUrl, '_blank');
+      window.open(fileUrl, "_blank");
     }
   };
 
   const hasAnnouncements = announcements.length > 0;
   const hasNotices = notices.length > 0;
   const hasContent = hasAnnouncements || hasNotices;
+  const displayedNotices = editMode ? notices.slice(0, 2) : notices;
+  const hiddenNoticeCount = editMode ? Math.max(notices.length - 2, 0) : 0;
 
   return (
     <>
@@ -735,33 +887,39 @@ export default function Notices() {
             className="mb-12"
           >
             <div className="grid gap-8 lg:grid-cols-[1fr_390px] lg:items-end">
-              <div>
-                <span
-                  className="inline-flex rounded-full px-4 py-1.5 text-sm font-black uppercase tracking-[0.14em] mb-5"
-                  style={{
-                    background: "rgba(215,25,32,0.08)",
-                    color: colors.red,
-                    border: "1px solid rgba(215,25,32,0.16)",
-                  }}
-                >
-                  {settings.page_badge}
-                </span>
+              <EditableWrap
+                editMode={editMode}
+                target={{ type: "pageHeader" }}
+                onEditTarget={onEditTarget}
+              >
+                <div>
+                  <span
+                    className="inline-flex rounded-full px-4 py-1.5 text-sm font-black uppercase tracking-[0.14em] mb-5"
+                    style={{
+                      background: "rgba(215,25,32,0.08)",
+                      color: colors.red,
+                      border: "1px solid rgba(215,25,32,0.16)",
+                    }}
+                  >
+                    {settings.page_badge}
+                  </span>
 
-                <h1
-                  className="text-5xl md:text-7xl text-slate-950 leading-[0.95]"
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 900,
-                    letterSpacing: "-0.065em",
-                  }}
-                >
-                  {settings.page_title}
-                </h1>
+                  <h1
+                    className="text-5xl md:text-7xl text-slate-950 leading-[0.95]"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontWeight: 900,
+                      letterSpacing: "-0.065em",
+                    }}
+                  >
+                    {settings.page_title}
+                  </h1>
 
-                <p className="mt-6 max-w-3xl text-lg leading-relaxed text-slate-500">
-                  {settings.page_description}
-                </p>
-              </div>
+                  <p className="mt-6 max-w-3xl text-lg leading-relaxed text-slate-500">
+                    {settings.page_description}
+                  </p>
+                </div>
+              </EditableWrap>
 
               <div
                 className="rounded-[28px] p-5"
@@ -845,7 +1003,7 @@ export default function Notices() {
                   boxShadow: "0 18px 46px rgba(15,23,42,0.18)",
                 }}
               >
-                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="text-sm font-black uppercase tracking-[0.18em] text-white/45">
                       Notice Board
@@ -863,8 +1021,11 @@ export default function Notices() {
                     </h2>
                   </div>
 
-                  <div className="text-sm font-semibold text-white/55">
-                    Newest appears first
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="text-sm font-semibold text-white/55">
+                      Newest appears first
+                    </div>
+                    <AddNoticeButton editMode={editMode} onAddNotice={onAddNotice} />
                   </div>
                 </div>
               </div>
@@ -880,11 +1041,10 @@ export default function Notices() {
                   Loading...
                 </div>
               ) : !hasContent ? (
-                <EmptyNotice />
+                <EmptyNotice editMode={editMode} onAddNotice={onAddNotice} />
               ) : (
                 <>
-                  {/* Announcements Section */}
-                  {hasAnnouncements && (
+                  {hasAnnouncements && !editMode && (
                     <div className="mb-6">
                       <div className="flex items-center gap-2 mb-4">
                         <Megaphone className="w-5 h-5" style={{ color: colors.red }} />
@@ -913,10 +1073,9 @@ export default function Notices() {
                     </div>
                   )}
 
-                  {/* Notices Section */}
                   {hasNotices && (
-                    <div>
-                      {hasAnnouncements && (
+                    <div className="space-y-5">
+                      {hasAnnouncements && !editMode && (
                         <div className="flex items-center gap-2 mb-4 mt-6">
                           <div
                             className="h-px flex-1"
@@ -937,14 +1096,33 @@ export default function Notices() {
                           />
                         </div>
                       )}
-                      {notices.map((notice, index) => (
+
+                      {displayedNotices.map((notice, index) => (
                         <NoticeCard
                           key={notice.id || index}
                           notice={notice}
                           index={index}
+                          editMode={editMode}
+                          onEditTarget={onEditTarget}
+                          onDeleteTarget={onDeleteTarget}
                           onClick={() => setSelectedNotice(notice)}
                         />
                       ))}
+
+                      {hiddenNoticeCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={onViewAllNotices}
+                          className="w-full rounded-2xl px-5 py-4 text-sm font-black transition-all hover:-translate-y-0.5"
+                          style={{
+                            background: "rgba(75,46,131,0.08)",
+                            color: colors.purple,
+                            border: "1px solid rgba(75,46,131,0.18)",
+                          }}
+                        >
+                          View All Notices to manage remaining {hiddenNoticeCount} notice(s)
+                        </button>
+                      )}
                     </div>
                   )}
                 </>
@@ -958,106 +1136,118 @@ export default function Notices() {
               transition={{ duration: 0.5 }}
               className="lg:sticky lg:top-28 space-y-6"
             >
-              <div
-                className="rounded-[28px] overflow-hidden"
-                style={{
-                  background:
-                    "linear-gradient(145deg, rgba(255,255,255,0.94), rgba(255,255,255,0.76))",
-                  border: "1px solid rgba(15,23,42,0.08)",
-                  boxShadow:
-                    "0 18px 46px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
-                  backdropFilter: "blur(16px)",
-                }}
+              <EditableWrap
+                editMode={editMode}
+                target={{ type: "calendar" }}
+                onEditTarget={onEditTarget}
               >
-                <div className="p-5">
+                <div
+                  className="rounded-[28px] overflow-hidden"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, rgba(255,255,255,0.94), rgba(255,255,255,0.76))",
+                    border: "1px solid rgba(15,23,42,0.08)",
+                    boxShadow:
+                      "0 18px 46px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+                    backdropFilter: "blur(16px)",
+                  }}
+                >
+                  <div className="p-5">
+                    <div
+                      className="w-16 h-1.5 rounded-full mb-4"
+                      style={{
+                        background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
+                      }}
+                    />
+
+                    <h3
+                      className="text-2xl text-slate-950"
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        fontWeight: 850,
+                        letterSpacing: "-0.035em",
+                      }}
+                    >
+                      {settings.calendar_title}
+                    </h3>
+
+                    <p className="text-sm text-slate-500 mt-1">
+                      {settings.calendar_subtitle}
+                    </p>
+
+                    <div
+                      className="rounded-2xl overflow-hidden flex justify-center items-start mt-5"
+                      style={{
+                        background: "#FFFFFF",
+                        border: "1px solid rgba(15,23,42,0.08)",
+                        height: "345px",
+                        paddingTop: "10px",
+                      }}
+                    >
+                      <iframe
+                        title="Nepali Calendar"
+                        src={settings.calendar_embed_url}
+                        style={{
+                          width: "245px",
+                          height: "330px",
+                          border: "0",
+                          transform: "scale(1.03)",
+                          transformOrigin: "top center",
+                          background: "#FFFFFF",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </EditableWrap>
+
+              <EditableWrap
+                editMode={editMode}
+                target={{ type: "sidebar" }}
+                onEditTarget={onEditTarget}
+              >
+                <div
+                  className="rounded-[28px] p-6"
+                  style={{
+                    background: `linear-gradient(135deg, ${colors.dark}, ${colors.purple})`,
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    boxShadow: "0 18px 46px rgba(15,23,42,0.2)",
+                  }}
+                >
                   <div
-                    className="w-16 h-1.5 rounded-full mb-4"
+                    className="w-16 h-1.5 rounded-full mb-5"
                     style={{
-                      background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
+                      background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan})`,
                     }}
                   />
 
-                  <h3
-                    className="text-2xl text-slate-950"
-                    style={{
-                      fontFamily: "var(--font-display)",
-                      fontWeight: 850,
-                      letterSpacing: "-0.035em",
-                    }}
-                  >
-                    {settings.calendar_title}
+                  <h3 className="text-white font-black text-xl">
+                    {settings.sidebar_title}
                   </h3>
 
-                  <p className="text-sm text-slate-500 mt-1">
-                    {settings.calendar_subtitle}
+                  <p className="text-sm leading-relaxed mt-3 mb-5 text-white/70">
+                    {settings.sidebar_description}
                   </p>
 
-                  <div
-                    className="rounded-2xl overflow-hidden flex justify-center items-start mt-5"
-                    style={{
-                      background: "#FFFFFF",
-                      border: "1px solid rgba(15,23,42,0.08)",
-                      height: "345px",
-                      paddingTop: "10px",
+                  <a
+                    href={settings.sidebar_button_link}
+                    onClick={(event) => {
+                      if (editMode) event.preventDefault();
                     }}
+                    className="inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-black transition-all duration-300 hover:-translate-y-0.5"
+                    style={{ color: colors.dark }}
                   >
-                    <iframe
-                      title="Nepali Calendar"
-                      src={settings.calendar_embed_url}
-                      style={{
-                        width: "245px",
-                        height: "330px",
-                        border: "0",
-                        transform: "scale(1.03)",
-                        transformOrigin: "top center",
-                        background: "#FFFFFF",
-                      }}
-                    />
-                  </div>
+                    {settings.sidebar_button_text}
+                  </a>
                 </div>
-              </div>
-
-              <div
-                className="rounded-[28px] p-6"
-                style={{
-                  background: `linear-gradient(135deg, ${colors.dark}, ${colors.purple})`,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  boxShadow: "0 18px 46px rgba(15,23,42,0.2)",
-                }}
-              >
-                <div
-                  className="w-16 h-1.5 rounded-full mb-5"
-                  style={{
-                    background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan})`,
-                  }}
-                />
-
-                <h3 className="text-white font-black text-xl">
-                  {settings.sidebar_title}
-                </h3>
-
-                <p className="text-sm leading-relaxed mt-3 mb-5 text-white/70">
-                  {settings.sidebar_description}
-                </p>
-
-                <a
-                  href={settings.sidebar_button_link}
-                  className="inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-black transition-all duration-300 hover:-translate-y-0.5"
-                  style={{
-                    color: colors.dark,
-                  }}
-                >
-                  {settings.sidebar_button_text}
-                </a>
-              </div>
+              </EditableWrap>
             </motion.aside>
           </div>
         </div>
       </section>
 
-      {/* Notice Popup Modal */}
       <AnimatePresence>
-        {selectedNotice && (
+        {selectedNotice && !editMode && (
           <motion.div
             className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6"
             initial={{ opacity: 0 }}
@@ -1088,7 +1278,6 @@ export default function Notices() {
                   selectedNotice.file_url && selectedNotice.file_type === "image";
                 const pdfSrc = selectedNotice.pdf_url || selectedNotice.file_url;
                 const hasPdf = !hasImage && Boolean(pdfSrc);
-                const hasFile = hasImage || hasPdf;
 
                 return (
                   <>
@@ -1200,9 +1389,7 @@ export default function Notices() {
                               <button
                                 onClick={() => handleModalDownload(pdfSrc)}
                                 className="rounded-full px-5 py-3 text-sm font-black text-white whitespace-nowrap"
-                                style={{
-                                  background: colors.dark,
-                                }}
+                                style={{ background: colors.dark }}
                               >
                                 Download PDF
                               </button>
@@ -1232,9 +1419,8 @@ export default function Notices() {
         )}
       </AnimatePresence>
 
-      {/* Announcement Popup Modal */}
       <AnimatePresence>
-        {selectedAnnouncement && (
+        {selectedAnnouncement && !editMode && (
           <AnnouncementPopup
             announcement={selectedAnnouncement}
             onClose={() => setSelectedAnnouncement(null)}

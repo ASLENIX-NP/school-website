@@ -1,25 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
-  ArrowLeft,
-  Save,
-  Home,
-  Image,
-  Type,
-  Link as LinkIcon,
+  AlertCircle,
+  Camera,
   CheckCircle2,
-  BarChart3,
-  BookOpen,
-  Award,
-  ExternalLink,
   Eye,
-  ChevronDown,
-  ChevronRight,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Pencil,
+  Save,
   UploadCloud,
   X,
 } from "lucide-react";
+
+import { Hero, defaultHeroData, mergeHeroData } from "../app/components/Hero";
+import {
+  Stats,
+  defaultStatsSectionData,
+  mergeStatsSectionData,
+} from "../app/components/Stats";
 
 const colors = {
   red: "#D71920",
@@ -31,523 +31,123 @@ const colors = {
 };
 
 const defaultHomeContent = {
-  hero: {
-    badge: "Admissions Open for New Academic Session",
-    titleLine1: "Baljagriti Secondary",
-    titleLine2: "English School",
-    titleLine3: "Hetauda-2, Makwanpur",
-    description:
-      "Baljagriti Secondary English School blends academic discipline, digital learning, creativity, sports, and values for students from Play Group to Grade 10.",
-    image:
-      "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1100&h=900&fit=crop&auto=format",
-    primaryButtonText: "Start Admission",
-    primaryButtonLink: "/admissions",
-    secondaryButtonText: "Explore Facilities",
-    secondaryButtonLink: "/facilities",
-    stat1Value: "2046 BS",
-    stat1Label: "Established",
-    stat2Value: "PG-10",
-    stat2Label: "Classes",
-    stat3Value: "Hetauda",
-    stat3Label: "Makwanpur",
-    imageLocation: "Hetauda-2, Makwanpur",
-    imageBottomTitle: "Basudev Marga, Hetauda-2",
-    imageBottomDescription:
-      "A learning environment built for academics, values, creativity, and student growth.",
-    floating1Title: "Quality Education",
-    floating1Subtitle: "Academics + Values",
-    floating2Title: "Computer Lab",
-    floating2Subtitle: "Digital Facility",
-    floating3Title: "Science Lab",
-    floating3Subtitle: "Practical Learning",
-    floating4Title: "E-Library",
-    floating4Subtitle: "Learning Resources",
-  },
-
-  statsSection: {
-    eyebrow: "School Highlights",
-    title: "Numbers that reflect our journey.",
-    description:
-      "These highlights can later be updated directly from the admin dashboard without changing frontend code.",
-    stats: [
-      { value: "3800", suffix: "+", label: "Students Enrolled" },
-      { value: "240", suffix: "+", label: "Expert Teachers" },
-      { value: "35", suffix: " yrs", label: "Years of Excellence" },
-      { value: "98", suffix: "%", label: "Success Rate" },
-    ],
-    story: {
-      badge: "About Baljagriti",
-      title: "Building Tomorrow's Leaders Today",
-      paragraphs: [
-        "Established with a vision to provide quality education in Makawanpur, Baljagriti Secondary English School has grown as one of Hetauda's respected academic institutions.",
-        "With students from Play Group to Grade 10, the school focuses on academic discipline, values, creativity, digital learning, and holistic student development.",
-      ],
-      buttonText: "Read Our Story",
-      buttonLink: "/about",
-      image:
-        "https://images.unsplash.com/photo-1588072432836-e10032774350?w=1000&h=800&fit=crop&auto=format",
-      imageTopTitle: "Baljagriti School",
-      imageTopSubtitle: "Hetauda-2, Makwanpur",
-      imageBottomTitle: "Quality Education Since 2046 BS",
-      imageBottomDescription:
-        "This image and text can later come from the admin dashboard.",
-    },
-    excellence: {
-      title: "Academic Excellence",
-      description:
-        "Our students consistently achieve outstanding results in the SEE examinations under NEB.",
-      cards: [
-        {
-          title: "Best SEE Results",
-          description:
-            "Consistently achieving top results in the Secondary Education Examination under the National Examination Board.",
-        },
-        {
-          title: "GPA 4.00 Achievers",
-          description:
-            "Our brightest students attain a perfect GPA of 4.00, a testament to our teaching quality and student dedication.",
-        },
-        {
-          title: "Holistic Development",
-          description:
-            "Beyond academics, we foster creativity, leadership, and sportsmanship through diverse extracurricular programs.",
-        },
-      ],
-    },
-  },
+  hero: defaultHeroData,
+  statsSection: defaultStatsSectionData,
 };
 
 function mergeHomeContent(saved = {}) {
-  const savedStats = saved.statsSection || {};
   return {
     ...defaultHomeContent,
-    ...saved,
-    hero: { ...defaultHomeContent.hero, ...(saved.hero || {}) },
-    statsSection: {
-      ...defaultHomeContent.statsSection,
-      ...savedStats,
-      stats:
-        Array.isArray(savedStats.stats) && savedStats.stats.length > 0
-          ? defaultHomeContent.statsSection.stats.map((item, index) => ({
-              ...item,
-              ...(savedStats.stats[index] || {}),
-            }))
-          : defaultHomeContent.statsSection.stats,
-      story: {
-        ...defaultHomeContent.statsSection.story,
-        ...(savedStats.story || {}),
-        paragraphs:
-          Array.isArray(savedStats.story?.paragraphs) &&
-          savedStats.story.paragraphs.length > 0
-            ? [
-                savedStats.story.paragraphs[0] || "",
-                savedStats.story.paragraphs[1] || "",
-              ]
-            : defaultHomeContent.statsSection.story.paragraphs,
-      },
-      excellence: {
-        ...defaultHomeContent.statsSection.excellence,
-        ...(savedStats.excellence || {}),
-        cards:
-          Array.isArray(savedStats.excellence?.cards) &&
-          savedStats.excellence.cards.length > 0
-            ? defaultHomeContent.statsSection.excellence.cards.map(
-                (item, index) => ({
-                  ...item,
-                  ...(savedStats.excellence.cards[index] || {}),
-                })
-              )
-            : defaultHomeContent.statsSection.excellence.cards,
-      },
-    },
+    ...(saved || {}),
+    hero: mergeHeroData(saved?.hero || {}),
+    statsSection: mergeStatsSectionData(saved?.statsSection || {}),
   };
 }
 
-function Field({ label, value, onChange, textarea = false }) {
+function Field({ label, value, onChange, placeholder = "", textarea = false }) {
   return (
     <div>
-      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
+      <label className="block text-sm font-black mb-2 text-slate-700">
         {label}
       </label>
+
       {textarea ? (
         <textarea
           value={value || ""}
           onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
           rows={4}
-          className="w-full px-4 py-3 rounded-xl outline-none text-sm resize-none transition-all duration-150"
+          className="w-full px-4 py-3 rounded-2xl outline-none text-sm resize-none"
           style={{
-            background: "#F8FAFC",
-            border: "1.5px solid rgba(75,46,131,0.12)",
+            background: "rgba(255,255,255,0.92)",
+            border: "1px solid rgba(75,46,131,0.16)",
             color: colors.dark,
-          }}
-          onFocus={(e) => {
-            e.target.style.border = "1.5px solid rgba(75,46,131,0.4)";
-            e.target.style.background = "#fff";
-            e.target.style.boxShadow = "0 0 0 3px rgba(75,46,131,0.06)";
-          }}
-          onBlur={(e) => {
-            e.target.style.border = "1.5px solid rgba(75,46,131,0.12)";
-            e.target.style.background = "#F8FAFC";
-            e.target.style.boxShadow = "none";
           }}
         />
       ) : (
         <input
           value={value || ""}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-4 py-3 rounded-xl outline-none text-sm transition-all duration-150"
+          placeholder={placeholder}
+          className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
           style={{
-            background: "#F8FAFC",
-            border: "1.5px solid rgba(75,46,131,0.12)",
+            background: "rgba(255,255,255,0.92)",
+            border: "1px solid rgba(75,46,131,0.16)",
             color: colors.dark,
           }}
-          onFocus={(e) => {
-            e.target.style.border = "1.5px solid rgba(75,46,131,0.4)";
-            e.target.style.background = "#fff";
-            e.target.style.boxShadow = "0 0 0 3px rgba(75,46,131,0.06)";
-          }}
-          onBlur={(e) => {
-            e.target.style.border = "1.5px solid rgba(75,46,131,0.12)";
-            e.target.style.background = "#F8FAFC";
-            e.target.style.boxShadow = "none";
-          }}
         />
       )}
     </div>
   );
 }
 
-function ImageUploadBox({ label, imageUrl, onUpload, onRemove, uploading }) {
+function Toggle({ checked, onChange, label }) {
   return (
-    <div>
-      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
-        {label}
-      </label>
-
-      <div
-        className="rounded-xl overflow-hidden bg-white mb-4 relative"
-        style={{ border: "1.5px solid rgba(15,23,42,0.08)" }}
-      >
-        {imageUrl ? (
-          <>
-            <img src={imageUrl} alt={label} className="w-full h-64 object-cover" />
-            <button
-              type="button"
-              onClick={onRemove}
-              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
-              title="Remove image"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </>
-        ) : (
-          <div className="w-full h-56 bg-slate-50 flex items-center justify-center">
-            <Image className="w-16 h-16 text-slate-300" />
-          </div>
-        )}
-      </div>
-
-      <label
-        className="flex flex-col items-center justify-center gap-2 cursor-pointer rounded-xl p-4 text-center transition-all duration-150 hover:bg-white/90"
-        style={{
-          background: "rgba(255,255,255,0.6)",
-          border: "1.5px dashed rgba(75,46,131,0.2)",
-        }}
-      >
-        <UploadCloud className="w-5 h-5" style={{ color: colors.purple }} />
-
-        <span className="text-sm font-bold text-slate-800">
-          {uploading ? "Uploading..." : "Upload Image"}
-        </span>
-
-        <span className="text-xs text-slate-400 leading-relaxed">
-          Recommended: 1100×900 px • PNG, JPG, WebP • Max 3 MB
-        </span>
-
-        <input
-          type="file"
-          accept="image/*"
-          disabled={uploading}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              onUpload(file);
-            }
-            e.target.value = "";
-          }}
-          className="hidden"
-        />
-      </label>
-    </div>
-  );
-}
-
-function AccordionSection({
-  icon: Icon,
-  title,
-  color,
-  children,
-  isExpanded,
-  onToggle,
-  sectionId,
-  index,
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
-      className="rounded-2xl overflow-hidden transition-all duration-300"
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className="w-full flex items-center justify-between gap-4 rounded-2xl px-4 py-3 text-left"
       style={{
-        background: "#FFFFFF",
-        border: isExpanded
-          ? `1.5px solid ${color}30`
-          : "1.5px solid rgba(15,23,42,0.07)",
-        boxShadow: isExpanded
-          ? `0 8px 32px ${color}12, 0 2px 8px rgba(0,0,0,0.04)`
-          : "0 2px 8px rgba(0,0,0,0.04)",
+        background: checked
+          ? "rgba(22,138,58,0.08)"
+          : "rgba(100,116,139,0.08)",
+        border: checked
+          ? "1px solid rgba(22,138,58,0.18)"
+          : "1px solid rgba(100,116,139,0.18)",
       }}
     >
-      <button
-        onClick={() => onToggle(sectionId)}
-        className="w-full flex items-center justify-between px-5 py-4 transition-all duration-200"
+      <span className="text-sm font-black text-slate-700">{label}</span>
+
+      <span
+        className="relative w-12 h-7 rounded-full transition-all"
         style={{
-          background: isExpanded ? `${color}06` : "transparent",
+          background: checked ? colors.green : "#CBD5E1",
         }}
       >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: `${color}12` }}
-          >
-            <Icon className="w-4 h-4" style={{ color }} />
-          </div>
-          <div className="text-left">
-            <div className="font-bold text-slate-900 text-sm">{title}</div>
-            {!isExpanded && (
-              <div className="text-xs text-slate-400 mt-0.5">Click to expand and edit</div>
-            )}
-          </div>
-        </div>
-        <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200"
+        <span
+          className="absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow"
           style={{
-            background: isExpanded ? `${color}15` : "rgba(15,23,42,0.05)",
+            left: checked ? "24px" : "4px",
           }}
-        >
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4" style={{ color }} />
-          ) : (
-            <ChevronRight className="w-4 h-4 text-slate-400" />
-          )}
-        </div>
-      </button>
-
-      {isExpanded && (
-        <div style={{ height: "1px", background: `${color}18`, margin: "0 20px" }} />
-      )}
-
-      <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          isExpanded ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
-        }`}
-      >
-        <div className="px-5 pt-5 pb-6 space-y-4">{children}</div>
-      </div>
-    </motion.div>
+        />
+      </span>
+    </button>
   );
 }
 
-function HomeOnlyPreview({ form }) {
-  const hero = form.hero;
-  const stats = form.statsSection;
-
+function getUploadUrl(payload) {
   return (
-    <div className="bg-white">
-      <section
-        className="relative overflow-hidden p-6"
-        style={{
-          background:
-            "radial-gradient(circle at 10% 18%, rgba(56,189,248,0.28), transparent 32%), radial-gradient(circle at 85% 12%, rgba(250,204,21,0.22), transparent 30%), radial-gradient(circle at 60% 78%, rgba(139,92,246,0.28), transparent 38%), linear-gradient(135deg, #020617 0%, #07111F 45%, #111827 100%)",
-        }}
-      >
-        <div className="grid lg:grid-cols-2 gap-6 items-center">
-          <div>
-            <div
-              className="inline-flex items-center rounded-full px-3 py-1.5 mb-4 text-xs font-semibold"
-              style={{
-                color: "rgba(255,255,255,0.9)",
-                background: "rgba(255,255,255,0.12)",
-                border: "1px solid rgba(255,255,255,0.16)",
-              }}
-            >
-              {hero.badge}
-            </div>
-            <h2
-              className="text-4xl leading-tight mb-4"
-              style={{
-                color: "#FFFFFF",
-                fontFamily: "var(--font-display)",
-                fontWeight: 850,
-                letterSpacing: "-0.05em",
-              }}
-            >
-              {hero.titleLine1}
-              <br />
-              <span style={{ color: colors.gold }}>{hero.titleLine2}</span>
-              <br />
-              {hero.titleLine3}
-            </h2>
-            <p className="text-sm leading-relaxed mb-5 text-white/70">
-              {hero.description}
-            </p>
-            <div className="flex flex-wrap gap-3 mb-5">
-              <span
-                className="px-4 py-2 rounded-xl text-xs font-bold"
-                style={{
-                  color: "#020617",
-                  background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                }}
-              >
-                {hero.primaryButtonText}
-              </span>
-              <span
-                className="px-4 py-2 rounded-xl text-xs font-bold text-white"
-                style={{
-                  background: "rgba(255,255,255,0.1)",
-                  border: "1px solid rgba(255,255,255,0.16)",
-                }}
-              >
-                {hero.secondaryButtonText}
-              </span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                [hero.stat1Value, hero.stat1Label],
-                [hero.stat2Value, hero.stat2Label],
-                [hero.stat3Value, hero.stat3Label],
-              ].map(([value, label], index) => (
-                <div
-                  key={index}
-                  className="rounded-2xl p-3"
-                  style={{
-                    background: "rgba(255,255,255,0.1)",
-                    border: "1px solid rgba(255,255,255,0.14)",
-                  }}
-                >
-                  <div className="text-white font-bold text-sm">{value}</div>
-                  <div className="text-white/55 text-xs">{label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-3xl overflow-hidden relative h-72">
-            <img
-              src={hero.image}
-              alt="Hero preview"
-              className="w-full h-full object-cover"
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                background: "linear-gradient(to top, rgba(2,6,23,0.65), transparent)",
-              }}
-            />
-            <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-black/35 p-4 backdrop-blur-md border border-white/15">
-              <div className="text-white font-bold text-sm">{hero.imageBottomTitle}</div>
-              <div className="text-white/65 text-xs mt-1">{hero.imageBottomDescription}</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        className="p-6"
-        style={{
-          background: "linear-gradient(180deg, #FFF8EE 0%, #F8FAFC 45%, #F7F4EF 100%)",
-        }}
-      >
-        <div className="mb-6">
-          <div className="inline-flex rounded-full px-3 py-1.5 mb-3 text-xs font-bold bg-slate-100 text-slate-800">
-            {stats.eyebrow}
-          </div>
-          <h2
-            className="text-3xl mb-2 text-slate-950"
-            style={{ fontFamily: "var(--font-display)", fontWeight: 850, letterSpacing: "-0.04em" }}
-          >
-            {stats.title}
-          </h2>
-          <p className="text-sm text-slate-500 leading-relaxed">{stats.description}</p>
-        </div>
-        <div className="grid grid-cols-2 gap-3 mb-8">
-          {stats.stats.map((item, index) => (
-            <div
-              key={index}
-              className="rounded-2xl p-4"
-              style={{ background: "#FFFFFF", border: "1px solid rgba(15,23,42,0.08)", boxShadow: "0 8px 24px rgba(15,23,42,0.06)" }}
-            >
-              <div className="text-2xl font-bold text-slate-950">{item.value}{item.suffix}</div>
-              <div className="text-xs text-slate-500">{item.label}</div>
-            </div>
-          ))}
-        </div>
-        <div className="grid lg:grid-cols-2 gap-5 items-center mb-8">
-          <div className="rounded-3xl overflow-hidden h-72 relative">
-            <img src={stats.story.image} alt="Story preview" className="w-full h-full object-cover" />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(2,6,23,0.72), rgba(2,6,23,0.15), rgba(15,23,42,0.82))" }} />
-            <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white/15 p-4 backdrop-blur-md border border-white/15">
-              <div className="text-white font-bold text-sm">{stats.story.imageBottomTitle}</div>
-              <div className="text-white/65 text-xs mt-1">{stats.story.imageBottomDescription}</div>
-            </div>
-          </div>
-          <div>
-            <div className="inline-flex rounded-full px-3 py-1.5 mb-3 text-xs font-bold bg-red-50 text-red-600">{stats.story.badge}</div>
-            <h2 className="text-3xl mb-3 text-slate-950" style={{ fontFamily: "var(--font-display)", fontWeight: 850, letterSpacing: "-0.04em" }}>{stats.story.title}</h2>
-            <p className="text-sm text-slate-500 leading-relaxed mb-3">{stats.story.paragraphs?.[0]}</p>
-            <p className="text-sm text-slate-500 leading-relaxed mb-4">{stats.story.paragraphs?.[1]}</p>
-            <span className="inline-flex px-4 py-2 rounded-xl bg-white text-slate-900 text-xs font-bold border border-slate-200">{stats.story.buttonText}</span>
-          </div>
-        </div>
-        <div className="mb-5">
-          <h2 className="text-3xl mb-2 text-slate-950" style={{ fontFamily: "var(--font-display)", fontWeight: 850, letterSpacing: "-0.04em" }}>{stats.excellence.title}</h2>
-          <p className="text-sm text-slate-500 leading-relaxed">{stats.excellence.description}</p>
-        </div>
-        <div className="grid md:grid-cols-3 gap-4">
-          {stats.excellence.cards.map((card, index) => (
-            <div key={index} className="rounded-2xl p-5 bg-white border border-slate-200">
-              <h3 className="text-lg font-bold text-slate-950 mb-2">{card.title}</h3>
-              <p className="text-xs leading-relaxed text-slate-500">{card.description}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-8 rounded-2xl p-5 bg-slate-950 text-white">
-          <div className="font-bold mb-1">Latest Notices</div>
-          <div className="text-sm text-white/60">Notices are managed separately. Later, this home area will show the latest 4 notices from Manage Notices.</div>
-        </div>
-      </section>
-    </div>
+    payload?.url ||
+    payload?.imageUrl ||
+    payload?.fileUrl ||
+    payload?.data?.url ||
+    payload?.data?.imageUrl ||
+    payload?.data?.fileUrl ||
+    payload?.data?.secure_url ||
+    payload?.file?.url ||
+    ""
   );
+}
+
+function getAuthHeaders() {
+  const token = localStorage.getItem("adminToken");
+
+  if (!token) return null;
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
 }
 
 export default function AdminHome() {
-  const navigate = useNavigate();
   const [form, setForm] = useState(defaultHomeContent);
   const [loading, setLoading] = useState(true);
+  const [editingTarget, setEditingTarget] = useState(null);
+  const [modalForm, setModalForm] = useState({});
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [uploadingStory, setUploadingStory] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  const [expandedSections, setExpandedSections] = useState({
-    hero: false,
-    heroImage: false,
-    heroStats: false,
-    highlights: false,
-    story: false,
-    excellence: false,
-  });
-
-  const token = localStorage.getItem("adminToken");
 
   useEffect(() => {
     const loadHomeContent = async () => {
@@ -557,57 +157,188 @@ export default function AdminHome() {
         setForm(mergeHomeContent(savedContent));
       } catch (err) {
         console.error("Load home content error:", err);
+        setError("Could not load saved home content. Default content shown.");
       } finally {
         setLoading(false);
       }
     };
+
     loadHomeContent();
   }, []);
 
-  const toggleSection = (sectionId) => {
-    setExpandedSections((prev) => ({ ...prev, [sectionId]: !prev[sectionId] }));
+  const heroFloatingMap = [
+    ["floating1Title", "floating1Subtitle"],
+    ["floating2Title", "floating2Subtitle"],
+    ["floating3Title", "floating3Subtitle"],
+    ["floating4Title", "floating4Subtitle"],
+  ];
+
+  const openEditor = (target) => {
+    setSuccess("");
+    setError("");
+    setEditingTarget(target);
+
+    if (target.type === "heroBadge") {
+      setModalForm({ badge: form.hero.badge || "" });
+      return;
+    }
+
+    if (target.type === "heroTitle") {
+      setModalForm({
+        titleLine1: form.hero.titleLine1 || "",
+        titleLine2: form.hero.titleLine2 || "",
+        titleLine3: form.hero.titleLine3 || "",
+      });
+      return;
+    }
+
+    if (target.type === "heroDescription") {
+      setModalForm({
+        description: form.hero.description || "",
+      });
+      return;
+    }
+
+    if (target.type === "heroButtons") {
+      setModalForm({
+        primaryButtonText: form.hero.primaryButtonText || "",
+        primaryButtonLink: form.hero.primaryButtonLink || "/admissions",
+        secondaryButtonText: form.hero.secondaryButtonText || "",
+        secondaryButtonLink: form.hero.secondaryButtonLink || "/facilities",
+      });
+      return;
+    }
+
+    if (target.type === "heroImage") {
+      setModalForm({
+        image: form.hero.image || "",
+      });
+      return;
+    }
+
+    if (target.type === "heroImageText") {
+      setModalForm({
+        imageBottomTitle: form.hero.imageBottomTitle || "",
+        imageBottomDescription: form.hero.imageBottomDescription || "",
+      });
+      return;
+    }
+
+    if (target.type === "heroStat") {
+      const pairs = [
+        ["stat1Value", "stat1Label"],
+        ["stat2Value", "stat2Label"],
+        ["stat3Value", "stat3Label"],
+      ];
+
+      const [valueKey, labelKey] = pairs[target.index];
+
+      setModalForm({
+        value: form.hero[valueKey] || "",
+        label: form.hero[labelKey] || "",
+      });
+      return;
+    }
+
+    if (target.type === "heroFloating") {
+      const [titleKey, subtitleKey] = heroFloatingMap[target.index];
+
+      setModalForm({
+        title: form.hero[titleKey] || "",
+        subtitle: form.hero[subtitleKey] || "",
+      });
+      return;
+    }
+
+    if (target.type === "statsHeader") {
+      setModalForm({
+        eyebrow: form.statsSection.eyebrow || "",
+        title: form.statsSection.title || "",
+        description: form.statsSection.description || "",
+      });
+      return;
+    }
+
+    if (target.type === "statsCard") {
+      const stat = form.statsSection.stats[target.index];
+
+      setModalForm({
+        value: stat?.value || "",
+        suffix: stat?.suffix || "",
+        label: stat?.label || "",
+        note: stat?.note || "",
+      });
+      return;
+    }
+
+    if (target.type === "storyImage") {
+      setModalForm({
+        image: form.statsSection.story.image || "",
+      });
+      return;
+    }
+
+    if (target.type === "storyImageText") {
+      setModalForm({
+        imageTopTitle: form.statsSection.story.imageTopTitle || "",
+        imageTopSubtitle: form.statsSection.story.imageTopSubtitle || "",
+        imageBottomTitle: form.statsSection.story.imageBottomTitle || "",
+        imageBottomDescription:
+          form.statsSection.story.imageBottomDescription || "",
+      });
+      return;
+    }
+
+    if (target.type === "storyText") {
+      setModalForm({
+        badge: form.statsSection.story.badge || "",
+        title: form.statsSection.story.title || "",
+        paragraph1: form.statsSection.story.paragraphs?.[0] || "",
+        paragraph2: form.statsSection.story.paragraphs?.[1] || "",
+      });
+      return;
+    }
+
+    if (target.type === "storyButton") {
+      setModalForm({
+        buttonText: form.statsSection.story.buttonText || "",
+        buttonLink: form.statsSection.story.buttonLink || "/about",
+      });
+      return;
+    }
+
+    if (target.type === "excellenceHeader") {
+      setModalForm({
+        title: form.statsSection.excellence.title || "",
+        description: form.statsSection.excellence.description || "",
+      });
+      return;
+    }
+
+    if (target.type === "excellenceCard") {
+      const card = form.statsSection.excellence.cards[target.index];
+
+      setModalForm({
+        title: card?.title || "",
+        description: card?.description || "",
+      });
+    }
   };
 
-  const updateHeroField = (name, value) =>
-    setForm((prev) => ({ ...prev, hero: { ...prev.hero, [name]: value } }));
+  const closeEditor = () => {
+    if (saving || uploadingImage) return;
+    setEditingTarget(null);
+    setModalForm({});
+  };
 
-  const updateStatsField = (name, value) =>
-    setForm((prev) => ({ ...prev, statsSection: { ...prev.statsSection, [name]: value } }));
-
-  const updateStatItem = (index, name, value) =>
-    setForm((prev) => {
-      const updated = [...prev.statsSection.stats];
-      updated[index] = { ...updated[index], [name]: value };
-      return { ...prev, statsSection: { ...prev.statsSection, stats: updated } };
-    });
-
-  const updateStoryField = (name, value) =>
-    setForm((prev) => ({
+  const updateModalField = (name, value) => {
+    setModalForm((prev) => ({
       ...prev,
-      statsSection: { ...prev.statsSection, story: { ...prev.statsSection.story, [name]: value } },
+      [name]: value,
     }));
+  };
 
-  const updateStoryParagraph = (index, value) =>
-    setForm((prev) => {
-      const paragraphs = [...prev.statsSection.story.paragraphs];
-      paragraphs[index] = value;
-      return { ...prev, statsSection: { ...prev.statsSection, story: { ...prev.statsSection.story, paragraphs } } };
-    });
-
-  const updateExcellenceField = (name, value) =>
-    setForm((prev) => ({
-      ...prev,
-      statsSection: { ...prev.statsSection, excellence: { ...prev.statsSection.excellence, [name]: value } },
-    }));
-
-  const updateExcellenceCard = (index, name, value) =>
-    setForm((prev) => {
-      const cards = [...prev.statsSection.excellence.cards];
-      cards[index] = { ...cards[index], [name]: value };
-      return { ...prev, statsSection: { ...prev.statsSection, excellence: { ...prev.statsSection.excellence, cards } } };
-    });
-
-  const uploadImage = async (file, fieldName, setUploadingState) => {
+  const uploadImage = async (file) => {
     if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
@@ -623,8 +354,16 @@ export default function AdminHome() {
       return;
     }
 
+    const authHeaders = getAuthHeaders();
+
+    if (!authHeaders) {
+      setError("Admin login expired. Please logout and login again.");
+      return;
+    }
+
+    setSuccess("");
     setError("");
-    setUploadingState(true);
+    setUploadingImage(true);
 
     try {
       const formData = new FormData();
@@ -632,371 +371,911 @@ export default function AdminHome() {
 
       const res = await axios.post("http://localhost:5000/api/upload", formData, {
         headers: {
+          ...authHeaders,
           "Content-Type": "multipart/form-data",
         },
       });
 
-      const uploadedUrl =
-        res.data?.url ||
-        res.data?.imageUrl ||
-        res.data?.fileUrl ||
-        res.data?.data?.url ||
-        res.data?.data?.imageUrl ||
-        res.data?.data?.fileUrl;
+      const uploadedUrl = getUploadUrl(res.data);
 
       if (!uploadedUrl) {
-        setError("Image uploaded but URL not returned.");
+        setError("Image uploaded but backend did not return image URL.");
         return;
       }
 
-      // Check if we're updating the story image or hero image
-      if (fieldName === "storyImage") {
-        updateStoryField("image", uploadedUrl);
-      } else {
-        updateHeroField(fieldName, uploadedUrl);
-      }
-      setSuccess("Image uploaded successfully.");
+      updateModalField("image", uploadedUrl);
+      setSuccess("Image uploaded. Click Save to publish this selected item.");
     } catch (err) {
       console.error("Image upload error:", err);
       setError(err.response?.data?.message || "Image upload failed.");
     } finally {
-      setUploadingState(false);
+      setUploadingImage(false);
     }
   };
 
-  const saveHomeContent = async () => {
+  const saveSelectedPart = async () => {
+    if (!editingTarget) return;
+
+    const authHeaders = getAuthHeaders();
+
+    if (!authHeaders) {
+      setError("Admin login expired. Please logout and login again.");
+      return;
+    }
+
+    setSaving(true);
     setSuccess("");
     setError("");
-    setSaving(true);
+
     try {
+      let nextForm = mergeHomeContent(form);
+
+      if (editingTarget.type === "heroBadge") {
+        nextForm.hero = {
+          ...nextForm.hero,
+          badge: modalForm.badge || "",
+        };
+      }
+
+      if (editingTarget.type === "heroTitle") {
+        nextForm.hero = {
+          ...nextForm.hero,
+          titleLine1: modalForm.titleLine1 || "",
+          titleLine2: modalForm.titleLine2 || "",
+          titleLine3: modalForm.titleLine3 || "",
+        };
+      }
+
+      if (editingTarget.type === "heroDescription") {
+        nextForm.hero = {
+          ...nextForm.hero,
+          description: modalForm.description || "",
+        };
+      }
+
+      if (editingTarget.type === "heroButtons") {
+        nextForm.hero = {
+          ...nextForm.hero,
+          primaryButtonText: modalForm.primaryButtonText || "",
+          primaryButtonLink: modalForm.primaryButtonLink || "/admissions",
+          secondaryButtonText: modalForm.secondaryButtonText || "",
+          secondaryButtonLink: modalForm.secondaryButtonLink || "/facilities",
+        };
+      }
+
+      if (editingTarget.type === "heroImage") {
+        nextForm.hero = {
+          ...nextForm.hero,
+          image: modalForm.image || "",
+        };
+      }
+
+      if (editingTarget.type === "heroImageText") {
+        nextForm.hero = {
+          ...nextForm.hero,
+          imageBottomTitle: modalForm.imageBottomTitle || "",
+          imageBottomDescription: modalForm.imageBottomDescription || "",
+        };
+      }
+
+      if (editingTarget.type === "heroStat") {
+        const pairs = [
+          ["stat1Value", "stat1Label"],
+          ["stat2Value", "stat2Label"],
+          ["stat3Value", "stat3Label"],
+        ];
+
+        const [valueKey, labelKey] = pairs[editingTarget.index];
+
+        nextForm.hero = {
+          ...nextForm.hero,
+          [valueKey]: modalForm.value || "",
+          [labelKey]: modalForm.label || "",
+        };
+      }
+
+      if (editingTarget.type === "heroFloating") {
+        const [titleKey, subtitleKey] = heroFloatingMap[editingTarget.index];
+
+        nextForm.hero = {
+          ...nextForm.hero,
+          [titleKey]: modalForm.title || "",
+          [subtitleKey]: modalForm.subtitle || "",
+        };
+      }
+
+      if (editingTarget.type === "statsHeader") {
+        nextForm.statsSection = {
+          ...nextForm.statsSection,
+          eyebrow: modalForm.eyebrow || "",
+          title: modalForm.title || "",
+          description: modalForm.description || "",
+        };
+      }
+
+      if (editingTarget.type === "statsCard") {
+        nextForm.statsSection = {
+          ...nextForm.statsSection,
+          stats: nextForm.statsSection.stats.map((item, index) =>
+            index === editingTarget.index
+              ? {
+                  ...item,
+                  value: modalForm.value || "",
+                  suffix: modalForm.suffix || "",
+                  label: modalForm.label || "",
+                  note: modalForm.note || "",
+                }
+              : item
+          ),
+        };
+      }
+
+      if (editingTarget.type === "storyImage") {
+        nextForm.statsSection = {
+          ...nextForm.statsSection,
+          story: {
+            ...nextForm.statsSection.story,
+            image: modalForm.image || "",
+          },
+        };
+      }
+
+      if (editingTarget.type === "storyImageText") {
+        nextForm.statsSection = {
+          ...nextForm.statsSection,
+          story: {
+            ...nextForm.statsSection.story,
+            imageTopTitle: modalForm.imageTopTitle || "",
+            imageTopSubtitle: modalForm.imageTopSubtitle || "",
+            imageBottomTitle: modalForm.imageBottomTitle || "",
+            imageBottomDescription: modalForm.imageBottomDescription || "",
+          },
+        };
+      }
+
+      if (editingTarget.type === "storyText") {
+        nextForm.statsSection = {
+          ...nextForm.statsSection,
+          story: {
+            ...nextForm.statsSection.story,
+            badge: modalForm.badge || "",
+            title: modalForm.title || "",
+            paragraphs: [modalForm.paragraph1 || "", modalForm.paragraph2 || ""],
+          },
+        };
+      }
+
+      if (editingTarget.type === "storyButton") {
+        nextForm.statsSection = {
+          ...nextForm.statsSection,
+          story: {
+            ...nextForm.statsSection.story,
+            buttonText: modalForm.buttonText || "",
+            buttonLink: modalForm.buttonLink || "/about",
+          },
+        };
+      }
+
+      if (editingTarget.type === "excellenceHeader") {
+        nextForm.statsSection = {
+          ...nextForm.statsSection,
+          excellence: {
+            ...nextForm.statsSection.excellence,
+            title: modalForm.title || "",
+            description: modalForm.description || "",
+          },
+        };
+      }
+
+      if (editingTarget.type === "excellenceCard") {
+        nextForm.statsSection = {
+          ...nextForm.statsSection,
+          excellence: {
+            ...nextForm.statsSection.excellence,
+            cards: nextForm.statsSection.excellence.cards.map((item, index) =>
+              index === editingTarget.index
+                ? {
+                    ...item,
+                    title: modalForm.title || "",
+                    description: modalForm.description || "",
+                  }
+                : item
+            ),
+          },
+        };
+      }
+
+      const cleanContent = mergeHomeContent(nextForm);
+
       await axios.put(
         "http://localhost:5000/api/site-content/home",
-        { content: form },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          content: cleanContent,
+        },
+        {
+          headers: authHeaders,
+        }
       );
-      setSuccess("Home page content saved successfully.");
+
+      setForm(cleanContent);
+      setEditingTarget(null);
+      setModalForm({});
+      setSuccess("Selected homepage item saved successfully.");
     } catch (err) {
-      console.error("Save home content error:", err);
-      setError(err.response?.data?.message || "Could not save home content.");
+      console.error("Save selected home item error:", err);
+
+      if (err.response?.status === 401) {
+        setError("Admin login expired or token is invalid. Please login again.");
+      } else {
+        setError(err.response?.data?.message || "Could not save selected item.");
+      }
     } finally {
       setSaving(false);
     }
   };
 
+  const modalTitle = useMemo(() => {
+    if (!editingTarget) return "";
+
+    const titles = {
+      heroBadge: "Edit Hero Badge",
+      heroTitle: "Edit Hero Title",
+      heroDescription: "Edit Hero Description",
+      heroButtons: "Edit Hero Buttons",
+      heroImage: "Change Hero Image",
+      heroImageText: "Edit Hero Image Text",
+      heroStat: "Edit Hero Stat",
+      heroFloating: "Edit Floating Label",
+      statsHeader: "Edit School Highlights Heading",
+      statsCard: "Edit Highlight Number Card",
+      storyImage: "Change Story Image",
+      storyImageText: "Edit Story Image Text",
+      storyText: "Edit Story Text",
+      storyButton: "Edit Story Button",
+      excellenceHeader: "Edit Academic Excellence Heading",
+      excellenceCard: "Edit Academic Excellence Card",
+    };
+
+    return titles[editingTarget.type] || "Edit Homepage";
+  }, [editingTarget]);
+
+  const ModalIcon = useMemo(() => {
+    if (!editingTarget) return Pencil;
+    if (editingTarget.type === "heroImage" || editingTarget.type === "storyImage") {
+      return Camera;
+    }
+    if (
+      editingTarget.type === "heroButtons" ||
+      editingTarget.type === "storyButton" ||
+      editingTarget.type === "heroFloating"
+    ) {
+      return LinkIcon;
+    }
+    return Pencil;
+  }, [editingTarget]);
+
+  const saveButtonText = useMemo(() => {
+    if (!editingTarget) return "Save";
+
+    if (editingTarget.type === "heroImage") return "Save Hero Image";
+    if (editingTarget.type === "storyImage") return "Save Story Image";
+    if (editingTarget.type === "heroTitle") return "Save Hero Title";
+    if (editingTarget.type === "heroButtons") return "Save Buttons";
+    if (editingTarget.type === "statsCard") return "Save Number Card";
+    if (editingTarget.type === "excellenceCard") return "Save Card";
+
+    return "Save This Item";
+  }, [editingTarget]);
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#FFF8EE" }}>
-        <div className="text-slate-600 font-semibold">Loading home editor...</div>
+      <div className="py-16 flex items-center justify-center">
+        <div className="text-slate-600 font-semibold">
+          Loading visual home editor...
+        </div>
       </div>
     );
   }
 
-  const sections = [
-    { id: "hero",       icon: Type,      title: "Hero Text",                  color: colors.purple },
-    { id: "heroImage",  icon: Image,     title: "Hero Image & Buttons",       color: colors.green  },
-    { id: "heroStats",  icon: LinkIcon,  title: "Hero Stats & Image Text",    color: colors.red    },
-    { id: "highlights", icon: BarChart3, title: "School Highlights Numbers",  color: colors.cyan   },
-    { id: "story",      icon: BookOpen,  title: "Home Story Section",         color: colors.green  },
-    { id: "excellence", icon: Award,     title: "Academic Excellence",        color: colors.purple },
-  ];
-
   return (
-    <section
-      className="min-h-screen relative overflow-hidden"
-      style={{
-        background: `
-          radial-gradient(circle at top right, rgba(56,189,248,0.16), transparent 34%),
-          radial-gradient(circle at bottom left, rgba(250,204,21,0.12), transparent 32%),
-          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
-        `,
-      }}
-    >
-      <header
-        className="sticky top-0 z-40"
+    <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-[24px] p-5 md:p-6"
         style={{
-          background: "linear-gradient(145deg, rgba(2,6,23,0.96), rgba(15,23,42,0.88))",
-          borderBottom: "1px solid rgba(255,255,255,0.12)",
-          boxShadow: "0 18px 52px rgba(0,0,0,0.22)",
-          backdropFilter: "blur(22px)",
+          background:
+            "linear-gradient(135deg, #E8EDF5 0%, #DCE3EF 50%, #E8E0F0 100%)",
+          border: "1px solid rgba(15,23,42,0.06)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate("/admin/dashboard")}
-            className="inline-flex items-center gap-2 text-white/80 hover:text-white font-semibold text-sm transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </button>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black mb-3 bg-sky-50 text-sky-700 border border-sky-100">
+              <Eye className="w-3.5 h-3.5" />
+              Visual Homepage Editor
+            </div>
 
-          <div className="flex items-center gap-3">
-            <a
-              href="/"
-              target="_blank"
-              rel="noreferrer"
-              className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white/80 hover:text-white text-sm transition-all"
-              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
-            >
-              <ExternalLink className="w-4 h-4" />
-              View Full Home
-            </a>
-
-            <button
-              type="button"
-              onClick={saveHomeContent}
-              disabled={saving}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 disabled:opacity-60"
+            <h2
+              className="text-2xl md:text-3xl font-black text-slate-950"
               style={{
-                color: "#020617",
-                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                boxShadow: "0 8px 24px rgba(56,189,248,0.28)",
+                fontFamily: "var(--font-display)",
+                letterSpacing: "-0.04em",
               }}
             >
-              <Save className="w-4 h-4" />
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
+              Hover and Edit Homepage
+            </h2>
+
+            <p className="text-sm text-slate-500 mt-1">
+              Hover over homepage content, click the pencil or camera icon, edit
+              only that selected item, and save it.
+            </p>
           </div>
         </div>
-      </header>
-
-      <main className="max-w-[1600px] mx-auto px-6 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-7"
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.2)" }}
-            >
-              <Home className="w-4 h-4" style={{ color: colors.cyan }} />
-            </div>
-            <span className="text-sm font-bold" style={{ color: colors.cyan }}>Manage Home</span>
-          </div>
-
-          <h1
-            className="text-3xl md:text-4xl font-black mb-2"
-            style={{ color: colors.dark, letterSpacing: "-0.04em" }}
-          >
-            Edit Homepage Content
-          </h1>
-          <p className="text-slate-500 text-sm">
-            Click on any section below to expand and edit. Only the section you need will be visible.
-          </p>
-        </motion.div>
 
         {success && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-5 rounded-xl px-4 py-3 flex items-center gap-3 font-semibold text-sm"
-            style={{ background: "rgba(22,138,58,0.08)", color: colors.green, border: "1px solid rgba(22,138,58,0.18)" }}
-          >
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+          <div className="mb-4 rounded-2xl px-4 py-3 flex items-center gap-2 font-semibold bg-green-50 text-green-700 border border-green-100">
+            <CheckCircle2 className="w-4 h-4" />
             {success}
-          </motion.div>
+          </div>
         )}
 
         {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-5 rounded-xl px-4 py-3 font-semibold text-sm"
-            style={{ background: "rgba(215,25,32,0.08)", color: colors.red, border: "1px solid rgba(215,25,32,0.18)" }}
-          >
+          <div className="mb-4 rounded-2xl px-4 py-3 flex items-center gap-2 font-semibold bg-red-50 text-red-700 border border-red-100">
+            <AlertCircle className="w-4 h-4" />
             {error}
-          </motion.div>
+          </div>
         )}
 
-        <div className="grid xl:grid-cols-[1fr_1.2fr] gap-6 items-start">
-          <div className="space-y-3">
-            <div
-              className="rounded-xl px-4 py-3 flex items-center justify-between mb-1"
-              style={{ background: "rgba(75,46,131,0.06)", border: "1px solid rgba(75,46,131,0.1)" }}
-            >
-              <span className="text-xs font-semibold text-slate-500">
-                {Object.values(expandedSections).filter(Boolean).length} of {sections.length} sections open
-              </span>
-              <button
-                onClick={() =>
-                  setExpandedSections(
-                    Object.fromEntries(
-                      sections.map((s) => [s.id, Object.values(expandedSections).some((v) => v) ? false : true])
-                    )
-                  )
-                }
-                className="text-xs font-bold transition-colors"
-                style={{ color: colors.purple }}
-              >
-                {Object.values(expandedSections).some((v) => v) ? "Collapse All" : "Expand All"}
-              </button>
-            </div>
-
-            {/* Hero Text */}
-            <AccordionSection
-              icon={sections[0].icon} title={sections[0].title} color={sections[0].color}
-              isExpanded={expandedSections.hero} onToggle={toggleSection} sectionId="hero" index={0}
-            >
-              <div className="grid md:grid-cols-2 gap-4">
-                <Field label="Badge Text" value={form.hero.badge} onChange={(v) => updateHeroField("badge", v)} />
-                <Field label="Title Line 1" value={form.hero.titleLine1} onChange={(v) => updateHeroField("titleLine1", v)} />
-                <Field label="Title Line 2" value={form.hero.titleLine2} onChange={(v) => updateHeroField("titleLine2", v)} />
-                <Field label="Title Line 3" value={form.hero.titleLine3} onChange={(v) => updateHeroField("titleLine3", v)} />
-              </div>
-              <Field label="Hero Description" value={form.hero.description} onChange={(v) => updateHeroField("description", v)} textarea />
-            </AccordionSection>
-
-            {/* Hero Image & Buttons */}
-            <AccordionSection
-              icon={sections[1].icon} title={sections[1].title} color={sections[1].color}
-              isExpanded={expandedSections.heroImage} onToggle={toggleSection} sectionId="heroImage" index={1}
-            >
-              <ImageUploadBox
-                label="Hero Image"
-                imageUrl={form.hero.image}
-                uploading={uploading}
-                onUpload={(file) => uploadImage(file, "image", setUploading)}
-                onRemove={() => updateHeroField("image", "")}
-              />
-              <div className="grid md:grid-cols-2 gap-4">
-                <Field label="Primary Button Text" value={form.hero.primaryButtonText} onChange={(v) => updateHeroField("primaryButtonText", v)} />
-                <Field label="Primary Button Link" value={form.hero.primaryButtonLink} onChange={(v) => updateHeroField("primaryButtonLink", v)} />
-                <Field label="Secondary Button Text" value={form.hero.secondaryButtonText} onChange={(v) => updateHeroField("secondaryButtonText", v)} />
-                <Field label="Secondary Button Link" value={form.hero.secondaryButtonLink} onChange={(v) => updateHeroField("secondaryButtonLink", v)} />
-              </div>
-            </AccordionSection>
-
-            {/* Hero Stats */}
-            <AccordionSection
-              icon={sections[2].icon} title={sections[2].title} color={sections[2].color}
-              isExpanded={expandedSections.heroStats} onToggle={toggleSection} sectionId="heroStats" index={2}
-            >
-              <div className="grid md:grid-cols-2 gap-4">
-                <Field label="Hero Stat 1 Value" value={form.hero.stat1Value} onChange={(v) => updateHeroField("stat1Value", v)} />
-                <Field label="Hero Stat 1 Label" value={form.hero.stat1Label} onChange={(v) => updateHeroField("stat1Label", v)} />
-                <Field label="Hero Stat 2 Value" value={form.hero.stat2Value} onChange={(v) => updateHeroField("stat2Value", v)} />
-                <Field label="Hero Stat 2 Label" value={form.hero.stat2Label} onChange={(v) => updateHeroField("stat2Label", v)} />
-                <Field label="Hero Stat 3 Value" value={form.hero.stat3Value} onChange={(v) => updateHeroField("stat3Value", v)} />
-                <Field label="Hero Stat 3 Label" value={form.hero.stat3Label} onChange={(v) => updateHeroField("stat3Label", v)} />
-                <Field label="Image Location" value={form.hero.imageLocation} onChange={(v) => updateHeroField("imageLocation", v)} />
-                <Field label="Image Bottom Title" value={form.hero.imageBottomTitle} onChange={(v) => updateHeroField("imageBottomTitle", v)} />
-              </div>
-              <Field label="Image Bottom Description" value={form.hero.imageBottomDescription} onChange={(v) => updateHeroField("imageBottomDescription", v)} textarea />
-            </AccordionSection>
-
-            {/* School Highlights */}
-            <AccordionSection
-              icon={sections[3].icon} title={sections[3].title} color={sections[3].color}
-              isExpanded={expandedSections.highlights} onToggle={toggleSection} sectionId="highlights" index={3}
-            >
-              <Field label="Section Eyebrow" value={form.statsSection.eyebrow} onChange={(v) => updateStatsField("eyebrow", v)} />
-              <Field label="Section Title" value={form.statsSection.title} onChange={(v) => updateStatsField("title", v)} />
-              <Field label="Section Description" value={form.statsSection.description} onChange={(v) => updateStatsField("description", v)} textarea />
-              <div className="space-y-3 pt-1">
-                {form.statsSection.stats.map((stat, index) => (
-                  <div
-                    key={index}
-                    className="grid md:grid-cols-3 gap-3 rounded-xl p-4"
-                    style={{ background: "rgba(56,189,248,0.04)", border: "1px solid rgba(56,189,248,0.12)" }}
-                  >
-                    <Field label={`Stat ${index + 1} Value`} value={stat.value} onChange={(v) => updateStatItem(index, "value", v)} />
-                    <Field label={`Stat ${index + 1} Suffix`} value={stat.suffix} onChange={(v) => updateStatItem(index, "suffix", v)} />
-                    <Field label={`Stat ${index + 1} Label`} value={stat.label} onChange={(v) => updateStatItem(index, "label", v)} />
-                  </div>
-                ))}
-              </div>
-            </AccordionSection>
-
-            {/* Story Section - Updated with Image Upload */}
-            <AccordionSection
-              icon={sections[4].icon} title={sections[4].title} color={sections[4].color}
-              isExpanded={expandedSections.story} onToggle={toggleSection} sectionId="story" index={4}
-            >
-              <Field label="Story Badge" value={form.statsSection.story.badge} onChange={(v) => updateStoryField("badge", v)} />
-              <Field label="Story Title" value={form.statsSection.story.title} onChange={(v) => updateStoryField("title", v)} />
-              <Field label="Story Paragraph 1" value={form.statsSection.story.paragraphs[0]} onChange={(v) => updateStoryParagraph(0, v)} textarea />
-              <Field label="Story Paragraph 2" value={form.statsSection.story.paragraphs[1]} onChange={(v) => updateStoryParagraph(1, v)} textarea />
-              
-              <ImageUploadBox
-                label="Story Image"
-                imageUrl={form.statsSection.story.image}
-                uploading={uploadingStory}
-                onUpload={(file) => uploadImage(file, "storyImage", setUploadingStory)}
-                onRemove={() => updateStoryField("image", "")}
-              />
-              
-              <div className="grid md:grid-cols-2 gap-4">
-                <Field label="Button Text" value={form.statsSection.story.buttonText} onChange={(v) => updateStoryField("buttonText", v)} />
-                <Field label="Button Link" value={form.statsSection.story.buttonLink} onChange={(v) => updateStoryField("buttonLink", v)} />
-                <Field label="Image Top Title" value={form.statsSection.story.imageTopTitle} onChange={(v) => updateStoryField("imageTopTitle", v)} />
-                <Field label="Image Top Subtitle" value={form.statsSection.story.imageTopSubtitle} onChange={(v) => updateStoryField("imageTopSubtitle", v)} />
-                <Field label="Image Bottom Title" value={form.statsSection.story.imageBottomTitle} onChange={(v) => updateStoryField("imageBottomTitle", v)} />
-              </div>
-              <Field label="Image Bottom Description" value={form.statsSection.story.imageBottomDescription} onChange={(v) => updateStoryField("imageBottomDescription", v)} textarea />
-            </AccordionSection>
-
-            {/* Academic Excellence */}
-            <AccordionSection
-              icon={sections[5].icon} title={sections[5].title} color={sections[5].color}
-              isExpanded={expandedSections.excellence} onToggle={toggleSection} sectionId="excellence" index={5}
-            >
-              <Field label="Academic Excellence Title" value={form.statsSection.excellence.title} onChange={(v) => updateExcellenceField("title", v)} />
-              <Field label="Academic Excellence Description" value={form.statsSection.excellence.description} onChange={(v) => updateExcellenceField("description", v)} textarea />
-              <div className="space-y-3 pt-1">
-                {form.statsSection.excellence.cards.map((card, index) => (
-                  <div
-                    key={index}
-                    className="rounded-xl p-4 space-y-3"
-                    style={{ background: "rgba(75,46,131,0.04)", border: "1px solid rgba(75,46,131,0.1)" }}
-                  >
-                    <Field label={`Card ${index + 1} Title`} value={card.title} onChange={(v) => updateExcellenceCard(index, "title", v)} />
-                    <Field label={`Card ${index + 1} Description`} value={card.description} onChange={(v) => updateExcellenceCard(index, "description", v)} textarea />
-                  </div>
-                ))}
-              </div>
-            </AccordionSection>
+        <div
+          className="rounded-[2rem] overflow-x-auto"
+          style={{
+            background:
+              "radial-gradient(circle at top left, rgba(56,189,248,0.14), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
+            border: "1px solid rgba(15,23,42,0.08)",
+          }}
+        >
+          <div className="min-w-[1180px] bg-white">
+            <Hero
+              editMode
+              contentOverride={form.hero}
+              onEditTarget={openEditor}
+            />
+            <Stats
+              editMode
+              contentOverride={form.statsSection}
+              onEditTarget={openEditor}
+            />
           </div>
-
-          <aside
-            className="xl:sticky xl:top-24 rounded-2xl overflow-hidden"
-            style={{
-              background: "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 20px 60px rgba(11,16,32,0.3)",
-            }}
-          >
-            <div
-              className="px-5 py-4 flex items-center justify-between"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
-            >
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: "rgba(56,189,248,0.12)" }}
-                >
-                  <Eye className="w-4 h-4" style={{ color: colors.cyan }} />
-                </div>
-                <div>
-                  <div className="text-white font-bold text-sm">Home Section Preview</div>
-                  <div className="text-white/45 text-xs">Updates live while typing</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
-                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
-                <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
-              </div>
-            </div>
-
-            <div className="bg-white overflow-y-auto" style={{ height: "720px" }}>
-              <HomeOnlyPreview form={form} />
-            </div>
-          </aside>
         </div>
-      </main>
-    </section>
+      </motion.div>
+
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="rounded-2xl p-4 bg-white border border-slate-100">
+          <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center mb-3">
+            <Pencil className="w-5 h-5" />
+          </div>
+          <div className="font-black text-slate-950">Text</div>
+          <div className="text-sm text-slate-500 mt-1">
+            Hover titles, descriptions, buttons, or cards.
+          </div>
+        </div>
+
+        <div className="rounded-2xl p-4 bg-white border border-slate-100">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center mb-3">
+            <Camera className="w-5 h-5" />
+          </div>
+          <div className="font-black text-slate-950">Images</div>
+          <div className="text-sm text-slate-500 mt-1">
+            Hover hero image or story image and click camera icon.
+          </div>
+        </div>
+
+        <div className="rounded-2xl p-4 bg-white border border-slate-100">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center mb-3">
+            <Save className="w-5 h-5" />
+          </div>
+          <div className="font-black text-slate-950">Specific Save</div>
+          <div className="text-sm text-slate-500 mt-1">
+            Each popup saves only the selected homepage item.
+          </div>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {editingTarget && (
+          <motion.div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
+            style={{
+              background: "rgba(2,6,23,0.55)",
+              backdropFilter: "blur(12px)",
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeEditor}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 14, scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 130, damping: 16 }}
+              className="w-full max-w-xl rounded-[28px] overflow-hidden max-h-[92vh] overflow-y-auto"
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid rgba(255,255,255,0.75)",
+                boxShadow: "0 42px 110px rgba(0,0,0,0.28)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div
+                className="h-1"
+                style={{
+                  background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan}, ${colors.green})`,
+                }}
+              />
+
+              <div className="p-6">
+                <div className="flex items-start justify-between gap-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(56,189,248,0.18))",
+                        color: colors.dark,
+                      }}
+                    >
+                      <ModalIcon className="w-5 h-5" />
+                    </div>
+
+                    <div>
+                      <h3 className="text-xl font-black text-slate-950">
+                        {modalTitle}
+                      </h3>
+                      <p className="text-sm text-slate-500">
+                        Save only this selected homepage item.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={closeEditor}
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-5">
+                  {(editingTarget.type === "heroImage" ||
+                    editingTarget.type === "storyImage") && (
+                    <>
+                      <div
+                        className="rounded-3xl p-5"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                        }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-28 h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center">
+                            {modalForm.image ? (
+                              <img
+                                src={modalForm.image}
+                                alt="Preview"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon className="w-8 h-8 text-slate-300" />
+                            )}
+                          </div>
+
+                          <div>
+                            <div className="text-white font-black">
+                              Image Preview
+                            </div>
+                            <div className="text-white/55 text-sm mt-1 leading-relaxed">
+                              Recommended: JPG/PNG/WebP, max 3 MB.
+                            </div>
+                          </div>
+                        </div>
+
+                        <label
+                          className="mt-5 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black cursor-pointer"
+                          style={{
+                            background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                            color: colors.dark,
+                          }}
+                        >
+                          <UploadCloud className="w-4 h-4" />
+                          {uploadingImage ? "Uploading..." : "Upload New Image"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={uploadingImage}
+                            onChange={(e) => {
+                              uploadImage(e.target.files?.[0]);
+                              e.target.value = "";
+                            }}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+
+                      <Field
+                        label="Image URL"
+                        value={modalForm.image}
+                        onChange={(value) => updateModalField("image", value)}
+                        placeholder="Image URL appears here after upload"
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "heroBadge" && (
+                    <Field
+                      label="Badge Text"
+                      value={modalForm.badge}
+                      onChange={(value) => updateModalField("badge", value)}
+                      placeholder="Admissions Open..."
+                    />
+                  )}
+
+                  {editingTarget.type === "heroTitle" && (
+                    <>
+                      <Field
+                        label="Title Line 1"
+                        value={modalForm.titleLine1}
+                        onChange={(value) =>
+                          updateModalField("titleLine1", value)
+                        }
+                      />
+
+                      <Field
+                        label="Title Line 2"
+                        value={modalForm.titleLine2}
+                        onChange={(value) =>
+                          updateModalField("titleLine2", value)
+                        }
+                      />
+
+                      <Field
+                        label="Title Line 3"
+                        value={modalForm.titleLine3}
+                        onChange={(value) =>
+                          updateModalField("titleLine3", value)
+                        }
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "heroDescription" && (
+                    <Field
+                      label="Hero Description"
+                      value={modalForm.description}
+                      onChange={(value) =>
+                        updateModalField("description", value)
+                      }
+                      textarea
+                    />
+                  )}
+
+                  {editingTarget.type === "heroButtons" && (
+                    <>
+                      <Field
+                        label="Primary Button Text"
+                        value={modalForm.primaryButtonText}
+                        onChange={(value) =>
+                          updateModalField("primaryButtonText", value)
+                        }
+                      />
+
+                      <Field
+                        label="Primary Button Link"
+                        value={modalForm.primaryButtonLink}
+                        onChange={(value) =>
+                          updateModalField("primaryButtonLink", value)
+                        }
+                        placeholder="/admissions"
+                      />
+
+                      <Field
+                        label="Secondary Button Text"
+                        value={modalForm.secondaryButtonText}
+                        onChange={(value) =>
+                          updateModalField("secondaryButtonText", value)
+                        }
+                      />
+
+                      <Field
+                        label="Secondary Button Link"
+                        value={modalForm.secondaryButtonLink}
+                        onChange={(value) =>
+                          updateModalField("secondaryButtonLink", value)
+                        }
+                        placeholder="/facilities"
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "heroStat" && (
+                    <>
+                      <Field
+                        label="Stat Value"
+                        value={modalForm.value}
+                        onChange={(value) => updateModalField("value", value)}
+                      />
+
+                      <Field
+                        label="Stat Label"
+                        value={modalForm.label}
+                        onChange={(value) => updateModalField("label", value)}
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "heroImageText" && (
+                    <>
+                      <Field
+                        label="Image Bottom Title"
+                        value={modalForm.imageBottomTitle}
+                        onChange={(value) =>
+                          updateModalField("imageBottomTitle", value)
+                        }
+                      />
+
+                      <Field
+                        label="Image Bottom Description"
+                        value={modalForm.imageBottomDescription}
+                        onChange={(value) =>
+                          updateModalField("imageBottomDescription", value)
+                        }
+                        textarea
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "heroFloating" && (
+                    <>
+                      <Field
+                        label="Floating Label Title"
+                        value={modalForm.title}
+                        onChange={(value) => updateModalField("title", value)}
+                      />
+
+                      <Field
+                        label="Floating Label Subtitle"
+                        value={modalForm.subtitle}
+                        onChange={(value) =>
+                          updateModalField("subtitle", value)
+                        }
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "statsHeader" && (
+                    <>
+                      <Field
+                        label="Eyebrow"
+                        value={modalForm.eyebrow}
+                        onChange={(value) => updateModalField("eyebrow", value)}
+                      />
+
+                      <Field
+                        label="Section Title"
+                        value={modalForm.title}
+                        onChange={(value) => updateModalField("title", value)}
+                      />
+
+                      <Field
+                        label="Section Description"
+                        value={modalForm.description}
+                        onChange={(value) =>
+                          updateModalField("description", value)
+                        }
+                        textarea
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "statsCard" && (
+                    <>
+                      <Field
+                        label="Number Value"
+                        value={modalForm.value}
+                        onChange={(value) => updateModalField("value", value)}
+                      />
+
+                      <Field
+                        label="Suffix"
+                        value={modalForm.suffix}
+                        onChange={(value) => updateModalField("suffix", value)}
+                        placeholder="+ / % / yrs"
+                      />
+
+                      <Field
+                        label="Label"
+                        value={modalForm.label}
+                        onChange={(value) => updateModalField("label", value)}
+                      />
+
+                      <Field
+                        label="Small Note"
+                        value={modalForm.note}
+                        onChange={(value) => updateModalField("note", value)}
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "storyImageText" && (
+                    <>
+                      <Field
+                        label="Image Top Title"
+                        value={modalForm.imageTopTitle}
+                        onChange={(value) =>
+                          updateModalField("imageTopTitle", value)
+                        }
+                      />
+
+                      <Field
+                        label="Image Top Subtitle"
+                        value={modalForm.imageTopSubtitle}
+                        onChange={(value) =>
+                          updateModalField("imageTopSubtitle", value)
+                        }
+                      />
+
+                      <Field
+                        label="Image Bottom Title"
+                        value={modalForm.imageBottomTitle}
+                        onChange={(value) =>
+                          updateModalField("imageBottomTitle", value)
+                        }
+                      />
+
+                      <Field
+                        label="Image Bottom Description"
+                        value={modalForm.imageBottomDescription}
+                        onChange={(value) =>
+                          updateModalField("imageBottomDescription", value)
+                        }
+                        textarea
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "storyText" && (
+                    <>
+                      <Field
+                        label="Story Badge"
+                        value={modalForm.badge}
+                        onChange={(value) => updateModalField("badge", value)}
+                      />
+
+                      <Field
+                        label="Story Title"
+                        value={modalForm.title}
+                        onChange={(value) => updateModalField("title", value)}
+                      />
+
+                      <Field
+                        label="Paragraph 1"
+                        value={modalForm.paragraph1}
+                        onChange={(value) =>
+                          updateModalField("paragraph1", value)
+                        }
+                        textarea
+                      />
+
+                      <Field
+                        label="Paragraph 2"
+                        value={modalForm.paragraph2}
+                        onChange={(value) =>
+                          updateModalField("paragraph2", value)
+                        }
+                        textarea
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "storyButton" && (
+                    <>
+                      <Field
+                        label="Button Text"
+                        value={modalForm.buttonText}
+                        onChange={(value) =>
+                          updateModalField("buttonText", value)
+                        }
+                      />
+
+                      <Field
+                        label="Button Link"
+                        value={modalForm.buttonLink}
+                        onChange={(value) =>
+                          updateModalField("buttonLink", value)
+                        }
+                        placeholder="/about"
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "excellenceHeader" && (
+                    <>
+                      <Field
+                        label="Academic Excellence Title"
+                        value={modalForm.title}
+                        onChange={(value) => updateModalField("title", value)}
+                      />
+
+                      <Field
+                        label="Academic Excellence Description"
+                        value={modalForm.description}
+                        onChange={(value) =>
+                          updateModalField("description", value)
+                        }
+                        textarea
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "excellenceCard" && (
+                    <>
+                      <Field
+                        label="Card Title"
+                        value={modalForm.title}
+                        onChange={(value) => updateModalField("title", value)}
+                      />
+
+                      <Field
+                        label="Card Description"
+                        value={modalForm.description}
+                        onChange={(value) =>
+                          updateModalField("description", value)
+                        }
+                        textarea
+                      />
+                    </>
+                  )}
+                </div>
+
+                <div className="flex gap-3 mt-7">
+                  <button
+                    type="button"
+                    onClick={closeEditor}
+                    disabled={saving || uploadingImage}
+                    className="flex-1 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5 disabled:opacity-60"
+                    style={{
+                      background: "rgba(15,23,42,0.06)",
+                      color: "rgba(15,23,42,0.65)",
+                      border: "1px solid rgba(15,23,42,0.08)",
+                    }}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={saveSelectedPart}
+                    disabled={saving || uploadingImage}
+                    className="flex-1 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5 disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                    style={{
+                      background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                      color: "#020617",
+                      boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
+                    }}
+                  >
+                    <Save className="w-4 h-4" />
+                    {saving ? "Saving..." : saveButtonText}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

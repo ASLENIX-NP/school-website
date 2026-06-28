@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
-import { X } from "lucide-react";
+import { Camera, Pencil, Plus, Trash2, X } from "lucide-react";
 
 const colors = {
   red: "#D71920",
@@ -12,7 +12,17 @@ const colors = {
   gold: "#FACC15",
 };
 
-const defaultFacilitiesContent = {
+const facilityColors = [
+  colors.red,
+  colors.purple,
+  colors.green,
+  "#F59E0B",
+  colors.cyan,
+  "#8B5CF6",
+  "#14B8A6",
+];
+
+export const defaultFacilitiesContent = {
   badgeText: "School Facilities",
   title: "Learning Beyond Classrooms",
   highlightedText: "Classrooms",
@@ -102,13 +112,23 @@ const defaultFacilitiesContent = {
   ],
 };
 
-function mergeFacilitiesContent(saved = {}) {
+function normalizeFacilities(facilities) {
+  if (!Array.isArray(facilities)) return defaultFacilitiesContent.facilities;
+
+  return facilities.map((facility, index) => ({
+    ...(defaultFacilitiesContent.facilities[index] || {}),
+    ...facility,
+    id: facility.id || Date.now() + index,
+    color: facility.color || facilityColors[index % facilityColors.length],
+    visible: facility.visible !== false,
+  }));
+}
+
+export function mergeFacilitiesContent(saved = {}) {
   return {
     ...defaultFacilitiesContent,
-    ...saved,
-    facilities: Array.isArray(saved.facilities)
-      ? saved.facilities
-      : defaultFacilitiesContent.facilities,
+    ...(saved || {}),
+    facilities: normalizeFacilities(saved.facilities),
   };
 }
 
@@ -125,6 +145,113 @@ function HighlightedTitle({ title, highlightedText }) {
       <span style={{ color: colors.red }}>{highlightedText}</span>
       {after}
     </>
+  );
+}
+
+function ActionButtons({
+  editMode,
+  target,
+  onEditTarget,
+  onDeleteTarget,
+  icon: Icon = Pencil,
+  canDelete = false,
+  label = "Edit",
+}) {
+  if (!editMode) return null;
+
+  return (
+    <div className="absolute -top-3 -right-3 z-[120] flex items-center gap-2 opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200">
+      <button
+        type="button"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onEditTarget(target);
+        }}
+        className="rounded-full w-10 h-10 flex items-center justify-center shadow-xl"
+        style={{
+          background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+          color: "#020617",
+          border: "1px solid rgba(255,255,255,0.88)",
+        }}
+        title={label}
+      >
+        <Icon className="w-4 h-4" />
+      </button>
+
+      {canDelete && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onDeleteTarget(target);
+          }}
+          className="rounded-full w-10 h-10 flex items-center justify-center shadow-xl"
+          style={{
+            background: "linear-gradient(135deg, #FEE2E2, #FCA5A5)",
+            color: colors.red,
+            border: "1px solid rgba(255,255,255,0.88)",
+          }}
+          title="Delete"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function EditableWrap({
+  editMode,
+  target,
+  onEditTarget,
+  onDeleteTarget = () => {},
+  icon = Pencil,
+  label = "Edit",
+  canDelete = false,
+  className = "",
+  children,
+}) {
+  if (!editMode) return children;
+
+  return (
+    <div className={`relative group ${className}`}>
+      {children}
+      <ActionButtons
+        editMode={editMode}
+        target={target}
+        onEditTarget={onEditTarget}
+        onDeleteTarget={onDeleteTarget}
+        icon={icon}
+        label={label}
+        canDelete={canDelete}
+      />
+    </div>
+  );
+}
+
+function AddFacilityButton({ editMode, onAddTarget }) {
+  if (!editMode) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onAddTarget("facility");
+      }}
+      className="mt-10 mx-auto flex items-center gap-2 rounded-2xl px-6 py-4 text-sm font-black transition-all hover:-translate-y-1"
+      style={{
+        background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+        color: "#020617",
+        boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
+      }}
+    >
+      <Plus className="w-4 h-4" />
+      Add Facility
+    </button>
   );
 }
 
@@ -180,11 +307,24 @@ function FacilityVisual({ facility, className = "" }) {
   );
 }
 
-export default function Facilities() {
-  const [content, setContent] = useState(defaultFacilitiesContent);
+export function Facilities({
+  editMode = false,
+  contentOverride = null,
+  onEditTarget = () => {},
+  onDeleteTarget = () => {},
+  onAddTarget = () => {},
+}) {
+  const [content, setContent] = useState(
+    mergeFacilitiesContent(contentOverride || defaultFacilitiesContent)
+  );
   const [selectedFacility, setSelectedFacility] = useState(null);
 
   useEffect(() => {
+    if (contentOverride) {
+      setContent(mergeFacilitiesContent(contentOverride));
+      return;
+    }
+
     const loadFacilitiesContent = async () => {
       try {
         const res = await axios.get(
@@ -200,10 +340,11 @@ export default function Facilities() {
     };
 
     loadFacilitiesContent();
-  }, []);
+  }, [contentOverride]);
 
-  // Body scroll lock when popup is open
   useEffect(() => {
+    if (editMode) return;
+
     if (selectedFacility) {
       document.body.style.overflow = "hidden";
     } else {
@@ -213,7 +354,7 @@ export default function Facilities() {
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [selectedFacility]);
+  }, [selectedFacility, editMode]);
 
   const visibleFacilities = content.facilities.filter(
     (facility) => facility.visible !== false
@@ -234,60 +375,80 @@ export default function Facilities() {
       <div className="absolute bottom-20 right-10 w-56 h-56 rounded-full bg-green-500/10 blur-3xl" />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55 }}
-          className="text-center mb-20"
+        <EditableWrap
+          editMode={editMode}
+          target={{ type: "pageHeader" }}
+          onEditTarget={onEditTarget}
+          label="Edit facilities heading"
         >
-          <span
-            className="px-5 py-2 rounded-full text-sm font-bold inline-flex items-center"
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55 }}
+            className="text-center mb-20 rounded-[2rem]"
             style={{
-              background: "rgba(22,138,58,0.08)",
-              color: colors.green,
-              border: "1px solid rgba(22,138,58,0.18)",
+              outline: editMode
+                ? "1px dashed rgba(56,189,248,0.55)"
+                : "none",
+              outlineOffset: editMode ? "10px" : "0",
             }}
           >
-            {content.badgeText}
-          </span>
+            <span
+              className="px-5 py-2 rounded-full text-sm font-bold inline-flex items-center"
+              style={{
+                background: "rgba(22,138,58,0.08)",
+                color: colors.green,
+                border: "1px solid rgba(22,138,58,0.18)",
+              }}
+            >
+              {content.badgeText}
+            </span>
 
-          <h1
-            className="text-5xl md:text-7xl mt-6 text-slate-950 leading-tight"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 850,
-              letterSpacing: "-0.055em",
-            }}
-          >
-            <HighlightedTitle
-              title={content.title}
-              highlightedText={content.highlightedText}
-            />
-          </h1>
+            <h1
+              className="text-5xl md:text-7xl mt-6 text-slate-950 leading-tight"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 850,
+                letterSpacing: "-0.055em",
+              }}
+            >
+              <HighlightedTitle
+                title={content.title}
+                highlightedText={content.highlightedText}
+              />
+            </h1>
 
-          <p className="max-w-3xl mx-auto mt-6 text-lg md:text-xl text-slate-600 leading-relaxed">
-            {content.subtitle}
-          </p>
-        </motion.div>
+            <p className="max-w-3xl mx-auto mt-6 text-lg md:text-xl text-slate-600 leading-relaxed">
+              {content.subtitle}
+            </p>
+          </motion.div>
+        </EditableWrap>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {visibleFacilities.map((facility, index) => {
             const facilityColor = facility.color || colors.green;
+            const realIndex = content.facilities.findIndex(
+              (item) => item.id === facility.id
+            );
 
             return (
               <motion.div
                 key={facility.id || facility.title}
-                onClick={() => setSelectedFacility(facility)}
+                onClick={() => {
+                  if (!editMode) setSelectedFacility(facility);
+                }}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.25 }}
                 transition={{ duration: 0.45, delay: index * 0.06 }}
-                className="group rounded-[2rem] overflow-hidden transition-all duration-300 cursor-pointer"
+                className="group relative rounded-[2rem] overflow-hidden transition-all duration-300 cursor-pointer"
                 style={{
                   minHeight: "760px",
                   background:
                     "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.82))",
-                  border: `1px solid ${facilityColor}24`,
+                  border: editMode
+                    ? "2px dashed rgba(56,189,248,0.55)"
+                    : `1px solid ${facilityColor}24`,
                   boxShadow:
                     "0 22px 54px rgba(15,23,42,0.09), inset 0 1px 0 rgba(255,255,255,0.82)",
                   backdropFilter: "blur(16px)",
@@ -295,20 +456,52 @@ export default function Facilities() {
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-10px)";
                   e.currentTarget.style.boxShadow = `0 30px 72px rgba(15,23,42,0.16), 0 0 0 1px ${facilityColor}22`;
-                  e.currentTarget.style.borderColor = `${facilityColor}55`;
+                  if (!editMode) e.currentTarget.style.borderColor = `${facilityColor}55`;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "translateY(0)";
                   e.currentTarget.style.boxShadow =
                     "0 22px 54px rgba(15,23,42,0.09), inset 0 1px 0 rgba(255,255,255,0.82)";
-                  e.currentTarget.style.borderColor = `${facilityColor}24`;
+                  if (!editMode) e.currentTarget.style.borderColor = `${facilityColor}24`;
                 }}
               >
+                <ActionButtons
+                  editMode={editMode}
+                  target={{ type: "facilityCard", index: realIndex }}
+                  onEditTarget={onEditTarget}
+                  onDeleteTarget={onDeleteTarget}
+                  canDelete
+                  label="Edit facility"
+                />
+
                 <div className="h-96 relative overflow-hidden">
                   <FacilityVisual
                     facility={facility}
                     className="transition-transform duration-500 group-hover:scale-105"
                   />
+
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      if (!editMode) return;
+                      event.preventDefault();
+                      event.stopPropagation();
+                      onEditTarget({ type: "facilityImage", index: realIndex });
+                    }}
+                    className={`absolute top-5 left-5 z-20 h-11 w-11 rounded-full items-center justify-center shadow-xl transition-all ${
+                      editMode
+                        ? "flex opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100"
+                        : "hidden"
+                    }`}
+                    style={{
+                      background: "rgba(255,255,255,0.92)",
+                      color: colors.purple,
+                      border: "1px solid rgba(255,255,255,0.88)",
+                    }}
+                    title="Change facility image"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
 
@@ -359,9 +552,11 @@ export default function Facilities() {
             );
           })}
         </div>
+
+        <AddFacilityButton editMode={editMode} onAddTarget={onAddTarget} />
       </div>
 
-      {selectedFacility && (
+      {!editMode && selectedFacility && (
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center p-2 md:p-8 overflow-y-auto"
           style={{
@@ -480,3 +675,5 @@ export default function Facilities() {
     </div>
   );
 }
+
+export default Facilities;

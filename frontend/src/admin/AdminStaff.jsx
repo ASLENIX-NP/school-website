@@ -1,27 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
+  AlertCircle,
   ArrowLeft,
-  Save,
-  Users,
-  Plus,
-  Trash2,
-  UploadCloud,
+  BarChart3,
+  Camera,
   CheckCircle2,
   ExternalLink,
-  Image,
-  Type,
-  BarChart3,
-  Eye,
-  EyeOff,
-  Phone,
+  Image as ImageIcon,
+  Pencil,
+  Save,
+  Trash2,
+  UploadCloud,
   UserRound,
-  ChevronDown,
-  ChevronRight,
+  Users,
   X,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+import {
+  Staff,
+  defaultStaffContent,
+  mergeStaffContent,
+} from "../pages/Staff";
 
 const colors = {
   red: "#D71920",
@@ -32,113 +34,25 @@ const colors = {
   gold: "#FACC15",
 };
 
-const defaultStaffContent = {
-  badgeText: "Our Faculty Team",
-  title: "Our Staff & Members",
-  highlightedWord: "Members",
-  subtitle:
-    "Meet the dedicated educators, mentors, and leaders who inspire excellence, character, and lifelong learning at Baljagriti Secondary English Boarding School.",
-  stats: [
-    {
-      id: "teachingStaff",
-      value: "50+",
-      label: "Teaching Staff",
-      icon: "users",
-      color: colors.green,
-    },
-    {
-      id: "expertFaculty",
-      value: "240+",
-      label: "Expert Faculty",
-      icon: "graduation",
-      color: colors.purple,
-    },
-    {
-      id: "yearsExcellence",
-      value: "35+",
-      label: "Years Excellence",
-      icon: "award",
-      color: colors.red,
-    },
-  ],
-  staff: [
-    {
-      id: 1,
-      name: "Binod Subedi",
-      position: "Principal",
-      imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
-      qualification: "M.Ed",
-      phone: "+977-9800000000",
-      description:
-        "Mr. Binod Subedi has been leading Baljagriti Secondary English School with vision and dedication for over a decade. His commitment to academic excellence and student welfare has transformed the school into a centre of quality education in the region.",
-      visible: true,
-    },
-    {
-      id: 2,
-      name: "Amul Shrestha",
-      position: "Vice Principal",
-      imageUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
-      qualification: "M.Ed",
-      phone: "+977-9800000000",
-      description:
-        "Mr. Amul Shrestha brings years of administrative and academic expertise to Baljagriti. As Vice Principal, he oversees daily operations, faculty coordination, and student discipline, ensuring a productive and inspiring learning environment.",
-      visible: true,
-    },
-    {
-      id: 3,
-      name: "Prem Hamal",
-      position: "Science Teacher",
-      imageUrl: "https://images.unsplash.com/photo-1504593811423-6dd665756598",
-      qualification: "B.Sc, B.Ed",
-      phone: "+977-9800000000",
-      description:
-        "Mr. Prem Hamal is a passionate science educator who brings curiosity and innovation into the classroom. With expertise in Physics, Chemistry, and Biology, he makes complex concepts accessible and exciting for every student.",
-      visible: true,
-    },
-  ],
-};
-
-function mergeStaffContent(saved = {}) {
-  return {
-    ...defaultStaffContent,
-    ...saved,
-    stats:
-      Array.isArray(saved.stats) && saved.stats.length
-        ? saved.stats
-        : defaultStaffContent.stats,
-    staff:
-      Array.isArray(saved.staff) && saved.staff.length
-        ? saved.staff
-        : defaultStaffContent.staff,
-  };
-}
+const statColors = [colors.green, colors.purple, colors.red, colors.cyan];
 
 function Field({ label, value, onChange, placeholder = "", type = "text" }) {
   return (
     <div>
-      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
+      <label className="block text-sm font-black mb-2 text-slate-700">
         {label}
       </label>
+
       <input
         type={type}
         value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-xl outline-none text-sm transition-all duration-150"
+        className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
         style={{
-          background: "#F8FAFC",
-          border: "1.5px solid rgba(75,46,131,0.12)",
+          background: "rgba(255,255,255,0.92)",
+          border: "1px solid rgba(75,46,131,0.16)",
           color: colors.dark,
-        }}
-        onFocus={(e) => {
-          e.target.style.border = "1.5px solid rgba(75,46,131,0.4)";
-          e.target.style.background = "#fff";
-          e.target.style.boxShadow = "0 0 0 3px rgba(75,46,131,0.06)";
-        }}
-        onBlur={(e) => {
-          e.target.style.border = "1.5px solid rgba(75,46,131,0.12)";
-          e.target.style.background = "#F8FAFC";
-          e.target.style.boxShadow = "none";
         }}
       />
     </div>
@@ -148,275 +62,84 @@ function Field({ label, value, onChange, placeholder = "", type = "text" }) {
 function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
   return (
     <div>
-      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
+      <label className="block text-sm font-black mb-2 text-slate-700">
         {label}
       </label>
+
       <textarea
         value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full px-4 py-3 rounded-xl outline-none text-sm resize-none transition-all duration-150"
+        className="w-full px-4 py-3 rounded-2xl outline-none text-sm resize-none"
         style={{
-          background: "#F8FAFC",
-          border: "1.5px solid rgba(75,46,131,0.12)",
+          background: "rgba(255,255,255,0.92)",
+          border: "1px solid rgba(75,46,131,0.16)",
           color: colors.dark,
-        }}
-        onFocus={(e) => {
-          e.target.style.border = "1.5px solid rgba(75,46,131,0.4)";
-          e.target.style.background = "#fff";
-          e.target.style.boxShadow = "0 0 0 3px rgba(75,46,131,0.06)";
-        }}
-        onBlur={(e) => {
-          e.target.style.border = "1.5px solid rgba(75,46,131,0.12)";
-          e.target.style.background = "#F8FAFC";
-          e.target.style.boxShadow = "none";
         }}
       />
     </div>
   );
 }
 
-// Image Upload Box Component
-function ImageUploadBox({ label, imageUrl, onUpload, onRemove, uploading }) {
+function Toggle({ checked, onChange, label }) {
   return (
-    <div>
-      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
-        {label}
-      </label>
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className="w-full flex items-center justify-between gap-4 rounded-2xl px-4 py-3 text-left"
+      style={{
+        background: checked
+          ? "rgba(22,138,58,0.08)"
+          : "rgba(100,116,139,0.08)",
+        border: checked
+          ? "1px solid rgba(22,138,58,0.18)"
+          : "1px solid rgba(100,116,139,0.18)",
+      }}
+    >
+      <span className="text-sm font-black text-slate-700">{label}</span>
 
-      <div
-        className="rounded-xl overflow-hidden bg-white mb-4 relative"
-        style={{ border: "1.5px solid rgba(15,23,42,0.08)" }}
+      <span
+        className="relative w-12 h-7 rounded-full transition-all"
+        style={{ background: checked ? colors.green : "#CBD5E1" }}
       >
-        {imageUrl ? (
-          <>
-            <img src={imageUrl} alt={label} className="w-full h-64 object-cover" />
-            <button
-              type="button"
-              onClick={onRemove}
-              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
-              title="Remove image"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </>
-        ) : (
-          <div className="w-full h-56 bg-slate-50 flex items-center justify-center">
-            <UserRound className="w-16 h-16 text-slate-300" />
-          </div>
-        )}
-      </div>
-
-      <label
-        className="flex flex-col items-center justify-center gap-2 cursor-pointer rounded-xl p-4 text-center transition-all duration-150 hover:bg-white/90"
-        style={{
-          background: "rgba(255,255,255,0.6)",
-          border: "1.5px dashed rgba(75,46,131,0.2)",
-        }}
-      >
-        <UploadCloud className="w-5 h-5" style={{ color: colors.purple }} />
-
-        <span className="text-sm font-bold text-slate-800">
-          {uploading ? "Uploading..." : "Upload Photo"}
-        </span>
-
-        <span className="text-xs text-slate-400 leading-relaxed">
-          Recommended: 800×1000 px • PNG, JPG, WebP • Max 2 MB
-        </span>
-
-        <input
-          type="file"
-          accept="image/*"
-          disabled={uploading}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              onUpload(file);
-            }
-            e.target.value = "";
-          }}
-          className="hidden"
+        <span
+          className="absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow"
+          style={{ left: checked ? "24px" : "4px" }}
         />
-      </label>
-    </div>
+      </span>
+    </button>
   );
 }
 
-// Accordion Section Component
-function AccordionSection({
-  icon: Icon,
-  title,
-  color,
-  children,
-  isExpanded,
-  onToggle,
-  sectionId,
-  index,
-}) {
+function getAuthHeaders() {
+  const token = localStorage.getItem("adminToken");
+
+  if (!token) return null;
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+function getUploadUrl(payload) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
-      className="rounded-2xl overflow-hidden transition-all duration-300"
-      style={{
-        background: "#FFFFFF",
-        border: isExpanded
-          ? `1.5px solid ${color}30`
-          : "1.5px solid rgba(15,23,42,0.07)",
-        boxShadow: isExpanded
-          ? `0 8px 32px ${color}12, 0 2px 8px rgba(0,0,0,0.04)`
-          : "0 2px 8px rgba(0,0,0,0.04)",
-      }}
-    >
-      <button
-        onClick={() => onToggle(sectionId)}
-        className="w-full flex items-center justify-between px-5 py-4 transition-all duration-200"
-        style={{
-          background: isExpanded ? `${color}06` : "transparent",
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: `${color}12` }}
-          >
-            <Icon className="w-4 h-4" style={{ color }} />
-          </div>
-          <div className="text-left">
-            <div className="font-bold text-slate-900 text-sm">{title}</div>
-            {!isExpanded && (
-              <div className="text-xs text-slate-400 mt-0.5">Click to expand and edit</div>
-            )}
-          </div>
-        </div>
-        <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200"
-          style={{
-            background: isExpanded ? `${color}15` : "rgba(15,23,42,0.05)",
-          }}
-        >
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4" style={{ color }} />
-          ) : (
-            <ChevronRight className="w-4 h-4 text-slate-400" />
-          )}
-        </div>
-      </button>
-
-      {isExpanded && (
-        <div style={{ height: "1px", background: `${color}18`, margin: "0 20px" }} />
-      )}
-
-      <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          isExpanded ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
-        }`}
-      >
-        <div className="px-5 pt-5 pb-6 space-y-4">{children}</div>
-      </div>
-    </motion.div>
+    payload?.url ||
+    payload?.imageUrl ||
+    payload?.fileUrl ||
+    payload?.data?.url ||
+    payload?.data?.imageUrl ||
+    payload?.data?.fileUrl ||
+    payload?.data?.secure_url ||
+    payload?.file?.url ||
+    ""
   );
 }
 
-function StaffPreview({ form }) {
-  const visibleStaff = form.staff.filter((staff) => staff.visible !== false);
-
-  return (
-    <div
-      className="min-h-full p-6"
-      style={{
-        background:
-          "radial-gradient(circle at top left, rgba(75,46,131,0.12), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F8FAFC 100%)",
-      }}
-    >
-      <div className="text-center mb-8">
-        <div
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-4"
-          style={{
-            background: "rgba(22,138,58,0.08)",
-            color: colors.green,
-            border: "1px solid rgba(22,138,58,0.18)",
-          }}
-        >
-          <Users className="w-4 h-4" />
-          {form.badgeText}
-        </div>
-
-        <h3
-          className="text-4xl text-slate-950 leading-tight"
-          style={{
-            fontFamily: "var(--font-display)",
-            fontWeight: 850,
-            letterSpacing: "-0.04em",
-          }}
-        >
-          {form.title}
-        </h3>
-
-        <p className="mt-3 text-slate-500 text-sm leading-relaxed">
-          {form.subtitle}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3 mb-8">
-        {form.stats.map((stat, index) => (
-          <div
-            key={stat.id || index}
-            className="bg-white rounded-2xl p-4 text-center"
-            style={{
-              border: "1px solid rgba(15,23,42,0.08)",
-              boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-            }}
-          >
-            <div className="text-2xl font-black text-slate-950">{stat.value}</div>
-            <div className="text-xs text-slate-500">{stat.label}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid gap-4">
-        {visibleStaff.slice(0, 3).map((staff) => (
-          <div
-            key={staff.id}
-            className="bg-white rounded-2xl overflow-hidden flex gap-4"
-            style={{
-              border: "1px solid rgba(15,23,42,0.08)",
-              boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-            }}
-          >
-            {staff.imageUrl ? (
-              <img
-                src={staff.imageUrl}
-                alt={staff.name}
-                className="w-28 h-32 object-cover flex-shrink-0"
-              />
-            ) : (
-              <div className="w-28 h-32 bg-slate-100 flex items-center justify-center flex-shrink-0">
-                <UserRound className="w-10 h-10 text-slate-300" />
-              </div>
-            )}
-
-            <div className="py-4 pr-4">
-              <div className="font-black text-slate-950">{staff.name}</div>
-              <div className="text-green-700 font-bold text-sm">{staff.position}</div>
-              {staff.description && (
-                <div className="text-slate-400 text-xs mt-1 line-clamp-2 leading-relaxed">
-                  {staff.description}
-                </div>
-              )}
-              <div className="text-slate-500 text-sm mt-2">{staff.qualification}</div>
-              <div className="text-slate-500 text-sm flex items-center gap-2 mt-1">
-                <Phone className="w-3 h-3" />
-                {staff.phone}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+function getDeleteName(target) {
+  if (!target) return "this item";
+  if (target.type === "staffCard") return "this staff member";
+  return "this item";
 }
 
 export default function AdminStaff() {
@@ -424,54 +147,23 @@ export default function AdminStaff() {
 
   const [form, setForm] = useState(defaultStaffContent);
   const [loading, setLoading] = useState(true);
+  const [editingTarget, setEditingTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [modalForm, setModalForm] = useState({});
   const [saving, setSaving] = useState(false);
-  const [uploadingId, setUploadingId] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-
-  // Define sections for accordion
-  const sectionKeys = ['topHeading', 'stats', 'staffMembers'];
-  const sectionTitles = {
-    topHeading: 'Top Heading Section',
-    stats: 'Top Staff Number Cards',
-    staffMembers: 'Staff Members'
-  };
-  const sectionIcons = {
-    topHeading: Type,
-    stats: BarChart3,
-    staffMembers: Image
-  };
-  const sectionColors = {
-    topHeading: colors.green,
-    stats: colors.purple,
-    staffMembers: colors.red
-  };
-
-  const [expandedSections, setExpandedSections] = useState(
-    Object.fromEntries(sectionKeys.map(key => [key, false]))
-  );
-
-  // Dynamic state for staff sections
-  const [expandedStaff, setExpandedStaff] = useState({});
-
-  const token = localStorage.getItem("adminToken");
 
   useEffect(() => {
     const loadStaffContent = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/site-content/staff");
         const savedContent = res.data?.data?.content || {};
-        const mergedContent = mergeStaffContent(savedContent);
-        setForm(mergedContent);
-        
-        // Initialize expanded state for all staff sections (all collapsed by default)
-        const initialExpanded = {};
-        mergedContent.staff?.forEach(member => {
-          initialExpanded[member.id] = false;
-        });
-        setExpandedStaff(initialExpanded);
+        setForm(mergeStaffContent(savedContent));
       } catch (err) {
         console.error("Load staff content error:", err);
+        setError("Could not load saved staff content. Default content shown.");
       } finally {
         setLoading(false);
       }
@@ -480,99 +172,80 @@ export default function AdminStaff() {
     loadStaffContent();
   }, []);
 
-  const toggleSection = (sectionId) => {
-    setExpandedSections((prev) => ({
+  const updateModalField = (name, value) => {
+    setModalForm((prev) => ({
       ...prev,
-      [sectionId]: !prev[sectionId],
+      [name]: value,
     }));
   };
 
-  const toggleStaffSection = (staffId) => {
-    setExpandedStaff((prev) => ({
-      ...prev,
-      [staffId]: !prev[staffId],
-    }));
+  const openEditor = (target) => {
+    setSuccess("");
+    setError("");
+    setEditingTarget(target);
+
+    if (target.type === "pageHeader") {
+      setModalForm({
+        badgeText: form.badgeText || "",
+        title: form.title || "",
+        highlightedWord: form.highlightedWord || "",
+        subtitle: form.subtitle || "",
+      });
+      return;
+    }
+
+    if (target.type === "statCard") {
+      const stat = form.stats?.[target.index] || {};
+      setModalForm({
+        value: stat.value || "",
+        label: stat.label || "",
+        icon: stat.icon || "users",
+        color: stat.color || statColors[target.index % statColors.length],
+      });
+      return;
+    }
+
+    if (target.type === "staffCard" || target.type === "staffImage") {
+      const member = form.staff?.[target.index] || {};
+      setModalForm({
+        name: member.name || "",
+        position: member.position || "",
+        imageUrl: member.imageUrl || "",
+        qualification: member.qualification || "",
+        phone: member.phone || "",
+        email: member.email || "",
+        description: member.description || "",
+        visible: member.visible !== false,
+      });
+    }
   };
 
-  const expandAll = () => {
-    const allStaffExpanded = {};
-    form.staff.forEach(member => {
-      allStaffExpanded[member.id] = true;
-    });
-    setExpandedStaff(allStaffExpanded);
-    setExpandedSections(
-      Object.fromEntries(sectionKeys.map(key => [key, true]))
+  const closeEditor = () => {
+    if (saving || uploadingImage) return;
+    setEditingTarget(null);
+    setModalForm({});
+  };
+
+  const saveContentToBackend = async (nextForm, message) => {
+    const authHeaders = getAuthHeaders();
+
+    if (!authHeaders) {
+      setError("Admin login expired. Please logout and login again.");
+      return false;
+    }
+
+    await axios.put(
+      "http://localhost:5000/api/site-content/staff",
+      { content: nextForm },
+      { headers: authHeaders }
     );
+
+    setForm(nextForm);
+    setSuccess(message || "Staff page updated successfully.");
+    return true;
   };
 
-  const collapseAll = () => {
-    const allStaffCollapsed = {};
-    form.staff.forEach(member => {
-      allStaffCollapsed[member.id] = false;
-    });
-    setExpandedStaff(allStaffCollapsed);
-    setExpandedSections(
-      Object.fromEntries(sectionKeys.map(key => [key, false]))
-    );
-  };
-
-  const updateField = (name, value) => {
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const updateStat = (id, name, value) => {
-    setForm((prev) => ({
-      ...prev,
-      stats: prev.stats.map((stat) =>
-        stat.id === id ? { ...stat, [name]: value } : stat
-      ),
-    }));
-  };
-
-  const updateStaff = (id, name, value) => {
-    setForm((prev) => ({
-      ...prev,
-      staff: prev.staff.map((member) =>
-        member.id === id ? { ...member, [name]: value } : member
-      ),
-    }));
-  };
-
-  const addStaffMember = () => {
-    const newMember = {
-      id: Date.now(),
-      name: "New Staff Member",
-      position: "Teacher",
-      imageUrl: "",
-      qualification: "",
-      phone: "",
-      description: "",
-      visible: true,
-    };
-    setForm((prev) => ({ ...prev, staff: [...prev.staff, newMember] }));
-    
-    // Auto-expand the new staff section
-    setExpandedStaff((prev) => ({
-      ...prev,
-      [newMember.id]: true,
-    }));
-  };
-
-  const deleteStaffMember = (id) => {
-    setForm((prev) => ({
-      ...prev,
-      staff: prev.staff.filter((member) => member.id !== id),
-    }));
-    
-    // Remove from expanded state
-    setExpandedStaff((prev) => {
-      const newState = { ...prev };
-      delete newState[id];
-      return newState;
-    });
-  };
-
-  const uploadStaffImage = async (staffId, file) => {
+  const uploadImage = async (file) => {
     if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
@@ -582,453 +255,672 @@ export default function AdminStaff() {
       setError("Please upload only PNG, JPG, or WebP image.");
       return;
     }
+
     if (file.size > maxSize) {
       setError("Staff photo must be less than 2 MB.");
       return;
     }
 
+    const authHeaders = getAuthHeaders();
+
+    if (!authHeaders) {
+      setError("Admin login expired. Please logout and login again.");
+      return;
+    }
+
     setSuccess("");
     setError("");
-    setUploadingId(staffId);
+    setUploadingImage(true);
 
     try {
       const formData = new FormData();
       formData.append("file", file);
 
       const res = await axios.post("http://localhost:5000/api/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          ...authHeaders,
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      const uploadedUrl =
-        res.data?.url ||
-        res.data?.imageUrl ||
-        res.data?.fileUrl ||
-        res.data?.data?.url ||
-        res.data?.data?.imageUrl ||
-        res.data?.data?.fileUrl;
+      const uploadedUrl = getUploadUrl(res.data);
 
       if (!uploadedUrl) {
         setError("Image uploaded but backend did not return image URL.");
         return;
       }
 
-      updateStaff(staffId, "imageUrl", uploadedUrl);
-      setSuccess("Staff photo uploaded successfully. Click Save Changes.");
+      updateModalField("imageUrl", uploadedUrl);
+      setSuccess("Staff photo uploaded. Click Save This Item to publish it.");
     } catch (err) {
       console.error("Staff photo upload error:", err);
       setError(err.response?.data?.message || "Staff photo upload failed.");
     } finally {
-      setUploadingId(null);
+      setUploadingImage(false);
     }
   };
 
-  async function saveStaffContent() {
+  const saveSelectedPart = async () => {
+    if (!editingTarget) return;
+
+    setSaving(true);
     setSuccess("");
     setError("");
-    setSaving(true);
 
     try {
-      await axios.put(
-        "http://localhost:5000/api/site-content/staff",
-        { content: form },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setSuccess("Staff page content saved successfully.");
+      let nextForm = mergeStaffContent(form);
+
+      if (editingTarget.type === "pageHeader") {
+        nextForm = {
+          ...nextForm,
+          badgeText: modalForm.badgeText || "",
+          title: modalForm.title || "",
+          highlightedWord: modalForm.highlightedWord || "",
+          subtitle: modalForm.subtitle || "",
+        };
+      }
+
+      if (editingTarget.type === "statCard") {
+        nextForm = {
+          ...nextForm,
+          stats: nextForm.stats.map((stat, index) =>
+            index === editingTarget.index
+              ? {
+                  ...stat,
+                  value: modalForm.value || "",
+                  label: modalForm.label || "",
+                  icon: modalForm.icon || "users",
+                  color: modalForm.color || statColors[index % statColors.length],
+                }
+              : stat
+          ),
+        };
+      }
+
+      if (editingTarget.type === "staffCard" || editingTarget.type === "staffImage") {
+        nextForm = {
+          ...nextForm,
+          staff: nextForm.staff.map((member, index) =>
+            index === editingTarget.index
+              ? {
+                  ...member,
+                  name: modalForm.name || "",
+                  position: modalForm.position || "",
+                  imageUrl: modalForm.imageUrl || "",
+                  qualification: modalForm.qualification || "",
+                  phone: modalForm.phone || "",
+                  email: modalForm.email || "",
+                  description: modalForm.description || "",
+                  visible: modalForm.visible !== false,
+                }
+              : member
+          ),
+        };
+      }
+
+      const cleanContent = mergeStaffContent(nextForm);
+      await saveContentToBackend(cleanContent, "Selected staff item saved successfully.");
+
+      setEditingTarget(null);
+      setModalForm({});
     } catch (err) {
-      console.error("Save staff content error:", err);
-      setError(err.response?.data?.message || "Could not save staff content.");
+      console.error("Save selected staff item error:", err);
+
+      if (err.response?.status === 401) {
+        setError("Admin login expired or token is invalid. Please login again.");
+      } else {
+        setError(err.response?.data?.message || "Could not save selected item.");
+      }
     } finally {
       setSaving(false);
     }
-  }
+  };
+
+  const addStaffMember = async () => {
+    setSaving(true);
+    setSuccess("");
+    setError("");
+
+    try {
+      const newMember = {
+        id: Date.now(),
+        name: "New Staff Member",
+        position: "Teacher",
+        imageUrl: "",
+        qualification: "",
+        phone: "",
+        email: "",
+        description: "Write a short bio about this staff member.",
+        visible: true,
+      };
+
+      const nextForm = mergeStaffContent({
+        ...form,
+        staff: [...form.staff, newMember],
+      });
+
+      await saveContentToBackend(nextForm, "New staff member added successfully.");
+    } catch (err) {
+      console.error("Add staff member error:", err);
+      setError(err.response?.data?.message || "Could not add staff member.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteTargetItem = async (target) => {
+    if (!target || target.type !== "staffCard") return;
+
+    setSaving(true);
+    setSuccess("");
+    setError("");
+
+    try {
+      const nextForm = mergeStaffContent({
+        ...form,
+        staff: form.staff.filter((_, index) => index !== target.index),
+      });
+
+      await saveContentToBackend(nextForm, "Staff member deleted successfully.");
+      setDeleteTarget(null);
+      setEditingTarget(null);
+      setModalForm({});
+    } catch (err) {
+      console.error("Delete staff member error:", err);
+      setError(err.response?.data?.message || "Could not delete staff member.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const modalTitle = useMemo(() => {
+    if (!editingTarget) return "";
+
+    if (editingTarget.type === "pageHeader") return "Edit Staff Heading";
+    if (editingTarget.type === "statCard") return "Edit Staff Number Card";
+    if (editingTarget.type === "staffImage") return "Change Staff Photo";
+    if (editingTarget.type === "staffCard") return "Edit Staff Member";
+
+    return "Edit Staff Page";
+  }, [editingTarget]);
+
+  const needsImageUpload = useMemo(() => {
+    if (!editingTarget) return false;
+    return editingTarget.type === "staffCard" || editingTarget.type === "staffImage";
+  }, [editingTarget]);
+
+  const ModalIcon = useMemo(() => {
+    if (!editingTarget) return Pencil;
+    if (editingTarget.type === "staffImage") return Camera;
+    if (editingTarget.type === "staffCard") return UserRound;
+    if (editingTarget.type === "statCard") return BarChart3;
+    return Pencil;
+  }, [editingTarget]);
 
   if (loading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "#FFF8EE" }}
-      >
-        <div className="text-slate-600 font-semibold">Loading staff editor...</div>
+      <div className="py-16 flex items-center justify-center">
+        <div className="text-slate-600 font-semibold">
+          Loading visual staff editor...
+        </div>
       </div>
     );
   }
 
-  const expandedCount = Object.values(expandedStaff).filter(Boolean).length + Object.values(expandedSections).filter(Boolean).length;
-  const totalSections = sectionKeys.length + form.staff.length;
-
   return (
-    <section
-      className="min-h-screen relative overflow-hidden"
-      style={{
-        background: `
-          radial-gradient(circle at top right, rgba(56,189,248,0.16), transparent 34%),
-          radial-gradient(circle at bottom left, rgba(250,204,21,0.12), transparent 32%),
-          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
-        `,
-      }}
-    >
-      <header
-        className="sticky top-0 z-40"
+    <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-[24px] p-5 md:p-6"
         style={{
           background:
-            "linear-gradient(145deg, rgba(2,6,23,0.96), rgba(15,23,42,0.88))",
-          borderBottom: "1px solid rgba(255,255,255,0.12)",
-          boxShadow: "0 18px 52px rgba(0,0,0,0.22)",
-          backdropFilter: "blur(22px)",
+            "linear-gradient(135deg, #E8EDF5 0%, #DCE3EF 50%, #E8E0F0 100%)",
+          border: "1px solid rgba(15,23,42,0.06)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate("/admin/dashboard")}
-            className="inline-flex items-center gap-2 text-white/80 hover:text-white font-semibold text-sm transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </button>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black mb-3 bg-green-50 text-green-700 border border-green-100">
+              <Users className="w-3.5 h-3.5" />
+              Visual Staff Editor
+            </div>
 
-          <div className="flex items-center gap-3">
+            <h2
+              className="text-2xl md:text-3xl font-black text-slate-950"
+              style={{
+                fontFamily: "var(--font-display)",
+                letterSpacing: "-0.04em",
+              }}
+            >
+              Hover and Edit Staff Page
+            </h2>
+
+            <p className="text-sm text-slate-500 mt-1">
+              Hover the heading, number cards, or staff cards. Click pencil/camera to edit and trash to delete a staff member.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/admin/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-black bg-white text-slate-700 border border-slate-100"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Dashboard
+            </button>
+
             <a
               href="/staff"
               target="_blank"
               rel="noreferrer"
-              className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white/80 hover:text-white text-sm transition-all"
-              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
+              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-black bg-white text-slate-700 border border-slate-100"
             >
               <ExternalLink className="w-4 h-4" />
-              View Staff Page
+              View Page
             </a>
-
-            <button
-              type="button"
-              onClick={saveStaffContent}
-              disabled={saving || uploadingId}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 disabled:opacity-60"
-              style={{
-                color: "#020617",
-                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                boxShadow: "0 8px 24px rgba(56,189,248,0.28)",
-              }}
-            >
-              <Save className="w-4 h-4" />
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
           </div>
         </div>
-      </header>
-
-      <main className="max-w-[1600px] mx-auto px-6 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-7"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center"
-                  style={{ background: "rgba(22,138,58,0.12)", border: "1px solid rgba(22,138,58,0.2)" }}
-                >
-                  <Users className="w-4 h-4" style={{ color: colors.green }} />
-                </div>
-                <span className="text-sm font-bold" style={{ color: colors.green }}>Manage Staff Page</span>
-              </div>
-
-              <h1
-                className="text-3xl md:text-4xl font-black mb-2"
-                style={{ color: colors.dark, letterSpacing: "-0.04em" }}
-              >
-                Edit Staff Page
-              </h1>
-              <p className="text-slate-500 text-sm">
-                Click on any section below to expand and edit. Only the section you need will be visible.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-slate-400 font-medium">
-                {expandedCount} of {totalSections} sections open
-              </span>
-              
-              {expandedCount < totalSections ? (
-                <button
-                  onClick={expandAll}
-                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105"
-                  style={{
-                    background: "rgba(56,189,248,0.1)",
-                    color: colors.cyan,
-                    border: "1px solid rgba(56,189,248,0.2)",
-                  }}
-                >
-                  Expand All
-                </button>
-              ) : (
-                <button
-                  onClick={collapseAll}
-                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105"
-                  style={{
-                    background: "rgba(15,23,42,0.06)",
-                    color: "rgba(15,23,42,0.5)",
-                    border: "1px solid rgba(15,23,42,0.08)",
-                  }}
-                >
-                  Collapse All
-                </button>
-              )}
-            </div>
-          </div>
-        </motion.div>
 
         {success && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-5 rounded-xl px-4 py-3 flex items-center gap-3 font-semibold text-sm"
-            style={{ background: "rgba(22,138,58,0.08)", color: colors.green, border: "1px solid rgba(22,138,58,0.18)" }}
-          >
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+          <div className="mb-4 rounded-2xl px-4 py-3 flex items-center gap-2 font-semibold bg-green-50 text-green-700 border border-green-100">
+            <CheckCircle2 className="w-4 h-4" />
             {success}
-          </motion.div>
+          </div>
         )}
 
         {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-5 rounded-xl px-4 py-3 font-semibold text-sm"
-            style={{ background: "rgba(215,25,32,0.08)", color: colors.red, border: "1px solid rgba(215,25,32,0.18)" }}
-          >
+          <div className="mb-4 rounded-2xl px-4 py-3 flex items-center gap-2 font-semibold bg-red-50 text-red-700 border border-red-100">
+            <AlertCircle className="w-4 h-4" />
             {error}
-          </motion.div>
+          </div>
         )}
 
-        <div className="grid xl:grid-cols-[1fr_1.2fr] gap-6 items-start">
-          <div className="space-y-3">
-            {/* Top Heading Section */}
-            <AccordionSection
-              icon={sectionIcons.topHeading}
-              title={sectionTitles.topHeading}
-              color={sectionColors.topHeading}
-              isExpanded={expandedSections.topHeading}
-              onToggle={toggleSection}
-              sectionId="topHeading"
-              index={0}
+        <div
+          className="rounded-[2rem] overflow-x-auto"
+          style={{
+            background:
+              "radial-gradient(circle at top left, rgba(56,189,248,0.14), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
+            border: "1px solid rgba(15,23,42,0.08)",
+          }}
+        >
+          <div className="min-w-[1180px] bg-white">
+            <Staff
+              editMode
+              contentOverride={form}
+              onEditTarget={openEditor}
+              onDeleteTarget={(target) => setDeleteTarget(target)}
+              onAddTarget={addStaffMember}
+            />
+          </div>
+        </div>
+      </motion.div>
+
+      <AnimatePresence>
+        {editingTarget && (
+          <motion.div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
+            style={{
+              background: "rgba(2,6,23,0.55)",
+              backdropFilter: "blur(12px)",
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeEditor}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 14, scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 130, damping: 16 }}
+              className="w-full max-w-xl rounded-[28px] overflow-hidden max-h-[92vh] overflow-y-auto"
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid rgba(255,255,255,0.75)",
+                boxShadow: "0 42px 110px rgba(0,0,0,0.28)",
+              }}
+              onClick={(event) => event.stopPropagation()}
             >
-              <div className="grid gap-5">
-                <Field
-                  label="Small Badge Text"
-                  value={form.badgeText}
-                  onChange={(value) => updateField("badgeText", value)}
-                />
+              <div
+                className="h-1"
+                style={{
+                  background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan}, ${colors.green})`,
+                }}
+              />
 
-                <div className="grid md:grid-cols-2 gap-4">
-                  <Field
-                    label="Main Title"
-                    value={form.title}
-                    onChange={(value) => updateField("title", value)}
-                  />
-                  <Field
-                    label="Green Highlight Word"
-                    value={form.highlightedWord}
-                    onChange={(value) => updateField("highlightedWord", value)}
-                    placeholder="Example: Members"
-                  />
-                </div>
-
-                <TextArea
-                  label="Subtitle"
-                  value={form.subtitle}
-                  onChange={(value) => updateField("subtitle", value)}
-                  rows={4}
-                />
-              </div>
-            </AccordionSection>
-
-            {/* Top Staff Number Cards */}
-            <AccordionSection
-              icon={sectionIcons.stats}
-              title={sectionTitles.stats}
-              color={sectionColors.stats}
-              isExpanded={expandedSections.stats}
-              onToggle={toggleSection}
-              sectionId="stats"
-              index={1}
-            >
-              <div className="space-y-4">
-                {form.stats.map((stat, index) => (
-                  <div
-                    key={stat.id}
-                    className="rounded-xl p-4"
-                    style={{
-                      background: "rgba(15,23,42,0.03)",
-                      border: "1px solid rgba(15,23,42,0.06)",
-                    }}
-                  >
-                    <div className="font-bold text-slate-900 text-sm mb-3">
-                      Number Card {index + 1}
+              <div className="p-6">
+                <div className="flex items-start justify-between gap-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(56,189,248,0.18))",
+                        color: colors.dark,
+                      }}
+                    >
+                      <ModalIcon className="w-5 h-5" />
                     </div>
-                    <div className="grid md:grid-cols-2 gap-3">
-                      <Field
-                        label="Number"
-                        value={stat.value}
-                        onChange={(value) => updateStat(stat.id, "value", value)}
-                      />
-                      <Field
-                        label="Label"
-                        value={stat.label}
-                        onChange={(value) => updateStat(stat.id, "label", value)}
-                      />
+
+                    <div>
+                      <h3 className="text-xl font-black text-slate-950">
+                        {modalTitle}
+                      </h3>
+                      <p className="text-sm text-slate-500">
+                        Save only this selected Staff page item.
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </AccordionSection>
 
-            {/* Staff Members - Each as a separate accordion */}
-            {form.staff.map((member, index) => (
-              <AccordionSection
-                key={member.id}
-                icon={UserRound}
-                title={`Staff Member ${index + 1}: ${member.name || "Untitled"}`}
-                color={colors.red}
-                isExpanded={expandedStaff[member.id] || false}
-                onToggle={() => toggleStaffSection(member.id)}
-                sectionId={member.id}
-                index={index + 2}
-              >
-                <div className="flex justify-end mb-3">
                   <button
                     type="button"
-                    onClick={() => deleteStaffMember(member.id)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105"
-                    style={{
-                      background: "rgba(215,25,32,0.08)",
-                      color: colors.red,
-                      border: "1px solid rgba(215,25,32,0.15)",
-                    }}
+                    onClick={closeEditor}
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Delete Staff
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="grid md:grid-cols-[180px_1fr] gap-4">
-                  <div>
-                    <ImageUploadBox
-                      label="Staff Photo"
-                      imageUrl={member.imageUrl}
-                      uploading={uploadingId === member.id}
-                      onUpload={(file) => uploadStaffImage(member.id, file)}
-                      onRemove={() => updateStaff(member.id, "imageUrl", "")}
-                    />
-                  </div>
+                <div className="space-y-5">
+                  {needsImageUpload && (
+                    <>
+                      <div
+                        className="rounded-3xl p-5"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                        }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-28 h-28 rounded-2xl bg-white overflow-hidden flex items-center justify-center">
+                            {modalForm.imageUrl ? (
+                              <img
+                                src={modalForm.imageUrl}
+                                alt="Preview"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon className="w-8 h-8 text-slate-300" />
+                            )}
+                          </div>
 
-                  <div className="grid gap-3">
-                    <div className="grid md:grid-cols-2 gap-3">
+                          <div>
+                            <div className="text-white font-black">Photo Preview</div>
+                            <div className="text-white/55 text-sm mt-1 leading-relaxed">
+                              Recommended: JPG/PNG/WebP, max 2 MB.
+                            </div>
+                          </div>
+                        </div>
+
+                        <label
+                          className="mt-5 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black cursor-pointer"
+                          style={{
+                            background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                            color: colors.dark,
+                          }}
+                        >
+                          <UploadCloud className="w-4 h-4" />
+                          {uploadingImage ? "Uploading..." : "Upload New Photo"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={uploadingImage}
+                            onChange={(event) => {
+                              uploadImage(event.target.files?.[0]);
+                              event.target.value = "";
+                            }}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+
+                      <Field
+                        label="Image URL"
+                        value={modalForm.imageUrl}
+                        onChange={(value) => updateModalField("imageUrl", value)}
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "pageHeader" && (
+                    <>
+                      <Field
+                        label="Badge Text"
+                        value={modalForm.badgeText}
+                        onChange={(value) => updateModalField("badgeText", value)}
+                      />
+
+                      <Field
+                        label="Main Title"
+                        value={modalForm.title}
+                        onChange={(value) => updateModalField("title", value)}
+                      />
+
+                      <Field
+                        label="Green Highlight Word"
+                        value={modalForm.highlightedWord}
+                        onChange={(value) => updateModalField("highlightedWord", value)}
+                      />
+
+                      <TextArea
+                        label="Subtitle"
+                        value={modalForm.subtitle}
+                        onChange={(value) => updateModalField("subtitle", value)}
+                        rows={4}
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "statCard" && (
+                    <>
+                      <Field
+                        label="Number"
+                        value={modalForm.value}
+                        onChange={(value) => updateModalField("value", value)}
+                      />
+
+                      <Field
+                        label="Label"
+                        value={modalForm.label}
+                        onChange={(value) => updateModalField("label", value)}
+                      />
+
+                      <Field
+                        label="Icon Type"
+                        value={modalForm.icon}
+                        onChange={(value) => updateModalField("icon", value)}
+                        placeholder="users / graduation / award"
+                      />
+
+                      <Field
+                        label="Accent Color"
+                        type="color"
+                        value={modalForm.color}
+                        onChange={(value) => updateModalField("color", value)}
+                      />
+                    </>
+                  )}
+
+                  {(editingTarget.type === "staffCard" ||
+                    editingTarget.type === "staffImage") && (
+                    <>
                       <Field
                         label="Name"
-                        value={member.name}
-                        onChange={(value) => updateStaff(member.id, "name", value)}
+                        value={modalForm.name}
+                        onChange={(value) => updateModalField("name", value)}
                       />
+
                       <Field
                         label="Position"
-                        value={member.position}
-                        onChange={(value) => updateStaff(member.id, "position", value)}
+                        value={modalForm.position}
+                        onChange={(value) => updateModalField("position", value)}
                       />
-                    </div>
 
-                    <div className="grid md:grid-cols-2 gap-3">
                       <Field
                         label="Qualification"
-                        value={member.qualification}
-                        onChange={(value) => updateStaff(member.id, "qualification", value)}
+                        value={modalForm.qualification}
+                        onChange={(value) => updateModalField("qualification", value)}
                       />
+
                       <Field
-                        label="Phone Number"
-                        value={member.phone}
-                        onChange={(value) => updateStaff(member.id, "phone", value)}
+                        label="Phone"
+                        value={modalForm.phone}
+                        onChange={(value) => updateModalField("phone", value)}
                         placeholder="+977-98XXXXXXXX"
                       />
-                    </div>
 
-                    <TextArea
-                      label="Description / About"
-                      value={member.description}
-                      onChange={(value) => updateStaff(member.id, "description", value)}
-                      placeholder="Write a short bio about this staff member."
-                      rows={3}
-                    />
-
-                    <label className="flex items-center gap-3 text-xs font-bold text-slate-700 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={member.visible !== false}
-                        onChange={(e) => updateStaff(member.id, "visible", e.target.checked)}
-                        className="w-4 h-4 accent-green-500"
+                      <Field
+                        label="Email"
+                        value={modalForm.email}
+                        onChange={(value) => updateModalField("email", value)}
+                        placeholder="Optional"
                       />
-                      Show this staff member on website
-                    </label>
-                  </div>
+
+                      <TextArea
+                        label="Description / About"
+                        value={modalForm.description}
+                        onChange={(value) => updateModalField("description", value)}
+                        rows={5}
+                      />
+
+                      <Toggle
+                        label="Show this staff member on website"
+                        checked={modalForm.visible !== false}
+                        onChange={(value) => updateModalField("visible", value)}
+                      />
+                    </>
+                  )}
                 </div>
-              </AccordionSection>
-            ))}
 
-            {/* Add New Staff Button */}
-            <button
-              type="button"
-              onClick={addStaffMember}
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-4 rounded-2xl font-bold text-sm transition-all hover:scale-[1.01]"
-              style={{
-                color: colors.dark,
-                background: "#FFFFFF",
-                border: "1.5px dashed rgba(75,46,131,0.2)",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-              }}
-            >
-              <Plus className="w-4 h-4" style={{ color: colors.purple }} />
-              Add New Staff Member
-            </button>
-          </div>
+                <div className="flex flex-col sm:flex-row gap-3 mt-7">
+                  {editingTarget.type === "staffCard" && (
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget(editingTarget)}
+                      disabled={saving || uploadingImage}
+                      className="sm:w-auto px-5 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5 disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                      style={{
+                        background: "rgba(215,25,32,0.08)",
+                        color: colors.red,
+                        border: "1px solid rgba(215,25,32,0.18)",
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  )}
 
-          <aside
-            className="xl:sticky xl:top-24 rounded-2xl overflow-hidden"
+                  <button
+                    type="button"
+                    onClick={closeEditor}
+                    disabled={saving || uploadingImage}
+                    className="flex-1 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5 disabled:opacity-60"
+                    style={{
+                      background: "rgba(15,23,42,0.06)",
+                      color: "rgba(15,23,42,0.65)",
+                      border: "1px solid rgba(15,23,42,0.08)",
+                    }}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={saveSelectedPart}
+                    disabled={saving || uploadingImage}
+                    className="flex-1 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5 disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                    style={{
+                      background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                      color: "#020617",
+                      boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
+                    }}
+                  >
+                    <Save className="w-4 h-4" />
+                    {saving ? "Saving..." : "Save This Item"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {deleteTarget && (
+          <motion.div
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-5"
             style={{
-              background: "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 20px 60px rgba(11,16,32,0.3)",
+              background: "rgba(2,6,23,0.62)",
+              backdropFilter: "blur(14px)",
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => {
+              if (!saving) setDeleteTarget(null);
             }}
           >
-            <div
-              className="px-5 py-4 flex items-center justify-between"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.96 }}
+              className="w-full max-w-md rounded-[28px] bg-white overflow-hidden"
+              style={{
+                boxShadow: "0 42px 110px rgba(0,0,0,0.32)",
+                border: "1px solid rgba(255,255,255,0.75)",
+              }}
+              onClick={(event) => event.stopPropagation()}
             >
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: "rgba(56,189,248,0.12)" }}
-                >
-                  <Eye className="w-4 h-4" style={{ color: colors.cyan }} />
+              <div className="p-6">
+                <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-5">
+                  <Trash2 className="w-6 h-6" />
                 </div>
-                <div>
-                  <div className="text-white font-bold text-sm">Staff Page Preview</div>
-                  <div className="text-white/45 text-xs">Updates live while typing</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
-                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
-                <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
-              </div>
-            </div>
 
-            <div className="bg-white overflow-y-auto" style={{ height: "720px" }}>
-              <StaffPreview form={form} />
-            </div>
-          </aside>
-        </div>
-      </main>
-    </section>
+                <h3 className="text-2xl font-black text-slate-950 mb-2">
+                  Are you sure?
+                </h3>
+
+                <p className="text-sm text-slate-500 leading-relaxed mb-6">
+                  This will permanently delete {getDeleteName(deleteTarget)} from the Staff page.
+                </p>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => setDeleteTarget(null)}
+                    className="flex-1 py-3 rounded-2xl text-sm font-black disabled:opacity-60"
+                    style={{
+                      background: "rgba(15,23,42,0.06)",
+                      color: "rgba(15,23,42,0.68)",
+                      border: "1px solid rgba(15,23,42,0.08)",
+                    }}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => deleteTargetItem(deleteTarget)}
+                    className="flex-1 py-3 rounded-2xl text-sm font-black disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                    style={{
+                      background: `linear-gradient(135deg, ${colors.red}, #991B1B)`,
+                      color: "#FFFFFF",
+                      boxShadow: "0 16px 38px rgba(215,25,32,0.24)",
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {saving ? "Deleting..." : "Yes, Delete"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

@@ -1,20 +1,25 @@
 import defaultSchoolLogo from "../assets/school-logo.jpeg";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
-  ArrowLeft,
-  Save,
-  Navigation,
-  Image,
-  Type,
-  Link as LinkIcon,
-  Eye,
+  AlertCircle,
+  Camera,
   CheckCircle2,
-  ExternalLink,
+  Eye,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Pencil,
+  Save,
   UploadCloud,
+  X,
 } from "lucide-react";
+
+import {
+  Navbar,
+  defaultNavbarContent,
+  mergeNavbarContent,
+} from "../app/components/Navbar";
 
 const colors = {
   red: "#D71920",
@@ -25,48 +30,10 @@ const colors = {
   gold: "#FACC15",
 };
 
-const defaultNavbarContent = {
-  logoUrl: "",
-  schoolName: "Baljagriti",
-  schoolSubtitle: "Secondary English School",
-  admissionButtonText: "Admission Open",
-  admissionButtonLink: "/admissions",
-  showAdmissionButton: true,
-  links: [
-    { id: "home", label: "Home", href: "/", visible: true },
-    { id: "about", label: "About", href: "/about", visible: true },
-    { id: "messages", label: "Messages", href: "/messages", visible: true },
-    { id: "academics", label: "Academics", href: "/academics", visible: true },
-    { id: "notices", label: "Notices", href: "/notices", visible: true },
-    { id: "facilities", label: "Facilities", href: "/facilities", visible: true },
-    { id: "staff", label: "Staff", href: "/staff", visible: true },
-    { id: "gallery", label: "Gallery", href: "/gallery", visible: true },
-    { id: "contact", label: "Contact", href: "/contact", visible: true },
-  ],
-};
-
-function mergeNavbarContent(saved = {}) {
-  const savedLinks = Array.isArray(saved.links) ? saved.links : [];
-
-  return {
-    ...defaultNavbarContent,
-    ...saved,
-    links: defaultNavbarContent.links.map((defaultLink) => {
-      const savedLink = savedLinks.find((link) => link.id === defaultLink.id);
-
-      return {
-        ...defaultLink,
-        ...(savedLink || {}),
-        visible: savedLink?.visible !== false,
-      };
-    }),
-  };
-}
-
 function Field({ label, value, onChange, placeholder = "" }) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
+      <label className="block text-sm font-black mb-2 text-slate-700">
         {label}
       </label>
 
@@ -76,7 +43,7 @@ function Field({ label, value, onChange, placeholder = "" }) {
         placeholder={placeholder}
         className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
         style={{
-          background: "rgba(255,255,255,0.88)",
+          background: "rgba(255,255,255,0.92)",
           border: "1px solid rgba(75,46,131,0.16)",
           color: colors.dark,
         }}
@@ -85,139 +52,84 @@ function Field({ label, value, onChange, placeholder = "" }) {
   );
 }
 
-function EditorCard({ icon: Icon, title, color, children }) {
+function Toggle({ checked, onChange, label }) {
   return (
-    <div
-      className="rounded-3xl p-6 md:p-8"
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className="w-full flex items-center justify-between gap-4 rounded-2xl px-4 py-3 text-left"
       style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.76))",
-        border: "1px solid rgba(11,16,32,0.08)",
-        boxShadow:
-          "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
+        background: checked
+          ? "rgba(22,138,58,0.08)"
+          : "rgba(100,116,139,0.08)",
+        border: checked
+          ? "1px solid rgba(22,138,58,0.18)"
+          : "1px solid rgba(100,116,139,0.18)",
       }}
     >
-      <div className="flex items-center gap-3 mb-6">
-        <Icon className="w-5 h-5" style={{ color }} />
-        <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
-      </div>
+      <span className="text-sm font-black text-slate-700">{label}</span>
 
-      {children}
-    </div>
+      <span
+        className="relative w-12 h-7 rounded-full transition-all"
+        style={{
+          background: checked ? colors.green : "#CBD5E1",
+        }}
+      >
+        <span
+          className="absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow"
+          style={{
+            left: checked ? "24px" : "4px",
+          }}
+        />
+      </span>
+    </button>
   );
 }
 
-function NavbarPreview({ form }) {
-  const visibleLinks = form.links.filter((link) => link.visible);
-  const previewLogo = form.logoUrl || defaultSchoolLogo;
-
+function getUploadUrl(payload) {
   return (
-    <div
-      className="min-h-full p-6 flex items-start justify-center"
-      style={{
-        background:
-          "radial-gradient(circle at top left, rgba(56,189,248,0.16), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
-      }}
-    >
-      <div
-        className="w-full rounded-[1.7rem] px-5 py-4"
-        style={{
-          background:
-            "linear-gradient(145deg, rgba(2,6,23,0.94), rgba(15,23,42,0.86))",
-          border: "1px solid rgba(255,255,255,0.14)",
-          boxShadow: "0 22px 62px rgba(0,0,0,0.32)",
-          backdropFilter: "blur(22px)",
-        }}
-      >
-        <div className="flex flex-col gap-5">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-14 h-14 rounded-2xl bg-white overflow-hidden flex items-center justify-center"
-              style={{
-                border: "1px solid rgba(255,255,255,0.7)",
-                boxShadow:
-                  "0 0 0 3px rgba(34,197,94,0.2), 0 14px 34px rgba(34,197,94,0.22)",
-              }}
-            >
-              <img
-                src={previewLogo}
-                alt={form.schoolName || "School logo"}
-                className="w-full h-full object-contain p-1"
-              />
-            </div>
-
-            <div>
-              <div
-                className="font-bold text-xl leading-tight text-white"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {form.schoolName || "School Name"}
-              </div>
-
-              <div
-                className="text-sm leading-tight"
-                style={{ color: colors.green }}
-              >
-                {form.schoolSubtitle || "School Subtitle"}
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="flex flex-wrap gap-2 rounded-2xl p-2"
-            style={{
-              background: "rgba(255,255,255,0.055)",
-              border: "1px solid rgba(255,255,255,0.1)",
-            }}
-          >
-            {visibleLinks.map((link, index) => (
-              <div
-                key={link.id}
-                className="px-3 py-2 rounded-xl text-sm font-medium"
-                style={{
-                  color: index === 0 ? "#020617" : "rgba(255,255,255,0.84)",
-                  background:
-                    index === 0
-                      ? `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`
-                      : "transparent",
-                }}
-              >
-                {link.label}
-              </div>
-            ))}
-          </div>
-
-          {form.showAdmissionButton && (
-            <div>
-              <div
-                className="inline-flex px-6 py-3 rounded-2xl text-sm font-bold text-slate-950"
-                style={{
-                  background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                  boxShadow:
-                    "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.42)",
-                }}
-              >
-                {form.admissionButtonText || "Admission Open"} →
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+    payload?.url ||
+    payload?.imageUrl ||
+    payload?.fileUrl ||
+    payload?.data?.url ||
+    payload?.data?.imageUrl ||
+    payload?.data?.fileUrl ||
+    payload?.data?.secure_url ||
+    payload?.file?.url ||
+    ""
   );
 }
 
 export default function AdminNavbar() {
-  const navigate = useNavigate();
-
   const [form, setForm] = useState(defaultNavbarContent);
   const [loading, setLoading] = useState(true);
+  const [editingTarget, setEditingTarget] = useState(null);
+  const [modalForm, setModalForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("adminToken");
+  function getAdminToken() {
+  return (
+    localStorage.getItem("adminToken") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("admin_token") ||
+    ""
+  );
+}
+
+function getAuthHeaders() {
+  const token = getAdminToken();
+
+  if (!token) {
+    return null;
+  }
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+}
 
   useEffect(() => {
     const loadNavbarContent = async () => {
@@ -230,6 +142,7 @@ export default function AdminNavbar() {
         setForm(mergeNavbarContent(savedContent));
       } catch (err) {
         console.error("Load navbar content error:", err);
+        setError("Could not load saved navbar content. Default content shown.");
       } finally {
         setLoading(false);
       }
@@ -238,42 +151,85 @@ export default function AdminNavbar() {
     loadNavbarContent();
   }, []);
 
-  const updateField = (name, value) => {
-    setForm((prev) => ({
+  const selectedLink = useMemo(() => {
+    if (editingTarget?.type !== "link") return null;
+    return form.links.find((link) => link.id === editingTarget.id) || null;
+  }, [editingTarget, form.links]);
+
+  const openEditor = (target) => {
+    setSuccess("");
+    setError("");
+    setEditingTarget(target);
+
+    if (target.type === "logo") {
+      setModalForm({
+        logoUrl: form.logoUrl || "",
+      });
+      return;
+    }
+
+    if (target.type === "schoolName") {
+      setModalForm({
+        schoolName: form.schoolName || "",
+      });
+      return;
+    }
+
+    if (target.type === "schoolSubtitle") {
+      setModalForm({
+        schoolSubtitle: form.schoolSubtitle || "",
+      });
+      return;
+    }
+
+    if (target.type === "admission") {
+      setModalForm({
+        admissionButtonText: form.admissionButtonText || "",
+        admissionButtonLink: form.admissionButtonLink || "/admissions",
+        showAdmissionButton: form.showAdmissionButton !== false,
+      });
+      return;
+    }
+
+    if (target.type === "link") {
+      const link = form.links.find((item) => item.id === target.id);
+
+      setModalForm({
+        label: link?.label || "",
+        href: link?.href || "/",
+        visible: link?.visible !== false,
+      });
+    }
+  };
+
+  const closeEditor = () => {
+    if (saving || uploadingLogo) return;
+    setEditingTarget(null);
+    setModalForm({});
+  };
+
+  const updateModalField = (name, value) => {
+    setModalForm((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const updateLink = (id, name, value) => {
-    setForm((prev) => ({
-      ...prev,
-      links: prev.links.map((link) =>
-        link.id === id
-          ? {
-              ...link,
-              [name]: value,
-            }
-          : link
-      ),
-    }));
-  };
-
   const uploadLogoImage = async (file) => {
-  if (!file) return;
+    if (!file) return;
 
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-  const maxSize = 2 * 1024 * 1024;
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const maxSize = 2 * 1024 * 1024;
 
-  if (!allowedTypes.includes(file.type)) {
-    setError("Please upload only PNG, JPG, or WebP image.");
-    return;
-  }
+    if (!allowedTypes.includes(file.type)) {
+      setError("Please upload only PNG, JPG, or WebP image.");
+      return;
+    }
 
-  if (file.size > maxSize) {
-    setError("Logo image must be less than 2 MB.");
-    return;
-  }
+    if (file.size > maxSize) {
+      setError("Logo image must be less than 2 MB.");
+      return;
+    }
 
     setSuccess("");
     setError("");
@@ -283,27 +239,29 @@ export default function AdminNavbar() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await axios.post("http://localhost:5000/api/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const authHeaders = getAuthHeaders();
 
-      const uploadedUrl =
-        res.data?.url ||
-        res.data?.imageUrl ||
-        res.data?.fileUrl ||
-        res.data?.data?.url ||
-        res.data?.data?.imageUrl ||
-        res.data?.data?.fileUrl;
+if (!authHeaders) {
+  setError("Admin login expired. Please logout and login again.");
+  return;
+}
+
+const res = await axios.post("http://localhost:5000/api/upload", formData, {
+  headers: {
+    ...authHeaders,
+    "Content-Type": "multipart/form-data",
+  },
+});
+
+      const uploadedUrl = getUploadUrl(res.data);
 
       if (!uploadedUrl) {
         setError("Image uploaded but backend did not return image URL.");
         return;
       }
 
-      updateField("logoUrl", uploadedUrl);
-      setSuccess("Logo uploaded successfully. Click Save Changes to store it.");
+      updateModalField("logoUrl", uploadedUrl);
+      setSuccess("Logo uploaded. Click Save Logo to publish it.");
     } catch (err) {
       console.error("Logo upload error:", err);
       setError(err.response?.data?.message || "Logo upload failed.");
@@ -312,45 +270,136 @@ export default function AdminNavbar() {
     }
   };
 
-  const removeCustomLogo = () => {
-    updateField("logoUrl", "");
-    setSuccess("Custom logo removed. Click Save Changes to keep default logo.");
-    setError("");
-  };
+  const saveSelectedPart = async () => {
+    if (!editingTarget) return;
 
-  async function saveNavbarContent() {
+    setSaving(true);
     setSuccess("");
     setError("");
-    setSaving(true);
 
     try {
-      await axios.put(
-        "http://localhost:5000/api/site-content/navbar",
-        {
-          content: form,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      let nextForm = mergeNavbarContent(form);
 
-      setSuccess("Navbar content saved successfully.");
+      if (editingTarget.type === "logo") {
+        nextForm = {
+          ...nextForm,
+          logoUrl: modalForm.logoUrl || "",
+        };
+      }
+
+      if (editingTarget.type === "schoolName") {
+        nextForm = {
+          ...nextForm,
+          schoolName: modalForm.schoolName || "",
+        };
+      }
+
+      if (editingTarget.type === "schoolSubtitle") {
+        nextForm = {
+          ...nextForm,
+          schoolSubtitle: modalForm.schoolSubtitle || "",
+        };
+      }
+
+      if (editingTarget.type === "admission") {
+        nextForm = {
+          ...nextForm,
+          admissionButtonText: modalForm.admissionButtonText || "",
+          admissionButtonLink: modalForm.admissionButtonLink || "/admissions",
+          showAdmissionButton: modalForm.showAdmissionButton !== false,
+        };
+      }
+
+      if (editingTarget.type === "link") {
+        nextForm = {
+          ...nextForm,
+          links: nextForm.links.map((link) =>
+            link.id === editingTarget.id
+              ? {
+                  ...link,
+                  label: modalForm.label || "",
+                  href: modalForm.href || "/",
+                  visible: modalForm.visible !== false,
+                }
+              : link
+          ),
+        };
+      }
+
+      const cleanContent = mergeNavbarContent(nextForm);
+
+      const authHeaders = getAuthHeaders();
+
+if (!authHeaders) {
+  setError("Admin login expired. Please logout and login again.");
+  setSaving(false);
+  return;
+}
+
+await axios.put(
+  "http://localhost:5000/api/site-content/navbar",
+  {
+    content: cleanContent,
+  },
+  {
+    headers: authHeaders,
+  }
+);
+
+      setForm(cleanContent);
+      setEditingTarget(null);
+      setModalForm({});
+      setSuccess("Selected navbar item saved successfully.");
     } catch (err) {
-      console.error("Save navbar content error:", err);
-      setError(err.response?.data?.message || "Could not save navbar content.");
+      console.error("Save selected navbar item error:", err);
+      if (err.response?.status === 401) {
+  setError("Admin login expired or token is invalid. Please logout and login again.");
+} else {
+  setError(err.response?.data?.message || "Could not save selected item.");
+}
     } finally {
       setSaving(false);
     }
-  }
+  };
+
+  const modalTitle = useMemo(() => {
+    if (!editingTarget) return "";
+
+    if (editingTarget.type === "logo") return "Change School Logo";
+    if (editingTarget.type === "schoolName") return "Edit School Name";
+    if (editingTarget.type === "schoolSubtitle") return "Edit School Subtitle";
+    if (editingTarget.type === "admission") return "Edit Admission Button";
+    if (editingTarget.type === "link") {
+      return selectedLink ? `Edit Menu: ${selectedLink.label}` : "Edit Menu Link";
+    }
+
+    return "Edit Navbar";
+  }, [editingTarget, selectedLink]);
+
+  const modalIcon = useMemo(() => {
+    if (!editingTarget) return Pencil;
+    if (editingTarget.type === "logo") return Camera;
+    if (editingTarget.type === "link") return LinkIcon;
+    return Pencil;
+  }, [editingTarget]);
+
+  const saveButtonText = useMemo(() => {
+    if (!editingTarget) return "Save";
+
+    if (editingTarget.type === "logo") return "Save Logo";
+    if (editingTarget.type === "schoolName") return "Save Name";
+    if (editingTarget.type === "schoolSubtitle") return "Save Subtitle";
+    if (editingTarget.type === "admission") return "Save Button";
+    if (editingTarget.type === "link") return "Save Menu Link";
+
+    return "Save";
+  }, [editingTarget]);
+
+  const ModalIcon = modalIcon;
 
   if (loading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "#FFF8EE" }}
-      >
+      <div className="py-16 flex items-center justify-center">
         <div className="text-slate-600 font-semibold">
           Loading navbar editor...
         </div>
@@ -359,379 +408,372 @@ export default function AdminNavbar() {
   }
 
   return (
-    <section
-      className="min-h-screen relative overflow-hidden"
-      style={{
-        background: `
-          radial-gradient(circle at top right, rgba(56,189,248,0.16), transparent 34%),
-          radial-gradient(circle at bottom left, rgba(250,204,21,0.12), transparent 32%),
-          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
-        `,
-      }}
-    >
-      <header
-        className="sticky top-0 z-40"
+    <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-[24px] p-5 md:p-6"
         style={{
           background:
-            "linear-gradient(145deg, rgba(2,6,23,0.96), rgba(15,23,42,0.88))",
-          borderBottom: "1px solid rgba(255,255,255,0.12)",
-          boxShadow: "0 18px 52px rgba(0,0,0,0.22)",
-          backdropFilter: "blur(22px)",
+            "linear-gradient(135deg, #E8EDF5 0%, #DCE3EF 50%, #E8E0F0 100%)",
+          border: "1px solid rgba(15,23,42,0.06)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate("/admin/dashboard")}
-            className="inline-flex items-center gap-2 text-white font-bold"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back to Dashboard
-          </button>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black mb-3 bg-sky-50 text-sky-700 border border-sky-100">
+              <Eye className="w-3.5 h-3.5" />
+              Visual Navbar Editor
+            </div>
 
-          <div className="flex items-center gap-3">
-            <a
-              href="/"
-              target="_blank"
-              rel="noreferrer"
-              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
+            <h2
+              className="text-2xl md:text-3xl font-black text-slate-950"
               style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.14)",
+                fontFamily: "var(--font-display)",
+                letterSpacing: "-0.04em",
               }}
             >
-              <ExternalLink className="w-4 h-4" />
-              View Site
-            </a>
+              Hover and Edit Navbar
+            </h2>
 
-            <button
-              type="button"
-              onClick={saveNavbarContent}
-              disabled={saving || uploadingLogo}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all hover:scale-105 disabled:opacity-60"
-              style={{
-                color: "#020617",
-                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                boxShadow:
-                  "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
-              }}
-            >
-              <Save className="w-4 h-4" />
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
+            <p className="text-sm text-slate-500 mt-1">
+              Hover logo, school name, menu links, or admission button. Click
+              the edit icon and save only that selected item.
+            </p>
           </div>
         </div>
-      </header>
-
-      <main className="max-w-[1600px] mx-auto px-6 py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <span
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-5"
-            style={{
-              background: "rgba(56,189,248,0.1)",
-              color: "#0284C7",
-              border: "1px solid rgba(56,189,248,0.2)",
-            }}
-          >
-            <Navigation className="w-4 h-4" />
-            Manage Navbar
-          </span>
-
-          <h1
-            className="text-4xl md:text-6xl mb-4"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 850,
-              color: colors.dark,
-              letterSpacing: "-0.045em",
-            }}
-          >
-            Edit Navbar Content
-          </h1>
-
-          <p className="text-slate-500 max-w-3xl text-lg">
-            Edit school logo, school name, existing menu labels, existing menu
-            links, visibility, and admission button.
-          </p>
-        </motion.div>
 
         {success && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold"
-            style={{
-              background: "rgba(22,138,58,0.1)",
-              color: colors.green,
-              border: "1px solid rgba(22,138,58,0.2)",
-            }}
-          >
-            <CheckCircle2 className="w-5 h-5" />
+          <div className="mb-4 rounded-2xl px-4 py-3 flex items-center gap-2 font-semibold bg-green-50 text-green-700 border border-green-100">
+            <CheckCircle2 className="w-4 h-4" />
             {success}
           </div>
         )}
 
         {error && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 font-semibold"
-            style={{
-              background: "rgba(215,25,32,0.1)",
-              color: colors.red,
-              border: "1px solid rgba(215,25,32,0.2)",
-            }}
-          >
+          <div className="mb-4 rounded-2xl px-4 py-3 flex items-center gap-2 font-semibold bg-red-50 text-red-700 border border-red-100">
+            <AlertCircle className="w-4 h-4" />
             {error}
           </div>
         )}
 
-        <div className="grid xl:grid-cols-[760px_1fr] gap-8 items-start">
-          <div className="space-y-8">
-            <EditorCard
-              icon={Image}
-              title="Logo and School Name"
-              color={colors.green}
+        <div
+  className="rounded-[2rem] p-4 md:p-6 overflow-x-auto"
+  style={{
+    background:
+      "radial-gradient(circle at top left, rgba(56,189,248,0.14), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
+    border: "1px solid rgba(15,23,42,0.08)",
+    minHeight: "170px",
+  }}
+>
+  <div className="min-w-[1250px]">
+    <Navbar editMode contentOverride={form} onEditTarget={openEditor} />
+  </div>
+</div>
+      </motion.div>
+
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="rounded-2xl p-4 bg-white border border-slate-100">
+          <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center mb-3">
+            <Camera className="w-5 h-5" />
+          </div>
+          <div className="font-black text-slate-950">Logo</div>
+          <div className="text-sm text-slate-500 mt-1">
+            Hover the school logo and click camera icon.
+          </div>
+        </div>
+
+        <div className="rounded-2xl p-4 bg-white border border-slate-100">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center mb-3">
+            <Pencil className="w-5 h-5" />
+          </div>
+          <div className="font-black text-slate-950">Text</div>
+          <div className="text-sm text-slate-500 mt-1">
+            Hover school name or subtitle and click edit icon.
+          </div>
+        </div>
+
+        <div className="rounded-2xl p-4 bg-white border border-slate-100">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center mb-3">
+            <LinkIcon className="w-5 h-5" />
+          </div>
+          <div className="font-black text-slate-950">Menu</div>
+          <div className="text-sm text-slate-500 mt-1">
+            Hover any menu item or admission button to edit.
+          </div>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {editingTarget && (
+          <motion.div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
+            style={{
+              background: "rgba(2,6,23,0.55)",
+              backdropFilter: "blur(12px)",
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeEditor}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 14, scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 130, damping: 16 }}
+              className="w-full max-w-lg rounded-[28px] overflow-hidden"
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid rgba(255,255,255,0.75)",
+                boxShadow: "0 42px 110px rgba(0,0,0,0.28)",
+              }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="grid gap-5">
-                <div>
-                  <label className="block text-sm font-bold mb-2 text-slate-700">
-                    Upload Logo Image
-                  </label>
+              <div
+                className="h-1"
+                style={{
+                  background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan}, ${colors.green})`,
+                }}
+              />
 
-                  <div
-                    className="rounded-2xl p-5"
-                    style={{
-                      background: "rgba(255,255,255,0.72)",
-                      border: "1px dashed rgba(75,46,131,0.28)",
-                    }}
-                  >
-                    <label
-                      className="flex flex-col items-center justify-center gap-3 cursor-pointer text-center"
-                      style={{ color: colors.dark }}
+              <div className="p-6">
+                <div className="flex items-start justify-between gap-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(56,189,248,0.18))",
+                        color: colors.dark,
+                      }}
                     >
-                      <UploadCloud
-                        className="w-8 h-8"
-                        style={{ color: colors.purple }}
-                      />
-
-                      <span className="font-bold">
-                        {uploadingLogo
-                          ? "Uploading logo..."
-                          : "Choose logo image"}
-                      </span>
-
-                      <span className="text-sm text-slate-500 leading-relaxed">
-  Recommended: 512×512 px square logo, PNG/JPG/WebP, max 2 MB.
-  Transparent PNG works best. Image uploads to ImageKit, then click Save Changes.
-</span>
-
-
-                      <input
-                        type="file"
-                        accept="image/*"
-                        disabled={uploadingLogo}
-                        onChange={(e) => {
-                          uploadLogoImage(e.target.files?.[0]);
-                          e.target.value = "";
-                        }}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <Field
-                  label="Uploaded ImageKit URL"
-                  value={form.logoUrl}
-                  onChange={(value) => updateField("logoUrl", value)}
-                  placeholder="ImageKit URL will appear here after upload."
-                />
-
-                <div
-                  className="rounded-2xl p-4 bg-white flex items-center justify-between gap-5"
-                  style={{ border: "1px solid rgba(11,16,32,0.08)" }}
-                >
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={form.logoUrl || defaultSchoolLogo}
-                      alt="Navbar logo preview"
-                      className="w-24 h-24 object-contain rounded-xl bg-white"
-                    />
+                      <ModalIcon className="w-5 h-5" />
+                    </div>
 
                     <div>
-                      <div className="font-bold text-slate-900">
-                        {form.logoUrl ? "Custom Uploaded Logo" : "Default Logo"}
-                      </div>
-
-                      <div className="text-sm text-slate-500">
-                        {form.logoUrl
-                          ? "This uploaded ImageKit logo will be used."
-                          : "Default local logo will be used."}
-                      </div>
+                      <h3 className="text-xl font-black text-slate-950">
+                        {modalTitle}
+                      </h3>
+                      <p className="text-sm text-slate-500">
+                        Save only this selected navbar item.
+                      </p>
                     </div>
                   </div>
 
-                  {form.logoUrl && (
-                    <button
-                      type="button"
-                      onClick={removeCustomLogo}
-                      className="px-4 py-2 rounded-xl text-sm font-bold"
-                      style={{
-                        background: "rgba(215,25,32,0.08)",
-                        color: colors.red,
-                        border: "1px solid rgba(215,25,32,0.18)",
-                      }}
-                    >
-                      Use Default
-                    </button>
+                  <button
+                    type="button"
+                    onClick={closeEditor}
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-5">
+                  {editingTarget.type === "logo" && (
+                    <>
+                      <div
+                        className="rounded-3xl p-5"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                        }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-24 h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center">
+                            {modalForm.logoUrl ? (
+                              <img
+                                src={modalForm.logoUrl}
+                                alt="Logo preview"
+                                className="w-full h-full object-contain p-1"
+                              />
+                            ) : (
+                              <img
+                                src={defaultSchoolLogo}
+                                alt="Default logo"
+                                className="w-full h-full object-contain p-1"
+                              />
+                            )}
+                          </div>
+
+                          <div>
+                            <div className="text-white font-black">
+                              Logo Preview
+                            </div>
+                            <div className="text-white/55 text-sm mt-1 leading-relaxed">
+                              Recommended: 512×512 square, PNG/JPG/WebP, max 2 MB.
+                            </div>
+                          </div>
+                        </div>
+
+                        <label
+                          className="mt-5 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black cursor-pointer"
+                          style={{
+                            background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                            color: colors.dark,
+                          }}
+                        >
+                          <UploadCloud className="w-4 h-4" />
+                          {uploadingLogo ? "Uploading..." : "Upload New Logo"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={uploadingLogo}
+                            onChange={(e) => {
+                              uploadLogoImage(e.target.files?.[0]);
+                              e.target.value = "";
+                            }}
+                            className="hidden"
+                          />
+                        </label>
+
+                        {modalForm.logoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => updateModalField("logoUrl", "")}
+                            className="mt-3 w-full px-4 py-3 rounded-2xl text-sm font-black"
+                            style={{
+                              background: "rgba(215,25,32,0.12)",
+                              color: "#FFFFFF",
+                              border: "1px solid rgba(255,255,255,0.12)",
+                            }}
+                          >
+                            Use Default Logo
+                          </button>
+                        )}
+                      </div>
+
+                      <Field
+                        label="Logo Image URL"
+                        value={modalForm.logoUrl}
+                        onChange={(value) => updateModalField("logoUrl", value)}
+                        placeholder="Image URL appears after upload"
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "schoolName" && (
+                    <Field
+                      label="School Name"
+                      value={modalForm.schoolName}
+                      onChange={(value) =>
+                        updateModalField("schoolName", value)
+                      }
+                      placeholder="Baljagriti"
+                    />
+                  )}
+
+                  {editingTarget.type === "schoolSubtitle" && (
+                    <Field
+                      label="School Subtitle"
+                      value={modalForm.schoolSubtitle}
+                      onChange={(value) =>
+                        updateModalField("schoolSubtitle", value)
+                      }
+                      placeholder="Secondary English School"
+                    />
+                  )}
+
+                  {editingTarget.type === "admission" && (
+                    <>
+                      <Toggle
+                        checked={modalForm.showAdmissionButton !== false}
+                        onChange={(value) =>
+                          updateModalField("showAdmissionButton", value)
+                        }
+                        label="Show admission button"
+                      />
+
+                      <Field
+                        label="Button Text"
+                        value={modalForm.admissionButtonText}
+                        onChange={(value) =>
+                          updateModalField("admissionButtonText", value)
+                        }
+                        placeholder="Admission Open"
+                      />
+
+                      <Field
+                        label="Button Link"
+                        value={modalForm.admissionButtonLink}
+                        onChange={(value) =>
+                          updateModalField("admissionButtonLink", value)
+                        }
+                        placeholder="/admissions"
+                      />
+                    </>
+                  )}
+
+                  {editingTarget.type === "link" && (
+                    <>
+                      <Toggle
+                        checked={modalForm.visible !== false}
+                        onChange={(value) => updateModalField("visible", value)}
+                        label="Show this menu item"
+                      />
+
+                      <Field
+                        label="Menu Label"
+                        value={modalForm.label}
+                        onChange={(value) => updateModalField("label", value)}
+                        placeholder="Home"
+                      />
+
+                      <Field
+                        label="Menu Link"
+                        value={modalForm.href}
+                        onChange={(value) => updateModalField("href", value)}
+                        placeholder="/about"
+                      />
+
+                      <div className="rounded-2xl p-4 bg-slate-50 border border-slate-200 text-slate-600 text-sm">
+                        Fixed Link ID:{" "}
+                        <span className="font-black text-slate-900">
+                          {editingTarget.id}
+                        </span>
+                      </div>
+                    </>
                   )}
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-5">
-                  <Field
-                    label="School Name"
-                    value={form.schoolName}
-                    onChange={(value) => updateField("schoolName", value)}
-                  />
-
-                  <Field
-                    label="School Subtitle"
-                    value={form.schoolSubtitle}
-                    onChange={(value) => updateField("schoolSubtitle", value)}
-                  />
-                </div>
-              </div>
-            </EditorCard>
-
-            <EditorCard
-              icon={LinkIcon}
-              title="Admission Button"
-              color={colors.gold}
-            >
-              <div className="grid md:grid-cols-2 gap-5">
-                <Field
-                  label="Admission Button Text"
-                  value={form.admissionButtonText}
-                  onChange={(value) =>
-                    updateField("admissionButtonText", value)
-                  }
-                />
-
-                <Field
-                  label="Admission Button Link"
-                  value={form.admissionButtonLink}
-                  onChange={(value) =>
-                    updateField("admissionButtonLink", value)
-                  }
-                />
-              </div>
-
-              <label className="mt-5 flex items-center gap-3 text-sm font-bold text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={form.showAdmissionButton}
-                  onChange={(e) =>
-                    updateField("showAdmissionButton", e.target.checked)
-                  }
-                  className="w-5 h-5"
-                />
-                Show admission button
-              </label>
-            </EditorCard>
-
-            <EditorCard icon={Type} title="Menu Links" color={colors.purple}>
-              <div className="space-y-4">
-                {form.links.map((link, index) => (
-                  <div
-                    key={link.id}
-                    className="rounded-2xl p-4"
+                <div className="flex gap-3 mt-7">
+                  <button
+                    type="button"
+                    onClick={closeEditor}
+                    disabled={saving || uploadingLogo}
+                    className="flex-1 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5 disabled:opacity-60"
                     style={{
-                      background: "rgba(15,23,42,0.04)",
+                      background: "rgba(15,23,42,0.06)",
+                      color: "rgba(15,23,42,0.65)",
                       border: "1px solid rgba(15,23,42,0.08)",
                     }}
                   >
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="font-bold text-slate-900">
-                        Menu Item {index + 1}
-                      </div>
+                    Cancel
+                  </button>
 
-                      <div
-                        className="px-3 py-1 rounded-full text-xs font-bold"
-                        style={{
-                          background: "rgba(75,46,131,0.08)",
-                          color: colors.purple,
-                          border: "1px solid rgba(75,46,131,0.14)",
-                        }}
-                      >
-                        Fixed Route
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <Field
-                        label="Label"
-                        value={link.label}
-                        onChange={(value) =>
-                          updateLink(link.id, "label", value)
-                        }
-                      />
-
-                      <Field
-                        label="Link"
-                        value={link.href}
-                        onChange={(value) => updateLink(link.id, "href", value)}
-                      />
-                    </div>
-
-                    <label className="mt-4 flex items-center gap-3 text-sm font-bold text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={link.visible}
-                        onChange={(e) =>
-                          updateLink(link.id, "visible", e.target.checked)
-                        }
-                        className="w-5 h-5"
-                      />
-                      Show this menu item
-                    </label>
-                  </div>
-                ))}
+                  <button
+                    type="button"
+                    onClick={saveSelectedPart}
+                    disabled={saving || uploadingLogo}
+                    className="flex-1 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5 disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                    style={{
+                      background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                      color: "#020617",
+                      boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
+                    }}
+                  >
+                    <Save className="w-4 h-4" />
+                    {saving ? "Saving..." : saveButtonText}
+                  </button>
+                </div>
               </div>
-            </EditorCard>
-          </div>
-
-          <aside
-            className="xl:sticky xl:top-28 rounded-3xl overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
-              border: "1px solid rgba(255,255,255,0.14)",
-              boxShadow: "0 22px 58px rgba(11,16,32,0.25)",
-            }}
-          >
-            <div className="p-5 border-b border-white/10">
-              <div className="text-white font-bold text-lg flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                Navbar Preview
-              </div>
-
-              <div className="text-sm text-white/55">
-                This preview updates live while typing.
-              </div>
-            </div>
-
-            <div
-              className="bg-white overflow-y-auto"
-              style={{
-                height: "760px",
-              }}
-            >
-              <NavbarPreview form={form} />
-            </div>
-          </aside>
-        </div>
-      </main>
-    </section>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

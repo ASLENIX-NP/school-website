@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
-import { X } from "lucide-react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
 
 const colors = {
   red: "#D71920",
@@ -24,7 +24,7 @@ const ACCENT_SEQUENCE = [
 
 const gradeAccent = (index) => ACCENT_SEQUENCE[index % ACCENT_SEQUENCE.length];
 
-const defaultAcademicsContent = {
+export const defaultAcademicsContent = {
   heroBadge: "Nurturing Excellence",
   heroTitle: "Academics at Baljagriti",
   heroHighlight: "Baljagriti",
@@ -91,8 +91,6 @@ const defaultAcademicsContent = {
         "Science",
         "Computer Science",
         "Optional Mathematics",
-        "Grade 11",
-        "Grade 12",
       ],
       highlight:
         "Rigorous academic preparation for SEE and NEB Grade 11–12 learning pathways.",
@@ -206,12 +204,6 @@ const defaultAcademicsContent = {
       visible: true,
     },
     {
-      id: 3,
-      term: "Third Terminal",
-      timeframe: "Pre-Final Competency Benchmarking",
-      visible: true,
-    },
-    {
       id: 4,
       term: "Final Examination",
       timeframe: "Comprehensive Session End Grading",
@@ -236,7 +228,167 @@ const defaultAcademicsContent = {
   secondaryButtonText: "Contact Administration",
   secondaryButtonLink: "/contact",
 
-  curriculum: {},
+  curriculum: {
+    "Pre-Primary Level": [
+      {
+        grade: "Nursery",
+        books: [
+          { subject: "English Readiness", publication: "Ekta Publication" },
+          { subject: "Nepali Readiness", publication: "Janak Publication" },
+          { subject: "Numbers & Counting", publication: "Buddha Publication" },
+          { subject: "Creative Activities", publication: "Creative Publication" },
+          { subject: "Rhymes & Storytelling", publication: "Story Publication" },
+        ],
+      },
+      {
+        grade: "LKG",
+        books: [
+          { subject: "English Readiness", publication: "Ekta Publication" },
+          { subject: "Nepali Readiness", publication: "Janak Publication" },
+          { subject: "Numbers & Counting", publication: "Buddha Publication" },
+        ],
+      },
+      {
+        grade: "UKG",
+        books: [
+          { subject: "English Readiness", publication: "Ekta Publication" },
+          { subject: "Nepali Readiness", publication: "Janak Publication" },
+          { subject: "Numbers & Counting", publication: "Buddha Publication" },
+        ],
+      },
+    ],
+    "Primary Level": [
+      {
+        grade: "Grade 1",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 2",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 3",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 4",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 5",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+    ],
+    "Lower Secondary Level": [
+      {
+        grade: "Grade 6",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Computer Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 7",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Computer Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 8",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Computer Science", publication: "CDC" },
+          { subject: "Social Studies", publication: "CDC" },
+        ],
+      },
+    ],
+    "Secondary Level": [
+      {
+        grade: "Grade 9",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Computer Science", publication: "CDC" },
+          { subject: "Optional Mathematics", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 10",
+        books: [
+          { subject: "English", publication: "Ekta Publication" },
+          { subject: "Nepali", publication: "Janak Publication" },
+          { subject: "Mathematics", publication: "CDC" },
+          { subject: "Science", publication: "CDC" },
+          { subject: "Computer Science", publication: "CDC" },
+          { subject: "Optional Mathematics", publication: "CDC" },
+        ],
+      },
+      {
+        grade: "Grade 11",
+        books: [
+          { subject: "English", publication: "NEB / CDC" },
+          { subject: "Nepali", publication: "NEB / CDC" },
+          { subject: "Accountancy / Science Stream Subject", publication: "NEB / CDC" },
+          { subject: "Economics / Biology / Physics", publication: "NEB / CDC" },
+          { subject: "Computer Science / Mathematics", publication: "NEB / CDC" },
+        ],
+      },
+      {
+        grade: "Grade 12",
+        books: [
+          { subject: "English", publication: "NEB / CDC" },
+          { subject: "Nepali", publication: "NEB / CDC" },
+          { subject: "Accountancy / Science Stream Subject", publication: "NEB / CDC" },
+          { subject: "Economics / Biology / Physics", publication: "NEB / CDC" },
+          { subject: "Computer Science / Mathematics", publication: "NEB / CDC" },
+        ],
+      },
+    ],
+  },
 };
 
 function isLegacyAcademicsContent(saved = {}) {
@@ -292,7 +444,43 @@ function normalizePrograms(programs = [], shouldMigrate = false) {
   });
 }
 
-function mergeAcademicsContent(saved = {}) {
+function normalizeCurriculum(curriculum = {}, shouldMigrate = false) {
+  const hasSavedCurriculum =
+    curriculum &&
+    typeof curriculum === "object" &&
+    Object.keys(curriculum).length > 0;
+
+  const merged = hasSavedCurriculum
+    ? { ...defaultAcademicsContent.curriculum, ...curriculum }
+    : defaultAcademicsContent.curriculum;
+
+  const secondaryGrades = Array.isArray(merged["Secondary Level"])
+    ? [...merged["Secondary Level"]]
+    : [...defaultAcademicsContent.curriculum["Secondary Level"]];
+
+  const ensureGrade = (gradeName, books) => {
+    const exists = secondaryGrades.some((item) => item.grade === gradeName);
+
+    if (!exists) {
+      secondaryGrades.push({
+        grade: gradeName,
+        books,
+      });
+    }
+  };
+
+  if (shouldMigrate || secondaryGrades.length < 4) {
+    ensureGrade("Grade 11", defaultAcademicsContent.curriculum["Secondary Level"][2].books);
+    ensureGrade("Grade 12", defaultAcademicsContent.curriculum["Secondary Level"][3].books);
+  }
+
+  return {
+    ...merged,
+    "Secondary Level": secondaryGrades,
+  };
+}
+
+export function mergeAcademicsContent(saved = {}) {
   const shouldMigrate = isLegacyAcademicsContent(saved);
 
   return {
@@ -304,7 +492,7 @@ function mergeAcademicsContent(saved = {}) {
       shouldMigrate
     ),
 
-    curriculum: saved.curriculum || defaultAcademicsContent.curriculum,
+    curriculum: normalizeCurriculum(saved.curriculum, shouldMigrate),
 
     programs: normalizePrograms(
       Array.isArray(saved.programs)
@@ -321,9 +509,13 @@ function mergeAcademicsContent(saved = {}) {
       ? saved.stats
       : defaultAcademicsContent.stats,
 
-    timelineTerms: Array.isArray(saved.timelineTerms)
+    timelineTerms: (Array.isArray(saved.timelineTerms)
       ? saved.timelineTerms
-      : defaultAcademicsContent.timelineTerms,
+      : defaultAcademicsContent.timelineTerms
+    ).filter((item) => {
+      const term = String(item.term || "").toLowerCase();
+      return !term.includes("third terminal");
+    }),
 
     ongoingAssessments: Array.isArray(saved.ongoingAssessments)
       ? saved.ongoingAssessments
@@ -342,6 +534,109 @@ function HighlightedTitle({ title, highlight }) {
       <span style={{ color: colors.red }}>{highlight}</span>
       {after}
     </>
+  );
+}
+
+
+
+function ActionButtons({
+  editMode,
+  target,
+  onEditTarget,
+  onDeleteTarget,
+  canDelete = false,
+}) {
+  if (!editMode) return null;
+
+  return (
+    <div className="absolute -top-3 -right-3 z-[120] flex items-center gap-2 opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200">
+      <button
+        type="button"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onEditTarget(target);
+        }}
+        className="rounded-full w-9 h-9 flex items-center justify-center shadow-xl"
+        style={{
+          background: "linear-gradient(135deg, #FACC15, #38BDF8)",
+          color: "#020617",
+          border: "1px solid rgba(255,255,255,0.85)",
+        }}
+        title="Edit"
+      >
+        <Pencil className="w-4 h-4" />
+      </button>
+
+      {canDelete && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onDeleteTarget(target);
+          }}
+          className="rounded-full w-9 h-9 flex items-center justify-center shadow-xl"
+          style={{
+            background: "linear-gradient(135deg, #FEE2E2, #FCA5A5)",
+            color: colors.red,
+            border: "1px solid rgba(255,255,255,0.85)",
+          }}
+          title="Delete"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function EditableWrap({
+  editMode,
+  target,
+  onEditTarget,
+  onDeleteTarget,
+  canDelete = false,
+  className = "",
+  children,
+}) {
+  if (!editMode) return children;
+
+  return (
+    <div className={`relative group ${className}`}>
+      {children}
+      <ActionButtons
+        editMode={editMode}
+        target={target}
+        onEditTarget={onEditTarget}
+        onDeleteTarget={onDeleteTarget}
+        canDelete={canDelete}
+      />
+    </div>
+  );
+}
+
+function SectionAddButton({ editMode, label, type, onAddTarget }) {
+  if (!editMode) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onAddTarget(type);
+      }}
+      className="inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-black transition-all hover:-translate-y-0.5"
+      style={{
+        background: "linear-gradient(135deg, #FACC15, #38BDF8)",
+        color: "#020617",
+        boxShadow: "0 12px 30px rgba(56,189,248,0.20)",
+      }}
+    >
+      <Plus className="w-4 h-4" />
+      {label}
+    </button>
   );
 }
 
@@ -604,11 +899,24 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
   );
 }
 
-export function Academics() {
-  const [content, setContent] = useState(defaultAcademicsContent);
+export function Academics({
+  editMode = false,
+  contentOverride = null,
+  onEditTarget = () => {},
+  onDeleteTarget = () => {},
+  onAddTarget = () => {},
+}) {
+  const [content, setContent] = useState(
+    mergeAcademicsContent(contentOverride || defaultAcademicsContent)
+  );
   const [selectedProgram, setSelectedProgram] = useState(null);
 
   useEffect(() => {
+    if (contentOverride) {
+      setContent(mergeAcademicsContent(contentOverride));
+      return;
+    }
+
     const loadAcademicsContent = async () => {
       try {
         const res = await axios.get(
@@ -624,7 +932,7 @@ export function Academics() {
     };
 
     loadAcademicsContent();
-  }, []);
+  }, [contentOverride]);
 
   const visiblePrograms = content.programs.filter(
     (item) => item.visible !== false
@@ -671,12 +979,18 @@ export function Academics() {
 
       <section className="pt-36 pb-16 relative z-10">
         <div className="max-w-4xl mx-auto text-center px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="space-y-8"
+          <EditableWrap
+            editMode={editMode}
+            target={{ type: "hero" }}
+            onEditTarget={onEditTarget}
+            onDeleteTarget={onDeleteTarget}
           >
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+              className="space-y-8"
+            >
             <span
               className="inline-block px-5 py-2 rounded-full text-sm font-bold"
               style={{
@@ -705,18 +1019,39 @@ export function Academics() {
             <p className="text-xl md:text-2xl leading-relaxed text-slate-600 max-w-3xl mx-auto">
               {content.heroDescription}
             </p>
-          </motion.div>
+            </motion.div>
+          </EditableWrap>
         </div>
       </section>
 
       <section className="pb-20 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
+          <div className="flex justify-end mb-6">
+            <SectionAddButton
+              editMode={editMode}
+              label="Add Program"
+              type="program"
+              onAddTarget={onAddTarget}
+            />
+          </div>
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {visiblePrograms.map((prog, i) => {
               const cardColor = prog.badgeColor || colors.green;
+              const realIndex = content.programs.findIndex(
+                (item) => item.id === prog.id
+              );
 
               return (
-                <motion.div
+                <EditableWrap
+                  key={prog.id}
+                  editMode={editMode}
+                  target={{ type: "program", index: realIndex }}
+                  onEditTarget={onEditTarget}
+                  onDeleteTarget={onDeleteTarget}
+                  canDelete
+                >
+                  <motion.div
                   key={prog.id}
                   onClick={() => setSelectedProgram(prog.level)}
                   initial={{ opacity: 0, y: 30 }}
@@ -803,7 +1138,8 @@ export function Academics() {
                       ))}
                     </div>
                   </div>
-                </motion.div>
+                  </motion.div>
+                </EditableWrap>
               );
             })}
           </div>
@@ -812,8 +1148,14 @@ export function Academics() {
 
      <section className="py-24 relative z-10">
   <div className="max-w-7xl mx-auto px-6">
-    <motion.div
-      initial={{ opacity: 0, y: 28 }}
+    <EditableWrap
+      editMode={editMode}
+      target={{ type: "featuresHeader" }}
+      onEditTarget={onEditTarget}
+      onDeleteTarget={onDeleteTarget}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.25 }}
       transition={{ duration: 0.55 }}
@@ -852,11 +1194,24 @@ export function Academics() {
       <p className="text-slate-600 max-w-3xl mx-auto leading-relaxed text-base md:text-lg">
         {content.featuresDescription}
       </p>
-    </motion.div>
+      </motion.div>
+    </EditableWrap>
+
+    <div className="flex justify-end mb-6">
+      <SectionAddButton
+        editMode={editMode}
+        label="Add Feature"
+        type="feature"
+        onAddTarget={onAddTarget}
+      />
+    </div>
 
     <div className="grid md:grid-cols-2 gap-7">
       {visibleFeatures.map((feat, i) => {
         const featureColor = feat.color || colors.green;
+        const realIndex = content.features.findIndex(
+          (item) => item.id === feat.id
+        );
 
         const cardStyles = [
           {
@@ -884,8 +1239,15 @@ export function Academics() {
         const styleSet = cardStyles[i % cardStyles.length];
 
         return (
-          <motion.div
+          <EditableWrap
             key={feat.id}
+            editMode={editMode}
+            target={{ type: "feature", index: realIndex }}
+            onEditTarget={onEditTarget}
+            onDeleteTarget={onDeleteTarget}
+            canDelete
+          >
+            <motion.div
             initial={{ opacity: 0, y: 26 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
@@ -941,7 +1303,8 @@ export function Academics() {
                 {feat.desc}
               </p>
             </div>
-          </motion.div>
+            </motion.div>
+          </EditableWrap>
         );
       })}
     </div>
@@ -955,12 +1318,32 @@ export function Academics() {
         }}
       >
         <div className="max-w-7xl mx-auto px-6">
+          <div className="flex justify-end mb-6">
+            <SectionAddButton
+              editMode={editMode}
+              label="Add Stat"
+              type="stat"
+              onAddTarget={onAddTarget}
+            />
+          </div>
+
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
             {visibleStats.map((stat, i) => {
               const statColor = stat.color || colors.green;
+              const realIndex = content.stats.findIndex(
+                (item) => item.id === stat.id
+              );
 
               return (
-                <motion.div
+                <EditableWrap
+                  key={stat.id}
+                  editMode={editMode}
+                  target={{ type: "stat", index: realIndex }}
+                  onEditTarget={onEditTarget}
+                  onDeleteTarget={onDeleteTarget}
+                  canDelete
+                >
+                  <motion.div
                   key={stat.id}
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -1002,7 +1385,8 @@ export function Academics() {
                   <div className="text-sm text-slate-600 font-bold tracking-wide uppercase">
                     {stat.label}
                   </div>
-                </motion.div>
+                  </motion.div>
+                </EditableWrap>
               );
             })}
           </div>
@@ -1011,8 +1395,14 @@ export function Academics() {
 
      <section className="pb-24 relative z-10">
   <div className="max-w-7xl mx-auto px-6">
-    <div className="text-center mb-14">
-      <span
+    <EditableWrap
+      editMode={editMode}
+      target={{ type: "examHeader" }}
+      onEditTarget={onEditTarget}
+      onDeleteTarget={onDeleteTarget}
+    >
+      <div className="text-center mb-10">
+        <span
         className="inline-block px-5 py-2 rounded-full text-sm font-bold mb-5"
         style={{
           background: "rgba(75,46,131,0.08)",
@@ -1045,6 +1435,16 @@ export function Academics() {
       <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed">
         {content.examDescription}
       </p>
+      </div>
+    </EditableWrap>
+
+    <div className="flex justify-end mb-6">
+      <SectionAddButton
+        editMode={editMode}
+        label="Add Exam Term"
+        type="timeline"
+        onAddTarget={onAddTarget}
+      />
     </div>
 
     <div className="grid lg:grid-cols-12 gap-10 items-stretch">
@@ -1055,6 +1455,9 @@ export function Academics() {
             return !term.includes("third terminal");
           })
           .map((t, index) => {
+            const realIndex = content.timelineTerms.findIndex(
+              (item) => item.id === t.id
+            );
             const termColor =
               index === 0
                 ? colors.red
@@ -1063,8 +1466,15 @@ export function Academics() {
                 : colors.purple;
 
             return (
-              <motion.div
+              <EditableWrap
                 key={t.id}
+                editMode={editMode}
+                target={{ type: "timeline", index: realIndex }}
+                onEditTarget={onEditTarget}
+                onDeleteTarget={onDeleteTarget}
+                canDelete
+              >
+                <motion.div
                 initial={{ opacity: 0, x: -22 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
@@ -1122,13 +1532,21 @@ export function Academics() {
                     </p>
                   </div>
                 </div>
-              </motion.div>
+                </motion.div>
+              </EditableWrap>
             );
           })}
       </div>
 
-      <motion.div
-        className="group lg:col-span-5 h-full min-h-[420px] rounded-[2rem] p-8 md:p-9 flex flex-col justify-between overflow-hidden relative"
+      <EditableWrap
+        editMode={editMode}
+        target={{ type: "continuous" }}
+        onEditTarget={onEditTarget}
+        onDeleteTarget={onDeleteTarget}
+        className="lg:col-span-5 h-full"
+      >
+        <motion.div
+          className="group lg:col-span-5 h-full min-h-[420px] rounded-[2rem] p-8 md:p-9 flex flex-col justify-between overflow-hidden relative"
         whileHover={{
           y: -6,
           scale: 1.01,
@@ -1201,14 +1619,22 @@ export function Academics() {
             </div>
           ))}
         </div>
-      </motion.div>
+        </motion.div>
+      </EditableWrap>
     </div>
   </div>
 </section>
 
       <section className="pt-10 pb-24 text-center relative z-10">
-        <motion.div
-          className="group max-w-4xl mx-auto px-6 py-14 rounded-[36px] space-y-6 transition-all duration-300 cursor-default"
+        <EditableWrap
+          editMode={editMode}
+          target={{ type: "cta" }}
+          onEditTarget={onEditTarget}
+          onDeleteTarget={onDeleteTarget}
+          className="max-w-4xl mx-auto"
+        >
+          <motion.div
+            className="group px-6 py-14 rounded-[36px] space-y-6 transition-all duration-300 cursor-default"
           whileHover={{
             y: -8,
             scale: 1.01,
@@ -1255,6 +1681,9 @@ export function Academics() {
           <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link
               to={content.primaryButtonLink || "/admissions"}
+              onClick={(event) => {
+                if (editMode) event.preventDefault();
+              }}
               className="px-8 py-4 rounded-xl text-base font-bold transition-all duration-300 hover:scale-105 hover:-translate-y-1 shadow-lg w-full sm:w-auto"
               style={{
                 background: "linear-gradient(135deg, #FACC15 0%, #38BDF8 100%)",
@@ -1267,12 +1696,16 @@ export function Academics() {
 
             <Link
               to={content.secondaryButtonLink || "/contact"}
+              onClick={(event) => {
+                if (editMode) event.preventDefault();
+              }}
               className="px-8 py-4 rounded-xl text-base font-bold text-slate-800 bg-white border border-slate-200 transition-all duration-300 hover:-translate-y-1 hover:bg-slate-50 w-full sm:w-auto shadow-sm hover:shadow-lg"
             >
               {content.secondaryButtonText}
             </Link>
           </div>
-        </motion.div>
+          </motion.div>
+        </EditableWrap>
       </section>
 
       <AnimatePresence>

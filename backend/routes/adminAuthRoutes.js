@@ -49,24 +49,29 @@ await supabase
     },
   ]);
 
-    const token = jwt.sign(
-      {
-        email: admin.admin_email,
-        role: admin.role,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
+    const normalizedRole = String(admin.role || "admin")
+  .trim()
+  .toLowerCase()
+  .replace(/[_-]+/g, " ");
+
+const token = jwt.sign(
+  {
+    email: admin.admin_email,
+    role: normalizedRole,
+  },
+  process.env.JWT_SECRET,
+  {
+    expiresIn: "7d",
+  }
+);
 
     return res.json({
       success: true,
       token,
       admin: {
-        email: admin.admin_email,
-        role: admin.role,
-      },
+  email: admin.admin_email,
+  role: normalizedRole,
+},
     });
 
   } catch (err) {

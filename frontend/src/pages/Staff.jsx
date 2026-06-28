@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import {
-  Users,
-  GraduationCap,
   Award,
-  Phone,
   BookOpen,
-  UserRound,
-  X,
-  Mail,
-  Star,
+  Camera,
   FileText,
+  GraduationCap,
+  Mail,
+  Pencil,
+  Phone,
+  Plus,
+  Star,
+  Trash2,
+  UserRound,
+  Users,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -23,7 +27,9 @@ const colors = {
   gold: "#FACC15",
 };
 
-const defaultStaffContent = {
+const statColors = [colors.green, colors.purple, colors.red, colors.cyan];
+
+export const defaultStaffContent = {
   badgeText: "Our Faculty Team",
   title: "Our Staff & Members",
   highlightedWord: "Members",
@@ -60,6 +66,7 @@ const defaultStaffContent = {
       imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
       qualification: "M.Ed",
       phone: "+977-9800000000",
+      email: "",
       description:
         "Mr. Binod Subedi has been leading Baljagriti Secondary English School with vision and dedication for over a decade. His commitment to academic excellence and student welfare has transformed the school into a centre of quality education in the region.",
       visible: true,
@@ -71,6 +78,7 @@ const defaultStaffContent = {
       imageUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
       qualification: "M.Ed",
       phone: "+977-9800000000",
+      email: "",
       description:
         "Mr. Amul Shrestha brings years of administrative and academic expertise to Baljagriti. As Vice Principal, he oversees daily operations, faculty coordination, and student discipline, ensuring a productive and inspiring learning environment.",
       visible: true,
@@ -82,6 +90,7 @@ const defaultStaffContent = {
       imageUrl: "https://images.unsplash.com/photo-1504593811423-6dd665756598",
       qualification: "B.Sc, B.Ed",
       phone: "+977-9800000000",
+      email: "",
       description:
         "Mr. Prem Hamal is a passionate science educator who brings curiosity and innovation into the classroom. With expertise in Physics, Chemistry, and Biology, he makes complex concepts accessible and exciting for every student.",
       visible: true,
@@ -89,18 +98,46 @@ const defaultStaffContent = {
   ],
 };
 
-function mergeStaffContent(saved = {}) {
+function normalizeStats(stats) {
+  if (!Array.isArray(stats) || stats.length === 0) {
+    return defaultStaffContent.stats;
+  }
+
+  return stats.map((stat, index) => ({
+    ...(defaultStaffContent.stats[index] || {}),
+    ...stat,
+    id: stat.id || `stat-${Date.now()}-${index}`,
+    icon: stat.icon || defaultStaffContent.stats[index]?.icon || "users",
+    color: stat.color || statColors[index % statColors.length],
+  }));
+}
+
+function normalizeStaff(staff) {
+  if (!Array.isArray(staff) || staff.length === 0) {
+    return defaultStaffContent.staff;
+  }
+
+  return staff.map((member, index) => ({
+    ...(defaultStaffContent.staff[index] || {}),
+    ...member,
+    id: member.id || Date.now() + index,
+    name: member.name || "Staff Member",
+    position: member.position || "Teacher",
+    imageUrl: member.imageUrl || "",
+    qualification: member.qualification || "",
+    phone: member.phone || "",
+    email: member.email || "",
+    description: member.description || "",
+    visible: member.visible !== false,
+  }));
+}
+
+export function mergeStaffContent(saved = {}) {
   return {
     ...defaultStaffContent,
-    ...saved,
-    stats:
-      Array.isArray(saved.stats) && saved.stats.length
-        ? saved.stats
-        : defaultStaffContent.stats,
-    staff:
-      Array.isArray(saved.staff) && saved.staff.length
-        ? saved.staff
-        : defaultStaffContent.staff,
+    ...(saved || {}),
+    stats: normalizeStats(saved.stats),
+    staff: normalizeStaff(saved.staff),
   };
 }
 
@@ -108,6 +145,22 @@ function getStatIcon(icon) {
   if (icon === "graduation") return GraduationCap;
   if (icon === "award") return Award;
   return Users;
+}
+
+function HighlightedTitle({ title, highlightedWord }) {
+  if (!highlightedWord || !title || !title.includes(highlightedWord)) {
+    return <>{title}</>;
+  }
+
+  const [before, after] = title.split(highlightedWord);
+
+  return (
+    <>
+      {before}
+      <span className="text-green-700">{highlightedWord}</span>
+      {after}
+    </>
+  );
 }
 
 function StaffImage({ src, name }) {
@@ -125,6 +178,113 @@ function StaffImage({ src, name }) {
     <div className="w-full h-80 bg-slate-100 flex items-center justify-center">
       <UserRound className="w-20 h-20 text-slate-300" />
     </div>
+  );
+}
+
+function ActionButtons({
+  editMode,
+  target,
+  onEditTarget,
+  onDeleteTarget,
+  canDelete = false,
+  label = "Edit",
+  icon: Icon = Pencil,
+}) {
+  if (!editMode) return null;
+
+  return (
+    <div className="absolute -top-3 -right-3 z-[120] flex items-center gap-2 opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200">
+      <button
+        type="button"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onEditTarget(target);
+        }}
+        className="rounded-full w-10 h-10 flex items-center justify-center shadow-xl"
+        style={{
+          background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+          color: "#020617",
+          border: "1px solid rgba(255,255,255,0.88)",
+        }}
+        title={label}
+      >
+        <Icon className="w-4 h-4" />
+      </button>
+
+      {canDelete && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onDeleteTarget(target);
+          }}
+          className="rounded-full w-10 h-10 flex items-center justify-center shadow-xl"
+          style={{
+            background: "linear-gradient(135deg, #FEE2E2, #FCA5A5)",
+            color: colors.red,
+            border: "1px solid rgba(255,255,255,0.88)",
+          }}
+          title="Delete"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function EditableWrap({
+  editMode,
+  target,
+  onEditTarget,
+  onDeleteTarget = () => {},
+  canDelete = false,
+  label = "Edit",
+  icon = Pencil,
+  className = "",
+  children,
+}) {
+  if (!editMode) return children;
+
+  return (
+    <div className={`relative group ${className}`}>
+      {children}
+      <ActionButtons
+        editMode={editMode}
+        target={target}
+        onEditTarget={onEditTarget}
+        onDeleteTarget={onDeleteTarget}
+        canDelete={canDelete}
+        label={label}
+        icon={icon}
+      />
+    </div>
+  );
+}
+
+function AddStaffButton({ editMode, onAddTarget }) {
+  if (!editMode) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onAddTarget("staffMember");
+      }}
+      className="mt-10 mx-auto flex items-center gap-2 rounded-2xl px-6 py-4 text-sm font-black transition-all hover:-translate-y-1"
+      style={{
+        background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+        color: "#020617",
+        boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
+      }}
+    >
+      <Plus className="w-4 h-4" />
+      Add Staff Member
+    </button>
   );
 }
 
@@ -156,7 +316,6 @@ function StaffPopup({ staff, onClose }) {
                 "0 80px 160px rgba(0,0,0,0.35), 0 30px 60px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.8)",
             }}
           >
-            {/* decorative blobs */}
             <div
               className="absolute top-0 right-0 w-72 h-72 rounded-full pointer-events-none"
               style={{
@@ -174,7 +333,6 @@ function StaffPopup({ staff, onClose }) {
               }}
             />
 
-            {/* Close button */}
             <motion.button
               type="button"
               onClick={onClose}
@@ -187,7 +345,6 @@ function StaffPopup({ staff, onClose }) {
             </motion.button>
 
             <div className="grid grid-cols-1 md:grid-cols-[700px_1fr]">
-              {/* Left — image */}
               <div className="relative h-[320px] sm:h-[400px] md:h-[900px] overflow-hidden">
                 {staff.imageUrl ? (
                   <img
@@ -221,9 +378,7 @@ function StaffPopup({ staff, onClose }) {
                 />
               </div>
 
-              {/* Right — ALL CENTERED */}
               <div className="p-6 sm:p-8 md:p-16 flex flex-col items-center md:justify-center relative z-10 text-center">
-                {/* accent line — centered */}
                 <div
                   className="w-16 h-1 rounded-full mb-6 mx-auto"
                   style={{
@@ -231,7 +386,6 @@ function StaffPopup({ staff, onClose }) {
                   }}
                 />
 
-                {/* position badge — centered */}
                 <span
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-4"
                   style={{
@@ -244,7 +398,6 @@ function StaffPopup({ staff, onClose }) {
                   {staff.position}
                 </span>
 
-                {/* name — centered */}
                 <h2
                   className="hidden md:block text-5xl lg:text-7xl font-black text-slate-950 leading-tight mb-2"
                   style={{
@@ -255,7 +408,6 @@ function StaffPopup({ staff, onClose }) {
                   {staff.name}
                 </h2>
 
-                {/* description — centered */}
                 {staff.description && (
                   <div
                     className="mt-8 p-8 rounded-3xl w-full"
@@ -284,7 +436,6 @@ function StaffPopup({ staff, onClose }) {
                   style={{ background: "rgba(15,23,42,0.08)" }}
                 />
 
-                {/* info cards — centered */}
                 <div className="space-y-3 w-full">
                   {staff.qualification && (
                     <div
@@ -356,7 +507,6 @@ function StaffPopup({ staff, onClose }) {
                   )}
                 </div>
 
-                {/* bottom accent — centered */}
                 <div className="mt-8 flex items-center justify-center gap-3">
                   <div className="h-1 w-8 rounded-full" style={{ background: colors.red }} />
                   <div className="h-1 w-16 rounded-full" style={{ background: colors.green }} />
@@ -371,12 +521,26 @@ function StaffPopup({ staff, onClose }) {
   );
 }
 
-export default function Staff() {
-  const [content, setContent] = useState(defaultStaffContent);
-  const [loading, setLoading] = useState(true);
+export function Staff({
+  editMode = false,
+  contentOverride = null,
+  onEditTarget = () => {},
+  onDeleteTarget = () => {},
+  onAddTarget = () => {},
+}) {
+  const [content, setContent] = useState(
+    mergeStaffContent(contentOverride || defaultStaffContent)
+  );
+  const [loading, setLoading] = useState(!contentOverride);
   const [selectedStaff, setSelectedStaff] = useState(null);
 
   useEffect(() => {
+    if (contentOverride) {
+      setContent(mergeStaffContent(contentOverride));
+      setLoading(false);
+      return;
+    }
+
     const loadStaffContent = async () => {
       try {
         const res = await axios.get(
@@ -393,10 +557,11 @@ export default function Staff() {
     };
 
     loadStaffContent();
-  }, []);
+  }, [contentOverride]);
 
-  // Body scroll lock when popup is open
   useEffect(() => {
+    if (editMode) return;
+
     if (selectedStaff) {
       document.body.style.overflow = "hidden";
     } else {
@@ -406,7 +571,7 @@ export default function Staff() {
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [selectedStaff]);
+  }, [selectedStaff, editMode]);
 
   const visibleStaff = content.staff.filter((staff) => staff.visible !== false);
 
@@ -426,61 +591,89 @@ export default function Staff() {
       <div className="absolute top-72 right-16 w-52 h-52 bg-purple-500/10 rounded-full blur-3xl" />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55 }}
-          className="text-center mb-16"
+        <EditableWrap
+          editMode={editMode}
+          target={{ type: "pageHeader" }}
+          onEditTarget={onEditTarget}
+          label="Edit staff heading"
         >
-          <div
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-full mb-6 font-semibold"
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55 }}
+            className="text-center mb-16 rounded-[2rem]"
             style={{
-              background: "rgba(22,138,58,0.08)",
-              border: "1px solid rgba(22,138,58,0.18)",
-              color: colors.green,
+              outline: editMode ? "1px dashed rgba(56,189,248,0.55)" : "none",
+              outlineOffset: editMode ? "10px" : "0",
             }}
           >
-            <Users size={16} />
-            {content.badgeText}
-          </div>
+            <div
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-full mb-6 font-semibold"
+              style={{
+                background: "rgba(22,138,58,0.08)",
+                border: "1px solid rgba(22,138,58,0.18)",
+                color: colors.green,
+              }}
+            >
+              <Users size={16} />
+              {content.badgeText}
+            </div>
 
-          <h1
-            className="text-5xl md:text-7xl text-slate-950 leading-tight"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 850,
-              letterSpacing: "-0.045em",
-            }}
-          >
-            {content.title.replace(content.highlightedWord, "").trim()}{" "}
-            <span className="text-green-700">{content.highlightedWord}</span>
-          </h1>
+            <h1
+              className="text-5xl md:text-7xl text-slate-950 leading-tight"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 850,
+                letterSpacing: "-0.045em",
+              }}
+            >
+              <HighlightedTitle
+                title={content.title}
+                highlightedWord={content.highlightedWord}
+              />
+            </h1>
 
-          <p className="mt-6 text-lg md:text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed">
-            {content.subtitle}
-          </p>
-        </motion.div>
+            <p className="mt-6 text-lg md:text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed">
+              {content.subtitle}
+            </p>
+          </motion.div>
+        </EditableWrap>
 
         <div className="grid md:grid-cols-3 gap-6 mb-16">
           {content.stats.map((stat, index) => {
             const Icon = getStatIcon(stat.icon);
             return (
-              <motion.div
+              <EditableWrap
                 key={stat.id || index}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: index * 0.08 }}
-                className="rounded-3xl p-8 text-center bg-white/90 backdrop-blur-xl"
-                style={{
-                  border: "1px solid rgba(15,23,42,0.08)",
-                  boxShadow:
-                    "0 22px 54px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.85)",
-                }}
+                editMode={editMode}
+                target={{ type: "statCard", index }}
+                onEditTarget={onEditTarget}
+                label="Edit number card"
               >
-                <Icon className="mx-auto mb-4" size={42} style={{ color: stat.color || colors.green }} />
-                <h3 className="text-4xl font-black text-slate-950">{stat.value}</h3>
-                <p className="text-slate-500 mt-1">{stat.label}</p>
-              </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: index * 0.08 }}
+                  className="rounded-3xl p-8 text-center bg-white/90 backdrop-blur-xl"
+                  style={{
+                    border: editMode
+                      ? "2px dashed rgba(56,189,248,0.55)"
+                      : "1px solid rgba(15,23,42,0.08)",
+                    boxShadow:
+                      "0 22px 54px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.85)",
+                  }}
+                >
+                  <Icon
+                    className="mx-auto mb-4"
+                    size={42}
+                    style={{ color: stat.color || colors.green }}
+                  />
+                  <h3 className="text-4xl font-black text-slate-950">
+                    {stat.value}
+                  </h3>
+                  <p className="text-slate-500 mt-1">{stat.label}</p>
+                </motion.div>
+              </EditableWrap>
             );
           })}
         </div>
@@ -491,58 +684,111 @@ export default function Staff() {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {visibleStaff.map((staff, index) => (
-              <motion.div
-                key={staff.id}
-                onClick={() => setSelectedStaff(staff)}
-                initial={{ opacity: 0, y: 26 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="group bg-white rounded-[2rem] overflow-hidden transition-all duration-300 hover:-translate-y-2 cursor-pointer"
-                style={{
-                  border: "1px solid rgba(15,23,42,0.08)",
-                  boxShadow:
-                    "0 22px 54px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.85)",
-                }}
-              >
-                <div className="relative overflow-hidden">
-                  <StaffImage src={staff.imageUrl} name={staff.name} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
-                </div>
+            {visibleStaff.map((staff, index) => {
+              const realIndex = content.staff.findIndex(
+                (member) => member.id === staff.id
+              );
 
-                <div className="p-7">
-                  <h3 className="text-2xl font-black text-slate-950">{staff.name}</h3>
-                  <p className="text-green-700 font-bold mt-1">{staff.position}</p>
+              return (
+                <motion.div
+                  key={staff.id}
+                  onClick={() => {
+                    if (!editMode) setSelectedStaff(staff);
+                  }}
+                  initial={{ opacity: 0, y: 26 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.25 }}
+                  transition={{ duration: 0.45, delay: index * 0.05 }}
+                  className="group relative bg-white rounded-[2rem] overflow-hidden transition-all duration-300 hover:-translate-y-2 cursor-pointer"
+                  style={{
+                    border: editMode
+                      ? "2px dashed rgba(56,189,248,0.55)"
+                      : "1px solid rgba(15,23,42,0.08)",
+                    boxShadow:
+                      "0 22px 54px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.85)",
+                  }}
+                >
+                  <ActionButtons
+                    editMode={editMode}
+                    target={{ type: "staffCard", index: realIndex }}
+                    onEditTarget={onEditTarget}
+                    onDeleteTarget={onDeleteTarget}
+                    canDelete
+                    label="Edit staff member"
+                  />
 
-                  {staff.description && (
-                    <p className="mt-3 text-slate-500 text-sm leading-relaxed line-clamp-2">
-                      {staff.description}
-                    </p>
-                  )}
+                  <div className="relative overflow-hidden">
+                    <StaffImage src={staff.imageUrl} name={staff.name} />
 
-                  <div className="mt-5 space-y-3">
-                    {staff.qualification && (
-                      <div className="flex items-center gap-3 text-slate-600">
-                        <BookOpen className="w-4 h-4 text-purple-700" />
-                        <span>{staff.qualification}</span>
-                      </div>
-                    )}
-                    {staff.phone && (
-                      <div className="flex items-center gap-3 text-slate-600">
-                        <Phone className="w-4 h-4 text-green-700" />
-                        <span>{staff.phone}</span>
-                      </div>
-                    )}
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        if (!editMode) return;
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onEditTarget({ type: "staffImage", index: realIndex });
+                      }}
+                      className={`absolute top-5 left-5 z-20 h-11 w-11 rounded-full items-center justify-center shadow-xl transition-all ${
+                        editMode
+                          ? "flex opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100"
+                          : "hidden"
+                      }`}
+                      style={{
+                        background: "rgba(255,255,255,0.92)",
+                        color: colors.purple,
+                        border: "1px solid rgba(255,255,255,0.88)",
+                      }}
+                      title="Change staff photo"
+                    >
+                      <Camera className="w-4 h-4" />
+                    </button>
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
                   </div>
-                </div>
-              </motion.div>
-            ))}
+
+                  <div className="p-7">
+                    <h3 className="text-2xl font-black text-slate-950">
+                      {staff.name}
+                    </h3>
+                    <p className="text-green-700 font-bold mt-1">
+                      {staff.position}
+                    </p>
+
+                    {staff.description && (
+                      <p className="mt-3 text-slate-500 text-sm leading-relaxed line-clamp-2">
+                        {staff.description}
+                      </p>
+                    )}
+
+                    <div className="mt-5 space-y-3">
+                      {staff.qualification && (
+                        <div className="flex items-center gap-3 text-slate-600">
+                          <BookOpen className="w-4 h-4 text-purple-700" />
+                          <span>{staff.qualification}</span>
+                        </div>
+                      )}
+                      {staff.phone && (
+                        <div className="flex items-center gap-3 text-slate-600">
+                          <Phone className="w-4 h-4 text-green-700" />
+                          <span>{staff.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         )}
+
+        <AddStaffButton editMode={editMode} onAddTarget={onAddTarget} />
       </div>
 
-      <StaffPopup staff={selectedStaff} onClose={() => setSelectedStaff(null)} />
+      {!editMode && (
+        <StaffPopup staff={selectedStaff} onClose={() => setSelectedStaff(null)} />
+      )}
     </section>
   );
 }
+
+export default Staff;

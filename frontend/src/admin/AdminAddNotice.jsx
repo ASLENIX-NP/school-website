@@ -18,6 +18,30 @@ const colors = {
   gold: "#FACC15",
 };
 
+function getAuthHeaders(json = false) {
+  const token = localStorage.getItem("adminToken");
+  const headers = {};
+
+  if (json) headers["Content-Type"] = "application/json";
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  return headers;
+}
+
+function getUploadUrl(payload) {
+  return (
+    payload?.url ||
+    payload?.imageUrl ||
+    payload?.fileUrl ||
+    payload?.data?.url ||
+    payload?.data?.imageUrl ||
+    payload?.data?.fileUrl ||
+    payload?.data?.secure_url ||
+    payload?.file?.url ||
+    ""
+  );
+}
+
 function Field({ label, value, onChange, placeholder = "", type = "text" }) {
   return (
     <div>
@@ -69,7 +93,7 @@ export default function AdminAddNotice() {
 
   const [form, setForm] = useState({
     title: "",
-    category: "",
+    category: "General",
     notice_date: new Date().toISOString().slice(0, 10),
     description: "",
     pdf_url: "",
@@ -82,10 +106,7 @@ export default function AdminAddNotice() {
   const [error, setError] = useState("");
 
   const updateField = (name, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const uploadPdf = async (file) => {
@@ -97,7 +118,6 @@ export default function AdminAddNotice() {
     const isPdf =
       file.type === "application/pdf" ||
       file.name.toLowerCase().endsWith(".pdf");
-
     const maxSize = 10 * 1024 * 1024;
 
     if (!isPdf) {
@@ -118,18 +138,12 @@ export default function AdminAddNotice() {
 
       const response = await fetch("http://localhost:5000/api/upload", {
         method: "POST",
+        headers: getAuthHeaders(false),
         body: formData,
       });
 
       const result = await response.json();
-
-      const uploadedUrl =
-        result?.url ||
-        result?.imageUrl ||
-        result?.fileUrl ||
-        result?.data?.url ||
-        result?.data?.imageUrl ||
-        result?.data?.fileUrl;
+      const uploadedUrl = getUploadUrl(result);
 
       if (!response.ok || !uploadedUrl) {
         throw new Error(result?.message || "PDF upload failed.");
@@ -159,9 +173,7 @@ export default function AdminAddNotice() {
     try {
       const response = await fetch("http://localhost:5000/api/notices", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(true),
         body: JSON.stringify({
           title: form.title,
           category: form.category,
@@ -179,9 +191,7 @@ export default function AdminAddNotice() {
       }
 
       setSuccess("Notice added successfully.");
-      setTimeout(() => {
-        navigate("/admin/notices");
-      }, 700);
+      setTimeout(() => navigate("/admin/notices"), 700);
     } catch (err) {
       console.error("Create notice error:", err);
       setError(err.message || "Failed to create notice.");
@@ -349,10 +359,7 @@ export default function AdminAddNotice() {
                   border: "1px dashed rgba(75,46,131,0.28)",
                 }}
               >
-                <UploadCloud
-                  className="w-8 h-8"
-                  style={{ color: colors.purple }}
-                />
+                <UploadCloud className="w-8 h-8" style={{ color: colors.purple }} />
 
                 <span className="font-bold text-slate-800">
                   {uploading ? "Uploading PDF..." : "Upload PDF from device"}
@@ -383,14 +390,8 @@ export default function AdminAddNotice() {
                   }}
                 >
                   <div className="flex items-center gap-2 mb-3">
-                    <FileText
-                      className="w-4 h-4"
-                      style={{ color: colors.green }}
-                    />
-                    <span
-                      className="text-sm font-bold"
-                      style={{ color: colors.green }}
-                    >
+                    <FileText className="w-4 h-4" style={{ color: colors.green }} />
+                    <span className="text-sm font-bold" style={{ color: colors.green }}>
                       PDF uploaded
                     </span>
                   </div>

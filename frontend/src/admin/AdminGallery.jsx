@@ -1,22 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowLeft,
   Save,
   Plus,
   Trash2,
   CheckCircle2,
+  AlertCircle,
   ExternalLink,
   Eye,
   EyeOff,
   Camera,
-  Type,
   Image as ImageIcon,
   Layers,
   Sparkles,
   Upload,
+  Edit3,
+  X,
 } from "lucide-react";
 
 const colors = {
@@ -27,6 +29,7 @@ const colors = {
   dark: "#0B1020",
   cyan: "#38BDF8",
   gold: "#FACC15",
+  cream: "#FFF8EE",
 };
 
 const DEFAULT_GALLERY_CATEGORIES = ["Classroom", "Events", "Certificate"];
@@ -82,13 +85,10 @@ const defaultGalleryContent = {
   highlightedText: "in Action",
   description:
     "Explore classroom learning, school events, certificates, achievements, and student life at Baljagriti Secondary English School.",
-
   categories: DEFAULT_GALLERY_CATEGORIES,
   categoryDescriptions: fallbackCategoryDescriptions,
   subcategories: fallbackSubcategories,
-
   images: [],
-
   bottomTitle: "School Memories",
   bottomDescription:
     "Gallery images are updated by the school administration to highlight student life and school activities.",
@@ -102,7 +102,6 @@ function normalizeCategories(categories = []) {
     .filter((item) => item.toLowerCase() !== "all");
 
   const combined = [...DEFAULT_GALLERY_CATEGORIES, ...cleaned];
-
   return Array.from(new Set(combined));
 }
 
@@ -110,9 +109,7 @@ function normalizeImageCategory(category, categories = []) {
   const clean = String(category || "").trim();
   const validCategories = normalizeCategories(categories);
 
-  if (validCategories.includes(clean)) {
-    return clean;
-  }
+  if (validCategories.includes(clean)) return clean;
 
   const legacyMap = {
     Sports: "Events",
@@ -167,12 +164,10 @@ function normalizeSubcategories(subcategories = {}) {
 
 function mergeGalleryContent(saved = {}) {
   const categories = normalizeCategories(saved.categories);
-
   const categoryDescriptions = normalizeCategoryDescriptions(
     saved.categoryDescriptions,
     categories
   );
-
   const subcategories = normalizeSubcategories(saved.subcategories);
 
   return {
@@ -197,21 +192,187 @@ function mergeGalleryContent(saved = {}) {
   };
 }
 
-function Field({ label, value, onChange, placeholder = "", type = "text" }) {
+function getImageUrls(item) {
+  if (Array.isArray(item.images) && item.images.length > 0) {
+    return item.images.filter(Boolean);
+  }
+
+  return item.image ? [item.image] : [];
+}
+
+function collectAlbumPhotos(items, fallbackCategory, fallbackTitle) {
+  const seen = new Set();
+  const photos = [];
+
+  items.forEach((item) => {
+    getImageUrls(item).forEach((url) => {
+      if (!url || seen.has(url)) return;
+
+      seen.add(url);
+
+      photos.push({
+        url,
+        title: item.title || fallbackTitle,
+        date: item.date || "School Activity",
+        category: fallbackCategory,
+        subcategory: item.subcategory || "",
+      });
+    });
+  });
+
+  return photos;
+}
+
+function buildSingleCategoryAlbum(content, category) {
+  const visibleImages = (content.images || []).filter(
+    (item) => item.visible !== false
+  );
+
+  const categoryItems = visibleImages.filter(
+    (item) =>
+      normalizeImageCategory(item.category, content.categories) === category
+  );
+
+  const photos = collectAlbumPhotos(categoryItems, category, category);
+  const cover =
+    categoryItems.find((item) => item.image)?.image || photos[0]?.url || "";
+
+  return {
+    category,
+    subcategory: "",
+    title: category,
+    date: categoryItems[0]?.date || "School Gallery",
+    description:
+      content.categoryDescriptions?.[category] ||
+      fallbackCategoryDescriptions[category] ||
+      "Explore school moments from this category.",
+    cover,
+    photos,
+    total: photos.length,
+  };
+}
+
+function buildMainCategoryAlbums(content) {
+  return normalizeCategories(content.categories).map((category) =>
+    buildSingleCategoryAlbum(content, category)
+  );
+}
+
+function buildSubcategoryAlbums(content, parentCategory) {
+  const visibleImages = (content.images || []).filter(
+    (item) => item.visible !== false
+  );
+
+  const parentItems = visibleImages.filter(
+    (item) =>
+      normalizeImageCategory(item.category, content.categories) === parentCategory
+  );
+
+  const subcategoryList =
+    normalizeSubcategories(content.subcategories)[parentCategory] || [];
+
+  if (subcategoryList.length === 0) {
+    return [buildSingleCategoryAlbum(content, parentCategory)];
+  }
+
+  const albums = subcategoryList
+    .filter((sub) => sub.visible !== false)
+    .map((sub) => {
+      const subItems = parentItems.filter(
+        (item) => String(item.subcategory || "").trim() === sub.name
+      );
+
+      const photos = collectAlbumPhotos(subItems, parentCategory, sub.name);
+      const cover =
+        subItems.find((item) => item.image)?.image || photos[0]?.url || "";
+
+      return {
+        category: parentCategory,
+        subcategory: sub.name,
+        title: sub.name,
+        date: subItems[0]?.date || parentCategory,
+        description:
+          sub.description ||
+          `Photos and memories from ${sub.name.toLowerCase()}.`,
+        cover,
+        photos,
+        total: photos.length,
+      };
+    });
+
+  const uncategorizedItems = parentItems.filter(
+    (item) => !String(item.subcategory || "").trim()
+  );
+
+  if (uncategorizedItems.length > 0) {
+    const photos = collectAlbumPhotos(
+      uncategorizedItems,
+      parentCategory,
+      parentCategory
+    );
+
+    albums.push({
+      category: parentCategory,
+      subcategory: "",
+      title: `General ${parentCategory}`,
+      date: uncategorizedItems[0]?.date || parentCategory,
+      description:
+        content.categoryDescriptions?.[parentCategory] ||
+        fallbackCategoryDescriptions[parentCategory],
+      cover:
+        uncategorizedItems.find((item) => item.image)?.image ||
+        photos[0]?.url ||
+        "",
+      photos,
+      total: photos.length,
+    });
+  }
+
+  return albums;
+}
+
+function buildCategoryAlbums(content, activeCategory) {
+  if (activeCategory === "All") return buildMainCategoryAlbums(content);
+
+  if (SUBCATEGORY_PARENT_CATEGORIES.includes(activeCategory)) {
+    return buildSubcategoryAlbums(content, activeCategory);
+  }
+
+  return [buildSingleCategoryAlbum(content, activeCategory)];
+}
+
+function HighlightedTitle({ title, highlightedText }) {
+  if (!highlightedText || !title.includes(highlightedText)) return <>{title}</>;
+
+  const [before, after] = title.split(highlightedText);
+
+  return (
+    <>
+      {before}
+      <span className="italic" style={{ color: colors.red }}>
+        {highlightedText}
+      </span>
+      {after}
+    </>
+  );
+}
+
+function Field({ label, value, onChange, placeholder = "", type = "text", disabled = false }) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
+      <label className="mb-2 block text-sm font-bold text-slate-700">
         {label}
       </label>
 
       <input
         type={type}
         value={value || ""}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
+        className="w-full rounded-2xl px-4 py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-60"
         style={{
-          background: "rgba(255,255,255,0.88)",
+          background: "rgba(255,255,255,0.92)",
           border: "1px solid rgba(75,46,131,0.16)",
           color: colors.dark,
         }}
@@ -219,66 +380,11 @@ function Field({ label, value, onChange, placeholder = "", type = "text" }) {
     </div>
   );
 }
-function DeferredField({ label, value, onCommit, placeholder = "" }) {
-  const [draft, setDraft] = useState(value || "");
 
-  useEffect(() => {
-    setDraft(value || "");
-  }, [value]);
-
-  const commitValue = () => {
-    const cleanValue = draft.trim();
-
-    if (!cleanValue) {
-      setDraft(value || "");
-      return;
-    }
-
-    if (cleanValue !== value) {
-      onCommit(cleanValue);
-    }
-  };
-
-  return (
-    <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
-        {label}
-      </label>
-
-      <input
-        type="text"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commitValue}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.currentTarget.blur();
-          }
-
-          if (e.key === "Escape") {
-            setDraft(value || "");
-            e.currentTarget.blur();
-          }
-        }}
-        placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
-        style={{
-          background: "rgba(255,255,255,0.88)",
-          border: "1px solid rgba(75,46,131,0.16)",
-          color: colors.dark,
-        }}
-      />
-
-      <p className="text-[11px] text-slate-400 mt-1">
-        Press Enter or click outside to apply.
-      </p>
-    </div>
-  );
-}
 function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
+      <label className="mb-2 block text-sm font-bold text-slate-700">
         {label}
       </label>
 
@@ -287,9 +393,9 @@ function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full px-4 py-3 rounded-2xl outline-none text-sm resize-none"
+        className="w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none"
         style={{
-          background: "rgba(255,255,255,0.88)",
+          background: "rgba(255,255,255,0.92)",
           border: "1px solid rgba(75,46,131,0.16)",
           color: colors.dark,
         }}
@@ -298,204 +404,614 @@ function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
   );
 }
 
-function EditorCard({ icon: Icon, title, color, children }) {
-  return (
-    <div
-      className="rounded-3xl p-6 md:p-8"
-      style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
-        border: "1px solid rgba(11,16,32,0.08)",
-        boxShadow:
-          "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
-      }}
-    >
-      <div className="flex items-center gap-3 mb-6">
-        <Icon className="w-5 h-5" style={{ color }} />
-        <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
-      </div>
+function IconButton({ icon: Icon, label, onClick, tone = "purple" }) {
+  const styles = {
+    purple: {
+      background: `linear-gradient(135deg, ${colors.purple}, ${colors.softPurple})`,
+      color: "#FFFFFF",
+    },
+    green: {
+      background: `linear-gradient(135deg, ${colors.green}, ${colors.cyan})`,
+      color: "#FFFFFF",
+    },
+    red: {
+      background: "rgba(215,25,32,0.95)",
+      color: "#FFFFFF",
+    },
+    dark: {
+      background: "rgba(11,16,32,0.94)",
+      color: "#FFFFFF",
+    },
+  };
 
-      {children}
-    </div>
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.();
+      }}
+      className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-black shadow-xl transition-all hover:-translate-y-0.5 hover:scale-105"
+      style={styles[tone] || styles.purple}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </button>
   );
 }
 
-function GalleryPreview({ form }) {
-  const categories = normalizeCategories(form.categories);
-  const visibleImages = [];
-
-  const categoryDescriptions = normalizeCategoryDescriptions(
-    form.categoryDescriptions,
-    categories
-  );
-
-  const subcategories = normalizeSubcategories(form.subcategories);
+function ConfirmDialog({ target, onCancel, onConfirm }) {
+  if (!target) return null;
 
   return (
-    <div
-      className="min-h-full p-6"
-      style={{
-        background:
-          "radial-gradient(circle at top right, rgba(124,92,196,0.18), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
-      }}
-    >
-      <div className="text-center mb-8">
-        <span
-          className="inline-block px-4 py-1.5 rounded-full text-sm font-bold mb-4"
-          style={{
-            background: "rgba(75,46,131,0.09)",
-            color: colors.purple,
-            border: "1px solid rgba(75,46,131,0.16)",
-          }}
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/70 p-5 backdrop-blur-sm"
+        onClick={onCancel}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92, y: 18 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.92, y: 18 }}
+          className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
         >
-          {form.badge}
-        </span>
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+            <Trash2 className="h-6 w-6" />
+          </div>
 
-        <h2
-          className="text-4xl font-black text-slate-950"
-          style={{
-            fontFamily: "var(--font-display)",
-            letterSpacing: "-0.04em",
-          }}
+          <h3 className="text-2xl font-black text-slate-950">Are you sure?</h3>
+          <p className="mt-2 text-sm leading-relaxed text-slate-500">
+            {target.message || "This item will be removed from the gallery content."}
+          </p>
+
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rounded-2xl bg-slate-100 px-5 py-3 text-sm font-black text-slate-700"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={onConfirm}
+              className="rounded-2xl px-5 py-3 text-sm font-black text-white"
+              style={{ background: colors.red }}
+            >
+              Delete
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function EditModal({ target, modalForm, setModalForm, onClose, onSave, onRequestDeleteSubcategory, onAddSubcategory }) {
+  if (!target) return null;
+
+  const isCategory = target.type === "category";
+  const isDefaultCategory = DEFAULT_GALLERY_CATEGORIES.includes(target.category);
+  const canUseSubcategories = SUBCATEGORY_PARENT_CATEGORIES.includes(target.category);
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/75 p-5 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.94, y: 24 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.94, y: 24 }}
+          className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[30px] bg-white shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
         >
-          {form.title}
-        </h2>
-
-        <p className="text-sm text-slate-500 mt-4 leading-relaxed">
-          {form.description}
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-2 justify-center mb-8">
-        <span className="px-4 py-2 rounded-xl text-sm font-bold bg-white border text-slate-700">
-          All
-        </span>
-
-        {categories.map((category) => (
-          <span
-            key={category}
-            className="px-4 py-2 rounded-xl text-sm font-bold bg-white border text-slate-700"
-          >
-            {category}
-          </span>
-        ))}
-      </div>
-
-      <div className="grid gap-4 mb-8">
-        {categories.map((category) => (
           <div
-            key={category}
-            className="rounded-3xl p-5"
+            className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-5"
             style={{
-              background: "rgba(255,255,255,0.78)",
-              border: "1px solid rgba(15,23,42,0.08)",
+              background:
+                "linear-gradient(145deg, rgba(2,6,23,0.98), rgba(15,23,42,0.94))",
+              borderBottom: "1px solid rgba(255,255,255,0.12)",
             }}
           >
-            <div className="font-black text-slate-950">{category}</div>
-
-            <div className="text-sm text-slate-500 mt-2 leading-relaxed">
-              {categoryDescriptions[category] ||
-                "Add a description for this category."}
+            <div>
+              <div className="text-xs font-black uppercase tracking-[0.18em] text-white/45">
+                Gallery Editor
+              </div>
+              <h2 className="text-2xl font-black text-white">
+                {target.label}
+              </h2>
             </div>
 
-            {SUBCATEGORY_PARENT_CATEGORIES.includes(category) && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {(subcategories[category] || []).map((sub) => (
-                  <span
-                    key={sub.id}
-                    className="px-3 py-1 rounded-full text-xs font-bold"
-                    style={{
-                      background:
-                        sub.visible !== false
-                          ? "rgba(22,138,58,0.09)"
-                          : "rgba(100,116,139,0.12)",
-                      color:
-                        sub.visible !== false ? colors.green : "#64748B",
-                      border: "1px solid rgba(15,23,42,0.08)",
-                    }}
-                  >
-                    {sub.name}
-                  </span>
-                ))}
-              </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="grid gap-5 p-6">
+            {target.type === "hero" && (
+              <>
+                <Field
+                  label="Badge Text"
+                  value={modalForm.badge}
+                  onChange={(value) => setModalForm((prev) => ({ ...prev, badge: value }))}
+                />
+                <Field
+                  label="Main Title"
+                  value={modalForm.title}
+                  onChange={(value) => setModalForm((prev) => ({ ...prev, title: value }))}
+                />
+                <Field
+                  label="Red Highlight Text"
+                  value={modalForm.highlightedText}
+                  onChange={(value) => setModalForm((prev) => ({ ...prev, highlightedText: value }))}
+                />
+                <TextArea
+                  label="Description"
+                  value={modalForm.description}
+                  onChange={(value) => setModalForm((prev) => ({ ...prev, description: value }))}
+                  rows={4}
+                />
+              </>
+            )}
+
+            {target.type === "bottom" && (
+              <>
+                <Field
+                  label="Bottom Title"
+                  value={modalForm.bottomTitle}
+                  onChange={(value) => setModalForm((prev) => ({ ...prev, bottomTitle: value }))}
+                />
+                <TextArea
+                  label="Bottom Description"
+                  value={modalForm.bottomDescription}
+                  onChange={(value) => setModalForm((prev) => ({ ...prev, bottomDescription: value }))}
+                  rows={3}
+                />
+                <Field
+                  label="Bottom Note"
+                  value={modalForm.bottomNote}
+                  onChange={(value) => setModalForm((prev) => ({ ...prev, bottomNote: value }))}
+                />
+              </>
+            )}
+
+            {isCategory && (
+              <>
+                <Field
+                  label="Category Name"
+                  value={modalForm.name}
+                  disabled={isDefaultCategory}
+                  onChange={(value) => setModalForm((prev) => ({ ...prev, name: value }))}
+                />
+
+                {isDefaultCategory && (
+                  <p className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
+                    Classroom, Events, and Certificate are default categories. Their names are protected, but description and subcategories can be edited.
+                  </p>
+                )}
+
+                <TextArea
+                  label={`${target.category} Description`}
+                  value={modalForm.description}
+                  onChange={(value) => setModalForm((prev) => ({ ...prev, description: value }))}
+                  rows={4}
+                />
+
+                {canUseSubcategories && (
+                  <div className="rounded-[24px] bg-slate-50 p-5" style={{ border: "1px solid rgba(15,23,42,0.08)" }}>
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-lg font-black text-slate-950">
+                          {target.category} Subcategories
+                        </h3>
+                        <p className="text-sm text-slate-500">
+                          These appear when users open the {target.category} tab.
+                        </p>
+                      </div>
+
+                      <IconButton
+                        icon={Plus}
+                        label="Add Subcategory"
+                        tone="green"
+                        onClick={onAddSubcategory}
+                      />
+                    </div>
+
+                    <div className="grid gap-4">
+                      {(modalForm.subcategories || []).map((sub, index) => (
+                        <div
+                          key={sub.id}
+                          className="rounded-2xl bg-white p-4"
+                          style={{ border: "1px solid rgba(75,46,131,0.12)" }}
+                        >
+                          <div className="mb-4 flex items-start justify-between gap-3">
+                            <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                              Subcategory {index + 1}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => onRequestDeleteSubcategory(sub)}
+                              className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-black"
+                              style={{
+                                background: "rgba(215,25,32,0.08)",
+                                color: colors.red,
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Delete
+                            </button>
+                          </div>
+
+                          <div className="grid gap-4">
+                            <Field
+                              label="Subcategory Name"
+                              value={sub.name}
+                              onChange={(value) =>
+                                setModalForm((prev) => ({
+                                  ...prev,
+                                  subcategories: prev.subcategories.map((item) =>
+                                    item.id === sub.id ? { ...item, name: value } : item
+                                  ),
+                                }))
+                              }
+                            />
+                            <TextArea
+                              label="Subcategory Description"
+                              value={sub.description}
+                              rows={3}
+                              onChange={(value) =>
+                                setModalForm((prev) => ({
+                                  ...prev,
+                                  subcategories: prev.subcategories.map((item) =>
+                                    item.id === sub.id ? { ...item, description: value } : item
+                                  ),
+                                }))
+                              }
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setModalForm((prev) => ({
+                                  ...prev,
+                                  subcategories: prev.subcategories.map((item) =>
+                                    item.id === sub.id
+                                      ? { ...item, visible: item.visible === false }
+                                      : item
+                                  ),
+                                }))
+                              }
+                              className="inline-flex w-fit items-center gap-2 rounded-xl px-4 py-3 text-sm font-black"
+                              style={{
+                                background:
+                                  sub.visible !== false
+                                    ? "rgba(22,138,58,0.1)"
+                                    : "rgba(100,116,139,0.12)",
+                                color: sub.visible !== false ? colors.green : "#64748B",
+                              }}
+                            >
+                              {sub.visible !== false ? (
+                                <>
+                                  <Eye className="h-4 w-4" /> Visible
+                                </>
+                              ) : (
+                                <>
+                                  <EyeOff className="h-4 w-4" /> Hidden
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {(modalForm.subcategories || []).length === 0 && (
+                        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm font-semibold text-slate-400">
+                          No subcategories added yet.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
-        ))}
+
+          <div className="flex justify-end gap-3 border-t border-slate-100 px-6 py-5">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-2xl bg-slate-100 px-5 py-3 text-sm font-black text-slate-700"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onSave}
+              className="rounded-2xl px-5 py-3 text-sm font-black text-white"
+              style={{ background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})` }}
+            >
+              Save This Section
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function GalleryAlbumCard({ album, index, onEdit, onDelete, onManageImages }) {
+  const canDelete = !DEFAULT_GALLERY_CATEGORIES.includes(album.category);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.45, delay: Math.min(index * 0.04, 0.18) }}
+      className={`group relative grid items-center gap-12 rounded-[2rem] border border-dashed border-cyan-300/70 bg-white/30 p-4 lg:grid-cols-2 ${
+        index % 2 !== 0 ? "lg:[&>*:first-child]:order-2" : ""
+      }`}
+    >
+      <div className="absolute right-4 top-4 z-40 flex flex-wrap justify-end gap-2 opacity-100 md:opacity-0 md:transition-opacity md:duration-200 md:group-hover:opacity-100">
+        <IconButton icon={Edit3} label="Edit" tone="purple" onClick={onEdit} />
+        <IconButton icon={Upload} label="Images" tone="green" onClick={onManageImages} />
+        {canDelete && (
+          <IconButton icon={Trash2} label="Delete" tone="red" onClick={onDelete} />
+        )}
       </div>
 
-      <div className="space-y-8">
-        {visibleImages.slice(0, 5).map((item) => {
-          const displayImage = item.image || item.images?.[0];
-
-          return (
-            <div key={item.id}>
-              {displayImage ? (
-                <img
-                  src={displayImage}
-                  alt={item.title}
-                  className="w-full h-52 object-cover rounded-3xl"
-                  style={{ boxShadow: "0 12px 32px rgba(15,23,42,0.12)" }}
-                />
-              ) : (
-                <div className="w-full h-52 rounded-3xl bg-slate-200 flex items-center justify-center">
-                  <ImageIcon className="w-14 h-14 text-slate-400" />
-                </div>
-              )}
-
-              <div className="mt-3 px-1">
-                <div className="text-xs text-slate-500 font-semibold uppercase tracking-wide">
-                  {item.category}
-                  {item.subcategory ? ` / ${item.subcategory}` : ""}
-                </div>
-
-                <div className="font-black text-slate-950 mt-0.5">
-                  {item.title}
-                </div>
-
-                <div className="text-xs text-slate-400 mt-0.5">
-                  {item.date}
-                </div>
-
-                <button
-                  type="button"
-                  className="mt-2 px-4 py-1.5 rounded-xl text-xs font-bold text-white"
-                  style={{
-                    background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
-                  }}
-                >
-                  View Album ({(item.images || []).length})
-                </button>
-              </div>
-            </div>
-          );
-        })}
-
-        {visibleImages.length === 0 && (
-          <div className="rounded-3xl p-8 text-center bg-white border border-slate-100">
-            <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <div className="font-black text-slate-900">
-              No gallery images yet
-            </div>
-            <div className="text-sm text-slate-500 mt-1">
-              Upload images from Gallery Image Manager.
-            </div>
+      <div className="overflow-hidden rounded-[32px] bg-white shadow-2xl">
+        {album.cover ? (
+          <img
+            src={album.cover}
+            alt={album.title}
+            className="h-[450px] w-full object-cover transition duration-700 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-[450px] w-full items-center justify-center bg-slate-100">
+            <ImageIcon className="h-16 w-16 text-slate-300" />
           </div>
         )}
       </div>
 
-      <div
-        className="mt-8 rounded-3xl p-5"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(11,16,32,0.96), rgba(75,46,131,0.9))",
-        }}
-      >
-        <div className="text-white font-bold">{form.bottomTitle}</div>
-        <div className="text-sm text-white/60 mt-1">
-          {form.bottomDescription}
+      <div className="px-2 py-8">
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full bg-green-100 px-4 py-2 font-semibold text-green-700">
+            {album.category}
+          </span>
+          {album.subcategory && (
+            <span className="rounded-full bg-purple-100 px-4 py-2 font-semibold text-purple-700">
+              {album.subcategory}
+            </span>
+          )}
         </div>
+
+        <h2 className="mt-5 text-5xl font-black text-slate-900">
+          {album.title}
+        </h2>
+        <p className="mt-3 text-slate-500">{album.date}</p>
+        <p className="mt-6 text-lg leading-relaxed text-slate-600">
+          {album.description}
+        </p>
+
+        <button
+          type="button"
+          disabled={album.total === 0}
+          className="relative z-10 mt-8 rounded-xl px-6 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          style={{
+            background:
+              album.total > 0
+                ? `linear-gradient(135deg, ${colors.red}, ${colors.green})`
+                : "rgba(100,116,139,0.75)",
+          }}
+        >
+          {album.total > 0 ? `View Album (${album.total})` : "No Images Added"}
+        </button>
       </div>
-    </div>
+    </motion.div>
+  );
+}
+
+function GalleryVisualEditor({ form, activeCategory, setActiveCategory, onEditHero, onEditCategory, onEditBottom, onAddCategory, onDeleteCategory, onManageImages }) {
+  const categories = ["All", ...normalizeCategories(form.categories)];
+  const filteredAlbums = useMemo(
+    () => buildCategoryAlbums(form, activeCategory),
+    [form, activeCategory]
+  );
+
+  return (
+    <section
+      id="gallery-admin-preview"
+      className="relative min-h-screen overflow-hidden pb-24 pt-10"
+      style={{
+        background: `
+          radial-gradient(circle at top right, rgba(124,92,196,0.18), transparent 34%),
+          radial-gradient(circle at bottom left, rgba(22,138,58,0.14), transparent 32%),
+          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
+        `,
+      }}
+    >
+      <div className="pointer-events-none absolute right-0 top-0 h-[520px] w-[520px] rounded-full bg-purple-500/10 blur-2xl" />
+      <div className="pointer-events-none absolute bottom-0 left-0 h-[420px] w-[420px] rounded-full bg-green-500/10 blur-2xl" />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-6">
+        <div
+          className="mb-8 rounded-[28px] p-5"
+          style={{
+            background:
+              "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
+            border: "1px solid rgba(255,255,255,0.14)",
+            boxShadow: "0 20px 60px rgba(11,16,32,0.22)",
+          }}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="text-xs font-black uppercase tracking-[0.22em] text-white/45">
+                Admin Gallery Editor Active
+              </div>
+              <p className="mt-1 text-sm font-semibold text-white/70">
+                Hover heading/category/bottom sections. Use the floating edit buttons.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <IconButton icon={Plus} label="Add Category" tone="green" onClick={onAddCategory} />
+              <IconButton icon={Upload} label="Manage Images" tone="purple" onClick={onManageImages} />
+            </div>
+          </div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55 }}
+          className="group relative mb-12 rounded-[32px] border border-dashed border-cyan-300/80 p-8 text-center"
+        >
+          <div className="absolute right-5 top-5 z-30 opacity-100 md:opacity-0 md:transition-opacity md:duration-200 md:group-hover:opacity-100">
+            <IconButton icon={Edit3} label="Edit Heading" tone="purple" onClick={onEditHero} />
+          </div>
+
+          <span
+            className="mb-5 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold"
+            style={{
+              background: "rgba(75,46,131,0.09)",
+              color: colors.purple,
+              border: "1px solid rgba(75,46,131,0.16)",
+            }}
+          >
+            <Camera className="h-4 w-4" />
+            {form.badge}
+          </span>
+
+          <h1
+            className="mb-4 text-4xl text-slate-950 md:text-6xl"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 850,
+              letterSpacing: "-0.045em",
+            }}
+          >
+            <HighlightedTitle title={form.title} highlightedText={form.highlightedText} />
+          </h1>
+
+          <p className="mx-auto max-w-3xl text-base leading-relaxed text-slate-500 md:text-lg">
+            {form.description}
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.08 }}
+          className="mb-12 flex flex-wrap justify-center gap-3"
+        >
+          {categories.map((category) => {
+            const active = activeCategory === category;
+            return (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setActiveCategory(category)}
+                className="rounded-2xl px-5 py-3 text-sm font-bold transition-all duration-300 hover:-translate-y-0.5"
+                style={{
+                  color: active ? "#FFFFFF" : colors.dark,
+                  background: active
+                    ? `linear-gradient(135deg, ${colors.red}, ${colors.green})`
+                    : "linear-gradient(145deg, rgba(255,255,255,0.92), rgba(255,255,255,0.68))",
+                  border: active
+                    ? "1px solid rgba(255,255,255,0.2)"
+                    : "1px solid rgba(11,16,32,0.08)",
+                  boxShadow: active
+                    ? "0 16px 38px rgba(22,138,58,0.22)"
+                    : "0 10px 28px rgba(11,16,32,0.06)",
+                  backdropFilter: "blur(14px)",
+                }}
+              >
+                {category}
+              </button>
+            );
+          })}
+        </motion.div>
+
+        <div
+          className="rounded-[2rem] p-4 md:p-5"
+          style={{
+            background:
+              "linear-gradient(145deg, rgba(255,255,255,0.38), rgba(255,255,255,0.16))",
+            border: "1px solid rgba(255,255,255,0.45)",
+            boxShadow:
+              "0 24px 80px rgba(11,16,32,0.1), inset 0 1px 0 rgba(255,255,255,0.72)",
+            backdropFilter: "blur(18px)",
+          }}
+        >
+          {filteredAlbums.length > 0 ? (
+            <div className="space-y-24">
+              {filteredAlbums.map((album, index) => (
+                <GalleryAlbumCard
+                  key={`${album.category}-${album.subcategory || album.title}`}
+                  album={album}
+                  index={index}
+                  onEdit={() => onEditCategory(album.category)}
+                  onDelete={() => onDeleteCategory(album.category)}
+                  onManageImages={onManageImages}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-3xl bg-white p-10 text-center">
+              <ImageIcon className="mx-auto mb-4 h-14 w-14 text-slate-300" />
+              <div className="font-bold text-slate-800">No gallery images found.</div>
+              <div className="mt-1 text-sm text-slate-500">Please check another category.</div>
+            </div>
+          )}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 22 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.45 }}
+          className="group relative mt-10 flex flex-col gap-4 rounded-3xl border border-dashed border-cyan-300/70 p-6 md:flex-row md:items-center md:justify-between"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(11,16,32,0.96), rgba(75,46,131,0.9))",
+            boxShadow: "0 22px 58px rgba(11,16,32,0.28)",
+          }}
+        >
+          <div className="absolute right-4 top-4 z-30 opacity-100 md:opacity-0 md:transition-opacity md:duration-200 md:group-hover:opacity-100">
+            <IconButton icon={Edit3} label="Edit Bottom" tone="green" onClick={onEditBottom} />
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-white">
+              <Layers className="h-6 w-6" />
+            </div>
+            <div>
+              <div className="font-bold text-white">{form.bottomTitle}</div>
+              <div className="text-sm text-white/70">{form.bottomDescription}</div>
+            </div>
+          </div>
+
+          <div className="inline-flex items-center gap-2 text-sm font-semibold text-white/75">
+            <Sparkles className="h-4 w-4" style={{ color: colors.gold }} />
+            {form.bottomNote}
+          </div>
+        </motion.div>
+      </div>
+    </section>
   );
 }
 
@@ -507,163 +1023,102 @@ export default function AdminGallery() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [editingTarget, setEditingTarget] = useState(null);
+  const [modalForm, setModalForm] = useState({});
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const token = localStorage.getItem("adminToken");
 
   useEffect(() => {
-  let alive = true;
+    let alive = true;
 
-  const loadGalleryContent = async () => {
-    setLoading(true);
+    const loadGalleryContent = async () => {
+      setLoading(true);
 
-    try {
-      const res = await axios.get(
-  "http://localhost:5000/api/site-content/gallery",
-  {
-    timeout: 20000,
-  }
-);
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/site-content/gallery",
+          { timeout: 20000 }
+        );
 
-      if (!alive) return;
+        if (!alive) return;
 
-      const savedContent = res.data?.data?.content || {};
-      const mergedContent = mergeGalleryContent(savedContent);
+        const savedContent = res.data?.data?.content || {};
+        const mergedContent = mergeGalleryContent(savedContent);
 
-      setForm(mergedContent);
-      setError("");
-    } catch (err) {
-      console.error("Load gallery content error:", err);
+        setForm(mergedContent);
+        setError("");
+      } catch (err) {
+        console.error("Load gallery content error:", err);
 
-      if (!alive) return;
+        if (!alive) return;
 
-      setForm(defaultGalleryContent);
-      setError(
-        "Gallery content took too long to load. Default editor is shown. Check backend if saved content is missing."
-      );
-    } finally {
-      if (alive) {
-        setLoading(false);
+        setForm(defaultGalleryContent);
+        setError(
+          "Gallery content took too long to load. Default editor is shown. Check backend if saved content is missing."
+        );
+      } finally {
+        if (alive) setLoading(false);
       }
-    }
-  };
+    };
 
-  loadGalleryContent();
+    loadGalleryContent();
 
-  return () => {
-    alive = false;
-  };
-}, []);
+    return () => {
+      alive = false;
+    };
+  }, []);
 
-  const categoryOptions = normalizeCategories(form.categories);
-
-  const updateField = (name, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const updateCategoryDescription = (category, value) => {
-    setForm((prev) => ({
-      ...prev,
-      categoryDescriptions: {
-        ...(prev.categoryDescriptions || {}),
-        [category]: value,
-      },
-    }));
-  };
-
-  const getSubcategories = (category) => {
-    return normalizeSubcategories(form.subcategories)[category] || [];
-  };
-
-  const updateSubcategory = (parentCategory, subcategoryId, field, value) => {
-    setForm((prev) => {
-      const normalized = normalizeSubcategories(prev.subcategories);
-      const currentList = normalized[parentCategory] || [];
-      const oldItem = currentList.find((item) => item.id === subcategoryId);
-
-      const updatedList = currentList.map((item) =>
-        item.id === subcategoryId ? { ...item, [field]: value } : item
-      );
-
-      const updatedImages =
-        field === "name" && oldItem
-          ? prev.images.map((image) =>
-              image.category === parentCategory &&
-              image.subcategory === oldItem.name
-                ? { ...image, subcategory: value }
-                : image
-            )
-          : prev.images;
-
-      return {
-        ...prev,
-        subcategories: {
-          ...normalized,
-          [parentCategory]: updatedList,
-        },
-        images: updatedImages,
-      };
+  const openHeroEditor = () => {
+    setEditingTarget({ type: "hero", label: "Edit Gallery Heading" });
+    setModalForm({
+      badge: form.badge,
+      title: form.title,
+      highlightedText: form.highlightedText,
+      description: form.description,
     });
   };
 
-  const addSubcategory = (parentCategory) => {
-    setForm((prev) => {
-      const normalized = normalizeSubcategories(prev.subcategories);
-      const currentList = normalized[parentCategory] || [];
-
-      const newItem = {
-        id: `${parentCategory.toLowerCase()}-${Date.now()}`,
-        name: `New ${parentCategory} Subcategory`,
-        description: "",
-        visible: true,
-      };
-
-      return {
-        ...prev,
-        subcategories: {
-          ...normalized,
-          [parentCategory]: [...currentList, newItem],
-        },
-      };
+  const openBottomEditor = () => {
+    setEditingTarget({ type: "bottom", label: "Edit Bottom Info Card" });
+    setModalForm({
+      bottomTitle: form.bottomTitle,
+      bottomDescription: form.bottomDescription,
+      bottomNote: form.bottomNote,
     });
   };
 
-  const deleteSubcategory = (parentCategory, subcategoryId) => {
-    const ok = window.confirm("Delete this subcategory?");
-    if (!ok) return;
+  const openCategoryEditor = (category) => {
+    const normalizedSubcategories = normalizeSubcategories(form.subcategories);
 
-    setForm((prev) => {
-      const normalized = normalizeSubcategories(prev.subcategories);
-      const deletedItem = (normalized[parentCategory] || []).find(
-        (item) => item.id === subcategoryId
-      );
-
-      const remaining = (normalized[parentCategory] || []).filter(
-        (item) => item.id !== subcategoryId
-      );
-
-      return {
-        ...prev,
-        subcategories: {
-          ...normalized,
-          [parentCategory]: remaining,
-        },
-        images: prev.images.map((image) =>
-          image.category === parentCategory &&
-          image.subcategory === deletedItem?.name
-            ? { ...image, subcategory: "" }
-            : image
-        ),
-      };
+    setEditingTarget({
+      type: "category",
+      label: `Edit ${category}`,
+      category,
     });
+
+    setModalForm({
+      name: category,
+      description:
+        form.categoryDescriptions?.[category] ||
+        fallbackCategoryDescriptions[category] ||
+        "",
+      subcategories: (normalizedSubcategories[category] || []).map((sub) => ({
+        ...sub,
+        originalName: sub.name,
+      })),
+    });
+  };
+
+  const closeModal = () => {
+    setEditingTarget(null);
+    setModalForm({});
   };
 
   const addCategory = () => {
     setForm((prev) => {
       const categories = normalizeCategories(prev.categories);
-
       let newName = "New Category";
       let counter = 1;
 
@@ -681,64 +1136,34 @@ export default function AdminGallery() {
         },
       };
     });
+
+    setActiveCategory("All");
+    setSuccess("New category added. Click Save Changes to publish.");
+    setError("");
   };
 
-  const updateCategoryName = (index, oldCategory, newValue) => {
-    const cleanValue = newValue.trimStart();
+  const requestDeleteCategory = (categoryToDelete) => {
+    if (categoryToDelete === "All") return;
 
-    if (!cleanValue) return;
-
-    setForm((prev) => {
-      const categories = normalizeCategories(prev.categories);
-
-      if (DEFAULT_GALLERY_CATEGORIES.includes(oldCategory)) {
-        return prev;
-      }
-
-      const updatedCategories = categories.map((category, categoryIndex) =>
-        categoryIndex === index ? cleanValue : category
-      );
-
-      const oldDescription = prev.categoryDescriptions?.[oldCategory] || "";
-
-      const nextDescriptions = {
-        ...(prev.categoryDescriptions || {}),
-        [cleanValue]: oldDescription,
-      };
-
-      delete nextDescriptions[oldCategory];
-
-      return {
-        ...prev,
-        categories: Array.from(new Set(updatedCategories)),
-        categoryDescriptions: nextDescriptions,
-        images: prev.images.map((image) =>
-          image.category === oldCategory
-            ? { ...image, category: cleanValue, subcategory: "" }
-            : image
-        ),
-      };
-    });
-  };
-
-  const deleteCategory = (categoryToDelete) => {
     if (DEFAULT_GALLERY_CATEGORIES.includes(categoryToDelete)) {
       setError("Default categories cannot be deleted.");
       return;
     }
 
-    const ok = window.confirm(`Delete category "${categoryToDelete}"?`);
-    if (!ok) return;
+    setDeleteTarget({
+      type: "category",
+      category: categoryToDelete,
+      message: `Delete category \"${categoryToDelete}\"? Images inside it will be moved to Classroom.`,
+    });
+  };
 
+  const deleteCategoryNow = (categoryToDelete) => {
     setForm((prev) => {
       const categories = normalizeCategories(prev.categories).filter(
         (category) => category !== categoryToDelete
       );
 
-      const nextDescriptions = {
-        ...(prev.categoryDescriptions || {}),
-      };
-
+      const nextDescriptions = { ...(prev.categoryDescriptions || {}) };
       delete nextDescriptions[categoryToDelete];
 
       return {
@@ -752,6 +1177,158 @@ export default function AdminGallery() {
         ),
       };
     });
+
+    setActiveCategory("All");
+    setSuccess("Category deleted. Click Save Changes to publish.");
+  };
+
+  const addSubcategoryInModal = () => {
+    if (!editingTarget?.category) return;
+
+    setModalForm((prev) => ({
+      ...prev,
+      subcategories: [
+        ...(prev.subcategories || []),
+        {
+          id: `${editingTarget.category.toLowerCase()}-${Date.now()}`,
+          name: `New ${editingTarget.category} Subcategory`,
+          originalName: "",
+          description: "",
+          visible: true,
+        },
+      ],
+    }));
+  };
+
+  const requestDeleteSubcategory = (subcategory) => {
+    setDeleteTarget({
+      type: "subcategory",
+      subcategory,
+      message: `Delete subcategory \"${subcategory.name}\"? Images using it will move to the general category.`,
+    });
+  };
+
+  const deleteSubcategoryInModal = (subcategoryId) => {
+    setModalForm((prev) => ({
+      ...prev,
+      subcategories: (prev.subcategories || []).filter(
+        (item) => item.id !== subcategoryId
+      ),
+    }));
+  };
+
+  const saveEditingSection = () => {
+    if (!editingTarget) return;
+
+    if (editingTarget.type === "hero") {
+      setForm((prev) => ({
+        ...prev,
+        badge: modalForm.badge,
+        title: modalForm.title,
+        highlightedText: modalForm.highlightedText,
+        description: modalForm.description,
+      }));
+      closeModal();
+      setSuccess("Heading updated. Click Save Changes to publish.");
+      return;
+    }
+
+    if (editingTarget.type === "bottom") {
+      setForm((prev) => ({
+        ...prev,
+        bottomTitle: modalForm.bottomTitle,
+        bottomDescription: modalForm.bottomDescription,
+        bottomNote: modalForm.bottomNote,
+      }));
+      closeModal();
+      setSuccess("Bottom card updated. Click Save Changes to publish.");
+      return;
+    }
+
+    if (editingTarget.type === "category") {
+      const oldCategory = editingTarget.category;
+      const isDefaultCategory = DEFAULT_GALLERY_CATEGORIES.includes(oldCategory);
+      const newCategory = isDefaultCategory
+        ? oldCategory
+        : String(modalForm.name || "").trim();
+
+      if (!newCategory) {
+        setError("Category name cannot be empty.");
+        return;
+      }
+
+      setForm((prev) => {
+        const categories = normalizeCategories(prev.categories);
+        const nextCategories = categories.map((category) =>
+          category === oldCategory ? newCategory : category
+        );
+
+        const nextDescriptions = { ...(prev.categoryDescriptions || {}) };
+        delete nextDescriptions[oldCategory];
+        nextDescriptions[newCategory] = modalForm.description || "";
+
+        const normalizedSubcategories = normalizeSubcategories(prev.subcategories);
+        const nextSubcategories = { ...normalizedSubcategories };
+
+        if (SUBCATEGORY_PARENT_CATEGORIES.includes(oldCategory)) {
+          nextSubcategories[oldCategory] = (modalForm.subcategories || [])
+            .map((sub) => ({
+              id: sub.id || `${oldCategory.toLowerCase()}-${Date.now()}`,
+              name: String(sub.name || "").trim(),
+              description: sub.description || "",
+              visible: sub.visible !== false,
+              originalName: sub.originalName || "",
+            }))
+            .filter((sub) => sub.name);
+        }
+
+        let nextImages = prev.images.map((image) =>
+          image.category === oldCategory
+            ? { ...image, category: newCategory }
+            : image
+        );
+
+        if (SUBCATEGORY_PARENT_CATEGORIES.includes(oldCategory)) {
+          const newSubNames = new Set(
+            (nextSubcategories[oldCategory] || []).map((sub) => sub.name)
+          );
+
+          nextImages = nextImages.map((image) => {
+            if (image.category !== oldCategory && image.category !== newCategory) {
+              return image;
+            }
+
+            const renamedSub = (modalForm.subcategories || []).find(
+              (sub) =>
+                sub.originalName &&
+                image.subcategory === sub.originalName &&
+                sub.name
+            );
+
+            if (renamedSub) {
+              return { ...image, subcategory: renamedSub.name };
+            }
+
+            if (image.subcategory && !newSubNames.has(image.subcategory)) {
+              return { ...image, subcategory: "" };
+            }
+
+            return image;
+          });
+        }
+
+        return {
+          ...prev,
+          categories: Array.from(new Set(nextCategories)),
+          categoryDescriptions: nextDescriptions,
+          subcategories: nextSubcategories,
+          images: nextImages,
+        };
+      });
+
+      closeModal();
+      setSuccess("Category updated. Click Save Changes to publish.");
+    }
   };
 
   async function saveGalleryContent() {
@@ -805,9 +1382,8 @@ export default function AdminGallery() {
         "http://localhost:5000/api/site-content/gallery",
         { content: cleanedForm },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 30000,
         }
       );
 
@@ -816,7 +1392,6 @@ export default function AdminGallery() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error("Save gallery content error:", err);
-
       setError(
         err.response?.data?.message ||
           JSON.stringify(err.response?.data) ||
@@ -827,30 +1402,31 @@ export default function AdminGallery() {
     }
   }
 
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+
+    if (deleteTarget.type === "category") {
+      deleteCategoryNow(deleteTarget.category);
+      setDeleteTarget(null);
+      return;
+    }
+
+    if (deleteTarget.type === "subcategory") {
+      deleteSubcategoryInModal(deleteTarget.subcategory.id);
+      setDeleteTarget(null);
+    }
+  };
+
   if (loading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "#FFF8EE" }}
-      >
-        <div className="text-slate-600 font-semibold">
-          Loading gallery editor...
-        </div>
+      <div className="flex min-h-screen items-center justify-center" style={{ background: "#FFF8EE" }}>
+        <div className="font-semibold text-slate-600">Loading gallery editor...</div>
       </div>
     );
   }
 
   return (
-    <section
-      className="min-h-screen relative overflow-hidden"
-      style={{
-        background: `
-          radial-gradient(circle at top right, rgba(56,189,248,0.16), transparent 34%),
-          radial-gradient(circle at bottom left, rgba(250,204,21,0.12), transparent 32%),
-          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
-        `,
-      }}
-    >
+    <section className="min-h-screen bg-[#FFF8EE]">
       <header
         className="sticky top-0 z-40"
         style={{
@@ -861,28 +1437,41 @@ export default function AdminGallery() {
           backdropFilter: "blur(22px)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="mx-auto flex h-20 max-w-[1600px] items-center justify-between px-6">
           <button
             type="button"
             onClick={() => navigate("/admin/dashboard")}
-            className="inline-flex items-center gap-2 text-white font-bold"
+            className="inline-flex items-center gap-2 font-bold text-white"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="h-5 w-5" />
             Back to Dashboard
           </button>
 
           <div className="flex items-center gap-3">
-            <a
-              href="/gallery"
-              target="_blank"
-              rel="noreferrer"
-              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
+            <button
+              type="button"
+              onClick={() => navigate("/admin/gallery-images")}
+              className="hidden items-center gap-2 rounded-2xl px-4 py-3 font-bold text-white transition-all hover:scale-105 md:inline-flex"
               style={{
                 background: "rgba(255,255,255,0.08)",
                 border: "1px solid rgba(255,255,255,0.14)",
               }}
             >
-              <ExternalLink className="w-4 h-4" />
+              <Upload className="h-4 w-4" />
+              Manage Images
+            </button>
+
+            <a
+              href="/gallery"
+              target="_blank"
+              rel="noreferrer"
+              className="hidden items-center gap-2 rounded-2xl px-4 py-3 font-bold text-white transition-all hover:scale-105 md:inline-flex"
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.14)",
+              }}
+            >
+              <ExternalLink className="h-4 w-4" />
               View Gallery Page
             </a>
 
@@ -890,7 +1479,7 @@ export default function AdminGallery() {
               type="button"
               onClick={saveGalleryContent}
               disabled={saving}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all hover:scale-105 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-2xl px-5 py-3 font-bold transition-all hover:scale-105 disabled:opacity-60"
               style={{
                 color: "#020617",
                 background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
@@ -898,441 +1487,102 @@ export default function AdminGallery() {
                   "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
               }}
             >
-              <Save className="w-4 h-4" />
+              <Save className="h-4 w-4" />
               {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-6 py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <span
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-5"
-            style={{
-              background: "rgba(75,46,131,0.1)",
-              color: colors.purple,
-              border: "1px solid rgba(75,46,131,0.2)",
-            }}
-          >
-            <Camera className="w-4 h-4" />
-            Manage Gallery Page
-          </span>
-
-          <h1
-            className="text-4xl md:text-6xl mb-4"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 850,
-              color: colors.dark,
-              letterSpacing: "-0.045em",
-            }}
-          >
-            Edit Gallery Page
-          </h1>
-
-          <p className="text-slate-500 max-w-3xl text-lg">
-            Edit the gallery heading, main categories, category descriptions,
-            Events subcategories, Certificate subcategories, and bottom
-            information.
-          </p>
-        </motion.div>
-
-        {success && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold"
-            style={{
-              background: "rgba(22,138,58,0.1)",
-              color: colors.green,
-              border: "1px solid rgba(22,138,58,0.2)",
-            }}
-          >
-            <CheckCircle2 className="w-5 h-5" />
-            {success}
-          </div>
-        )}
-
-        {error && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 font-semibold"
-            style={{
-              background: "rgba(215,25,32,0.1)",
-              color: colors.red,
-              border: "1px solid rgba(215,25,32,0.2)",
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start">
-          <div className="space-y-8">
-            <button
-              type="button"
-              onClick={() => navigate("/admin/gallery-images")}
-              className="w-full rounded-[32px] p-7 text-left transition-all hover:-translate-y-1"
+      <main>
+        <div className="mx-auto max-w-[1600px] px-6 pt-8">
+          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}>
+            <span
+              className="mb-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold"
               style={{
-                background: `linear-gradient(135deg, ${colors.dark}, ${colors.purple})`,
-                border: "1px solid rgba(255,255,255,0.14)",
-                boxShadow: "0 24px 70px rgba(11,16,32,0.18)",
+                background: "rgba(75,46,131,0.1)",
+                color: colors.purple,
+                border: "1px solid rgba(75,46,131,0.2)",
               }}
             >
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-                <div>
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white font-bold mb-4">
-                    <Upload className="w-4 h-4" />
-                    Upload / Remove Images
-                  </div>
+              <Camera className="h-4 w-4" />
+              Manage Gallery Page
+            </span>
 
-                  <h2
-                    className="text-3xl font-black text-white"
-                    style={{
-                      fontFamily: "var(--font-display)",
-                      letterSpacing: "-0.04em",
-                    }}
-                  >
-                    Manage Gallery Images
-                  </h2>
-
-                  <p className="text-white/65 mt-2 max-w-xl">
-                    Upload images and assign them to categories. Events and
-                    Certificate images can also be assigned to subcategories.
-                  </p>
-                </div>
-
-                <div
-                  className="px-6 py-4 rounded-2xl font-black"
-                  style={{
-                    background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                    color: colors.dark,
-                  }}
-                >
-                  Open Image Manager
-                </div>
-              </div>
-            </button>
-
-            <EditorCard
-              icon={Type}
-              title="Top Gallery Section"
-              color={colors.purple}
+            <h1
+              className="mb-2 text-4xl md:text-6xl"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 850,
+                color: colors.dark,
+                letterSpacing: "-0.045em",
+              }}
             >
-              <div className="grid gap-5">
-                <Field
-                  label="Badge Text"
-                  value={form.badge}
-                  onChange={(value) => updateField("badge", value)}
-                />
+              Edit Gallery Page
+            </h1>
 
-                <Field
-                  label="Main Title"
-                  value={form.title}
-                  onChange={(value) => updateField("title", value)}
-                />
+            <p className="max-w-3xl text-lg text-slate-500">
+              Visual editor mode. Hover the real gallery sections and click pencil/edit buttons. Use Manage Images for uploading and removing photos.
+            </p>
+          </motion.div>
 
-                <Field
-                  label="Red Highlight Text"
-                  value={form.highlightedText}
-                  onChange={(value) => updateField("highlightedText", value)}
-                />
-
-                <TextArea
-                  label="Description"
-                  value={form.description}
-                  onChange={(value) => updateField("description", value)}
-                  rows={4}
-                />
-              </div>
-            </EditorCard>
-
-            <EditorCard
-              icon={Layers}
-              title="Main Categories, Descriptions & Subcategories"
-              color={colors.green}
+          {success && (
+            <div
+              className="mt-6 flex items-center gap-3 rounded-2xl px-5 py-4 font-semibold"
+              style={{
+                background: "rgba(22,138,58,0.1)",
+                color: colors.green,
+                border: "1px solid rgba(22,138,58,0.2)",
+              }}
             >
-              <div className="flex justify-end mb-5">
-                <button
-                  type="button"
-                  onClick={addCategory}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
-                  style={{
-                    background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
-                  }}
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Category
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                {categoryOptions.map((category, index) => (
-                  <div
-                    key={`category-${index}`}
-                    className="rounded-3xl p-5"
-                    style={{
-                      background: "rgba(15,23,42,0.035)",
-                      border: "1px solid rgba(15,23,42,0.08)",
-                    }}
-                  >
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
-                      <div className="flex-1">
-                        {DEFAULT_GALLERY_CATEGORIES.includes(category) ? (
-                          <h3 className="text-xl font-black text-slate-950">
-                            {category}
-                          </h3>
-                        ) : (
-                          <DeferredField
-  label="Category Name"
-  value={category}
-  onCommit={(value) =>
-    updateCategoryName(index, category, value)
-  }
-/>
-                        )}
-
-                        <p className="text-xs text-slate-500 mt-2">
-                          This description appears in the public Gallery page.
-                        </p>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className="px-4 py-2 rounded-2xl text-xs font-black"
-                          style={{
-                            background: "rgba(22,138,58,0.09)",
-                            color: colors.green,
-                            border: "1px solid rgba(22,138,58,0.16)",
-                          }}
-                        >
-                          Main Category
-                        </span>
-
-                        {!DEFAULT_GALLERY_CATEGORIES.includes(category) && (
-                          <button
-                            type="button"
-                            onClick={() => deleteCategory(category)}
-                            className="px-4 py-2 rounded-2xl text-xs font-black"
-                            style={{
-                              background: "rgba(215,25,32,0.09)",
-                              color: colors.red,
-                              border: "1px solid rgba(215,25,32,0.18)",
-                            }}
-                          >
-                            Delete Category
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <TextArea
-                      label={`${category} Description`}
-                      value={
-                        form.categoryDescriptions?.[category] ||
-                        fallbackCategoryDescriptions[category] ||
-                        ""
-                      }
-                      onChange={(value) =>
-                        updateCategoryDescription(category, value)
-                      }
-                      rows={3}
-                    />
-
-                    {SUBCATEGORY_PARENT_CATEGORIES.includes(category) && (
-                      <div className="mt-6">
-                        <div className="flex items-center justify-between gap-4 mb-4">
-                          <div>
-                            <h4 className="font-black text-slate-900">
-                              {category} Subcategories
-                            </h4>
-
-                            <p className="text-xs text-slate-500 mt-1">
-                              These appear when users open the {category} tab.
-                            </p>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => addSubcategory(category)}
-                            className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold text-white"
-                            style={{
-                              background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
-                            }}
-                          >
-                            <Plus className="w-4 h-4" />
-                            Add Subcategory
-                          </button>
-                        </div>
-
-                        <div className="space-y-4">
-                          {getSubcategories(category).map((sub) => (
-                            <div
-                              key={sub.id}
-                              className="rounded-2xl p-4"
-                              style={{
-                                background: "rgba(255,255,255,0.82)",
-                                border: "1px solid rgba(75,46,131,0.12)",
-                              }}
-                            >
-                              <div className="grid gap-4">
-                                <DeferredField
-  label="Subcategory Name"
-  value={sub.name}
-  onCommit={(value) =>
-    updateSubcategory(
-      category,
-      sub.id,
-      "name",
-      value
-    )
-  }
-/>
-
-                                <TextArea
-                                  label="Subcategory Description"
-                                  value={sub.description}
-                                  onChange={(value) =>
-                                    updateSubcategory(
-                                      category,
-                                      sub.id,
-                                      "description",
-                                      value
-                                    )
-                                  }
-                                  rows={3}
-                                />
-
-                                <div className="flex flex-wrap items-center gap-3">
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      updateSubcategory(
-                                        category,
-                                        sub.id,
-                                        "visible",
-                                        !sub.visible
-                                      )
-                                    }
-                                    className="inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold"
-                                    style={{
-                                      background:
-                                        sub.visible !== false
-                                          ? "rgba(22,138,58,0.1)"
-                                          : "rgba(100,116,139,0.12)",
-                                      color:
-                                        sub.visible !== false
-                                          ? colors.green
-                                          : "#64748B",
-                                    }}
-                                  >
-                                    {sub.visible !== false ? (
-                                      <>
-                                        <Eye className="w-4 h-4" />
-                                        Visible
-                                      </>
-                                    ) : (
-                                      <>
-                                        <EyeOff className="w-4 h-4" />
-                                        Hidden
-                                      </>
-                                    )}
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      deleteSubcategory(category, sub.id)
-                                    }
-                                    className="inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold"
-                                    style={{
-                                      background: "rgba(215,25,32,0.09)",
-                                      color: colors.red,
-                                    }}
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                    Delete
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-
-                          {getSubcategories(category).length === 0 && (
-                            <div className="rounded-2xl p-5 text-sm font-semibold text-slate-500 bg-white/70 border border-slate-100">
-                              No subcategories added yet.
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <p className="text-xs text-slate-500 mt-5 leading-relaxed">
-                Classroom, Events, and Certificate are default categories.
-                You can add more categories. Only Events and Certificate have
-                subcategories.
-              </p>
-            </EditorCard>
-
-            <EditorCard
-              icon={Sparkles}
-              title="Bottom Info Card"
-              color={colors.green}
-            >
-              <div className="grid gap-5">
-                <Field
-                  label="Bottom Title"
-                  value={form.bottomTitle}
-                  onChange={(value) => updateField("bottomTitle", value)}
-                />
-
-                <TextArea
-                  label="Bottom Description"
-                  value={form.bottomDescription}
-                  onChange={(value) => updateField("bottomDescription", value)}
-                  rows={3}
-                />
-
-                <Field
-                  label="Bottom Note"
-                  value={form.bottomNote}
-                  onChange={(value) => updateField("bottomNote", value)}
-                />
-              </div>
-            </EditorCard>
-          </div>
-
-          <aside
-            className="rounded-3xl overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
-              border: "1px solid rgba(255,255,255,0.14)",
-              boxShadow: "0 22px 58px rgba(11,16,32,0.25)",
-            }}
-          >
-            <div className="p-5 border-b border-white/10">
-              <div className="text-white font-bold text-lg flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                Gallery Page Preview
-              </div>
-
-              <div className="text-sm text-white/55">
-                Full preview updates while editing.
-              </div>
+              <CheckCircle2 className="h-5 w-5" />
+              {success}
             </div>
+          )}
 
-            <div className="bg-white">
-              <GalleryPreview form={form} />
+          {error && (
+            <div
+              className="mt-6 flex items-center gap-3 rounded-2xl px-5 py-4 font-semibold"
+              style={{
+                background: "rgba(215,25,32,0.1)",
+                color: colors.red,
+                border: "1px solid rgba(215,25,32,0.2)",
+              }}
+            >
+              <AlertCircle className="h-5 w-5" />
+              {error}
             </div>
-          </aside>
+          )}
         </div>
+
+        <GalleryVisualEditor
+          form={form}
+          activeCategory={activeCategory}
+          setActiveCategory={setActiveCategory}
+          onEditHero={openHeroEditor}
+          onEditCategory={openCategoryEditor}
+          onEditBottom={openBottomEditor}
+          onAddCategory={addCategory}
+          onDeleteCategory={requestDeleteCategory}
+          onManageImages={() => navigate("/admin/gallery-images")}
+        />
       </main>
+
+      <EditModal
+        target={editingTarget}
+        modalForm={modalForm}
+        setModalForm={setModalForm}
+        onClose={closeModal}
+        onSave={saveEditingSection}
+        onRequestDeleteSubcategory={requestDeleteSubcategory}
+        onAddSubcategory={addSubcategoryInModal}
+      />
+
+      <ConfirmDialog
+        target={deleteTarget}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
     </section>
   );
 }
