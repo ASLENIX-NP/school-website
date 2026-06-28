@@ -1,5 +1,12 @@
 import jwt from "jsonwebtoken";
 
+function normalizeRole(role) {
+  return String(role || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, " ");
+}
+
 export const protectAdmin = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -13,22 +20,35 @@ export const protectAdmin = (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (
-      !decoded ||
-      (decoded.role !== "admin" &&
-       decoded.role !== "Super Admin")
-    ) {
-      return res.status(401).json({
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({
         success: false,
-        message: "Not authorized as admin.",
+        message: "JWT_SECRET is missing in backend .env file.",
       });
     }
 
-    req.admin = decoded;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const role = normalizeRole(decoded.role);
+
+    const allowedRoles = ["admin", "super admin"];
+
+    if (!decoded || !allowedRoles.includes(role)) {
+      return res.status(401).json({
+        success: false,
+        message: `Not authorized as admin. Current role: ${decoded?.role || "missing"}`,
+      });
+    }
+
+    req.admin = {
+      ...decoded,
+      role,
+    };
+
     next();
   } catch (error) {
+    console.error("Admin auth middleware error:", error.message);
+
     return res.status(401).json({
       success: false,
       message: "Invalid or expired token.",
