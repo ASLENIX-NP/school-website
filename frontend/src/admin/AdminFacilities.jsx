@@ -15,6 +15,8 @@ import {
   Type,
   Building2,
   X,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 
 const colors = {
@@ -129,7 +131,7 @@ function mergeFacilitiesContent(saved = {}) {
 function Field({ label, value, onChange, placeholder = "", type = "text" }) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
+      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
         {label}
       </label>
 
@@ -138,11 +140,21 @@ function Field({ label, value, onChange, placeholder = "", type = "text" }) {
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
+        className="w-full px-4 py-3 rounded-xl outline-none text-sm transition-all duration-150"
         style={{
-          background: "rgba(255,255,255,0.88)",
-          border: "1px solid rgba(75,46,131,0.16)",
+          background: "#F8FAFC",
+          border: "1.5px solid rgba(75,46,131,0.12)",
           color: colors.dark,
+        }}
+        onFocus={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.4)";
+          e.target.style.background = "#fff";
+          e.target.style.boxShadow = "0 0 0 3px rgba(75,46,131,0.06)";
+        }}
+        onBlur={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.12)";
+          e.target.style.background = "#F8FAFC";
+          e.target.style.boxShadow = "none";
         }}
       />
     </div>
@@ -152,7 +164,7 @@ function Field({ label, value, onChange, placeholder = "", type = "text" }) {
 function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
+      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
         {label}
       </label>
 
@@ -161,36 +173,167 @@ function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full px-4 py-3 rounded-2xl outline-none text-sm resize-none"
+        className="w-full px-4 py-3 rounded-xl outline-none text-sm resize-none transition-all duration-150"
         style={{
-          background: "rgba(255,255,255,0.88)",
-          border: "1px solid rgba(75,46,131,0.16)",
+          background: "#F8FAFC",
+          border: "1.5px solid rgba(75,46,131,0.12)",
           color: colors.dark,
+        }}
+        onFocus={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.4)";
+          e.target.style.background = "#fff";
+          e.target.style.boxShadow = "0 0 0 3px rgba(75,46,131,0.06)";
+        }}
+        onBlur={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.12)";
+          e.target.style.background = "#F8FAFC";
+          e.target.style.boxShadow = "none";
         }}
       />
     </div>
   );
 }
 
-function EditorCard({ icon: Icon, title, color, children }) {
+// Image Upload Box Component
+function ImageUploadBox({ label, imageUrl, onUpload, onRemove, uploading }) {
   return (
-    <div
-      className="rounded-3xl p-6 md:p-8"
-      style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
-        border: "1px solid rgba(11,16,32,0.08)",
-        boxShadow:
-          "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
-      }}
-    >
-      <div className="flex items-center gap-3 mb-6">
-        <Icon className="w-5 h-5" style={{ color }} />
-        <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
+    <div>
+      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
+        {label}
+      </label>
+
+      <div
+        className="rounded-xl overflow-hidden bg-white mb-4 relative"
+        style={{ border: "1.5px solid rgba(15,23,42,0.08)" }}
+      >
+        {imageUrl ? (
+          <>
+            <img src={imageUrl} alt={label} className="w-full h-48 object-cover" />
+            <button
+              type="button"
+              onClick={onRemove}
+              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
+              title="Remove image"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </>
+        ) : (
+          <div className="w-full h-48 bg-slate-50 flex items-center justify-center">
+            <Building2 className="w-16 h-16 text-slate-300" />
+          </div>
+        )}
       </div>
 
-      {children}
+      <label
+        className="flex flex-col items-center justify-center gap-2 cursor-pointer rounded-xl p-4 text-center transition-all duration-150 hover:bg-white/90"
+        style={{
+          background: "rgba(255,255,255,0.6)",
+          border: "1.5px dashed rgba(75,46,131,0.2)",
+        }}
+      >
+        <UploadCloud className="w-5 h-5" style={{ color: colors.purple }} />
+
+        <span className="text-sm font-bold text-slate-800">
+          {uploading ? "Uploading..." : "Upload Image"}
+        </span>
+
+        <span className="text-xs text-slate-400 leading-relaxed">
+          Recommended: 1200×800 px • PNG, JPG, WebP • Max 3 MB
+        </span>
+
+        <input
+          type="file"
+          accept="image/*"
+          disabled={uploading}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              onUpload(file);
+            }
+            e.target.value = "";
+          }}
+          className="hidden"
+        />
+      </label>
     </div>
+  );
+}
+
+// Accordion Section Component
+function AccordionSection({
+  icon: Icon,
+  title,
+  color,
+  children,
+  isExpanded,
+  onToggle,
+  sectionId,
+  index,
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      className="rounded-2xl overflow-hidden transition-all duration-300"
+      style={{
+        background: "#FFFFFF",
+        border: isExpanded
+          ? `1.5px solid ${color}30`
+          : "1.5px solid rgba(15,23,42,0.07)",
+        boxShadow: isExpanded
+          ? `0 8px 32px ${color}12, 0 2px 8px rgba(0,0,0,0.04)`
+          : "0 2px 8px rgba(0,0,0,0.04)",
+      }}
+    >
+      <button
+        onClick={() => onToggle(sectionId)}
+        className="w-full flex items-center justify-between px-5 py-4 transition-all duration-200"
+        style={{
+          background: isExpanded ? `${color}06` : "transparent",
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: `${color}12` }}
+          >
+            <Icon className="w-4 h-4" style={{ color }} />
+          </div>
+          <div className="text-left">
+            <div className="font-bold text-slate-900 text-sm">{title}</div>
+            {!isExpanded && (
+              <div className="text-xs text-slate-400 mt-0.5">Click to expand and edit</div>
+            )}
+          </div>
+        </div>
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200"
+          style={{
+            background: isExpanded ? `${color}15` : "rgba(15,23,42,0.05)",
+          }}
+        >
+          {isExpanded ? (
+            <ChevronDown className="w-4 h-4" style={{ color }} />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+          )}
+        </div>
+      </button>
+
+      {isExpanded && (
+        <div style={{ height: "1px", background: `${color}18`, margin: "0 20px" }} />
+      )}
+
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isExpanded ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="px-5 pt-5 pb-6 space-y-4">{children}</div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -358,6 +501,28 @@ export default function AdminFacilities() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
+  // Define sections for accordion
+  const sectionKeys = ['topHeading', 'facilityCards'];
+  const sectionTitles = {
+    topHeading: 'Top Heading Section',
+    facilityCards: 'Facility Cards'
+  };
+  const sectionIcons = {
+    topHeading: Type,
+    facilityCards: Building2
+  };
+  const sectionColors = {
+    topHeading: colors.green,
+    facilityCards: colors.purple
+  };
+
+  const [expandedSections, setExpandedSections] = useState(
+    Object.fromEntries(sectionKeys.map(key => [key, false]))
+  );
+
+  // Dynamic state for facility sections
+  const [expandedFacilities, setExpandedFacilities] = useState({});
+
   const token = localStorage.getItem("adminToken");
 
   useEffect(() => {
@@ -368,7 +533,15 @@ export default function AdminFacilities() {
         );
 
         const savedContent = res.data?.data?.content || {};
-        setForm(mergeFacilitiesContent(savedContent));
+        const mergedContent = mergeFacilitiesContent(savedContent);
+        setForm(mergedContent);
+        
+        // Initialize expanded state for all facility sections (all collapsed by default)
+        const initialExpanded = {};
+        mergedContent.facilities?.forEach(facility => {
+          initialExpanded[facility.id] = false;
+        });
+        setExpandedFacilities(initialExpanded);
       } catch (err) {
         console.error("Load facilities content error:", err);
       } finally {
@@ -378,6 +551,42 @@ export default function AdminFacilities() {
 
     loadFacilitiesContent();
   }, []);
+
+  const toggleSection = (sectionId) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  };
+
+  const toggleFacilitySection = (facilityId) => {
+    setExpandedFacilities((prev) => ({
+      ...prev,
+      [facilityId]: !prev[facilityId],
+    }));
+  };
+
+  const expandAll = () => {
+    const allFacilitiesExpanded = {};
+    form.facilities.forEach(facility => {
+      allFacilitiesExpanded[facility.id] = true;
+    });
+    setExpandedFacilities(allFacilitiesExpanded);
+    setExpandedSections(
+      Object.fromEntries(sectionKeys.map(key => [key, true]))
+    );
+  };
+
+  const collapseAll = () => {
+    const allFacilitiesCollapsed = {};
+    form.facilities.forEach(facility => {
+      allFacilitiesCollapsed[facility.id] = false;
+    });
+    setExpandedFacilities(allFacilitiesCollapsed);
+    setExpandedSections(
+      Object.fromEntries(sectionKeys.map(key => [key, false]))
+    );
+  };
 
   const updateField = (name, value) => {
     setForm((prev) => ({
@@ -417,6 +626,12 @@ export default function AdminFacilities() {
       ...prev,
       facilities: [...prev.facilities, newFacility],
     }));
+    
+    // Auto-expand the new facility section
+    setExpandedFacilities((prev) => ({
+      ...prev,
+      [newFacility.id]: true,
+    }));
   };
 
   const deleteFacility = (id) => {
@@ -424,6 +639,13 @@ export default function AdminFacilities() {
       ...prev,
       facilities: prev.facilities.filter((facility) => facility.id !== id),
     }));
+    
+    // Remove from expanded state
+    setExpandedFacilities((prev) => {
+      const newState = { ...prev };
+      delete newState[id];
+      return newState;
+    });
   };
 
   const uploadFacilityImage = async (facilityId, file) => {
@@ -525,6 +747,9 @@ export default function AdminFacilities() {
     );
   }
 
+  const expandedCount = Object.values(expandedFacilities).filter(Boolean).length + Object.values(expandedSections).filter(Boolean).length;
+  const totalSections = sectionKeys.length + form.facilities.length;
+
   return (
     <section
       className="min-h-screen relative overflow-hidden"
@@ -546,13 +771,13 @@ export default function AdminFacilities() {
           backdropFilter: "blur(22px)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <button
             type="button"
             onClick={() => navigate("/admin/dashboard")}
-            className="inline-flex items-center gap-2 text-white font-bold"
+            className="inline-flex items-center gap-2 text-white/80 hover:text-white font-semibold text-sm transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </button>
 
@@ -561,11 +786,8 @@ export default function AdminFacilities() {
               href="/facilities"
               target="_blank"
               rel="noreferrer"
-              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
-              style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.14)",
-              }}
+              className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white/80 hover:text-white text-sm transition-all"
+              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
             >
               <ExternalLink className="w-4 h-4" />
               View Facilities Page
@@ -575,12 +797,11 @@ export default function AdminFacilities() {
               type="button"
               onClick={saveFacilitiesContent}
               disabled={saving || uploadingId}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all hover:scale-105 disabled:opacity-60"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 disabled:opacity-60"
               style={{
                 color: "#020617",
                 background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                boxShadow:
-                  "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
+                boxShadow: "0 8px 24px rgba(56,189,248,0.28)",
               }}
             >
               <Save className="w-4 h-4" />
@@ -590,86 +811,113 @@ export default function AdminFacilities() {
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-6 py-10">
+      <main className="max-w-[1600px] mx-auto px-6 py-8">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          transition={{ duration: 0.4 }}
+          className="mb-7"
         >
-          <span
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-5"
-            style={{
-              background: "rgba(22,138,58,0.1)",
-              color: colors.green,
-              border: "1px solid rgba(22,138,58,0.2)",
-            }}
-          >
-            <Building2 className="w-4 h-4" />
-            Manage Facilities Page
-          </span>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{ background: "rgba(22,138,58,0.12)", border: "1px solid rgba(22,138,58,0.2)" }}
+                >
+                  <Building2 className="w-4 h-4" style={{ color: colors.green }} />
+                </div>
+                <span className="text-sm font-bold" style={{ color: colors.green }}>Manage Facilities Page</span>
+              </div>
 
-          <h1
-            className="text-4xl md:text-6xl mb-4"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 850,
-              color: colors.dark,
-              letterSpacing: "-0.045em",
-            }}
-          >
-            Edit Facilities Page
-          </h1>
+              <h1
+                className="text-3xl md:text-4xl font-black mb-2"
+                style={{ color: colors.dark, letterSpacing: "-0.04em" }}
+              >
+                Edit Facilities Page
+              </h1>
+              <p className="text-slate-500 text-sm">
+                Click on any section below to expand and edit. Only the section you need will be visible.
+              </p>
+            </div>
 
-          <p className="text-slate-500 max-w-3xl text-lg">
-            Edit the facilities page heading, cards, images, accent colors,
-            categories, descriptions, and modal details. Emoji editing is no
-            longer shown because the public page now uses a cleaner premium
-            visual style.
-          </p>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-400 font-medium">
+                {expandedCount} of {totalSections} sections open
+              </span>
+              
+              {expandedCount < totalSections ? (
+                <button
+                  onClick={expandAll}
+                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105"
+                  style={{
+                    background: "rgba(56,189,248,0.1)",
+                    color: colors.cyan,
+                    border: "1px solid rgba(56,189,248,0.2)",
+                  }}
+                >
+                  Expand All
+                </button>
+              ) : (
+                <button
+                  onClick={collapseAll}
+                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105"
+                  style={{
+                    background: "rgba(15,23,42,0.06)",
+                    color: "rgba(15,23,42,0.5)",
+                    border: "1px solid rgba(15,23,42,0.08)",
+                  }}
+                >
+                  Collapse All
+                </button>
+              )}
+            </div>
+          </div>
         </motion.div>
 
         {success && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold"
-            style={{
-              background: "rgba(22,138,58,0.1)",
-              color: colors.green,
-              border: "1px solid rgba(22,138,58,0.2)",
-            }}
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-5 rounded-xl px-4 py-3 flex items-center gap-3 font-semibold text-sm"
+            style={{ background: "rgba(22,138,58,0.08)", color: colors.green, border: "1px solid rgba(22,138,58,0.18)" }}
           >
-            <CheckCircle2 className="w-5 h-5" />
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             {success}
-          </div>
+          </motion.div>
         )}
 
         {error && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 font-semibold"
-            style={{
-              background: "rgba(215,25,32,0.1)",
-              color: colors.red,
-              border: "1px solid rgba(215,25,32,0.2)",
-            }}
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-5 rounded-xl px-4 py-3 font-semibold text-sm"
+            style={{ background: "rgba(215,25,32,0.08)", color: colors.red, border: "1px solid rgba(215,25,32,0.18)" }}
           >
             {error}
-          </div>
+          </motion.div>
         )}
 
-        <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start">
-          <div className="space-y-8">
-            <EditorCard
-              icon={Type}
-              title="Top Heading Section"
-              color={colors.green}
+        <div className="grid xl:grid-cols-[1fr_1.2fr] gap-6 items-start">
+          <div className="space-y-3">
+            {/* Top Heading Section */}
+            <AccordionSection
+              icon={sectionIcons.topHeading}
+              title={sectionTitles.topHeading}
+              color={sectionColors.topHeading}
+              isExpanded={expandedSections.topHeading}
+              onToggle={toggleSection}
+              sectionId="topHeading"
+              index={0}
             >
-              <div className="grid gap-5">
+              <div className="grid gap-4">
                 <Field
                   label="Small Badge Text"
                   value={form.badgeText}
                   onChange={(value) => updateField("badgeText", value)}
                 />
 
-                <div className="grid md:grid-cols-2 gap-5">
+                <div className="grid md:grid-cols-2 gap-4">
                   <Field
                     label="Main Title"
                     value={form.title}
@@ -688,9 +936,10 @@ export default function AdminFacilities() {
                   label="Subtitle"
                   value={form.subtitle}
                   onChange={(value) => updateField("subtitle", value)}
+                  rows={4}
                 />
 
-                <div className="grid md:grid-cols-2 gap-5">
+                <div className="grid md:grid-cols-2 gap-4">
                   <Field
                     label="Card Button Text"
                     value={form.learnMoreText}
@@ -704,266 +953,146 @@ export default function AdminFacilities() {
                   />
                 </div>
               </div>
-            </EditorCard>
+            </AccordionSection>
 
-            <EditorCard
-              icon={Building2}
-              title="Facility Cards"
-              color={colors.purple}
-            >
-              <div className="flex justify-end mb-6">
-                <button
-                  type="button"
-                  onClick={addFacility}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
-                  style={{
-                    background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
-                    boxShadow: "0 14px 34px rgba(75,46,131,0.22)",
-                  }}
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Facility
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                {form.facilities.map((facility, index) => (
-                  <div
-                    key={facility.id}
-                    className="rounded-3xl p-5"
+            {/* Facility Cards - Each as a separate accordion */}
+            {form.facilities.map((facility, index) => (
+              <AccordionSection
+                key={facility.id}
+                icon={Building2}
+                title={`Facility ${index + 1}: ${facility.title || "Untitled"}`}
+                color={facility.color || colors.purple}
+                isExpanded={expandedFacilities[facility.id] || false}
+                onToggle={() => toggleFacilitySection(facility.id)}
+                sectionId={facility.id}
+                index={index + 1}
+              >
+                <div className="flex justify-end mb-3">
+                  <button
+                    type="button"
+                    onClick={() => deleteFacility(facility.id)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105"
                     style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
+                      background: "rgba(215,25,32,0.08)",
+                      color: colors.red,
+                      border: "1px solid rgba(215,25,32,0.15)",
                     }}
                   >
-                    <div className="flex items-center justify-between gap-4 mb-5">
-                      <div>
-                        <div className="font-black text-slate-950">
-                          Facility {index + 1}
-                        </div>
-                        <div className="text-sm text-slate-500">
-                          {facility.title || "Untitled facility"}
-                        </div>
-                      </div>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete Facility
+                  </button>
+                </div>
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateFacility(
-                              facility.id,
-                              "visible",
-                              !facility.visible
-                            )
-                          }
-                          className="p-3 rounded-xl"
-                          style={{
-                            background:
-                              facility.visible !== false
-                                ? "rgba(22,138,58,0.1)"
-                                : "rgba(100,116,139,0.12)",
-                            color:
-                              facility.visible !== false
-                                ? colors.green
-                                : "#64748B",
-                            border:
-                              facility.visible !== false
-                                ? "1px solid rgba(22,138,58,0.2)"
-                                : "1px solid rgba(100,116,139,0.16)",
-                          }}
-                          title={
-                            facility.visible !== false ? "Visible" : "Hidden"
-                          }
-                        >
-                          {facility.visible !== false ? (
-                            <Eye className="w-4 h-4" />
-                          ) : (
-                            <EyeOff className="w-4 h-4" />
-                          )}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => deleteFacility(facility.id)}
-                          className="p-3 rounded-xl"
-                          style={{
-                            background: "rgba(215,25,32,0.09)",
-                            color: colors.red,
-                            border: "1px solid rgba(215,25,32,0.18)",
-                          }}
-                          title="Delete facility"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-[220px_1fr] gap-5">
-                      <div>
-                        <div
-                          className="rounded-2xl overflow-hidden bg-white mb-4 relative"
-                          style={{
-                            border: "1px solid rgba(15,23,42,0.08)",
-                          }}
-                        >
-                          {facility.imageUrl ? (
-                            <>
-                              <img
-                                src={facility.imageUrl}
-                                alt={facility.title}
-                                className="w-full h-44 object-cover"
-                              />
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateFacility(facility.id, "imageUrl", "")
-                                }
-                                className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
-                                title="Remove image"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </>
-                          ) : (
-                            <FacilityPreviewVisual facility={facility} />
-                          )}
-                        </div>
-
-                        <label
-                          className="flex flex-col items-center justify-center gap-2 cursor-pointer rounded-2xl p-4 text-center"
-                          style={{
-                            background: "rgba(255,255,255,0.72)",
-                            border: "1px dashed rgba(75,46,131,0.28)",
-                          }}
-                        >
-                          <UploadCloud
-                            className="w-6 h-6"
-                            style={{ color: colors.purple }}
-                          />
-
-                          <span className="text-sm font-bold text-slate-800">
-                            {uploadingId === facility.id
-                              ? "Uploading..."
-                              : "Upload Image"}
-                          </span>
-
-                          <span className="text-xs text-slate-500 leading-relaxed">
-                            Recommended: 1200×800 px landscape, PNG/JPG/WebP,
-                            max 3 MB.
-                          </span>
-
-                          <input
-                            type="file"
-                            accept="image/*"
-                            disabled={uploadingId === facility.id}
-                            onChange={(e) => {
-                              uploadFacilityImage(
-                                facility.id,
-                                e.target.files?.[0]
-                              );
-                              e.target.value = "";
-                            }}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-
-                      <div className="grid gap-4">
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <Field
-                            label="Facility Title"
-                            value={facility.title}
-                            onChange={(value) =>
-                              updateFacility(facility.id, "title", value)
-                            }
-                          />
-
-                          <Field
-                            label="Category"
-                            value={facility.category}
-                            onChange={(value) =>
-                              updateFacility(facility.id, "category", value)
-                            }
-                          />
-                        </div>
-
-                        <Field
-                          label="Accent Color"
-                          type="color"
-                          value={facility.color}
-                          onChange={(value) =>
-                            updateFacility(facility.id, "color", value)
-                          }
-                        />
-
-                        <TextArea
-                          label="Short Description"
-                          value={facility.description}
-                          onChange={(value) =>
-                            updateFacility(facility.id, "description", value)
-                          }
-                          rows={3}
-                        />
-
-                        <TextArea
-                          label="Modal Facility Details"
-                          value={facility.details}
-                          onChange={(value) =>
-                            updateFacility(facility.id, "details", value)
-                          }
-                          rows={4}
-                        />
-
-                        <label className="flex items-center gap-3 text-sm font-bold text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={facility.visible !== false}
-                            onChange={(e) =>
-                              updateFacility(
-                                facility.id,
-                                "visible",
-                                e.target.checked
-                              )
-                            }
-                            className="w-5 h-5"
-                          />
-                          Show this facility on website
-                        </label>
-                      </div>
-                    </div>
+                <div className="grid md:grid-cols-[220px_1fr] gap-4">
+                  <div>
+                    <ImageUploadBox
+                      label="Facility Image"
+                      imageUrl={facility.imageUrl}
+                      uploading={uploadingId === facility.id}
+                      onUpload={(file) => uploadFacilityImage(facility.id, file)}
+                      onRemove={() => updateFacility(facility.id, "imageUrl", "")}
+                    />
                   </div>
-                ))}
-              </div>
-            </EditorCard>
+
+                  <div className="grid gap-3">
+                    <div className="grid md:grid-cols-2 gap-3">
+                      <Field
+                        label="Facility Title"
+                        value={facility.title}
+                        onChange={(value) => updateFacility(facility.id, "title", value)}
+                      />
+
+                      <Field
+                        label="Category"
+                        value={facility.category}
+                        onChange={(value) => updateFacility(facility.id, "category", value)}
+                      />
+                    </div>
+
+                    <Field
+                      label="Accent Color"
+                      type="color"
+                      value={facility.color}
+                      onChange={(value) => updateFacility(facility.id, "color", value)}
+                    />
+
+                    <TextArea
+                      label="Short Description"
+                      value={facility.description}
+                      onChange={(value) => updateFacility(facility.id, "description", value)}
+                      rows={3}
+                    />
+
+                    <TextArea
+                      label="Modal Facility Details"
+                      value={facility.details}
+                      onChange={(value) => updateFacility(facility.id, "details", value)}
+                      rows={4}
+                    />
+
+                    <label className="flex items-center gap-3 text-xs font-bold text-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={facility.visible !== false}
+                        onChange={(e) => updateFacility(facility.id, "visible", e.target.checked)}
+                        className="w-4 h-4 accent-green-500"
+                      />
+                      Show this facility on website
+                    </label>
+                  </div>
+                </div>
+              </AccordionSection>
+            ))}
+
+            {/* Add New Facility Button */}
+            <button
+              type="button"
+              onClick={addFacility}
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-4 rounded-2xl font-bold text-sm transition-all hover:scale-[1.01]"
+              style={{
+                color: colors.dark,
+                background: "#FFFFFF",
+                border: "1.5px dashed rgba(75,46,131,0.2)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              }}
+            >
+              <Plus className="w-4 h-4" style={{ color: colors.purple }} />
+              Add New Facility
+            </button>
           </div>
 
           <aside
-            className="xl:sticky xl:top-28 rounded-3xl overflow-hidden"
+            className="xl:sticky xl:top-24 rounded-2xl overflow-hidden"
             style={{
-              background:
-                "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
-              border: "1px solid rgba(255,255,255,0.14)",
-              boxShadow: "0 22px 58px rgba(11,16,32,0.25)",
+              background: "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 20px 60px rgba(11,16,32,0.3)",
             }}
           >
-            <div className="p-5 border-b border-white/10">
-              <div className="text-white font-bold text-lg flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                Facilities Page Preview
+            <div
+              className="px-5 py-4 flex items-center justify-between"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: "rgba(56,189,248,0.12)" }}
+                >
+                  <Eye className="w-4 h-4" style={{ color: colors.cyan }} />
+                </div>
+                <div>
+                  <div className="text-white font-bold text-sm">Facilities Page Preview</div>
+                  <div className="text-white/45 text-xs">Updates live while typing</div>
+                </div>
               </div>
-
-              <div className="text-sm text-white/55">
-                Preview updates while editing.
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
               </div>
             </div>
 
-            <div
-              className="bg-white overflow-y-auto"
-              style={{
-                height: "760px",
-              }}
-            >
+            <div className="bg-white overflow-y-auto" style={{ height: "720px" }}>
               <FacilityPreview form={form} />
             </div>
           </aside>

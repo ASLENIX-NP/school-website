@@ -20,6 +20,8 @@ import {
   Award,
   X,
   MessageSquareText,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 
 const colors = {
@@ -187,20 +189,29 @@ function mergeAboutContent(saved = {}) {
 function Field({ label, value, onChange, placeholder = "", type = "text" }) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
+      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
         {label}
       </label>
-
       <input
         type={type}
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
+        className="w-full px-4 py-3 rounded-xl outline-none text-sm transition-all duration-150"
         style={{
-          background: "rgba(255,255,255,0.88)",
-          border: "1px solid rgba(75,46,131,0.16)",
+          background: "#F8FAFC",
+          border: "1.5px solid rgba(75,46,131,0.12)",
           color: colors.dark,
+        }}
+        onFocus={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.4)";
+          e.target.style.background = "#fff";
+          e.target.style.boxShadow = "0 0 0 3px rgba(75,46,131,0.06)";
+        }}
+        onBlur={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.12)";
+          e.target.style.background = "#F8FAFC";
+          e.target.style.boxShadow = "none";
         }}
       />
     </div>
@@ -210,45 +221,112 @@ function Field({ label, value, onChange, placeholder = "", type = "text" }) {
 function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
+      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
         {label}
       </label>
-
       <textarea
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full px-4 py-3 rounded-2xl outline-none text-sm resize-none"
+        className="w-full px-4 py-3 rounded-xl outline-none text-sm resize-none transition-all duration-150"
         style={{
-          background: "rgba(255,255,255,0.88)",
-          border: "1px solid rgba(75,46,131,0.16)",
+          background: "#F8FAFC",
+          border: "1.5px solid rgba(75,46,131,0.12)",
           color: colors.dark,
+        }}
+        onFocus={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.4)";
+          e.target.style.background = "#fff";
+          e.target.style.boxShadow = "0 0 0 3px rgba(75,46,131,0.06)";
+        }}
+        onBlur={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.12)";
+          e.target.style.background = "#F8FAFC";
+          e.target.style.boxShadow = "none";
         }}
       />
     </div>
   );
 }
 
-function EditorCard({ icon: Icon, title, color, children }) {
+// Accordion Section Component - Matching Home page design
+function AccordionSection({
+  icon: Icon,
+  title,
+  color,
+  children,
+  isExpanded,
+  onToggle,
+  sectionId,
+  index,
+}) {
   return (
-    <div
-      className="rounded-3xl p-6 md:p-8"
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      className="rounded-2xl overflow-hidden transition-all duration-300"
       style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
-        border: "1px solid rgba(11,16,32,0.08)",
-        boxShadow:
-          "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
+        background: "#FFFFFF",
+        border: isExpanded
+          ? `1.5px solid ${color}30`
+          : "1.5px solid rgba(15,23,42,0.07)",
+        boxShadow: isExpanded
+          ? `0 8px 32px ${color}12, 0 2px 8px rgba(0,0,0,0.04)`
+          : "0 2px 8px rgba(0,0,0,0.04)",
       }}
     >
-      <div className="flex items-center gap-3 mb-6">
-        <Icon className="w-5 h-5" style={{ color }} />
-        <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
-      </div>
+      {/* Header */}
+      <button
+        onClick={() => onToggle(sectionId)}
+        className="w-full flex items-center justify-between px-5 py-4 transition-all duration-200"
+        style={{
+          background: isExpanded ? `${color}06` : "transparent",
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: `${color}12` }}
+          >
+            <Icon className="w-4 h-4" style={{ color }} />
+          </div>
+          <div className="text-left">
+            <div className="font-bold text-slate-900 text-sm">{title}</div>
+            {!isExpanded && (
+              <div className="text-xs text-slate-400 mt-0.5">Click to expand and edit</div>
+            )}
+          </div>
+        </div>
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200"
+          style={{
+            background: isExpanded ? `${color}15` : "rgba(15,23,42,0.05)",
+          }}
+        >
+          {isExpanded ? (
+            <ChevronDown className="w-4 h-4" style={{ color }} />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+          )}
+        </div>
+      </button>
 
-      {children}
-    </div>
+      {/* Divider when open */}
+      {isExpanded && (
+        <div style={{ height: "1px", background: `${color}18`, margin: "0 20px" }} />
+      )}
+
+      {/* Content */}
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isExpanded ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="px-5 pt-5 pb-6 space-y-4">{children}</div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -306,13 +384,13 @@ function ImageUploadBox({
 }) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
+      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
         {label}
       </label>
 
       <div
-        className="rounded-2xl overflow-hidden bg-white mb-4 relative"
-        style={{ border: "1px solid rgba(15,23,42,0.08)" }}
+        className="rounded-xl overflow-hidden bg-white mb-4 relative"
+        style={{ border: "1.5px solid rgba(15,23,42,0.08)" }}
       >
         {imageUrl ? (
           <>
@@ -327,26 +405,26 @@ function ImageUploadBox({
             </button>
           </>
         ) : (
-          <div className="w-full h-56 bg-slate-100 flex items-center justify-center">
+          <div className="w-full h-56 bg-slate-50 flex items-center justify-center">
             <ImageIcon className="w-16 h-16 text-slate-300" />
           </div>
         )}
       </div>
 
       <label
-        className="flex flex-col items-center justify-center gap-2 cursor-pointer rounded-2xl p-4 text-center"
+        className="flex flex-col items-center justify-center gap-2 cursor-pointer rounded-xl p-4 text-center transition-all duration-150 hover:bg-white/90"
         style={{
-          background: "rgba(255,255,255,0.72)",
-          border: "1px dashed rgba(75,46,131,0.28)",
+          background: "rgba(255,255,255,0.6)",
+          border: "1.5px dashed rgba(75,46,131,0.2)",
         }}
       >
-        <UploadCloud className="w-6 h-6" style={{ color: colors.purple }} />
+        <UploadCloud className="w-5 h-5" style={{ color: colors.purple }} />
 
         <span className="text-sm font-bold text-slate-800">
           {uploading ? "Uploading..." : "Upload Image"}
         </span>
 
-        <span className="text-xs text-slate-500 leading-relaxed">
+        <span className="text-xs text-slate-400 leading-relaxed">
           {instruction}
         </span>
 
@@ -361,18 +439,6 @@ function ImageUploadBox({
           className="hidden"
         />
       </label>
-    </div>
-  );
-}
-
-function PreviewImage({ src, alt, height = "h-60" }) {
-  if (src) {
-    return <img src={src} alt={alt} className={`w-full ${height} object-cover`} />;
-  }
-
-  return (
-    <div className={`w-full ${height} bg-slate-100 flex items-center justify-center`}>
-      <ImageIcon className="w-14 h-14 text-slate-300" />
     </div>
   );
 }
@@ -476,10 +542,17 @@ function AboutPreview({ form }) {
             boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
           }}
         >
-          <PreviewImage
-            src={form.storyImageUrl}
-            alt={form.storyImageAlt || "Story image"}
-          />
+          {form.storyImageUrl ? (
+            <img
+              src={form.storyImageUrl}
+              alt={form.storyImageAlt || "Story image"}
+              className="w-full h-60 object-cover"
+            />
+          ) : (
+            <div className="w-full h-60 bg-slate-100 flex items-center justify-center">
+              <ImageIcon className="w-14 h-14 text-slate-300" />
+            </div>
+          )}
 
           <div className="absolute bottom-4 left-4 right-4 rounded-2xl p-4 bg-black/45 backdrop-blur-md">
             <div
@@ -739,6 +812,41 @@ export default function AdminAbout() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
+  // Define sections
+  const sectionKeys = ['header', 'story', 'headings', 'pillars', 'messages', 'missionVision', 'journey'];
+  const sectionTitles = {
+    header: 'Header Section',
+    story: 'Story Section',
+    headings: 'Section Headings',
+    pillars: 'Pillar Cards - Our Core Values',
+    messages: 'Leadership Messages',
+    missionVision: 'Mission & Vision Cards',
+    journey: 'Journey Timeline'
+  };
+  const sectionIcons = {
+    header: Type,
+    story: BookOpen,
+    headings: Award,
+    pillars: Award,
+    messages: MessageSquareText,
+    missionVision: Target,
+    journey: CalendarDays
+  };
+  const sectionColors = {
+    header: colors.purple,
+    story: colors.purple,
+    headings: colors.green,
+    pillars: colors.red,
+    messages: colors.purple,
+    missionVision: colors.green,
+    journey: colors.red
+  };
+
+  // State for accordion - all collapsed by default
+  const [expandedSections, setExpandedSections] = useState(
+    Object.fromEntries(sectionKeys.map(key => [key, false]))
+  );
+
   const token = localStorage.getItem("adminToken");
 
   useEffect(() => {
@@ -756,6 +864,25 @@ export default function AdminAbout() {
 
     loadAboutContent();
   }, []);
+
+  const toggleSection = (sectionId) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  };
+
+  const expandAll = () => {
+    setExpandedSections(
+      Object.fromEntries(sectionKeys.map(key => [key, true]))
+    );
+  };
+
+  const collapseAll = () => {
+    setExpandedSections(
+      Object.fromEntries(sectionKeys.map(key => [key, false]))
+    );
+  };
 
   const updateField = (name, value) => {
     setForm((prev) => ({
@@ -987,6 +1114,9 @@ export default function AdminAbout() {
     );
   }
 
+  const expandedCount = Object.values(expandedSections).filter(Boolean).length;
+  const totalSections = sectionKeys.length;
+
   return (
     <section
       className="min-h-screen relative overflow-hidden"
@@ -1008,13 +1138,13 @@ export default function AdminAbout() {
           backdropFilter: "blur(22px)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <button
             type="button"
             onClick={() => navigate("/admin/dashboard")}
-            className="inline-flex items-center gap-2 text-white font-bold"
+            className="inline-flex items-center gap-2 text-white/80 hover:text-white font-semibold text-sm transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </button>
 
@@ -1023,11 +1153,8 @@ export default function AdminAbout() {
               href="/about"
               target="_blank"
               rel="noreferrer"
-              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
-              style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.14)",
-              }}
+              className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white/80 hover:text-white text-sm transition-all"
+              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
             >
               <ExternalLink className="w-4 h-4" />
               View About Page
@@ -1037,12 +1164,11 @@ export default function AdminAbout() {
               type="button"
               onClick={saveAboutContent}
               disabled={saving || uploadingKey}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all hover:scale-105 disabled:opacity-60"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 disabled:opacity-60"
               style={{
                 color: "#020617",
                 background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                boxShadow:
-                  "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
+                boxShadow: "0 8px 24px rgba(56,189,248,0.28)",
               }}
             >
               <Save className="w-4 h-4" />
@@ -1052,196 +1178,226 @@ export default function AdminAbout() {
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-6 py-10">
+      <main className="max-w-[1600px] mx-auto px-6 py-8">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          transition={{ duration: 0.4 }}
+          className="mb-7"
         >
-          <span
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-5"
-            style={{
-              background: "rgba(75,46,131,0.1)",
-              color: colors.purple,
-              border: "1px solid rgba(75,46,131,0.2)",
-            }}
-          >
-            <BookOpen className="w-4 h-4" />
-            Manage About Page
-          </span>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{ background: "rgba(75,46,131,0.12)", border: "1px solid rgba(75,46,131,0.2)" }}
+                >
+                  <BookOpen className="w-4 h-4" style={{ color: colors.purple }} />
+                </div>
+                <span className="text-sm font-bold" style={{ color: colors.purple }}>Manage About Page</span>
+              </div>
 
-          <h1
-            className="text-4xl md:text-6xl mb-4"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 850,
-              color: colors.dark,
-              letterSpacing: "-0.045em",
-            }}
-          >
-            Edit About Page
-          </h1>
+              <h1
+                className="text-3xl md:text-4xl font-black mb-2"
+                style={{ color: colors.dark, letterSpacing: "-0.04em" }}
+              >
+                Edit About Page
+              </h1>
+              <p className="text-slate-500 text-sm">
+                Click on any section below to expand and edit. Only the section you need will be visible.
+              </p>
+            </div>
 
-          <p className="text-slate-500 max-w-3xl text-lg">
-            Edit about heading, story section, leadership messages, pillar cards, mission, vision, and journey timeline.
-          </p>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-400 font-medium">
+                {expandedCount} of {totalSections} sections open
+              </span>
+              
+              {expandedCount < totalSections ? (
+                <button
+                  onClick={expandAll}
+                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105"
+                  style={{
+                    background: "rgba(56,189,248,0.1)",
+                    color: colors.cyan,
+                    border: "1px solid rgba(56,189,248,0.2)",
+                  }}
+                >
+                  Expand All
+                </button>
+              ) : (
+                <button
+                  onClick={collapseAll}
+                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105"
+                  style={{
+                    background: "rgba(15,23,42,0.06)",
+                    color: "rgba(15,23,42,0.5)",
+                    border: "1px solid rgba(15,23,42,0.08)",
+                  }}
+                >
+                  Collapse All
+                </button>
+              )}
+            </div>
+          </div>
         </motion.div>
 
         {success && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold"
-            style={{
-              background: "rgba(22,138,58,0.1)",
-              color: colors.green,
-              border: "1px solid rgba(22,138,58,0.2)",
-            }}
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-5 rounded-xl px-4 py-3 flex items-center gap-3 font-semibold text-sm"
+            style={{ background: "rgba(22,138,58,0.08)", color: colors.green, border: "1px solid rgba(22,138,58,0.18)" }}
           >
-            <CheckCircle2 className="w-5 h-5" />
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             {success}
-          </div>
+          </motion.div>
         )}
 
         {error && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 font-semibold"
-            style={{
-              background: "rgba(215,25,32,0.1)",
-              color: colors.red,
-              border: "1px solid rgba(215,25,32,0.2)",
-            }}
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-5 rounded-xl px-4 py-3 font-semibold text-sm"
+            style={{ background: "rgba(215,25,32,0.08)", color: colors.red, border: "1px solid rgba(215,25,32,0.18)" }}
           >
             {error}
-          </div>
+          </motion.div>
         )}
 
-        <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start">
-          <div className="space-y-8">
+        {/* Main grid - matching Home page layout */}
+        <div className="grid xl:grid-cols-[1fr_1.2fr] gap-6 items-start">
+          {/* Left: Accordion sections */}
+          <div className="space-y-3">
             {/* Header Section */}
-            <EditorCard
-              icon={Type}
-              title="Header Section"
-              color={colors.purple}
+            <AccordionSection
+              icon={sectionIcons.header}
+              title={sectionTitles.header}
+              color={sectionColors.header}
+              isExpanded={expandedSections.header}
+              onToggle={toggleSection}
+              sectionId="header"
+              index={0}
             >
-              <div className="grid gap-5">
-                <Field
-                  label="Page Title"
-                  value={form.pageTitle}
-                  onChange={(value) => updateField("pageTitle", value)}
-                />
-
-                <TextArea
-                  label="Page Subtitle"
-                  value={form.pageSubtitle}
-                  onChange={(value) => updateField("pageSubtitle", value)}
-                  rows={3}
-                />
-              </div>
-            </EditorCard>
+              <Field
+                label="Page Title"
+                value={form.pageTitle}
+                onChange={(value) => updateField("pageTitle", value)}
+              />
+              <TextArea
+                label="Page Subtitle"
+                value={form.pageSubtitle}
+                onChange={(value) => updateField("pageSubtitle", value)}
+                rows={3}
+              />
+            </AccordionSection>
 
             {/* Story Section */}
-            <EditorCard
-              icon={BookOpen}
-              title="Story Section"
-              color={colors.purple}
+            <AccordionSection
+              icon={sectionIcons.story}
+              title={sectionTitles.story}
+              color={sectionColors.story}
+              isExpanded={expandedSections.story}
+              onToggle={toggleSection}
+              sectionId="story"
+              index={1}
             >
-              <div className="grid gap-5">
+              <Field
+                label="Story Badge"
+                value={form.storyBadge}
+                onChange={(value) => updateField("storyBadge", value)}
+              />
+              <Field
+                label="Story Title"
+                value={form.storyTitle}
+                onChange={(value) => updateField("storyTitle", value)}
+              />
+              <TextArea
+                label="Story Paragraphs - one paragraph per line"
+                value={form.storyParagraphs.join("\n")}
+                onChange={(value) =>
+                  updateField(
+                    "storyParagraphs",
+                    value
+                      .split("\n")
+                      .map((item) => item.trim())
+                      .filter(Boolean)
+                  )
+                }
+                rows={7}
+              />
+              <ImageUploadBox
+                label="Story Image"
+                imageUrl={form.storyImageUrl}
+                uploading={uploadingKey === "storyImageUrl"}
+                instruction="Recommended: 1200×900 px landscape, PNG/JPG/WebP, max 3 MB."
+                onUpload={(file) => uploadImage("storyImageUrl", file)}
+                onRemove={() => updateField("storyImageUrl", "")}
+              />
+              <Field
+                label="Story Image Alt Text"
+                value={form.storyImageAlt}
+                onChange={(value) => updateField("storyImageAlt", value)}
+              />
+              <div className="grid md:grid-cols-2 gap-4">
                 <Field
-                  label="Story Badge"
-                  value={form.storyBadge}
-                  onChange={(value) => updateField("storyBadge", value)}
+                  label="Story Image Caption Title"
+                  value={form.storyImageTitle}
+                  onChange={(value) => updateField("storyImageTitle", value)}
                 />
-
                 <Field
-                  label="Story Title"
-                  value={form.storyTitle}
-                  onChange={(value) => updateField("storyTitle", value)}
+                  label="Story Image Caption Subtitle"
+                  value={form.storyImageSubtitle}
+                  onChange={(value) => updateField("storyImageSubtitle", value)}
                 />
-
-                <TextArea
-                  label="Story Paragraphs - one paragraph per line"
-                  value={form.storyParagraphs.join("\n")}
-                  onChange={(value) =>
-                    updateField(
-                      "storyParagraphs",
-                      value
-                        .split("\n")
-                        .map((item) => item.trim())
-                        .filter(Boolean)
-                    )
-                  }
-                  rows={7}
-                />
-
-                <ImageUploadBox
-                  label="Story Image"
-                  imageUrl={form.storyImageUrl}
-                  uploading={uploadingKey === "storyImageUrl"}
-                  instruction="Recommended: 1200×900 px landscape, PNG/JPG/WebP, max 3 MB."
-                  onUpload={(file) => uploadImage("storyImageUrl", file)}
-                  onRemove={() => updateField("storyImageUrl", "")}
-                />
-
-                <Field
-                  label="Story Image Alt Text"
-                  value={form.storyImageAlt}
-                  onChange={(value) => updateField("storyImageAlt", value)}
-                />
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <Field
-                    label="Story Image Caption Title"
-                    value={form.storyImageTitle}
-                    onChange={(value) => updateField("storyImageTitle", value)}
-                  />
-
-                  <Field
-                    label="Story Image Caption Subtitle"
-                    value={form.storyImageSubtitle}
-                    onChange={(value) =>
-                      updateField("storyImageSubtitle", value)
-                    }
-                  />
-                </div>
               </div>
-            </EditorCard>
+            </AccordionSection>
 
             {/* Section Headings */}
-            <EditorCard
-              icon={Award}
-              title="Section Headings"
-              color={colors.green}
+            <AccordionSection
+              icon={sectionIcons.headings}
+              title={sectionTitles.headings}
+              color={sectionColors.headings}
+              isExpanded={expandedSections.headings}
+              onToggle={toggleSection}
+              sectionId="headings"
+              index={2}
             >
-              <div className="grid gap-5">
-                <Field
-                  label="Pillar Badge"
-                  value={form.pillarBadge}
-                  onChange={(value) => updateField("pillarBadge", value)}
-                  placeholder="Our Core Values"
-                />
+              <Field
+                label="Pillar Badge"
+                value={form.pillarBadge}
+                onChange={(value) => updateField("pillarBadge", value)}
+                placeholder="Our Core Values"
+              />
+              <Field
+                label="Pillar Title"
+                value={form.pillarTitle}
+                onChange={(value) => updateField("pillarTitle", value)}
+                placeholder="What Makes Us Different"
+              />
+              <Field
+                label="Timeline Badge"
+                value={form.timelineBadge}
+                onChange={(value) => updateField("timelineBadge", value)}
+                placeholder="Timeline"
+              />
+            </AccordionSection>
 
-                <Field
-                  label="Pillar Title"
-                  value={form.pillarTitle}
-                  onChange={(value) => updateField("pillarTitle", value)}
-                  placeholder="What Makes Us Different"
-                />
-
-                <Field
-                  label="Timeline Badge"
-                  value={form.timelineBadge}
-                  onChange={(value) => updateField("timelineBadge", value)}
-                  placeholder="Timeline"
-                />
-              </div>
-            </EditorCard>
-
-            {/* Pillar Cards - Our Core Values */}
-            <EditorCard icon={Award} title="Pillar Cards - Our Core Values" color={colors.red}>
-              <div className="flex justify-end mb-6">
+            {/* Pillar Cards */}
+            <AccordionSection
+              icon={sectionIcons.pillars}
+              title={sectionTitles.pillars}
+              color={sectionColors.pillars}
+              isExpanded={expandedSections.pillars}
+              onToggle={toggleSection}
+              sectionId="pillars"
+              index={3}
+            >
+              <div className="flex justify-end mb-4">
                 <button
                   type="button"
                   onClick={addPillar}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm text-white transition-all hover:scale-105"
                   style={{
                     background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
                   }}
@@ -1251,71 +1407,66 @@ export default function AdminAbout() {
                 </button>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {form.pillars.map((item, index) => (
                   <div
                     key={item.id}
-                    className="rounded-3xl p-5"
+                    className="rounded-xl p-4 space-y-4"
                     style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
+                      background: "rgba(15,23,42,0.03)",
+                      border: "1px solid rgba(15,23,42,0.06)",
                     }}
                   >
-                    <div className="flex items-center justify-between mb-5">
-                      <div>
-                        <div className="font-black text-slate-950">
-                          Pillar {index + 1}
-                        </div>
-
-                        <div className="text-sm text-slate-500">
-                          {item.label}
-                        </div>
+                    <div className="flex items-center justify-between">
+                      <div className="font-bold text-slate-900 text-sm">
+                        Pillar {index + 1}
                       </div>
-
                       <VisibilityDeleteControls
                         visible={item.visible}
-                        onToggle={() =>
-                          updatePillar(item.id, "visible", !item.visible)
-                        }
+                        onToggle={() => updatePillar(item.id, "visible", !item.visible)}
                         onDelete={() => deletePillar(item.id)}
                       />
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-2 gap-3">
                       <Field
                         label="Label"
                         value={item.label}
-                        onChange={(value) =>
-                          updatePillar(item.id, "label", value)
-                        }
+                        onChange={(value) => updatePillar(item.id, "label", value)}
                       />
-
                       <Field
                         label="Accent Color"
                         type="color"
                         value={item.color}
-                        onChange={(value) =>
-                          updatePillar(item.id, "color", value)
-                        }
+                        onChange={(value) => updatePillar(item.id, "color", value)}
                       />
                     </div>
-                    
+                    <TextArea
+                      label="Description"
+                      value={item.desc}
+                      onChange={(value) => updatePillar(item.id, "desc", value)}
+                      rows={2}
+                    />
                   </div>
                 ))}
               </div>
-            </EditorCard>
+            </AccordionSection>
 
             {/* Leadership Messages */}
-            <EditorCard
-              icon={MessageSquareText}
-              title="Leadership Messages"
-              color={colors.purple}
+            <AccordionSection
+              icon={sectionIcons.messages}
+              title={sectionTitles.messages}
+              color={sectionColors.messages}
+              isExpanded={expandedSections.messages}
+              onToggle={toggleSection}
+              sectionId="messages"
+              index={4}
             >
-              <div className="flex justify-end mb-6">
+              <div className="flex justify-end mb-4">
                 <button
                   type="button"
                   onClick={addMessage}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm text-white transition-all hover:scale-105"
                   style={{
                     background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
                   }}
@@ -1325,118 +1476,85 @@ export default function AdminAbout() {
                 </button>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {form.messages?.map((item, index) => (
                   <div
                     key={item.id}
-                    className="rounded-3xl p-5"
+                    className="rounded-xl p-4 space-y-4"
                     style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
+                      background: "rgba(15,23,42,0.03)",
+                      border: "1px solid rgba(15,23,42,0.06)",
                     }}
                   >
-                    <div className="flex items-center justify-between mb-5">
-                      <div>
-                        <div className="font-black text-slate-950">
-                          Message {index + 1}
-                        </div>
-                        <div className="text-sm text-slate-500">
-                          {item.name}
-                        </div>
+                    <div className="flex items-center justify-between">
+                      <div className="font-bold text-slate-900 text-sm">
+                        Message {index + 1}
                       </div>
-
                       <VisibilityDeleteControls
                         visible={item.visible}
-                        onToggle={() =>
-                          updateMessage(item.id, "visible", !item.visible)
-                        }
+                        onToggle={() => updateMessage(item.id, "visible", !item.visible)}
                         onDelete={() => deleteMessage(item.id)}
                       />
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-2 gap-3">
                       <Field
                         label="Name"
                         value={item.name}
-                        onChange={(value) =>
-                          updateMessage(item.id, "name", value)
-                        }
+                        onChange={(value) => updateMessage(item.id, "name", value)}
                       />
-
                       <Field
                         label="Role"
                         value={item.role}
-                        onChange={(value) =>
-                          updateMessage(item.id, "role", value)
-                        }
+                        onChange={(value) => updateMessage(item.id, "role", value)}
                       />
                     </div>
-
-                    <div className="mt-4">
-                      <Field
-                        label="Title"
-                        value={item.title}
-                        onChange={(value) =>
-                          updateMessage(item.id, "title", value)
-                        }
-                      />
-                    </div>
-
-                    <div className="mt-4">
-                      <TextArea
-                        label="Message"
-                        value={item.message}
-                        onChange={(value) =>
-                          updateMessage(item.id, "message", value)
-                        }
-                      />
-                    </div>
-
-                    <div className="mt-4">
-  <ImageUploadBox
-    label="Leadership Photo"
-    imageUrl={item.image}
-    uploading={uploadingKey === `message-${item.id}`}
-    instruction="Upload Principal/Vice Principal photo"
-    onUpload={async (file) => {
-      if (!file) return;
-    
-      const formData = new FormData();
-      formData.append("file", file);
-    
-      const res = await axios.post(
-        "http://localhost:5000/api/upload",
-        formData
-      );
-    
-      const uploadedUrl =
-        res.data?.url ||
-        res.data?.imageUrl ||
-        res.data?.data?.url;
-    
-      updateMessage(item.id, "image", uploadedUrl);
-    }}
-    onRemove={() =>
-      updateMessage(item.id, "image", "")
-    }
-  />
-</div>
+                    <Field
+                      label="Title"
+                      value={item.title}
+                      onChange={(value) => updateMessage(item.id, "title", value)}
+                    />
+                    <TextArea
+                      label="Message"
+                      value={item.message}
+                      onChange={(value) => updateMessage(item.id, "message", value)}
+                      rows={3}
+                    />
+                    <ImageUploadBox
+                      label="Leadership Photo"
+                      imageUrl={item.image}
+                      uploading={uploadingKey === `message-${item.id}`}
+                      instruction="Upload leadership photo"
+                      onUpload={async (file) => {
+                        if (!file) return;
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        const res = await axios.post("http://localhost:5000/api/upload", formData);
+                        const uploadedUrl = res.data?.url || res.data?.imageUrl || res.data?.data?.url;
+                        updateMessage(item.id, "image", uploadedUrl);
+                      }}
+                      onRemove={() => updateMessage(item.id, "image", "")}
+                    />
                   </div>
                 ))}
               </div>
-            </EditorCard>
+            </AccordionSection>
 
             {/* Mission & Vision */}
-            <EditorCard
-              icon={Target}
-              title="Mission & Vision Cards"
-              color={colors.green}
+            <AccordionSection
+              icon={sectionIcons.missionVision}
+              title={sectionTitles.missionVision}
+              color={sectionColors.missionVision}
+              isExpanded={expandedSections.missionVision}
+              onToggle={toggleSection}
+              sectionId="missionVision"
+              index={5}
             >
-              <div className="flex justify-end mb-6">
+              <div className="flex justify-end mb-4">
                 <button
                   type="button"
                   onClick={addMissionVision}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm text-white transition-all hover:scale-105"
                   style={{
                     background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
                   }}
@@ -1446,179 +1564,161 @@ export default function AdminAbout() {
                 </button>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {form.missionVision.map((item, index) => (
                   <div
                     key={item.id}
-                    className="rounded-3xl p-5"
+                    className="rounded-xl p-4 space-y-4"
                     style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
+                      background: "rgba(15,23,42,0.03)",
+                      border: "1px solid rgba(15,23,42,0.06)",
                     }}
                   >
-                    <div className="flex items-center justify-between mb-5">
-                      <div>
-                        <div className="font-black text-slate-950">
-                          Card {index + 1}
-                        </div>
-
-                        <div className="text-sm text-slate-500">
-                          {item.title}
-                        </div>
+                    <div className="flex items-center justify-between">
+                      <div className="font-bold text-slate-900 text-sm">
+                        Card {index + 1}
                       </div>
-
                       <VisibilityDeleteControls
                         visible={item.visible}
-                        onToggle={() =>
-                          updateMissionVision(item.id, "visible", !item.visible)
-                        }
+                        onToggle={() => updateMissionVision(item.id, "visible", !item.visible)}
                         onDelete={() => deleteMissionVision(item.id)}
                       />
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-2 gap-3">
                       <Field
                         label="Title"
                         value={item.title}
-                        onChange={(value) =>
-                          updateMissionVision(item.id, "title", value)
-                        }
+                        onChange={(value) => updateMissionVision(item.id, "title", value)}
                       />
-
                       <Field
                         label="Accent Color"
                         type="color"
                         value={item.color}
-                        onChange={(value) =>
-                          updateMissionVision(item.id, "color", value)
-                        }
+                        onChange={(value) => updateMissionVision(item.id, "color", value)}
                       />
                     </div>
-
-                    <div className="mt-4">
-                      <TextArea
-                        label="Description"
-                        value={item.desc}
-                        onChange={(value) =>
-                          updateMissionVision(item.id, "desc", value)
-                        }
-                      />
-                    </div>
+                    <TextArea
+                      label="Description"
+                      value={item.desc}
+                      onChange={(value) => updateMissionVision(item.id, "desc", value)}
+                      rows={3}
+                    />
                   </div>
                 ))}
               </div>
-            </EditorCard>
+            </AccordionSection>
 
             {/* Journey Timeline */}
-            <EditorCard
-              icon={CalendarDays}
-              title="Journey Timeline"
-              color={colors.red}
+            <AccordionSection
+              icon={sectionIcons.journey}
+              title={sectionTitles.journey}
+              color={sectionColors.journey}
+              isExpanded={expandedSections.journey}
+              onToggle={toggleSection}
+              sectionId="journey"
+              index={6}
             >
-              <div className="grid gap-5">
-                <Field
-                  label="Journey Section Title"
-                  value={form.journeyTitle}
-                  onChange={(value) => updateField("journeyTitle", value)}
-                />
+              <Field
+                label="Journey Section Title"
+                value={form.journeyTitle}
+                onChange={(value) => updateField("journeyTitle", value)}
+              />
 
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={addJourney}
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
-                    style={{
-                      background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
-                    }}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Journey
-                  </button>
-                </div>
+              <div className="flex justify-end mt-2">
+                <button
+                  type="button"
+                  onClick={addJourney}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm text-white transition-all hover:scale-105"
+                  style={{
+                    background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Journey
+                </button>
+              </div>
 
+              <div className="space-y-4 mt-4">
                 {form.journey.map((item, index) => (
                   <div
                     key={item.id}
-                    className="rounded-3xl p-5"
+                    className="rounded-xl p-4 space-y-4"
                     style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
+                      background: "rgba(15,23,42,0.03)",
+                      border: "1px solid rgba(15,23,42,0.06)",
                     }}
                   >
-                    <div className="flex items-center justify-between mb-5">
-                      <div>
-                        <div className="font-black text-slate-950">
-                          Journey {index + 1}
-                        </div>
-
-                        <div className="text-sm text-slate-500">
-                          {item.title}
-                        </div>
+                    <div className="flex items-center justify-between">
+                      <div className="font-bold text-slate-900 text-sm">
+                        Journey {index + 1}
                       </div>
-
                       <VisibilityDeleteControls
                         visible={item.visible}
-                        onToggle={() =>
-                          updateJourney(item.id, "visible", !item.visible)
-                        }
+                        onToggle={() => updateJourney(item.id, "visible", !item.visible)}
                         onDelete={() => deleteJourney(item.id)}
                       />
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-2 gap-3">
                       <Field
                         label="Year / Label"
                         value={item.year}
-                        onChange={(value) =>
-                          updateJourney(item.id, "year", value)
-                        }
+                        onChange={(value) => updateJourney(item.id, "year", value)}
                       />
-
                       <Field
                         label="Title"
                         value={item.title}
-                        onChange={(value) =>
-                          updateJourney(item.id, "title", value)
-                        }
+                        onChange={(value) => updateJourney(item.id, "title", value)}
                       />
                     </div>
-
-                    <div className="mt-4">
-                      <TextArea
-                        label="Description"
-                        value={item.desc}
-                        onChange={(value) =>
-                          updateJourney(item.id, "desc", value)
-                        }
-                      />
-                    </div>
+                    <TextArea
+                      label="Description"
+                      value={item.desc}
+                      onChange={(value) => updateJourney(item.id, "desc", value)}
+                      rows={2}
+                    />
                   </div>
                 ))}
               </div>
-            </EditorCard>
+            </AccordionSection>
           </div>
 
+          {/* Right: Preview */}
           <aside
-            className="sticky top-28 self-start rounded-3xl overflow-hidden"
+            className="xl:sticky xl:top-24 rounded-2xl overflow-hidden"
             style={{
-              background:
-                "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
-              border: "1px solid rgba(255,255,255,0.14)",
-              boxShadow: "0 22px 58px rgba(11,16,32,0.25)",
+              background: "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 20px 60px rgba(11,16,32,0.3)",
             }}
           >
-            <div className="p-5 border-b border-white/10">
-              <div className="text-white font-bold text-lg flex items-center gap-2">
-                <EyeIcon className="w-5 h-5" />
-                About Page Preview
+            {/* Preview header */}
+            <div
+              className="px-5 py-4 flex items-center justify-between"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: "rgba(56,189,248,0.12)" }}
+                >
+                  <EyeIcon className="w-4 h-4" style={{ color: colors.cyan }} />
+                </div>
+                <div>
+                  <div className="text-white font-bold text-sm">About Page Preview</div>
+                  <div className="text-white/45 text-xs">Updates live while typing</div>
+                </div>
               </div>
-
-              <div className="text-sm text-white/55">
-                Full preview updates while editing. Scroll to see all content.
+              {/* Fake browser dots */}
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
               </div>
             </div>
 
-            <div className="bg-white max-h-[calc(100vh-200px)] overflow-y-auto">
+            <div className="bg-white overflow-y-auto" style={{ height: "720px" }}>
               <AboutPreview form={form} />
             </div>
           </aside>

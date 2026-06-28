@@ -20,6 +20,8 @@ import {
   Library,
   ArrowUp,
   ArrowDown,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 
 const colors = {
@@ -223,7 +225,6 @@ const defaultAcademicsContent = {
       timeframe: "Mid-Session Progress Verification",
       visible: true,
     },
-    
     {
       id: 4,
       term: "Final Examination",
@@ -454,8 +455,6 @@ function normalizePrograms(programs = [], shouldMigrate = false) {
     return {
       ...program,
 
-      // Only migrate old default data.
-      // After admin saves once, this will never override again.
       span: isOldSecondarySpan ? "Grade 9 – 12" : program.span,
 
       highlight:
@@ -540,7 +539,6 @@ function mergeAcademicsContent(saved = {}) {
     ...defaultAcademicsContent,
     ...saved,
 
-    // Version 2 means: admin edits are now respected.
     _contentVersion: 2,
 
     heroDescription: normalizeLegacyHeroDescription(
@@ -574,23 +572,33 @@ function mergeAcademicsContent(saved = {}) {
     curriculum: normalizeCurriculum(saved.curriculum, shouldMigrate),
   };
 }
+
 function Field({ label, value, onChange, placeholder = "", type = "text" }) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
+      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
         {label}
       </label>
-
       <input
         type={type}
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
+        className="w-full px-4 py-3 rounded-xl outline-none text-sm transition-all duration-150"
         style={{
-          background: "rgba(255,255,255,0.88)",
-          border: "1px solid rgba(75,46,131,0.16)",
+          background: "#F8FAFC",
+          border: "1.5px solid rgba(75,46,131,0.12)",
           color: colors.dark,
+        }}
+        onFocus={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.4)";
+          e.target.style.background = "#fff";
+          e.target.style.boxShadow = "0 0 0 3px rgba(75,46,131,0.06)";
+        }}
+        onBlur={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.12)";
+          e.target.style.background = "#F8FAFC";
+          e.target.style.boxShadow = "none";
         }}
       />
     </div>
@@ -600,45 +608,109 @@ function Field({ label, value, onChange, placeholder = "", type = "text" }) {
 function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
+      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
         {label}
       </label>
-
       <textarea
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full px-4 py-3 rounded-2xl outline-none text-sm resize-none"
+        className="w-full px-4 py-3 rounded-xl outline-none text-sm resize-none transition-all duration-150"
         style={{
-          background: "rgba(255,255,255,0.88)",
-          border: "1px solid rgba(75,46,131,0.16)",
+          background: "#F8FAFC",
+          border: "1.5px solid rgba(75,46,131,0.12)",
           color: colors.dark,
+        }}
+        onFocus={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.4)";
+          e.target.style.background = "#fff";
+          e.target.style.boxShadow = "0 0 0 3px rgba(75,46,131,0.06)";
+        }}
+        onBlur={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.12)";
+          e.target.style.background = "#F8FAFC";
+          e.target.style.boxShadow = "none";
         }}
       />
     </div>
   );
 }
 
-function EditorCard({ icon: Icon, title, color, children }) {
+// Accordion Section Component - Matching Home page design
+function AccordionSection({
+  icon: Icon,
+  title,
+  color,
+  children,
+  isExpanded,
+  onToggle,
+  sectionId,
+  index,
+}) {
   return (
-    <div
-      className="rounded-3xl p-6 md:p-8"
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      className="rounded-2xl overflow-hidden transition-all duration-300"
       style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
-        border: "1px solid rgba(11,16,32,0.08)",
-        boxShadow:
-          "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
+        background: "#FFFFFF",
+        border: isExpanded
+          ? `1.5px solid ${color}30`
+          : "1.5px solid rgba(15,23,42,0.07)",
+        boxShadow: isExpanded
+          ? `0 8px 32px ${color}12, 0 2px 8px rgba(0,0,0,0.04)`
+          : "0 2px 8px rgba(0,0,0,0.04)",
       }}
     >
-      <div className="flex items-center gap-3 mb-6">
-        <Icon className="w-5 h-5" style={{ color }} />
-        <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
-      </div>
+      <button
+        onClick={() => onToggle(sectionId)}
+        className="w-full flex items-center justify-between px-5 py-4 transition-all duration-200"
+        style={{
+          background: isExpanded ? `${color}06` : "transparent",
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: `${color}12` }}
+          >
+            <Icon className="w-4 h-4" style={{ color }} />
+          </div>
+          <div className="text-left">
+            <div className="font-bold text-slate-900 text-sm">{title}</div>
+            {!isExpanded && (
+              <div className="text-xs text-slate-400 mt-0.5">Click to expand and edit</div>
+            )}
+          </div>
+        </div>
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200"
+          style={{
+            background: isExpanded ? `${color}15` : "rgba(15,23,42,0.05)",
+          }}
+        >
+          {isExpanded ? (
+            <ChevronDown className="w-4 h-4" style={{ color }} />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+          )}
+        </div>
+      </button>
 
-      {children}
-    </div>
+      {isExpanded && (
+        <div style={{ height: "1px", background: `${color}18`, margin: "0 20px" }} />
+      )}
+
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isExpanded ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="px-5 pt-5 pb-6 space-y-4">{children}</div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -690,15 +762,12 @@ function AcademicsPreview({ form }) {
   const visiblePrograms = (form.programs || []).filter(
     (item) => item.visible !== false
   );
-
   const visibleFeatures = (form.features || []).filter(
     (item) => item.visible !== false
   );
-
   const visibleStats = (form.stats || []).filter(
     (item) => item.visible !== false
   );
-
   const visibleTimeline = (form.timelineTerms || []).filter(
     (item) => item.visible !== false
   );
@@ -988,6 +1057,40 @@ export default function AdminAcademics() {
   const [error, setError] = useState("");
   const [expandedCurriculumLevel, setExpandedCurriculumLevel] = useState(null);
 
+  // Define sections for accordion
+  const sectionKeys = ['hero', 'programs', 'curriculum', 'features', 'stats', 'exam', 'cta'];
+  const sectionTitles = {
+    hero: 'Hero Section',
+    programs: 'Academic Programs',
+    curriculum: 'Curriculum & Books',
+    features: 'Features Section',
+    stats: 'Statistics',
+    exam: 'Examination System',
+    cta: 'Bottom CTA'
+  };
+  const sectionIcons = {
+    hero: Type,
+    programs: BookOpen,
+    curriculum: Library,
+    features: Award,
+    stats: Users,
+    exam: Calendar,
+    cta: Target
+  };
+  const sectionColors = {
+    hero: colors.purple,
+    programs: colors.green,
+    curriculum: colors.purple,
+    features: colors.red,
+    stats: colors.purple,
+    exam: colors.green,
+    cta: colors.red
+  };
+
+  const [expandedSections, setExpandedSections] = useState(
+    Object.fromEntries(sectionKeys.map(key => [key, false]))
+  );
+
   const token = localStorage.getItem("adminToken");
 
   useEffect(() => {
@@ -1008,6 +1111,25 @@ export default function AdminAcademics() {
 
     loadAcademicsContent();
   }, []);
+
+  const toggleSection = (sectionId) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  };
+
+  const expandAll = () => {
+    setExpandedSections(
+      Object.fromEntries(sectionKeys.map(key => [key, true]))
+    );
+  };
+
+  const collapseAll = () => {
+    setExpandedSections(
+      Object.fromEntries(sectionKeys.map(key => [key, false]))
+    );
+  };
 
   const updateField = (name, value) => {
     setForm((prev) => ({
@@ -1308,63 +1430,65 @@ export default function AdminAcademics() {
       };
     });
   };
-const moveGrade = (level, gradeIndex, direction) => {
-  setForm((prev) => {
-    const grades = Array.isArray(prev.curriculum?.[level])
-      ? [...prev.curriculum[level]]
-      : [];
 
-    const targetIndex = gradeIndex + direction;
+  const moveGrade = (level, gradeIndex, direction) => {
+    setForm((prev) => {
+      const grades = Array.isArray(prev.curriculum?.[level])
+        ? [...prev.curriculum[level]]
+        : [];
 
-    if (targetIndex < 0 || targetIndex >= grades.length) {
-      return prev;
-    }
+      const targetIndex = gradeIndex + direction;
 
-    const temp = grades[gradeIndex];
-    grades[gradeIndex] = grades[targetIndex];
-    grades[targetIndex] = temp;
-
-    return {
-      ...prev,
-      curriculum: {
-        ...prev.curriculum,
-        [level]: grades,
-      },
-    };
-  });
-};
-  async function saveAcademicsContent() {
-  setSuccess("");
-  setError("");
-  setSaving(true);
-
-  try {
-    const contentToSave = {
-      ...form,
-      _contentVersion: 2,
-    };
-
-    await axios.put(
-      "http://localhost:5000/api/site-content/academics",
-      { content: contentToSave },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      if (targetIndex < 0 || targetIndex >= grades.length) {
+        return prev;
       }
-    );
 
-    setForm(contentToSave);
-    setSuccess("Academics page content saved successfully.");
-  } catch (err) {
-    console.error("Save academics content error:", err);
-    setError(
-      err.response?.data?.message || "Could not save academics content."
-    );
-  } finally {
-    setSaving(false);
+      const temp = grades[gradeIndex];
+      grades[gradeIndex] = grades[targetIndex];
+      grades[targetIndex] = temp;
+
+      return {
+        ...prev,
+        curriculum: {
+          ...prev.curriculum,
+          [level]: grades,
+        },
+      };
+    });
+  };
+
+  async function saveAcademicsContent() {
+    setSuccess("");
+    setError("");
+    setSaving(true);
+
+    try {
+      const contentToSave = {
+        ...form,
+        _contentVersion: 2,
+      };
+
+      await axios.put(
+        "http://localhost:5000/api/site-content/academics",
+        { content: contentToSave },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setForm(contentToSave);
+      setSuccess("Academics page content saved successfully.");
+    } catch (err) {
+      console.error("Save academics content error:", err);
+      setError(
+        err.response?.data?.message || "Could not save academics content."
+      );
+    } finally {
+      setSaving(false);
+    }
   }
-}
 
   if (loading) {
     return (
@@ -1379,9 +1503,12 @@ const moveGrade = (level, gradeIndex, direction) => {
     );
   }
 
+  const expandedCount = Object.values(expandedSections).filter(Boolean).length;
+  const totalSections = sectionKeys.length;
+
   return (
     <section
-      className="min-h-screen relative"
+      className="min-h-screen relative overflow-hidden"
       style={{
         background: `
           radial-gradient(circle at top right, rgba(56,189,248,0.16), transparent 34%),
@@ -1400,13 +1527,13 @@ const moveGrade = (level, gradeIndex, direction) => {
           backdropFilter: "blur(22px)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <button
             type="button"
             onClick={() => navigate("/admin/dashboard")}
-            className="inline-flex items-center gap-2 text-white font-bold"
+            className="inline-flex items-center gap-2 text-white/80 hover:text-white font-semibold text-sm transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </button>
 
@@ -1415,11 +1542,8 @@ const moveGrade = (level, gradeIndex, direction) => {
               href="/academics"
               target="_blank"
               rel="noreferrer"
-              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
-              style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.14)",
-              }}
+              className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white/80 hover:text-white text-sm transition-all"
+              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
             >
               <ExternalLink className="w-4 h-4" />
               View Academics Page
@@ -1429,12 +1553,11 @@ const moveGrade = (level, gradeIndex, direction) => {
               type="button"
               onClick={saveAcademicsContent}
               disabled={saving}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all hover:scale-105 disabled:opacity-60"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 disabled:opacity-60"
               style={{
                 color: "#020617",
                 background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                boxShadow:
-                  "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
+                boxShadow: "0 8px 24px rgba(56,189,248,0.28)",
               }}
             >
               <Save className="w-4 h-4" />
@@ -1444,111 +1567,144 @@ const moveGrade = (level, gradeIndex, direction) => {
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-6 py-10">
+      <main className="max-w-[1600px] mx-auto px-6 py-8">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          transition={{ duration: 0.4 }}
+          className="mb-7"
         >
-          <span
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-5"
-            style={{
-              background: "rgba(75,46,131,0.1)",
-              color: colors.purple,
-              border: "1px solid rgba(75,46,131,0.2)",
-            }}
-          >
-            <BookOpen className="w-4 h-4" />
-            Manage Academics Page
-          </span>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{ background: "rgba(75,46,131,0.12)", border: "1px solid rgba(75,46,131,0.2)" }}
+                >
+                  <BookOpen className="w-4 h-4" style={{ color: colors.purple }} />
+                </div>
+                <span className="text-sm font-bold" style={{ color: colors.purple }}>Manage Academics Page</span>
+              </div>
 
-          <h1
-            className="text-4xl md:text-6xl mb-4"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 850,
-              color: colors.dark,
-              letterSpacing: "-0.045em",
-            }}
-          >
-            Edit Academics Page
-          </h1>
+              <h1
+                className="text-3xl md:text-4xl font-black mb-2"
+                style={{ color: colors.dark, letterSpacing: "-0.04em" }}
+              >
+                Edit Academics Page
+              </h1>
+              <p className="text-slate-500 text-sm">
+                Click on any section below to expand and edit. Only the section you need will be visible.
+              </p>
+            </div>
 
-          <p className="text-slate-500 max-w-3xl text-lg">
-            Edit academic hero, programs, features, statistics, examination
-            system, ongoing assessments, and CTA buttons. Manage curriculum
-            books and publications for each grade level.
-          </p>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-400 font-medium">
+                {expandedCount} of {totalSections} sections open
+              </span>
+              
+              {expandedCount < totalSections ? (
+                <button
+                  onClick={expandAll}
+                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105"
+                  style={{
+                    background: "rgba(56,189,248,0.1)",
+                    color: colors.cyan,
+                    border: "1px solid rgba(56,189,248,0.2)",
+                  }}
+                >
+                  Expand All
+                </button>
+              ) : (
+                <button
+                  onClick={collapseAll}
+                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105"
+                  style={{
+                    background: "rgba(15,23,42,0.06)",
+                    color: "rgba(15,23,42,0.5)",
+                    border: "1px solid rgba(15,23,42,0.08)",
+                  }}
+                >
+                  Collapse All
+                </button>
+              )}
+            </div>
+          </div>
         </motion.div>
 
         {success && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold"
-            style={{
-              background: "rgba(22,138,58,0.1)",
-              color: colors.green,
-              border: "1px solid rgba(22,138,58,0.2)",
-            }}
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-5 rounded-xl px-4 py-3 flex items-center gap-3 font-semibold text-sm"
+            style={{ background: "rgba(22,138,58,0.08)", color: colors.green, border: "1px solid rgba(22,138,58,0.18)" }}
           >
-            <CheckCircle2 className="w-5 h-5" />
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             {success}
-          </div>
+          </motion.div>
         )}
 
         {error && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 font-semibold"
-            style={{
-              background: "rgba(215,25,32,0.1)",
-              color: colors.red,
-              border: "1px solid rgba(215,25,32,0.2)",
-            }}
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-5 rounded-xl px-4 py-3 font-semibold text-sm"
+            style={{ background: "rgba(215,25,32,0.08)", color: colors.red, border: "1px solid rgba(215,25,32,0.18)" }}
           >
             {error}
-          </div>
+          </motion.div>
         )}
 
-        <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start relative">
-          <div className="space-y-8">
-            <EditorCard icon={Type} title="Hero Section" color={colors.purple}>
-              <div className="grid gap-5">
-                <Field
-                  label="Hero Badge"
-                  value={form.heroBadge}
-                  onChange={(value) => updateField("heroBadge", value)}
-                />
-
-                <Field
-                  label="Hero Title"
-                  value={form.heroTitle}
-                  onChange={(value) => updateField("heroTitle", value)}
-                />
-
-                <Field
-                  label="Red Highlight Word"
-                  value={form.heroHighlight}
-                  onChange={(value) => updateField("heroHighlight", value)}
-                />
-
-                <TextArea
-                  label="Hero Description"
-                  value={form.heroDescription}
-                  onChange={(value) => updateField("heroDescription", value)}
-                  rows={4}
-                />
-              </div>
-            </EditorCard>
-
-            <EditorCard
-              icon={BookOpen}
-              title="Academic Programs"
-              color={colors.green}
+        <div className="grid xl:grid-cols-[1fr_1.2fr] gap-6 items-start">
+          {/* Left: Accordion sections */}
+          <div className="space-y-3">
+            {/* Hero Section */}
+            <AccordionSection
+              icon={sectionIcons.hero}
+              title={sectionTitles.hero}
+              color={sectionColors.hero}
+              isExpanded={expandedSections.hero}
+              onToggle={toggleSection}
+              sectionId="hero"
+              index={0}
             >
-              <div className="flex justify-end mb-6">
+              <Field
+                label="Hero Badge"
+                value={form.heroBadge}
+                onChange={(value) => updateField("heroBadge", value)}
+              />
+              <Field
+                label="Hero Title"
+                value={form.heroTitle}
+                onChange={(value) => updateField("heroTitle", value)}
+              />
+              <Field
+                label="Red Highlight Word"
+                value={form.heroHighlight}
+                onChange={(value) => updateField("heroHighlight", value)}
+              />
+              <TextArea
+                label="Hero Description"
+                value={form.heroDescription}
+                onChange={(value) => updateField("heroDescription", value)}
+                rows={4}
+              />
+            </AccordionSection>
+
+            {/* Academic Programs */}
+            <AccordionSection
+              icon={sectionIcons.programs}
+              title={sectionTitles.programs}
+              color={sectionColors.programs}
+              isExpanded={expandedSections.programs}
+              onToggle={toggleSection}
+              sectionId="programs"
+              index={1}
+            >
+              <div className="flex justify-end mb-4">
                 <button
                   type="button"
                   onClick={addProgram}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm text-white transition-all hover:scale-105"
                   style={{
                     background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
                   }}
@@ -1558,57 +1714,41 @@ const moveGrade = (level, gradeIndex, direction) => {
                 </button>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {form.programs.map((program, index) => (
                   <div
                     key={program.id}
-                    className="rounded-3xl p-5"
+                    className="rounded-xl p-4 space-y-4"
                     style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
+                      background: "rgba(15,23,42,0.03)",
+                      border: "1px solid rgba(15,23,42,0.06)",
                     }}
                   >
-                    <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-black text-slate-950">
+                        <div className="font-bold text-slate-900 text-sm">
                           Program {index + 1}
                         </div>
-
-                        <div className="text-sm text-slate-500">
-                          {program.level}
-                        </div>
+                        <div className="text-xs text-slate-400">{program.level}</div>
                       </div>
-
                       <VisibilityDeleteControls
                         visible={program.visible}
-                        onToggle={() =>
-                          updateProgram(
-                            program.id,
-                            "visible",
-                            !program.visible
-                          )
-                        }
+                        onToggle={() => updateProgram(program.id, "visible", !program.visible)}
                         onDelete={() => deleteProgram(program.id)}
                       />
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-2 gap-3">
                       <Field
                         label="Level"
                         value={program.level}
-                        onChange={(value) =>
-                          updateProgram(program.id, "level", value)
-                        }
+                        onChange={(value) => updateProgram(program.id, "level", value)}
                       />
-
                       <Field
                         label="Span"
                         value={program.span}
-                        onChange={(value) =>
-                          updateProgram(program.id, "span", value)
-                        }
+                        onChange={(value) => updateProgram(program.id, "span", value)}
                       />
-
                       <Field
                         label="Accent Color"
                         type="color"
@@ -1619,48 +1759,45 @@ const moveGrade = (level, gradeIndex, direction) => {
                         }}
                       />
                     </div>
-
-                    <div className="mt-4">
-                      <TextArea
-                        label="Highlight"
-                        value={program.highlight}
-                        onChange={(value) =>
-                          updateProgram(program.id, "highlight", value)
-                        }
-                        rows={3}
-                      />
-                    </div>
-                    <div className="mt-4">
-  <TextArea
-    label="Course Structure / Subjects - one per line"
-    value={(program.classes || []).join("\n")}
-    onChange={(value) =>
-      updateProgram(
-        program.id,
-        "classes",
-        value
-          .split("\n")
-          .map((item) => item.trim())
-          .filter(Boolean)
-      )
-    }
-    rows={5}
-  />
-</div>
+                    <TextArea
+                      label="Highlight"
+                      value={program.highlight}
+                      onChange={(value) => updateProgram(program.id, "highlight", value)}
+                      rows={2}
+                    />
+                    <TextArea
+                      label="Course Structure / Subjects - one per line"
+                      value={(program.classes || []).join("\n")}
+                      onChange={(value) =>
+                        updateProgram(
+                          program.id,
+                          "classes",
+                          value
+                            .split("\n")
+                            .map((item) => item.trim())
+                            .filter(Boolean)
+                        )
+                      }
+                      rows={4}
+                    />
                   </div>
                 ))}
               </div>
-            </EditorCard>
+            </AccordionSection>
 
-            <EditorCard
-              icon={Library}
-              title="Curriculum & Books"
-              color={colors.purple}
+            {/* Curriculum & Books */}
+            <AccordionSection
+              icon={sectionIcons.curriculum}
+              title={sectionTitles.curriculum}
+              color={sectionColors.curriculum}
+              isExpanded={expandedSections.curriculum}
+              onToggle={toggleSection}
+              sectionId="curriculum"
+              index={2}
             >
-              <p className="text-sm text-slate-500 mb-6">
+              <p className="text-sm text-slate-500 mb-4">
                 Manage subjects and publications for each grade level across all
-                academic programs. These appear in the ledger modal on the
-                public Academics page.
+                academic programs.
               </p>
 
               {Object.entries(form.curriculum || {}).map(([level, grades]) => {
@@ -1671,19 +1808,19 @@ const moveGrade = (level, gradeIndex, direction) => {
                   colors.purple;
 
                 return (
-                  <div key={level} className="mb-6 last:mb-0">
+                  <div key={level} className="mb-4 last:mb-0">
                     <button
                       type="button"
                       onClick={() =>
                         setExpandedCurriculumLevel(isExpanded ? null : level)
                       }
-                      className="w-full flex items-center justify-between p-4 rounded-2xl transition-all"
+                      className="w-full flex items-center justify-between p-3 rounded-xl transition-all"
                       style={{
                         background: isExpanded
-                          ? "rgba(75,46,131,0.08)"
-                          : "rgba(15,23,42,0.04)",
+                          ? `${levelColor}10`
+                          : "rgba(15,23,42,0.03)",
                         border: `1px solid ${
-                          isExpanded ? levelColor : "rgba(15,23,42,0.08)"
+                          isExpanded ? `${levelColor}30` : "rgba(15,23,42,0.06)"
                         }`,
                       }}
                     >
@@ -1692,36 +1829,33 @@ const moveGrade = (level, gradeIndex, direction) => {
                           className="w-3 h-3 rounded-full"
                           style={{ background: levelColor }}
                         />
-
-                        <span className="font-bold text-slate-950">
+                        <span className="font-bold text-slate-900 text-sm">
                           {level}
                         </span>
-
-                        <span className="text-sm text-slate-400">
+                        <span className="text-xs text-slate-400">
                           ({grades.length} grades)
                         </span>
                       </div>
-
                       <span className="text-slate-400">
                         {isExpanded ? "−" : "+"}
                       </span>
                     </button>
 
                     {isExpanded && (
-                      <div className="mt-4 space-y-4">
+                      <div className="mt-3 space-y-3">
                         {grades.map((grade, gradeIndex) => {
                           const gradeAccentColor = gradeAccent(gradeIndex);
 
                           return (
                             <div
                               key={`${level}-grade-${gradeIndex}`}
-                              className="rounded-2xl p-5"
+                              className="rounded-xl p-4"
                               style={{
                                 background: "rgba(255,255,255,0.6)",
                                 border: `1px solid ${gradeAccentColor}22`,
                               }}
                             >
-                              <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center justify-between mb-3">
                                 <div className="flex-1 mr-4">
                                   <Field
                                     label="Grade Name"
@@ -1738,57 +1872,57 @@ const moveGrade = (level, gradeIndex, direction) => {
                                 </div>
 
                                 <div className="flex items-center gap-2 mt-6">
-  <button
-    type="button"
-    onClick={() => moveGrade(level, gradeIndex, -1)}
-    disabled={gradeIndex === 0}
-    className="p-2 rounded-xl disabled:opacity-35 disabled:cursor-not-allowed"
-    style={{
-      background: "rgba(75,46,131,0.08)",
-      color: colors.purple,
-      border: "1px solid rgba(75,46,131,0.18)",
-    }}
-    title="Move grade up"
-  >
-    <ArrowUp className="w-4 h-4" />
-  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => moveGrade(level, gradeIndex, -1)}
+                                    disabled={gradeIndex === 0}
+                                    className="p-2 rounded-xl disabled:opacity-35 disabled:cursor-not-allowed"
+                                    style={{
+                                      background: "rgba(75,46,131,0.08)",
+                                      color: colors.purple,
+                                      border: "1px solid rgba(75,46,131,0.18)",
+                                    }}
+                                    title="Move grade up"
+                                  >
+                                    <ArrowUp className="w-4 h-4" />
+                                  </button>
 
-  <button
-    type="button"
-    onClick={() => moveGrade(level, gradeIndex, 1)}
-    disabled={gradeIndex === grades.length - 1}
-    className="p-2 rounded-xl disabled:opacity-35 disabled:cursor-not-allowed"
-    style={{
-      background: "rgba(22,138,58,0.08)",
-      color: colors.green,
-      border: "1px solid rgba(22,138,58,0.18)",
-    }}
-    title="Move grade down"
-  >
-    <ArrowDown className="w-4 h-4" />
-  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => moveGrade(level, gradeIndex, 1)}
+                                    disabled={gradeIndex === grades.length - 1}
+                                    className="p-2 rounded-xl disabled:opacity-35 disabled:cursor-not-allowed"
+                                    style={{
+                                      background: "rgba(22,138,58,0.08)",
+                                      color: colors.green,
+                                      border: "1px solid rgba(22,138,58,0.18)",
+                                    }}
+                                    title="Move grade down"
+                                  >
+                                    <ArrowDown className="w-4 h-4" />
+                                  </button>
 
-  <button
-    type="button"
-    onClick={() => removeGrade(level, gradeIndex)}
-    className="p-2 rounded-xl"
-    style={{
-      background: "rgba(215,25,32,0.09)",
-      color: colors.red,
-      border: "1px solid rgba(215,25,32,0.18)",
-    }}
-    title="Delete grade"
-  >
-    <Trash2 className="w-4 h-4" />
-  </button>
-</div>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeGrade(level, gradeIndex)}
+                                    className="p-2 rounded-xl"
+                                    style={{
+                                      background: "rgba(215,25,32,0.09)",
+                                      color: colors.red,
+                                      border: "1px solid rgba(215,25,32,0.18)",
+                                    }}
+                                    title="Delete grade"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
                               </div>
 
-                              <div className="space-y-3">
+                              <div className="space-y-2">
                                 {grade.books.map((book, bookIndex) => (
                                   <div
                                     key={`${level}-grade-${gradeIndex}-book-${bookIndex}`}
-                                    className="grid md:grid-cols-12 gap-3 items-center p-3 rounded-xl"
+                                    className="grid md:grid-cols-12 gap-2 items-center p-3 rounded-xl"
                                     style={{
                                       background: "rgba(255,255,255,0.8)",
                                       border: "1px solid rgba(15,23,42,0.06)",
@@ -1836,7 +1970,7 @@ const moveGrade = (level, gradeIndex, direction) => {
                                             bookIndex
                                           )
                                         }
-                                        className="p-3 rounded-xl w-full"
+                                        className="p-2 rounded-xl w-full"
                                         style={{
                                           background: "rgba(215,25,32,0.08)",
                                           color: colors.red,
@@ -1855,7 +1989,7 @@ const moveGrade = (level, gradeIndex, direction) => {
                                   onClick={() =>
                                     addBookToGrade(level, gradeIndex)
                                   }
-                                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105"
+                                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105"
                                   style={{
                                     color: colors.purple,
                                     background: "rgba(75,46,131,0.08)",
@@ -1873,7 +2007,7 @@ const moveGrade = (level, gradeIndex, direction) => {
                         <button
                           type="button"
                           onClick={() => addGradeToLevel(level)}
-                          className="flex items-center gap-2 px-4 py-3 rounded-2xl font-bold transition-all hover:scale-105 w-full justify-center"
+                          className="flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-sm transition-all hover:scale-105 w-full justify-center"
                           style={{
                             color: colors.green,
                             background: "rgba(22,138,58,0.08)",
@@ -1888,31 +2022,35 @@ const moveGrade = (level, gradeIndex, direction) => {
                   </div>
                 );
               })}
-            </EditorCard>
+            </AccordionSection>
 
-            <EditorCard icon={Award} title="Features Section" color={colors.red}>
-              <div className="grid gap-5 mb-6">
-                <Field
-                  label="Features Title"
-                  value={form.featuresTitle}
-                  onChange={(value) => updateField("featuresTitle", value)}
-                />
+            {/* Features Section */}
+            <AccordionSection
+              icon={sectionIcons.features}
+              title={sectionTitles.features}
+              color={sectionColors.features}
+              isExpanded={expandedSections.features}
+              onToggle={toggleSection}
+              sectionId="features"
+              index={3}
+            >
+              <Field
+                label="Features Title"
+                value={form.featuresTitle}
+                onChange={(value) => updateField("featuresTitle", value)}
+              />
+              <TextArea
+                label="Features Description"
+                value={form.featuresDescription}
+                onChange={(value) => updateField("featuresDescription", value)}
+                rows={3}
+              />
 
-                <TextArea
-                  label="Features Description"
-                  value={form.featuresDescription}
-                  onChange={(value) =>
-                    updateField("featuresDescription", value)
-                  }
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex justify-end mb-6">
+              <div className="flex justify-end mt-2">
                 <button
                   type="button"
                   onClick={addFeature}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm text-white transition-all hover:scale-105"
                   style={{
                     background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
                   }}
@@ -1922,80 +2060,66 @@ const moveGrade = (level, gradeIndex, direction) => {
                 </button>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-3 mt-4">
                 {form.features.map((feature, index) => (
                   <div
                     key={feature.id}
-                    className="rounded-3xl p-5"
+                    className="rounded-xl p-4 space-y-3"
                     style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
+                      background: "rgba(15,23,42,0.03)",
+                      border: "1px solid rgba(15,23,42,0.06)",
                     }}
                   >
-                    <div className="flex items-center justify-between mb-5">
-                      <div>
-                        <div className="font-black text-slate-950">
-                          Feature {index + 1}
-                        </div>
-
-                        <div className="text-sm text-slate-500">
-                          {feature.title}
-                        </div>
+                    <div className="flex items-center justify-between">
+                      <div className="font-bold text-slate-900 text-sm">
+                        Feature {index + 1}
                       </div>
-
                       <VisibilityDeleteControls
                         visible={feature.visible}
-                        onToggle={() =>
-                          updateFeature(
-                            feature.id,
-                            "visible",
-                            !feature.visible
-                          )
-                        }
+                        onToggle={() => updateFeature(feature.id, "visible", !feature.visible)}
                         onDelete={() => deleteFeature(feature.id)}
                       />
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-2 gap-3">
                       <Field
                         label="Title"
                         value={feature.title}
-                        onChange={(value) =>
-                          updateFeature(feature.id, "title", value)
-                        }
+                        onChange={(value) => updateFeature(feature.id, "title", value)}
                       />
-
                       <Field
                         label="Accent Color"
                         type="color"
                         value={feature.color}
-                        onChange={(value) =>
-                          updateFeature(feature.id, "color", value)
-                        }
+                        onChange={(value) => updateFeature(feature.id, "color", value)}
                       />
                     </div>
-
-                    <div className="mt-4">
-                      <TextArea
-                        label="Description"
-                        value={feature.desc}
-                        onChange={(value) =>
-                          updateFeature(feature.id, "desc", value)
-                        }
-                        rows={3}
-                      />
-                    </div>
+                    <TextArea
+                      label="Description"
+                      value={feature.desc}
+                      onChange={(value) => updateFeature(feature.id, "desc", value)}
+                      rows={2}
+                    />
                   </div>
                 ))}
               </div>
-            </EditorCard>
+            </AccordionSection>
 
-            <EditorCard icon={Users} title="Statistics" color={colors.purple}>
-              <div className="flex justify-end mb-6">
+            {/* Statistics */}
+            <AccordionSection
+              icon={sectionIcons.stats}
+              title={sectionTitles.stats}
+              color={sectionColors.stats}
+              isExpanded={expandedSections.stats}
+              onToggle={toggleSection}
+              sectionId="stats"
+              index={4}
+            >
+              <div className="flex justify-end mb-4">
                 <button
                   type="button"
                   onClick={addStat}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm text-white transition-all hover:scale-105"
                   style={{
                     background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
                   }}
@@ -2005,122 +2129,105 @@ const moveGrade = (level, gradeIndex, direction) => {
                 </button>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {form.stats.map((stat, index) => (
                   <div
                     key={stat.id}
-                    className="rounded-3xl p-5"
+                    className="rounded-xl p-4 space-y-3"
                     style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
+                      background: "rgba(15,23,42,0.03)",
+                      border: "1px solid rgba(15,23,42,0.06)",
                     }}
                   >
-                    <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-black text-slate-950">
+                        <div className="font-bold text-slate-900 text-sm">
                           Stat {index + 1}
                         </div>
-
-                        <div className="text-sm text-slate-500">
-                          {stat.value} {stat.label}
-                        </div>
+                        <div className="text-xs text-slate-400">{stat.value} {stat.label}</div>
                       </div>
-
                       <VisibilityDeleteControls
                         visible={stat.visible}
-                        onToggle={() =>
-                          updateStat(stat.id, "visible", !stat.visible)
-                        }
+                        onToggle={() => updateStat(stat.id, "visible", !stat.visible)}
                         onDelete={() => deleteStat(stat.id)}
                       />
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-4">
+                    <div className="grid md:grid-cols-3 gap-3">
                       <Field
                         label="Value"
                         value={stat.value}
-                        onChange={(value) =>
-                          updateStat(stat.id, "value", value)
-                        }
+                        onChange={(value) => updateStat(stat.id, "value", value)}
                       />
-
                       <Field
                         label="Label"
                         value={stat.label}
-                        onChange={(value) =>
-                          updateStat(stat.id, "label", value)
-                        }
+                        onChange={(value) => updateStat(stat.id, "label", value)}
                       />
-
                       <Field
                         label="Accent Color"
                         type="color"
                         value={stat.color}
-                        onChange={(value) =>
-                          updateStat(stat.id, "color", value)
-                        }
+                        onChange={(value) => updateStat(stat.id, "color", value)}
                       />
                     </div>
                   </div>
                 ))}
               </div>
-            </EditorCard>
+            </AccordionSection>
 
-            <EditorCard
-              icon={Calendar}
-              title="Examination System"
-              color={colors.green}
+            {/* Examination System */}
+            <AccordionSection
+              icon={sectionIcons.exam}
+              title={sectionTitles.exam}
+              color={sectionColors.exam}
+              isExpanded={expandedSections.exam}
+              onToggle={toggleSection}
+              sectionId="exam"
+              index={5}
             >
-              <div className="grid gap-5">
-                <Field
-                  label="Exam Section Title"
-                  value={form.examTitle}
-                  onChange={(value) => updateField("examTitle", value)}
-                />
+              <Field
+                label="Exam Section Title"
+                value={form.examTitle}
+                onChange={(value) => updateField("examTitle", value)}
+              />
+              <TextArea
+                label="Exam Section Description"
+                value={form.examDescription}
+                onChange={(value) => updateField("examDescription", value)}
+                rows={3}
+              />
+              <Field
+                label="Continuous Evaluation Title"
+                value={form.continuousTitle}
+                onChange={(value) => updateField("continuousTitle", value)}
+              />
+              <TextArea
+                label="Continuous Evaluation Description"
+                value={form.continuousDescription}
+                onChange={(value) => updateField("continuousDescription", value)}
+                rows={3}
+              />
+              <TextArea
+                label="Ongoing Assessments - one per line"
+                value={(form.ongoingAssessments || []).join("\n")}
+                onChange={(value) =>
+                  updateField(
+                    "ongoingAssessments",
+                    value
+                      .split("\n")
+                      .map((item) => item.trim())
+                      .filter(Boolean)
+                  )
+                }
+                rows={4}
+              />
 
-                <TextArea
-                  label="Exam Section Description"
-                  value={form.examDescription}
-                  onChange={(value) => updateField("examDescription", value)}
-                  rows={3}
-                />
-
-                <Field
-                  label="Continuous Evaluation Title"
-                  value={form.continuousTitle}
-                  onChange={(value) => updateField("continuousTitle", value)}
-                />
-
-                <TextArea
-                  label="Continuous Evaluation Description"
-                  value={form.continuousDescription}
-                  onChange={(value) =>
-                    updateField("continuousDescription", value)
-                  }
-                  rows={3}
-                />
-
-                <TextArea
-                  label="Ongoing Assessments - one per line"
-                  value={(form.ongoingAssessments || []).join("\n")}
-                  onChange={(value) =>
-                    updateField(
-                      "ongoingAssessments",
-                      value
-                        .split("\n")
-                        .map((item) => item.trim())
-                        .filter(Boolean)
-                    )
-                  }
-                  rows={5}
-                />
-              </div>
-
-              <div className="flex justify-end my-6">
+              <div className="flex justify-end mt-2">
                 <button
                   type="button"
                   onClick={addTimeline}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm text-white transition-all hover:scale-105"
                   style={{
                     background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
                   }}
@@ -2130,146 +2237,129 @@ const moveGrade = (level, gradeIndex, direction) => {
                 </button>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-3 mt-4">
                 {form.timelineTerms.map((item, index) => (
                   <div
                     key={item.id}
-                    className="rounded-3xl p-5"
+                    className="rounded-xl p-4 space-y-3"
                     style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
+                      background: "rgba(15,23,42,0.03)",
+                      border: "1px solid rgba(15,23,42,0.06)",
                     }}
                   >
-                    <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-black text-slate-950">
+                        <div className="font-bold text-slate-900 text-sm">
                           Exam Term {index + 1}
                         </div>
-
-                        <div className="text-sm text-slate-500">
-                          {item.term}
-                        </div>
+                        <div className="text-xs text-slate-400">{item.term}</div>
                       </div>
-
                       <VisibilityDeleteControls
                         visible={item.visible}
-                        onToggle={() =>
-                          updateTimeline(item.id, "visible", !item.visible)
-                        }
+                        onToggle={() => updateTimeline(item.id, "visible", !item.visible)}
                         onDelete={() => deleteTimeline(item.id)}
                       />
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-2 gap-3">
                       <Field
                         label="Term"
                         value={item.term}
-                        onChange={(value) =>
-                          updateTimeline(item.id, "term", value)
-                        }
+                        onChange={(value) => updateTimeline(item.id, "term", value)}
                       />
-
                       <Field
                         label="Timeframe"
                         value={item.timeframe}
-                        onChange={(value) =>
-                          updateTimeline(item.id, "timeframe", value)
-                        }
+                        onChange={(value) => updateTimeline(item.id, "timeframe", value)}
                       />
                     </div>
                   </div>
                 ))}
               </div>
-            </EditorCard>
+            </AccordionSection>
 
-            <EditorCard icon={Target} title="Bottom CTA" color={colors.red}>
-              <div className="grid gap-5">
+            {/* Bottom CTA */}
+            <AccordionSection
+              icon={sectionIcons.cta}
+              title={sectionTitles.cta}
+              color={sectionColors.cta}
+              isExpanded={expandedSections.cta}
+              onToggle={toggleSection}
+              sectionId="cta"
+              index={6}
+            >
+              <Field
+                label="CTA Title"
+                value={form.ctaTitle}
+                onChange={(value) => updateField("ctaTitle", value)}
+              />
+              <TextArea
+                label="CTA Description"
+                value={form.ctaDescription}
+                onChange={(value) => updateField("ctaDescription", value)}
+                rows={3}
+              />
+              <div className="grid md:grid-cols-2 gap-3">
                 <Field
-                  label="CTA Title"
-                  value={form.ctaTitle}
-                  onChange={(value) => updateField("ctaTitle", value)}
+                  label="Primary Button Text"
+                  value={form.primaryButtonText}
+                  onChange={(value) => updateField("primaryButtonText", value)}
                 />
-
-                <TextArea
-                  label="CTA Description"
-                  value={form.ctaDescription}
-                  onChange={(value) => updateField("ctaDescription", value)}
-                  rows={3}
+                <Field
+                  label="Primary Button Link"
+                  value={form.primaryButtonLink}
+                  onChange={(value) => updateField("primaryButtonLink", value)}
                 />
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <Field
-                    label="Primary Button Text"
-                    value={form.primaryButtonText}
-                    onChange={(value) =>
-                      updateField("primaryButtonText", value)
-                    }
-                  />
-
-                  <Field
-                    label="Primary Button Link"
-                    value={form.primaryButtonLink}
-                    onChange={(value) =>
-                      updateField("primaryButtonLink", value)
-                    }
-                  />
-
-                  <Field
-                    label="Secondary Button Text"
-                    value={form.secondaryButtonText}
-                    onChange={(value) =>
-                      updateField("secondaryButtonText", value)
-                    }
-                  />
-
-                  <Field
-                    label="Secondary Button Link"
-                    value={form.secondaryButtonLink}
-                    onChange={(value) =>
-                      updateField("secondaryButtonLink", value)
-                    }
-                  />
-                </div>
+                <Field
+                  label="Secondary Button Text"
+                  value={form.secondaryButtonText}
+                  onChange={(value) => updateField("secondaryButtonText", value)}
+                />
+                <Field
+                  label="Secondary Button Link"
+                  value={form.secondaryButtonLink}
+                  onChange={(value) => updateField("secondaryButtonLink", value)}
+                />
               </div>
-            </EditorCard>
+            </AccordionSection>
           </div>
 
-          <div
-            className="xl:sticky xl:top-24 self-start"
+          {/* Right: Preview */}
+          <aside
+            className="xl:sticky xl:top-24 rounded-2xl overflow-hidden"
             style={{
-              maxHeight: "calc(100vh - 120px)",
+              background: "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 20px 60px rgba(11,16,32,0.3)",
             }}
           >
             <div
-              className="rounded-3xl overflow-hidden"
-              style={{
-                background:
-                  "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
-                border: "1px solid rgba(255,255,255,0.14)",
-                boxShadow: "0 22px 58px rgba(11,16,32,0.25)",
-              }}
+              className="px-5 py-4 flex items-center justify-between"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
             >
-              <div className="p-5 border-b border-white/10">
-                <div className="text-white font-bold text-lg flex items-center gap-2">
-                  <Eye className="w-5 h-5" />
-                  Academics Page Preview
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: "rgba(56,189,248,0.12)" }}
+                >
+                  <Eye className="w-4 h-4" style={{ color: colors.cyan }} />
                 </div>
-
-                <div className="text-sm text-white/55">
-                  Full preview updates while editing. Scroll to see all content.
+                <div>
+                  <div className="text-white font-bold text-sm">Academics Page Preview</div>
+                  <div className="text-white/45 text-xs">Updates live while typing</div>
                 </div>
               </div>
-
-              <div
-                className="bg-white overflow-y-auto"
-                style={{
-                  maxHeight: "calc(100vh - 180px)",
-                }}
-              >
-                <AcademicsPreview form={form} />
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
               </div>
             </div>
-          </div>
+
+            <div className="bg-white overflow-y-auto" style={{ height: "720px" }}>
+              <AcademicsPreview form={form} />
+            </div>
+          </aside>
         </div>
       </main>
     </section>

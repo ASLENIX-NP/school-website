@@ -529,27 +529,7 @@ export default function AdminDashboard() {
               </div>
             ) : (
               // ── Editor View ──
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-black text-slate-950">
-                      Edit {activeEditor.charAt(0).toUpperCase() + activeEditor.slice(1)}
-                    </h2>
-                    <p className="text-sm text-slate-500">
-                      Manage your {activeEditor} content here.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setActiveEditor(null)}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-black transition-all hover:-translate-y-0.5"
-                    style={{ background: "rgba(15,23,42,0.06)", color: "rgba(15,23,42,0.6)", border: `1px solid ${bg.border}` }}
-                  >
-                    <X className="w-4 h-4" />
-                    Close Editor
-                  </button>
-                </div>
-
-                {/* ── RENDER ALL YOUR EXISTING ADMIN PAGES ── */}
+              <div>
                 {activeEditor === "home" && <AdminHome />}
                 {activeEditor === "about" && <AdminAbout />}
                 {activeEditor === "messages" && <AdminMessages />}

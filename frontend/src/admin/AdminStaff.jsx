@@ -18,6 +18,9 @@ import {
   EyeOff,
   Phone,
   UserRound,
+  ChevronDown,
+  ChevronRight,
+  X,
 } from "lucide-react";
 
 const colors = {
@@ -113,7 +116,7 @@ function mergeStaffContent(saved = {}) {
 function Field({ label, value, onChange, placeholder = "", type = "text" }) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
+      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
         {label}
       </label>
       <input
@@ -121,11 +124,21 @@ function Field({ label, value, onChange, placeholder = "", type = "text" }) {
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
+        className="w-full px-4 py-3 rounded-xl outline-none text-sm transition-all duration-150"
         style={{
-          background: "rgba(255,255,255,0.88)",
-          border: "1px solid rgba(75,46,131,0.16)",
+          background: "#F8FAFC",
+          border: "1.5px solid rgba(75,46,131,0.12)",
           color: colors.dark,
+        }}
+        onFocus={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.4)";
+          e.target.style.background = "#fff";
+          e.target.style.boxShadow = "0 0 0 3px rgba(75,46,131,0.06)";
+        }}
+        onBlur={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.12)";
+          e.target.style.background = "#F8FAFC";
+          e.target.style.boxShadow = "none";
         }}
       />
     </div>
@@ -135,7 +148,7 @@ function Field({ label, value, onChange, placeholder = "", type = "text" }) {
 function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
+      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
         {label}
       </label>
       <textarea
@@ -143,35 +156,167 @@ function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full px-4 py-3 rounded-2xl outline-none text-sm resize-none"
+        className="w-full px-4 py-3 rounded-xl outline-none text-sm resize-none transition-all duration-150"
         style={{
-          background: "rgba(255,255,255,0.88)",
-          border: "1px solid rgba(75,46,131,0.16)",
+          background: "#F8FAFC",
+          border: "1.5px solid rgba(75,46,131,0.12)",
           color: colors.dark,
+        }}
+        onFocus={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.4)";
+          e.target.style.background = "#fff";
+          e.target.style.boxShadow = "0 0 0 3px rgba(75,46,131,0.06)";
+        }}
+        onBlur={(e) => {
+          e.target.style.border = "1.5px solid rgba(75,46,131,0.12)";
+          e.target.style.background = "#F8FAFC";
+          e.target.style.boxShadow = "none";
         }}
       />
     </div>
   );
 }
 
-function EditorCard({ icon: Icon, title, color, children }) {
+// Image Upload Box Component
+function ImageUploadBox({ label, imageUrl, onUpload, onRemove, uploading }) {
   return (
-    <div
-      className="rounded-3xl p-6 md:p-8"
+    <div>
+      <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">
+        {label}
+      </label>
+
+      <div
+        className="rounded-xl overflow-hidden bg-white mb-4 relative"
+        style={{ border: "1.5px solid rgba(15,23,42,0.08)" }}
+      >
+        {imageUrl ? (
+          <>
+            <img src={imageUrl} alt={label} className="w-full h-64 object-cover" />
+            <button
+              type="button"
+              onClick={onRemove}
+              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
+              title="Remove image"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </>
+        ) : (
+          <div className="w-full h-56 bg-slate-50 flex items-center justify-center">
+            <UserRound className="w-16 h-16 text-slate-300" />
+          </div>
+        )}
+      </div>
+
+      <label
+        className="flex flex-col items-center justify-center gap-2 cursor-pointer rounded-xl p-4 text-center transition-all duration-150 hover:bg-white/90"
+        style={{
+          background: "rgba(255,255,255,0.6)",
+          border: "1.5px dashed rgba(75,46,131,0.2)",
+        }}
+      >
+        <UploadCloud className="w-5 h-5" style={{ color: colors.purple }} />
+
+        <span className="text-sm font-bold text-slate-800">
+          {uploading ? "Uploading..." : "Upload Photo"}
+        </span>
+
+        <span className="text-xs text-slate-400 leading-relaxed">
+          Recommended: 800×1000 px • PNG, JPG, WebP • Max 2 MB
+        </span>
+
+        <input
+          type="file"
+          accept="image/*"
+          disabled={uploading}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              onUpload(file);
+            }
+            e.target.value = "";
+          }}
+          className="hidden"
+        />
+      </label>
+    </div>
+  );
+}
+
+// Accordion Section Component
+function AccordionSection({
+  icon: Icon,
+  title,
+  color,
+  children,
+  isExpanded,
+  onToggle,
+  sectionId,
+  index,
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      className="rounded-2xl overflow-hidden transition-all duration-300"
       style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
-        border: "1px solid rgba(11,16,32,0.08)",
-        boxShadow:
-          "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
+        background: "#FFFFFF",
+        border: isExpanded
+          ? `1.5px solid ${color}30`
+          : "1.5px solid rgba(15,23,42,0.07)",
+        boxShadow: isExpanded
+          ? `0 8px 32px ${color}12, 0 2px 8px rgba(0,0,0,0.04)`
+          : "0 2px 8px rgba(0,0,0,0.04)",
       }}
     >
-      <div className="flex items-center gap-3 mb-6">
-        <Icon className="w-5 h-5" style={{ color }} />
-        <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
+      <button
+        onClick={() => onToggle(sectionId)}
+        className="w-full flex items-center justify-between px-5 py-4 transition-all duration-200"
+        style={{
+          background: isExpanded ? `${color}06` : "transparent",
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: `${color}12` }}
+          >
+            <Icon className="w-4 h-4" style={{ color }} />
+          </div>
+          <div className="text-left">
+            <div className="font-bold text-slate-900 text-sm">{title}</div>
+            {!isExpanded && (
+              <div className="text-xs text-slate-400 mt-0.5">Click to expand and edit</div>
+            )}
+          </div>
+        </div>
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200"
+          style={{
+            background: isExpanded ? `${color}15` : "rgba(15,23,42,0.05)",
+          }}
+        >
+          {isExpanded ? (
+            <ChevronDown className="w-4 h-4" style={{ color }} />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+          )}
+        </div>
+      </button>
+
+      {isExpanded && (
+        <div style={{ height: "1px", background: `${color}18`, margin: "0 20px" }} />
+      )}
+
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isExpanded ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="px-5 pt-5 pb-6 space-y-4">{children}</div>
       </div>
-      {children}
-    </div>
+    </motion.div>
   );
 }
 
@@ -284,6 +429,31 @@ export default function AdminStaff() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
+  // Define sections for accordion
+  const sectionKeys = ['topHeading', 'stats', 'staffMembers'];
+  const sectionTitles = {
+    topHeading: 'Top Heading Section',
+    stats: 'Top Staff Number Cards',
+    staffMembers: 'Staff Members'
+  };
+  const sectionIcons = {
+    topHeading: Type,
+    stats: BarChart3,
+    staffMembers: Image
+  };
+  const sectionColors = {
+    topHeading: colors.green,
+    stats: colors.purple,
+    staffMembers: colors.red
+  };
+
+  const [expandedSections, setExpandedSections] = useState(
+    Object.fromEntries(sectionKeys.map(key => [key, false]))
+  );
+
+  // Dynamic state for staff sections
+  const [expandedStaff, setExpandedStaff] = useState({});
+
   const token = localStorage.getItem("adminToken");
 
   useEffect(() => {
@@ -291,7 +461,15 @@ export default function AdminStaff() {
       try {
         const res = await axios.get("http://localhost:5000/api/site-content/staff");
         const savedContent = res.data?.data?.content || {};
-        setForm(mergeStaffContent(savedContent));
+        const mergedContent = mergeStaffContent(savedContent);
+        setForm(mergedContent);
+        
+        // Initialize expanded state for all staff sections (all collapsed by default)
+        const initialExpanded = {};
+        mergedContent.staff?.forEach(member => {
+          initialExpanded[member.id] = false;
+        });
+        setExpandedStaff(initialExpanded);
       } catch (err) {
         console.error("Load staff content error:", err);
       } finally {
@@ -301,6 +479,42 @@ export default function AdminStaff() {
 
     loadStaffContent();
   }, []);
+
+  const toggleSection = (sectionId) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  };
+
+  const toggleStaffSection = (staffId) => {
+    setExpandedStaff((prev) => ({
+      ...prev,
+      [staffId]: !prev[staffId],
+    }));
+  };
+
+  const expandAll = () => {
+    const allStaffExpanded = {};
+    form.staff.forEach(member => {
+      allStaffExpanded[member.id] = true;
+    });
+    setExpandedStaff(allStaffExpanded);
+    setExpandedSections(
+      Object.fromEntries(sectionKeys.map(key => [key, true]))
+    );
+  };
+
+  const collapseAll = () => {
+    const allStaffCollapsed = {};
+    form.staff.forEach(member => {
+      allStaffCollapsed[member.id] = false;
+    });
+    setExpandedStaff(allStaffCollapsed);
+    setExpandedSections(
+      Object.fromEntries(sectionKeys.map(key => [key, false]))
+    );
+  };
 
   const updateField = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -336,6 +550,12 @@ export default function AdminStaff() {
       visible: true,
     };
     setForm((prev) => ({ ...prev, staff: [...prev.staff, newMember] }));
+    
+    // Auto-expand the new staff section
+    setExpandedStaff((prev) => ({
+      ...prev,
+      [newMember.id]: true,
+    }));
   };
 
   const deleteStaffMember = (id) => {
@@ -343,6 +563,13 @@ export default function AdminStaff() {
       ...prev,
       staff: prev.staff.filter((member) => member.id !== id),
     }));
+    
+    // Remove from expanded state
+    setExpandedStaff((prev) => {
+      const newState = { ...prev };
+      delete newState[id];
+      return newState;
+    });
   };
 
   const uploadStaffImage = async (staffId, file) => {
@@ -426,6 +653,9 @@ export default function AdminStaff() {
     );
   }
 
+  const expandedCount = Object.values(expandedStaff).filter(Boolean).length + Object.values(expandedSections).filter(Boolean).length;
+  const totalSections = sectionKeys.length + form.staff.length;
+
   return (
     <section
       className="min-h-screen relative overflow-hidden"
@@ -447,13 +677,13 @@ export default function AdminStaff() {
           backdropFilter: "blur(22px)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <button
             type="button"
             onClick={() => navigate("/admin/dashboard")}
-            className="inline-flex items-center gap-2 text-white font-bold"
+            className="inline-flex items-center gap-2 text-white/80 hover:text-white font-semibold text-sm transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </button>
 
@@ -462,11 +692,8 @@ export default function AdminStaff() {
               href="/staff"
               target="_blank"
               rel="noreferrer"
-              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
-              style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.14)",
-              }}
+              className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white/80 hover:text-white text-sm transition-all"
+              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
             >
               <ExternalLink className="w-4 h-4" />
               View Staff Page
@@ -476,12 +703,11 @@ export default function AdminStaff() {
               type="button"
               onClick={saveStaffContent}
               disabled={saving || uploadingId}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all hover:scale-105 disabled:opacity-60"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 disabled:opacity-60"
               style={{
                 color: "#020617",
                 background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                boxShadow:
-                  "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
+                boxShadow: "0 8px 24px rgba(56,189,248,0.28)",
               }}
             >
               <Save className="w-4 h-4" />
@@ -491,72 +717,105 @@ export default function AdminStaff() {
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-6 py-10">
+      <main className="max-w-[1600px] mx-auto px-6 py-8">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          transition={{ duration: 0.4 }}
+          className="mb-7"
         >
-          <span
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-5"
-            style={{
-              background: "rgba(22,138,58,0.1)",
-              color: colors.green,
-              border: "1px solid rgba(22,138,58,0.2)",
-            }}
-          >
-            <Users className="w-4 h-4" />
-            Manage Staff Page
-          </span>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{ background: "rgba(22,138,58,0.12)", border: "1px solid rgba(22,138,58,0.2)" }}
+                >
+                  <Users className="w-4 h-4" style={{ color: colors.green }} />
+                </div>
+                <span className="text-sm font-bold" style={{ color: colors.green }}>Manage Staff Page</span>
+              </div>
 
-          <h1
-            className="text-4xl md:text-6xl mb-4"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 850,
-              color: colors.dark,
-              letterSpacing: "-0.045em",
-            }}
-          >
-            Edit Staff Page
-          </h1>
+              <h1
+                className="text-3xl md:text-4xl font-black mb-2"
+                style={{ color: colors.dark, letterSpacing: "-0.04em" }}
+              >
+                Edit Staff Page
+              </h1>
+              <p className="text-slate-500 text-sm">
+                Click on any section below to expand and edit. Only the section you need will be visible.
+              </p>
+            </div>
 
-          <p className="text-slate-500 max-w-3xl text-lg">
-            Edit top section, staff numbers, staff members, phone numbers, and
-            staff photos. Images upload directly to ImageKit.
-          </p>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-400 font-medium">
+                {expandedCount} of {totalSections} sections open
+              </span>
+              
+              {expandedCount < totalSections ? (
+                <button
+                  onClick={expandAll}
+                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105"
+                  style={{
+                    background: "rgba(56,189,248,0.1)",
+                    color: colors.cyan,
+                    border: "1px solid rgba(56,189,248,0.2)",
+                  }}
+                >
+                  Expand All
+                </button>
+              ) : (
+                <button
+                  onClick={collapseAll}
+                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105"
+                  style={{
+                    background: "rgba(15,23,42,0.06)",
+                    color: "rgba(15,23,42,0.5)",
+                    border: "1px solid rgba(15,23,42,0.08)",
+                  }}
+                >
+                  Collapse All
+                </button>
+              )}
+            </div>
+          </div>
         </motion.div>
 
         {success && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold"
-            style={{
-              background: "rgba(22,138,58,0.1)",
-              color: colors.green,
-              border: "1px solid rgba(22,138,58,0.2)",
-            }}
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-5 rounded-xl px-4 py-3 flex items-center gap-3 font-semibold text-sm"
+            style={{ background: "rgba(22,138,58,0.08)", color: colors.green, border: "1px solid rgba(22,138,58,0.18)" }}
           >
-            <CheckCircle2 className="w-5 h-5" />
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             {success}
-          </div>
+          </motion.div>
         )}
 
         {error && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 font-semibold"
-            style={{
-              background: "rgba(215,25,32,0.1)",
-              color: colors.red,
-              border: "1px solid rgba(215,25,32,0.2)",
-            }}
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-5 rounded-xl px-4 py-3 font-semibold text-sm"
+            style={{ background: "rgba(215,25,32,0.08)", color: colors.red, border: "1px solid rgba(215,25,32,0.18)" }}
           >
             {error}
-          </div>
+          </motion.div>
         )}
 
-        <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start">
-          <div className="space-y-8">
-            <EditorCard icon={Type} title="Top Heading Section" color={colors.green}>
+        <div className="grid xl:grid-cols-[1fr_1.2fr] gap-6 items-start">
+          <div className="space-y-3">
+            {/* Top Heading Section */}
+            <AccordionSection
+              icon={sectionIcons.topHeading}
+              title={sectionTitles.topHeading}
+              color={sectionColors.topHeading}
+              isExpanded={expandedSections.topHeading}
+              onToggle={toggleSection}
+              sectionId="topHeading"
+              index={0}
+            >
               <div className="grid gap-5">
                 <Field
                   label="Small Badge Text"
@@ -564,7 +823,7 @@ export default function AdminStaff() {
                   onChange={(value) => updateField("badgeText", value)}
                 />
 
-                <div className="grid md:grid-cols-2 gap-5">
+                <div className="grid md:grid-cols-2 gap-4">
                   <Field
                     label="Main Title"
                     value={form.title}
@@ -582,25 +841,35 @@ export default function AdminStaff() {
                   label="Subtitle"
                   value={form.subtitle}
                   onChange={(value) => updateField("subtitle", value)}
+                  rows={4}
                 />
               </div>
-            </EditorCard>
+            </AccordionSection>
 
-            <EditorCard icon={BarChart3} title="Top Staff Number Cards" color={colors.purple}>
+            {/* Top Staff Number Cards */}
+            <AccordionSection
+              icon={sectionIcons.stats}
+              title={sectionTitles.stats}
+              color={sectionColors.stats}
+              isExpanded={expandedSections.stats}
+              onToggle={toggleSection}
+              sectionId="stats"
+              index={1}
+            >
               <div className="space-y-4">
                 {form.stats.map((stat, index) => (
                   <div
                     key={stat.id}
-                    className="rounded-2xl p-4"
+                    className="rounded-xl p-4"
                     style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
+                      background: "rgba(15,23,42,0.03)",
+                      border: "1px solid rgba(15,23,42,0.06)",
                     }}
                   >
-                    <div className="font-bold text-slate-900 mb-4">
+                    <div className="font-bold text-slate-900 text-sm mb-3">
                       Number Card {index + 1}
                     </div>
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-2 gap-3">
                       <Field
                         label="Number"
                         value={stat.value}
@@ -615,221 +884,146 @@ export default function AdminStaff() {
                   </div>
                 ))}
               </div>
-            </EditorCard>
+            </AccordionSection>
 
-            <EditorCard icon={Image} title="Staff Members" color={colors.red}>
-              <div className="flex justify-end mb-6">
-                <button
-                  type="button"
-                  onClick={addStaffMember}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
-                  style={{
-                    background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
-                    boxShadow: "0 14px 34px rgba(75,46,131,0.22)",
-                  }}
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Staff
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                {form.staff.map((member, index) => (
-                  <div
-                    key={member.id}
-                    className="rounded-3xl p-5"
+            {/* Staff Members - Each as a separate accordion */}
+            {form.staff.map((member, index) => (
+              <AccordionSection
+                key={member.id}
+                icon={UserRound}
+                title={`Staff Member ${index + 1}: ${member.name || "Untitled"}`}
+                color={colors.red}
+                isExpanded={expandedStaff[member.id] || false}
+                onToggle={() => toggleStaffSection(member.id)}
+                sectionId={member.id}
+                index={index + 2}
+              >
+                <div className="flex justify-end mb-3">
+                  <button
+                    type="button"
+                    onClick={() => deleteStaffMember(member.id)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105"
                     style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
+                      background: "rgba(215,25,32,0.08)",
+                      color: colors.red,
+                      border: "1px solid rgba(215,25,32,0.15)",
                     }}
                   >
-                    <div className="flex items-center justify-between gap-4 mb-5">
-                      <div>
-                        <div className="font-black text-slate-950">
-                          Staff Member {index + 1}
-                        </div>
-                        <div className="text-sm text-slate-500">
-                          {member.name || "Unnamed staff member"}
-                        </div>
-                      </div>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete Staff
+                  </button>
+                </div>
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateStaff(member.id, "visible", !member.visible)
-                          }
-                          className="p-3 rounded-xl"
-                          style={{
-                            background: member.visible
-                              ? "rgba(22,138,58,0.1)"
-                              : "rgba(100,116,139,0.12)",
-                            color: member.visible ? colors.green : "#64748B",
-                            border: member.visible
-                              ? "1px solid rgba(22,138,58,0.2)"
-                              : "1px solid rgba(100,116,139,0.16)",
-                          }}
-                          title={member.visible ? "Visible" : "Hidden"}
-                        >
-                          {member.visible ? (
-                            <Eye className="w-4 h-4" />
-                          ) : (
-                            <EyeOff className="w-4 h-4" />
-                          )}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => deleteStaffMember(member.id)}
-                          className="p-3 rounded-xl"
-                          style={{
-                            background: "rgba(215,25,32,0.09)",
-                            color: colors.red,
-                            border: "1px solid rgba(215,25,32,0.18)",
-                          }}
-                          title="Delete staff"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-[180px_1fr] gap-5">
-                      <div>
-                        <div
-                          className="rounded-2xl overflow-hidden bg-white mb-4"
-                          style={{ border: "1px solid rgba(15,23,42,0.08)" }}
-                        >
-                          {member.imageUrl ? (
-                            <img
-                              src={member.imageUrl}
-                              alt={member.name}
-                              className="w-full h-52 object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-52 bg-slate-100 flex items-center justify-center">
-                              <UserRound className="w-16 h-16 text-slate-300" />
-                            </div>
-                          )}
-                        </div>
-
-                        <label
-                          className="flex flex-col items-center justify-center gap-2 cursor-pointer rounded-2xl p-4 text-center"
-                          style={{
-                            background: "rgba(255,255,255,0.72)",
-                            border: "1px dashed rgba(75,46,131,0.28)",
-                          }}
-                        >
-                          <UploadCloud
-                            className="w-6 h-6"
-                            style={{ color: colors.purple }}
-                          />
-                          <span className="text-sm font-bold text-slate-800">
-                            {uploadingId === member.id
-                              ? "Uploading..."
-                              : "Upload Photo"}
-                          </span>
-                          <span className="text-xs text-slate-500 leading-relaxed">
-                            Recommended: 800×1000 px portrait, PNG/JPG/WebP, max 2 MB.
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            disabled={uploadingId === member.id}
-                            onChange={(e) => {
-                              uploadStaffImage(member.id, e.target.files?.[0]);
-                              e.target.value = "";
-                            }}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-
-                      <div className="grid gap-4">
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <Field
-                            label="Name"
-                            value={member.name}
-                            onChange={(value) =>
-                              updateStaff(member.id, "name", value)
-                            }
-                          />
-                          <Field
-                            label="Position"
-                            value={member.position}
-                            onChange={(value) =>
-                              updateStaff(member.id, "position", value)
-                            }
-                          />
-                        </div>
-
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <Field
-                            label="Qualification"
-                            value={member.qualification}
-                            onChange={(value) =>
-                              updateStaff(member.id, "qualification", value)
-                            }
-                          />
-                          <Field
-                            label="Phone Number"
-                            value={member.phone}
-                            onChange={(value) =>
-                              updateStaff(member.id, "phone", value)
-                            }
-                            placeholder="+977-98XXXXXXXX"
-                          />
-                        </div>
-
-                        <TextArea
-                          label="Description / About"
-                          value={member.description}
-                          onChange={(value) =>
-                            updateStaff(member.id, "description", value)
-                          }
-                          placeholder="Write a short bio about this staff member. This appears in the popup when visitors click on their card."
-                          rows={4}
-                        />
-
-                        <label className="flex items-center gap-3 text-sm font-bold text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={member.visible !== false}
-                            onChange={(e) =>
-                              updateStaff(member.id, "visible", e.target.checked)
-                            }
-                            className="w-5 h-5"
-                          />
-                          Show this staff member on website
-                        </label>
-                      </div>
-                    </div>
+                <div className="grid md:grid-cols-[180px_1fr] gap-4">
+                  <div>
+                    <ImageUploadBox
+                      label="Staff Photo"
+                      imageUrl={member.imageUrl}
+                      uploading={uploadingId === member.id}
+                      onUpload={(file) => uploadStaffImage(member.id, file)}
+                      onRemove={() => updateStaff(member.id, "imageUrl", "")}
+                    />
                   </div>
-                ))}
-              </div>
-            </EditorCard>
+
+                  <div className="grid gap-3">
+                    <div className="grid md:grid-cols-2 gap-3">
+                      <Field
+                        label="Name"
+                        value={member.name}
+                        onChange={(value) => updateStaff(member.id, "name", value)}
+                      />
+                      <Field
+                        label="Position"
+                        value={member.position}
+                        onChange={(value) => updateStaff(member.id, "position", value)}
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-3">
+                      <Field
+                        label="Qualification"
+                        value={member.qualification}
+                        onChange={(value) => updateStaff(member.id, "qualification", value)}
+                      />
+                      <Field
+                        label="Phone Number"
+                        value={member.phone}
+                        onChange={(value) => updateStaff(member.id, "phone", value)}
+                        placeholder="+977-98XXXXXXXX"
+                      />
+                    </div>
+
+                    <TextArea
+                      label="Description / About"
+                      value={member.description}
+                      onChange={(value) => updateStaff(member.id, "description", value)}
+                      placeholder="Write a short bio about this staff member."
+                      rows={3}
+                    />
+
+                    <label className="flex items-center gap-3 text-xs font-bold text-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={member.visible !== false}
+                        onChange={(e) => updateStaff(member.id, "visible", e.target.checked)}
+                        className="w-4 h-4 accent-green-500"
+                      />
+                      Show this staff member on website
+                    </label>
+                  </div>
+                </div>
+              </AccordionSection>
+            ))}
+
+            {/* Add New Staff Button */}
+            <button
+              type="button"
+              onClick={addStaffMember}
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-4 rounded-2xl font-bold text-sm transition-all hover:scale-[1.01]"
+              style={{
+                color: colors.dark,
+                background: "#FFFFFF",
+                border: "1.5px dashed rgba(75,46,131,0.2)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              }}
+            >
+              <Plus className="w-4 h-4" style={{ color: colors.purple }} />
+              Add New Staff Member
+            </button>
           </div>
 
           <aside
-            className="xl:sticky xl:top-28 rounded-3xl overflow-hidden"
+            className="xl:sticky xl:top-24 rounded-2xl overflow-hidden"
             style={{
-              background:
-                "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
-              border: "1px solid rgba(255,255,255,0.14)",
-              boxShadow: "0 22px 58px rgba(11,16,32,0.25)",
+              background: "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 20px 60px rgba(11,16,32,0.3)",
             }}
           >
-            <div className="p-5 border-b border-white/10">
-              <div className="text-white font-bold text-lg flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                Staff Page Preview
+            <div
+              className="px-5 py-4 flex items-center justify-between"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: "rgba(56,189,248,0.12)" }}
+                >
+                  <Eye className="w-4 h-4" style={{ color: colors.cyan }} />
+                </div>
+                <div>
+                  <div className="text-white font-bold text-sm">Staff Page Preview</div>
+                  <div className="text-white/45 text-xs">Updates live while typing</div>
+                </div>
               </div>
-              <div className="text-sm text-white/55">
-                Preview updates while editing.
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
               </div>
             </div>
 
-            <div className="bg-white overflow-y-auto" style={{ height: "760px" }}>
+            <div className="bg-white overflow-y-auto" style={{ height: "720px" }}>
               <StaffPreview form={form} />
             </div>
           </aside>
