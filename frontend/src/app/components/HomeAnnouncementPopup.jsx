@@ -60,3 +60,4 @@ export default function HomeAnnouncementPopup() {
     </AnimatePresence>
   );
 }
+
