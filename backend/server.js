@@ -1,8 +1,10 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { supabase } from "./config/supabase.js";
 
+dotenv.config();
+
+import { supabase } from "./config/supabase.js";
 import healthRoutes from "./routes/healthRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import adminAuthRoutes from "./routes/adminAuthRoutes.js";
@@ -11,9 +13,6 @@ import noticeRoutes from "./routes/noticeRoutes.js";
 import noticeSettingsRoutes from "./routes/noticeSettingsRoutes.js";
 import adminSettingsRoutes from "./routes/adminSettingsRoutes.js";
 import announcementRoutes from "./routes/announcementRoutes.js";
-console.log("JWT_SECRET =", process.env.JWT_SECRET);
-
-dotenv.config();
 
 const app = express();
 
@@ -43,8 +42,6 @@ function normalizePhone(phone = "") {
 function isValidPhone(phone = "") {
   const cleaned = normalizePhone(phone);
 
-  // Accepts Nepal/international style numbers:
-  // 10 digits local, or +countrycode with 7 to 15 total digits.
   const digitsOnly = cleaned.replace(/\D/g, "");
 
   return digitsOnly.length >= 10 && digitsOnly.length <= 15;

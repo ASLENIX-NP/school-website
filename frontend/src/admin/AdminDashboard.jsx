@@ -121,10 +121,29 @@ export default function AdminDashboard() {
     loadData();
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminUser");
-    navigate("/admin/login");
+  const logout = async () => {
+    const token = localStorage.getItem("adminToken");
+
+    try {
+      if (token) {
+        await axios.post(
+          "http://localhost:5000/api/admin/auth/logout",
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      }
+    } catch (err) {
+      console.error("Admin logout error:", err);
+    } finally {
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
+      setShowLogoutConfirm(false);
+      navigate("/admin/login");
+    }
   };
 
   const latestMessages = messages.slice(0, 4);

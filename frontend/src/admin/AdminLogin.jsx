@@ -50,9 +50,7 @@ export default function AdminLogin() {
       console.error("Admin login error:", err);
 
       if (err.code === "ERR_NETWORK") {
-        setError(
-          "Backend is not running. Start backend with npm run dev first."
-        );
+        setError("Backend is not running. Start backend with npm run dev first.");
       } else {
         setError(
           err.response?.data?.message || "Login failed. Please try again."

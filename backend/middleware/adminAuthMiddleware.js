@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { supabase } from "../config/supabase.js";
 
 function normalizeRole(role) {
   return String(role || "")
@@ -7,7 +8,7 @@ function normalizeRole(role) {
     .replace(/[_-]+/g, " ");
 }
 
-export const protectAdmin = (req, res, next) => {
+export const protectAdmin = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -28,22 +29,51 @@ export const protectAdmin = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     const role = normalizeRole(decoded.role);
-
     const allowedRoles = ["admin", "super admin"];
 
     if (!decoded || !allowedRoles.includes(role)) {
       return res.status(401).json({
         success: false,
-        message: `Not authorized as admin. Current role: ${decoded?.role || "missing"}`,
+        message: `Not authorized as admin. Current role: ${
+          decoded?.role || "missing"
+        }`,
       });
     }
+
+    if (!decoded.tokenId) {
+      return res.status(401).json({
+        success: false,
+        message: "Admin session expired. Please login again.",
+      });
+    }
+
+    const { data: activeSession, error: sessionError } = await supabase
+      .from("admin_sessions")
+      .select("id, token_id, admin_email, expires_at, revoked_at")
+      .eq("token_id", decoded.tokenId)
+      .is("revoked_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .maybeSingle();
+
+    if (sessionError || !activeSession) {
+      return res.status(401).json({
+        success: false,
+        message: "Admin session expired or logged out.",
+      });
+    }
+
+    await supabase
+      .from("admin_sessions")
+      .update({ last_seen_at: new Date().toISOString() })
+      .eq("token_id", decoded.tokenId);
 
     req.admin = {
       ...decoded,
       role,
     };
+
+    req.adminSession = activeSession;
 
     next();
   } catch (error) {
