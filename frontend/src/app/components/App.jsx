@@ -12,8 +12,6 @@ import { Gallery } from "./Gallery";
 import { Contact } from "./Contact";
 import { Footer } from "./Footer";
 
-
-import Messages from "../../pages/Messages";
 import Notices from "../../pages/Notices";
 import NoticeDetail from "../../pages/NoticeDetail";
 import Staff from "../../pages/Staff";
@@ -22,12 +20,10 @@ import AdminAbout from "../../admin/AdminAbout";
 import AdminLogin from "../../admin/AdminLogin";
 import AdminDashboard from "../../admin/AdminDashboard";
 import AdminHome from "../../admin/AdminHome";
-import AdminMessages from "../../admin/AdminMessages";
 import AdminNotices from "../../admin/AdminNotices";
 import AdminFacilities from "../../admin/AdminFacilities";
 import AdminNavbar from "../../admin/AdminNavbar";
 import AdminStaff from "../../admin/AdminStaff";
-import AdminComingSoon from "../../admin/AdminComingSoon";
 import ProtectedAdminRoute from "../../admin/ProtectedAdminRoute";
 import AdminAcademics from "../../admin/AdminAcademics";
 import AdminAdmissions from "../../admin/AdminAdmissions";
@@ -84,11 +80,11 @@ function SchoolApp() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
 
- return (
-  <div className="min-h-screen" style={{ fontFamily: "var(--font-body)" }}>
-    <ScrollToTop />
+  return (
+    <div className="min-h-screen" style={{ fontFamily: "var(--font-body)" }}>
+      <ScrollToTop />
 
-    {!isAdminRoute && <Navbar />}
+      {!isAdminRoute && <Navbar />}
 
       <main>
         <Routes>
@@ -98,7 +94,6 @@ function SchoolApp() {
           <Route path="/facilities" element={<FacilitiesPage />} />
           <Route path="/academics" element={<AcademicsPage />} />
           <Route path="/admissions" element={<AdmissionsPage />} />
-          <Route path="/messages" element={<Messages />} />
           <Route path="/notices" element={<Notices />} />
           <Route path="/notices/:id" element={<NoticeDetail />} />
           <Route path="/staff" element={<Staff />} />
@@ -141,20 +136,12 @@ function SchoolApp() {
               </ProtectedPage>
             }
           />
-          <Route
-  path="/admin/settings"
-  element={
-    <ProtectedPage>
-      <AdminSettings />
-    </ProtectedPage>
-  }
-/>
 
           <Route
-            path="/admin/messages"
+            path="/admin/settings"
             element={
               <ProtectedPage>
-                <AdminMessages />
+                <AdminSettings />
               </ProtectedPage>
             }
           />
@@ -167,14 +154,15 @@ function SchoolApp() {
               </ProtectedPage>
             }
           />
+
           <Route
-  path="/admin/facilities"
-  element={
-    <ProtectedPage>
-      <AdminFacilities />
-    </ProtectedPage>
-  }
-/>
+            path="/admin/facilities"
+            element={
+              <ProtectedPage>
+                <AdminFacilities />
+              </ProtectedPage>
+            }
+          />
 
           <Route
             path="/admin/notices"
@@ -184,14 +172,16 @@ function SchoolApp() {
               </ProtectedPage>
             }
           />
-<Route
-  path="/admin/notices/new"
-  element={
-    <ProtectedPage>
-      <AdminAddNotice />
-    </ProtectedPage>
-  }
-/>
+
+          <Route
+            path="/admin/notices/new"
+            element={
+              <ProtectedPage>
+                <AdminAddNotice />
+              </ProtectedPage>
+            }
+          />
+
           <Route
             path="/admin/contact"
             element={
@@ -201,87 +191,78 @@ function SchoolApp() {
             }
           />
 
-          {/* Admin Editors To Build Next */}
           <Route
-  path="/admin/about"
-  element={
-    <ProtectedPage>
-      <AdminAbout />
-    </ProtectedPage>
-  }
-/>
+            path="/admin/about"
+            element={
+              <ProtectedPage>
+                <AdminAbout />
+              </ProtectedPage>
+            }
+          />
 
           <Route
-  path="/admin/academics"
-  element={
-    <ProtectedPage>
-      <AdminAcademics />
-    </ProtectedPage>
-  }
-/>
+            path="/admin/academics"
+            element={
+              <ProtectedPage>
+                <AdminAcademics />
+              </ProtectedPage>
+            }
+          />
 
           <Route
-  path="/admin/admissions"
-  element={
-    <ProtectedPage>
-      <AdminAdmissions />
-    </ProtectedPage>
-  }
-/>
-
-          <Route
-  path="/admin/contact-messages"
-  element={
-    <ProtectedPage>
-      <AdminContactMessages />
-    </ProtectedPage>
-  }
-/>
-
-          <Route
-  path="/admin/gallery"
-  element={
-    <ProtectedPage>
-      <AdminGallery />
-    </ProtectedPage>
-  }
-/>
-<Route
-  path="/admin/gallery-images"
-  element={
-    <ProtectedPage>
-      <AdminGalleryImages />
-    </ProtectedPage>
-  }
-/>
+            path="/admin/admissions"
+            element={
+              <ProtectedPage>
+                <AdminAdmissions />
+              </ProtectedPage>
+            }
+          />
 
           <Route
             path="/admin/contact-messages"
             element={
               <ProtectedPage>
-                <AdminComingSoon
-                  title="Contact Messages"
-                  description="This section will show messages submitted from the public contact form."
-                />
+                <AdminContactMessages />
               </ProtectedPage>
             }
           />
-<Route
-  path="/admin/announcements"
-  element={
-    <ProtectedPage>
-      <AdminAnnouncements />
-    </ProtectedPage>
-  }
-/>
+
           <Route
-  path="/admin/footer"
-  element={
-    <ProtectedPage>
-      <AdminFooter />
-    </ProtectedPage>
-  }
-/>
+            path="/admin/gallery"
+            element={
+              <ProtectedPage>
+                <AdminGallery />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/gallery-images"
+            element={
+              <ProtectedPage>
+                <AdminGalleryImages />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/announcements"
+            element={
+              <ProtectedPage>
+                <AdminAnnouncements />
+              </ProtectedPage>
+            }
+          />
+
+          <Route
+            path="/admin/footer"
+            element={
+              <ProtectedPage>
+                <AdminFooter />
+              </ProtectedPage>
+            }
+          />
+
           {/* Fallback */}
           <Route
             path="*"

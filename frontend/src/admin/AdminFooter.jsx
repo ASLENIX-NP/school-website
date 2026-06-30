@@ -1,25 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowLeft,
   Save,
+  CheckCircle2,
+  AlertCircle,
+  ExternalLink,
+  Footprints,
+  Pencil,
   Plus,
   Trash2,
   UploadCloud,
-  CheckCircle2,
-  ExternalLink,
+  X,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Share2,
+  Phone,
+  Copyright,
   Eye,
   EyeOff,
-  Footprints,
-  Type,
-  Link as LinkIcon,
-  Phone,
-  Share2,
-  Image as ImageIcon,
-  X,
 } from "lucide-react";
+
+import {
+  Footer,
+  defaultFooterContent,
+  mergeFooterContent,
+  normalizeExternalUrl,
+  normalizeMapUrl,
+} from "../app/components/Footer";
 
 const colors = {
   green: "#168A3A",
@@ -30,97 +40,54 @@ const colors = {
   gold: "#FACC15",
 };
 
-const defaultFooterContent = {
-  logoUrl: "",
-  schoolName: "Baljagriti",
-  schoolSubtitle: "Secondary English Boarding School",
-  admissionBadgeText: "Admissions Open 2026",
-  showAdmissionBadge: true,
+function getAdminToken() {
+  return (
+    localStorage.getItem("adminToken") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("admin_token") ||
+    ""
+  );
+}
 
-  navLinks: [
-    { id: 1, label: "About", href: "/about", visible: true },
-    { id: 2, label: "Academics", href: "/academics", visible: true },
-    { id: 3, label: "Facilities", href: "/facilities", visible: true },
-    { id: 4, label: "Gallery", href: "/gallery", visible: true },
-    { id: 5, label: "Contact", href: "/contact", visible: true },
-  ],
+function getAuthHeaders() {
+  const token = getAdminToken();
 
-  socials: [
-    {
-      id: 1,
-      type: "facebook",
-      href: "https://www.facebook.com/baljagritiesschool",
-      label: "Facebook",
-      visible: true,
-    },
-    {
-      id: 2,
-      type: "website",
-      href: "https://baljagriti.edu.np/",
-      label: "Website",
-      visible: true,
-    },
-    {
-      id: 3,
-      type: "youtube",
-      href: "https://www.youtube.com/@BaljagritiEngSecondarySchool",
-      label: "YouTube",
-      visible: true,
-    },
-  ],
+  if (!token) return null;
 
-  contact: {
-    address: "Basudev Marga, Hetauda-2, Makawanpur, Nepal",
-    mapUrl:
-      "https://www.google.com/maps/search/?api=1&query=Baljagriti+English+Secondary+School+Hetauda",
-    phones: ["057-590144", "057-590145", "057-590146"],
-    email: "infobjess2046@gmail.com",
-  },
-
-  modalTitle: "Contact Baljagriti School",
-  modalHint: "Click any number to copy it.",
-  copiedText: "Copied",
-  closeButtonText: "Close",
-
-  copyrightText:
-    "© 2026 Baljagriti Secondary English Boarding School. All rights reserved.",
-};
-
-function mergeFooterContent(saved = {}) {
   return {
-    ...defaultFooterContent,
-    ...saved,
-    navLinks: Array.isArray(saved.navLinks)
-      ? saved.navLinks
-      : defaultFooterContent.navLinks,
-    socials: Array.isArray(saved.socials)
-      ? saved.socials
-      : defaultFooterContent.socials,
-    contact: {
-      ...defaultFooterContent.contact,
-      ...(saved.contact || {}),
-      phones: Array.isArray(saved.contact?.phones)
-        ? saved.contact.phones
-        : defaultFooterContent.contact.phones,
-    },
+    Authorization: `Bearer ${token}`,
   };
+}
+
+function getUploadUrl(payload) {
+  return (
+    payload?.url ||
+    payload?.imageUrl ||
+    payload?.fileUrl ||
+    payload?.data?.url ||
+    payload?.data?.imageUrl ||
+    payload?.data?.fileUrl ||
+    payload?.data?.secure_url ||
+    payload?.file?.url ||
+    ""
+  );
 }
 
 function Field({ label, value, onChange, placeholder = "", type = "text" }) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
+      <label className="block text-sm font-black mb-2 text-slate-700">
         {label}
       </label>
 
       <input
         type={type}
         value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
         style={{
-          background: "rgba(255,255,255,0.88)",
+          background: "rgba(255,255,255,0.92)",
           border: "1px solid rgba(75,46,131,0.16)",
           color: colors.dark,
         }}
@@ -132,18 +99,18 @@ function Field({ label, value, onChange, placeholder = "", type = "text" }) {
 function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-2 text-slate-700">
+      <label className="block text-sm font-black mb-2 text-slate-700">
         {label}
       </label>
 
       <textarea
         value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         rows={rows}
         className="w-full px-4 py-3 rounded-2xl outline-none text-sm resize-none"
         style={{
-          background: "rgba(255,255,255,0.88)",
+          background: "rgba(255,255,255,0.92)",
           border: "1px solid rgba(75,46,131,0.16)",
           color: colors.dark,
         }}
@@ -152,153 +119,118 @@ function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
   );
 }
 
-function EditorCard({ icon: Icon, title, color, children }) {
+function Toggle({ checked, onChange, label }) {
   return (
-    <div
-      className="rounded-3xl p-6 md:p-8"
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className="w-full flex items-center justify-between gap-4 rounded-2xl px-4 py-3 text-left"
       style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
-        border: "1px solid rgba(11,16,32,0.08)",
-        boxShadow:
-          "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
+        background: checked
+          ? "rgba(22,138,58,0.08)"
+          : "rgba(100,116,139,0.08)",
+        border: checked
+          ? "1px solid rgba(22,138,58,0.18)"
+          : "1px solid rgba(100,116,139,0.18)",
       }}
     >
-      <div className="flex items-center gap-3 mb-6">
-        <Icon className="w-5 h-5" style={{ color }} />
-        <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
-      </div>
+      <span className="text-sm font-black text-slate-700">{label}</span>
 
-      {children}
+      <span
+        className="relative w-12 h-7 rounded-full transition-all"
+        style={{ background: checked ? colors.green : "#CBD5E1" }}
+      >
+        <span
+          className="absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow"
+          style={{ left: checked ? "24px" : "4px" }}
+        />
+      </span>
+    </button>
+  );
+}
+
+function SelectField({ label, value, onChange, children }) {
+  return (
+    <div>
+      <label className="block text-sm font-black mb-2 text-slate-700">
+        {label}
+      </label>
+
+      <select
+        value={value || ""}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
+        style={{
+          background: "rgba(255,255,255,0.92)",
+          border: "1px solid rgba(75,46,131,0.16)",
+          color: colors.dark,
+        }}
+      >
+        {children}
+      </select>
     </div>
   );
 }
 
-function VisibilityDeleteControls({ visible, onToggle, onDelete }) {
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="p-3 rounded-xl"
-        style={{
-          background:
-            visible !== false ? "rgba(22,138,58,0.1)" : "rgba(100,116,139,0.12)",
-          color: visible !== false ? colors.green : "#64748B",
-        }}
-      >
-        {visible !== false ? (
-          <Eye className="w-4 h-4" />
-        ) : (
-          <EyeOff className="w-4 h-4" />
-        )}
-      </button>
-
-      <button
-        type="button"
-        onClick={onDelete}
-        className="p-3 rounded-xl"
-        style={{
-          background: "rgba(215,25,32,0.09)",
-          color: colors.red,
-        }}
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
-    </div>
-  );
-}
-
-function FooterPreview({ form }) {
-  const visibleLinks = form.navLinks.filter((link) => link.visible !== false);
-  const visibleSocials = form.socials.filter((social) => social.visible !== false);
+function ConfirmDialog({ target, onCancel, onConfirm }) {
+  if (!target) return null;
 
   return (
-    <div
-      className="p-6"
-      style={{
-        background:
-          "linear-gradient(135deg, #020617 0%, #07111F 55%, #0F172A 100%)",
-      }}
+    <motion.div
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-5"
+      style={{ background: "rgba(2,6,23,0.62)", backdropFilter: "blur(14px)" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onCancel}
     >
-      <div
-        className="rounded-[32px] p-6 border border-white/10"
-        style={{
-          background:
-            "linear-gradient(145deg, rgba(4,12,30,0.92), rgba(9,20,45,0.95))",
-        }}
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.94 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 14, scale: 0.96 }}
+        className="w-full max-w-md rounded-[28px] bg-white overflow-hidden"
+        style={{ boxShadow: "0 42px 110px rgba(0,0,0,0.32)" }}
+        onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center overflow-hidden">
-            {form.logoUrl ? (
-              <img
-                src={form.logoUrl}
-                alt={form.schoolName}
-                className="w-full h-full object-contain p-1"
-              />
-            ) : (
-              <ImageIcon className="w-7 h-7 text-slate-900" />
-            )}
+        <div className="h-1" style={{ background: `linear-gradient(90deg, ${colors.red}, ${colors.gold})` }} />
+        <div className="p-7">
+          <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-5">
+            <Trash2 className="w-6 h-6" />
           </div>
 
-          <div>
-            <div className="text-white text-xl font-black">{form.schoolName}</div>
-            <div className="text-green-400 text-sm">{form.schoolSubtitle}</div>
-            {form.showAdmissionBadge && (
-              <div className="text-green-400 text-xs mt-1">
-                ● {form.admissionBadgeText}
-              </div>
-            )}
+          <h3 className="text-2xl font-black text-slate-950 mb-2">
+            Are you sure?
+          </h3>
+          <p className="text-sm text-slate-500 leading-relaxed">
+            {target.message || "This item will be removed when you save this section."}
+          </p>
+
+          <div className="flex gap-3 mt-7">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="flex-1 py-3 rounded-2xl text-sm font-black"
+              style={{
+                background: "rgba(15,23,42,0.06)",
+                color: "rgba(15,23,42,0.65)",
+                border: "1px solid rgba(15,23,42,0.08)",
+              }}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={onConfirm}
+              className="flex-1 py-3 rounded-2xl text-sm font-black text-white"
+              style={{ background: `linear-gradient(135deg, ${colors.red}, #9B1117)` }}
+            >
+              Delete
+            </button>
           </div>
         </div>
-
-        <div className="flex flex-wrap gap-3 mb-6">
-          {visibleLinks.map((link) => (
-            <span
-              key={link.id}
-              className="px-4 py-2 rounded-xl text-sm"
-              style={{
-                color: "rgba(226,232,240,0.72)",
-                background: "rgba(255,255,255,0.06)",
-              }}
-            >
-              {link.label}
-            </span>
-          ))}
-        </div>
-
-        <div className="flex gap-2 mb-6">
-          {visibleSocials.map((social) => (
-            <span
-              key={social.id}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs"
-              style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.12)",
-              }}
-            >
-              {social.label.slice(0, 1)}
-            </span>
-          ))}
-        </div>
-
-        <div
-          className="pt-5 border-t space-y-3 text-sm"
-          style={{
-            borderColor: "rgba(255,255,255,0.09)",
-            color: "rgba(226,232,240,0.58)",
-          }}
-        >
-          <div>📍 {form.contact.address}</div>
-          <div>📞 {form.contact.phones.join(", ")}</div>
-          <div>✉️ {form.contact.email}</div>
-        </div>
-
-        <div className="mt-6 text-xs text-center text-slate-500">
-          {form.copyrightText}
-        </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -307,12 +239,13 @@ export default function AdminFooter() {
 
   const [form, setForm] = useState(defaultFooterContent);
   const [loading, setLoading] = useState(true);
+  const [editingTarget, setEditingTarget] = useState(null);
+  const [modalForm, setModalForm] = useState({});
+  const [confirmTarget, setConfirmTarget] = useState(null);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-
-  const token = localStorage.getItem("adminToken");
 
   useEffect(() => {
     const loadFooterContent = async () => {
@@ -322,6 +255,7 @@ export default function AdminFooter() {
         setForm(mergeFooterContent(savedContent));
       } catch (err) {
         console.error("Load footer content error:", err);
+        setError("Could not load saved footer content. Default content shown.");
       } finally {
         setLoading(false);
       }
@@ -330,69 +264,153 @@ export default function AdminFooter() {
     loadFooterContent();
   }, []);
 
-  const updateField = (name, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const selectedNavLink = useMemo(() => {
+    if (editingTarget?.type !== "navLink") return null;
+    return form.navLinks.find((link) => link.id === editingTarget.id) || null;
+  }, [editingTarget, form.navLinks]);
+
+  const selectedSocial = useMemo(() => {
+    if (editingTarget?.type !== "social") return null;
+    return form.socials.find((social) => social.id === editingTarget.id) || null;
+  }, [editingTarget, form.socials]);
+
+  const openEditor = (target) => {
+    setSuccess("");
+    setError("");
+    setEditingTarget(target);
+
+    if (target.type === "identity") {
+      setModalForm({
+        logoUrl: form.logoUrl || "",
+        schoolName: form.schoolName || "",
+        schoolSubtitle: form.schoolSubtitle || "",
+        admissionBadgeText: form.admissionBadgeText || "",
+        showAdmissionBadge: form.showAdmissionBadge !== false,
+      });
+      return;
+    }
+
+    if (target.type === "navLinks") {
+      setModalForm({
+        navLinks: (form.navLinks || []).map((link) => ({
+          id: link.id || Date.now() + Math.random(),
+          label: link.label || "",
+          href: link.href || "/",
+          visible: link.visible !== false,
+        })),
+      });
+      return;
+    }
+
+    if (target.type === "navLink") {
+      const link = form.navLinks.find((item) => item.id === target.id);
+      setModalForm({
+        label: link?.label || "",
+        href: link?.href || "/",
+        visible: link?.visible !== false,
+      });
+      return;
+    }
+
+    if (target.type === "socials") {
+      setModalForm({
+        socials: (form.socials || []).map((social) => ({
+          id: social.id || Date.now() + Math.random(),
+          label: social.label || "",
+          type: social.type || "website",
+          href: social.href || "",
+          visible: social.visible !== false,
+        })),
+      });
+      return;
+    }
+
+    if (target.type === "social") {
+      const social = form.socials.find((item) => item.id === target.id);
+      setModalForm({
+        label: social?.label || "",
+        type: social?.type || "website",
+        href: social?.href || "",
+        visible: social?.visible !== false,
+      });
+      return;
+    }
+
+    if (target.type === "contact") {
+      setModalForm({
+        address: form.contact?.address || "",
+        mapUrl: form.contact?.mapUrl || "",
+        email: form.contact?.email || "",
+        phones: Array.isArray(form.contact?.phones) ? form.contact.phones : [],
+      });
+      return;
+    }
+
+    if (target.type === "phonePopup") {
+      setModalForm({
+        modalTitle: form.modalTitle || "",
+        modalHint: form.modalHint || "",
+        copiedText: form.copiedText || "",
+        closeButtonText: form.closeButtonText || "",
+      });
+      return;
+    }
+
+    if (target.type === "copyright") {
+      setModalForm({
+        copyrightText: form.copyrightText || "",
+      });
+    }
   };
 
-  const updateContact = (name, value) => {
-    setForm((prev) => ({
-      ...prev,
-      contact: {
-        ...prev.contact,
-        [name]: value,
-      },
-    }));
+  const closeEditor = () => {
+    if (saving || uploadingLogo) return;
+    setEditingTarget(null);
+    setModalForm({});
   };
 
-  const updatePhone = (index, value) => {
-    setForm((prev) => ({
-      ...prev,
-      contact: {
-        ...prev.contact,
-        phones: prev.contact.phones.map((phone, i) =>
-          i === index ? value : phone
-        ),
-      },
-    }));
+  const updateModalField = (name, value) => {
+    setModalForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const addPhone = () => {
-    setForm((prev) => ({
+  const updateModalPhone = (index, value) => {
+    setModalForm((prev) => ({
       ...prev,
-      contact: {
-        ...prev.contact,
-        phones: [...prev.contact.phones, ""],
-      },
-    }));
-  };
-
-  const deletePhone = (index) => {
-    setForm((prev) => ({
-      ...prev,
-      contact: {
-        ...prev.contact,
-        phones: prev.contact.phones.filter((_, i) => i !== index),
-      },
-    }));
-  };
-
-  const updateNavLink = (id, field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      navLinks: prev.navLinks.map((link) =>
-        link.id === id ? { ...link, [field]: value } : link
+      phones: (prev.phones || []).map((phone, phoneIndex) =>
+        phoneIndex === index ? value : phone
       ),
     }));
   };
 
-  const addNavLink = () => {
-    setForm((prev) => ({
+  const addModalPhone = () => {
+    setModalForm((prev) => ({
+      ...prev,
+      phones: [...(prev.phones || []), ""],
+    }));
+  };
+
+  const deleteModalPhone = (index) => {
+    setModalForm((prev) => ({
+      ...prev,
+      phones: (prev.phones || []).filter((_, phoneIndex) => phoneIndex !== index),
+    }));
+  };
+
+
+  const updateModalListItem = (listName, index, field, value) => {
+    setModalForm((prev) => ({
+      ...prev,
+      [listName]: (prev[listName] || []).map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [field]: value } : item
+      ),
+    }));
+  };
+
+  const addModalNavLink = () => {
+    setModalForm((prev) => ({
       ...prev,
       navLinks: [
-        ...prev.navLinks,
+        ...(prev.navLinks || []),
         {
           id: Date.now(),
           label: "New Link",
@@ -403,31 +421,32 @@ export default function AdminFooter() {
     }));
   };
 
-  const deleteNavLink = (id) => {
-    setForm((prev) => ({
+  const deleteModalNavLink = (index) => {
+    const links = modalForm.navLinks || [];
+
+    if (links.length <= 1) {
+      setError("At least one footer navigation link is required.");
+      return;
+    }
+
+    const ok = window.confirm("Delete this footer link?");
+    if (!ok) return;
+
+    setModalForm((prev) => ({
       ...prev,
-      navLinks: prev.navLinks.filter((link) => link.id !== id),
+      navLinks: (prev.navLinks || []).filter((_, itemIndex) => itemIndex !== index),
     }));
   };
 
-  const updateSocial = (id, field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      socials: prev.socials.map((social) =>
-        social.id === id ? { ...social, [field]: value } : social
-      ),
-    }));
-  };
-
-  const addSocial = () => {
-    setForm((prev) => ({
+  const addModalSocial = () => {
+    setModalForm((prev) => ({
       ...prev,
       socials: [
-        ...prev.socials,
+        ...(prev.socials || []),
         {
           id: Date.now(),
-          type: "website",
           label: "Website",
+          type: "website",
           href: "",
           visible: true,
         },
@@ -435,10 +454,20 @@ export default function AdminFooter() {
     }));
   };
 
-  const deleteSocial = (id) => {
-    setForm((prev) => ({
+  const deleteModalSocial = (index) => {
+    const socials = modalForm.socials || [];
+
+    if (socials.length <= 1) {
+      setError("At least one social link is required.");
+      return;
+    }
+
+    const ok = window.confirm("Delete this social link?");
+    if (!ok) return;
+
+    setModalForm((prev) => ({
       ...prev,
-      socials: prev.socials.filter((social) => social.id !== id),
+      socials: (prev.socials || []).filter((_, itemIndex) => itemIndex !== index),
     }));
   };
 
@@ -458,6 +487,13 @@ export default function AdminFooter() {
       return;
     }
 
+    const authHeaders = getAuthHeaders();
+
+    if (!authHeaders) {
+      setError("Admin login expired. Please logout and login again.");
+      return;
+    }
+
     setSuccess("");
     setError("");
     setUploadingLogo(true);
@@ -468,25 +504,20 @@ export default function AdminFooter() {
 
       const res = await axios.post("http://localhost:5000/api/upload", formData, {
         headers: {
+          ...authHeaders,
           "Content-Type": "multipart/form-data",
         },
       });
 
-      const uploadedUrl =
-        res.data?.url ||
-        res.data?.imageUrl ||
-        res.data?.fileUrl ||
-        res.data?.data?.url ||
-        res.data?.data?.imageUrl ||
-        res.data?.data?.fileUrl;
+      const uploadedUrl = getUploadUrl(res.data);
 
       if (!uploadedUrl) {
         setError("Logo uploaded but backend did not return image URL.");
         return;
       }
 
-      updateField("logoUrl", uploadedUrl);
-      setSuccess("Footer logo uploaded successfully. Click Save Changes.");
+      updateModalField("logoUrl", uploadedUrl);
+      setSuccess("Footer logo uploaded. Click Save Section to publish.");
     } catch (err) {
       console.error("Footer logo upload error:", err);
       setError(err.response?.data?.message || "Footer logo upload failed.");
@@ -495,40 +526,278 @@ export default function AdminFooter() {
     }
   };
 
-  async function saveFooterContent() {
+  const addTarget = (type) => {
+    setSuccess("");
+    setError("");
+
+    if (type === "navLink") {
+      const newLink = {
+        id: Date.now(),
+        label: "New Link",
+        href: "/",
+        visible: true,
+      };
+
+      setForm((prev) => ({
+        ...prev,
+        navLinks: [...prev.navLinks, newLink],
+      }));
+      setSuccess("New footer link added. Edit it and click Save Section.");
+      setTimeout(() => openEditor({ type: "navLink", id: newLink.id }), 80);
+      return;
+    }
+
+    if (type === "social") {
+      const newSocial = {
+        id: Date.now(),
+        type: "website",
+        label: "Website",
+        href: "",
+        visible: true,
+      };
+
+      setForm((prev) => ({
+        ...prev,
+        socials: [...prev.socials, newSocial],
+      }));
+      setSuccess("New social link added. Edit it and click Save Section.");
+      setTimeout(() => openEditor({ type: "social", id: newSocial.id }), 80);
+    }
+  };
+
+  const requestDelete = (target) => {
+    if (target.type === "navLink" && form.navLinks.length <= 1) {
+      setError("At least one footer navigation link is required.");
+      return;
+    }
+
+    if (target.type === "social" && form.socials.length <= 1) {
+      setError("At least one social link is required.");
+      return;
+    }
+
+    const label =
+      target.type === "navLink"
+        ? form.navLinks.find((item) => item.id === target.id)?.label
+        : form.socials.find((item) => item.id === target.id)?.label;
+
+    setConfirmTarget({
+      ...target,
+      message: `Delete "${label || "this item"}" from the footer? Save this section to publish the deletion.`,
+    });
+  };
+
+  const confirmDelete = () => {
+    if (!confirmTarget) return;
+
+    if (confirmTarget.type === "navLink") {
+      setForm((prev) => ({
+        ...prev,
+        navLinks: prev.navLinks.filter((link) => link.id !== confirmTarget.id),
+      }));
+    }
+
+    if (confirmTarget.type === "social") {
+      setForm((prev) => ({
+        ...prev,
+        socials: prev.socials.filter((social) => social.id !== confirmTarget.id),
+      }));
+    }
+
+    setConfirmTarget(null);
+    setSuccess("Item removed. Save this section to publish.");
+  };
+
+  const buildCleanFooterContent = (sourceForm) => {
+    const cleanForm = mergeFooterContent({
+      ...sourceForm,
+      socials: (sourceForm.socials || []).map((social) => ({
+        ...social,
+        href: normalizeExternalUrl(social.href),
+      })),
+      contact: {
+        ...(sourceForm.contact || {}),
+        mapUrl: normalizeMapUrl(sourceForm.contact?.mapUrl, sourceForm.contact?.address),
+        phones: Array.isArray(sourceForm.contact?.phones)
+          ? sourceForm.contact.phones.map((phone) => String(phone || "").trim()).filter(Boolean)
+          : [],
+      },
+    });
+
+    if (!cleanForm.contact.phones.length) {
+      cleanForm.contact.phones = ["057-590144"];
+    }
+
+    return cleanForm;
+  };
+
+  const saveSelectedPart = async () => {
+    if (!editingTarget) return;
+
+    const authHeaders = getAuthHeaders();
+
+    if (!authHeaders) {
+      setError("Admin login expired. Please logout and login again.");
+      return;
+    }
+
     setSuccess("");
     setError("");
     setSaving(true);
 
     try {
+      let nextForm = mergeFooterContent(form);
+
+      if (editingTarget.type === "identity") {
+        nextForm = {
+          ...nextForm,
+          logoUrl: modalForm.logoUrl || "",
+          schoolName: modalForm.schoolName || "",
+          schoolSubtitle: modalForm.schoolSubtitle || "",
+          admissionBadgeText: modalForm.admissionBadgeText || "",
+          showAdmissionBadge: modalForm.showAdmissionBadge !== false,
+        };
+      }
+
+      if (editingTarget.type === "navLinks") {
+        const cleanedLinks = (modalForm.navLinks || [])
+          .map((link) => ({
+            id: link.id || Date.now() + Math.random(),
+            label: String(link.label || "").trim() || "New Link",
+            href: String(link.href || "/").trim() || "/",
+            visible: link.visible !== false,
+          }))
+          .filter((link) => link.label || link.href);
+
+        nextForm = {
+          ...nextForm,
+          navLinks: cleanedLinks.length ? cleanedLinks : defaultFooterContent.navLinks,
+        };
+      }
+
+      if (editingTarget.type === "navLink") {
+        nextForm = {
+          ...nextForm,
+          navLinks: nextForm.navLinks.map((link) =>
+            link.id === editingTarget.id
+              ? {
+                  ...link,
+                  label: modalForm.label || "",
+                  href: modalForm.href || "/",
+                  visible: modalForm.visible !== false,
+                }
+              : link
+          ),
+        };
+      }
+
+      if (editingTarget.type === "socials") {
+        const cleanedSocials = (modalForm.socials || [])
+          .map((social) => ({
+            id: social.id || Date.now() + Math.random(),
+            label: String(social.label || "").trim() || "Website",
+            type: social.type || "website",
+            href: normalizeExternalUrl(String(social.href || "").trim()),
+            visible: social.visible !== false,
+          }))
+          .filter((social) => social.label || social.href);
+
+        nextForm = {
+          ...nextForm,
+          socials: cleanedSocials.length ? cleanedSocials : defaultFooterContent.socials,
+        };
+      }
+
+      if (editingTarget.type === "social") {
+        nextForm = {
+          ...nextForm,
+          socials: nextForm.socials.map((social) =>
+            social.id === editingTarget.id
+              ? {
+                  ...social,
+                  label: modalForm.label || "",
+                  type: modalForm.type || "website",
+                  href: normalizeExternalUrl(modalForm.href || ""),
+                  visible: modalForm.visible !== false,
+                }
+              : social
+          ),
+        };
+      }
+
+      if (editingTarget.type === "contact") {
+        nextForm = {
+          ...nextForm,
+          contact: {
+            ...nextForm.contact,
+            address: modalForm.address || "",
+            mapUrl: normalizeMapUrl(modalForm.mapUrl || "", modalForm.address || ""),
+            email: modalForm.email || "",
+            phones: (modalForm.phones || []).map((phone) => phone.trim()).filter(Boolean),
+          },
+        };
+
+        if (nextForm.contact.phones.length === 0) {
+          nextForm.contact.phones = ["057-590144"];
+        }
+      }
+
+      if (editingTarget.type === "phonePopup") {
+        nextForm = {
+          ...nextForm,
+          modalTitle: modalForm.modalTitle || "",
+          modalHint: modalForm.modalHint || "",
+          copiedText: modalForm.copiedText || "Copied",
+          closeButtonText: modalForm.closeButtonText || "Close",
+        };
+      }
+
+      if (editingTarget.type === "copyright") {
+        nextForm = {
+          ...nextForm,
+          copyrightText: modalForm.copyrightText || "",
+        };
+      }
+
+      const cleanForm = buildCleanFooterContent(nextForm);
+
       await axios.put(
         "http://localhost:5000/api/site-content/footer",
-        { content: form },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { content: cleanForm },
+        { headers: authHeaders }
       );
 
-      setSuccess("Footer content saved successfully.");
+      setForm(cleanForm);
+      setEditingTarget(null);
+      setModalForm({});
+      setSuccess("Footer section saved successfully.");
     } catch (err) {
-      console.error("Save footer content error:", err);
-      setError(err.response?.data?.message || "Could not save footer content.");
+      console.error("Save footer section error:", err);
+      setError(err.response?.data?.message || "Could not save this footer section.");
     } finally {
       setSaving(false);
     }
-  }
+  };
+
+  const modalTitle = useMemo(() => {
+    if (!editingTarget) return "";
+
+    if (editingTarget.type === "identity") return "Edit Footer School Info";
+    if (editingTarget.type === "navLinks") return "Edit Footer Links";
+    if (editingTarget.type === "navLink") return selectedNavLink ? `Edit Link: ${selectedNavLink.label}` : "Edit Footer Link";
+    if (editingTarget.type === "socials") return "Edit Social Links";
+    if (editingTarget.type === "social") return selectedSocial ? `Edit Social: ${selectedSocial.label}` : "Edit Social Link";
+    if (editingTarget.type === "contact") return "Edit Footer Contact Details";
+    if (editingTarget.type === "phonePopup") return "Edit Phone Popup";
+    if (editingTarget.type === "copyright") return "Edit Copyright";
+
+    return "Edit Footer";
+  }, [editingTarget, selectedNavLink, selectedSocial]);
 
   if (loading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "#FFF8EE" }}
-      >
-        <div className="text-slate-600 font-semibold">
-          Loading footer editor...
-        </div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#FFF8EE" }}>
+        <div className="text-slate-600 font-semibold">Loading footer editor...</div>
       </div>
     );
   }
@@ -579,21 +848,6 @@ export default function AdminFooter() {
               View Website
             </a>
 
-            <button
-              type="button"
-              onClick={saveFooterContent}
-              disabled={saving || uploadingLogo}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all hover:scale-105 disabled:opacity-60"
-              style={{
-                color: "#020617",
-                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                boxShadow:
-                  "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
-              }}
-            >
-              <Save className="w-4 h-4" />
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
           </div>
         </div>
       </header>
@@ -613,7 +867,7 @@ export default function AdminFooter() {
             }}
           >
             <Footprints className="w-4 h-4" />
-            Manage Footer
+            Visual Footer Editor
           </span>
 
           <h1
@@ -629,434 +883,484 @@ export default function AdminFooter() {
           </h1>
 
           <p className="text-slate-500 max-w-3xl text-lg">
-            Edit footer logo, school text, quick links, social links, contact
-            details, phone popup, and copyright.
+            Edit directly from the real footer preview. Each popup saves its own section immediately, so there is no separate final Save Changes button.
           </p>
         </motion.div>
 
         {success && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold"
-            style={{
-              background: "rgba(22,138,58,0.1)",
-              color: colors.green,
-              border: "1px solid rgba(22,138,58,0.2)",
-            }}
-          >
+          <div className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold bg-green-50 text-green-700 border border-green-100">
             <CheckCircle2 className="w-5 h-5" />
             {success}
           </div>
         )}
 
         {error && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 font-semibold"
-            style={{
-              background: "rgba(215,25,32,0.1)",
-              color: colors.red,
-              border: "1px solid rgba(215,25,32,0.2)",
-            }}
-          >
+          <div className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold bg-red-50 text-red-700 border border-red-100">
+            <AlertCircle className="w-5 h-5" />
             {error}
           </div>
         )}
 
-        <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start">
-          <div className="space-y-8">
-            <EditorCard icon={Type} title="School Identity" color={colors.green}>
-              <div className="grid gap-5">
-                <div>
-                  <label className="block text-sm font-bold mb-2 text-slate-700">
-                    Footer Logo
-                  </label>
+        <div
+          className="rounded-[32px] p-4 md:p-6"
+          style={{
+            background:
+              "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+            border: "1px solid rgba(11,16,32,0.08)",
+            boxShadow:
+              "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
+          }}
+        >
+          <Footer
+            editMode
+            contentOverride={form}
+            onEditTarget={openEditor}
+            onAddTarget={addTarget}
+            onDeleteTarget={requestDelete}
+          />
+        </div>
 
-                  <div
-                    className="rounded-2xl overflow-hidden bg-white mb-4 relative"
-                    style={{ border: "1px solid rgba(15,23,42,0.08)" }}
-                  >
-                    {form.logoUrl ? (
-                      <>
-                        <img
-                          src={form.logoUrl}
-                          alt={form.schoolName}
-                          className="w-full h-44 object-contain p-4"
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => updateField("logoUrl", "")}
-                          className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
-                          title="Remove logo"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </>
-                    ) : (
-                      <div className="w-full h-44 bg-slate-100 flex items-center justify-center">
-                        <ImageIcon className="w-16 h-16 text-slate-300" />
-                      </div>
-                    )}
-                  </div>
-
-                  <label
-                    className="flex flex-col items-center justify-center gap-2 cursor-pointer rounded-2xl p-4 text-center"
-                    style={{
-                      background: "rgba(255,255,255,0.72)",
-                      border: "1px dashed rgba(75,46,131,0.28)",
-                    }}
-                  >
-                    <UploadCloud
-                      className="w-6 h-6"
-                      style={{ color: colors.purple }}
-                    />
-
-                    <span className="text-sm font-bold text-slate-800">
-                      {uploadingLogo ? "Uploading..." : "Upload Logo"}
-                    </span>
-
-                    <span className="text-xs text-slate-500 leading-relaxed">
-                      Recommended: 512×512 px square PNG/JPG/WebP, max 2 MB.
-                    </span>
-
-                    <input
-                      type="file"
-                      accept="image/*"
-                      disabled={uploadingLogo}
-                      onChange={(e) => {
-                        uploadLogo(e.target.files?.[0]);
-                        e.target.value = "";
-                      }}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-
-                <Field
-                  label="School Name"
-                  value={form.schoolName}
-                  onChange={(value) => updateField("schoolName", value)}
-                />
-
-                <Field
-                  label="School Subtitle"
-                  value={form.schoolSubtitle}
-                  onChange={(value) => updateField("schoolSubtitle", value)}
-                />
-
-                <Field
-                  label="Admission Badge Text"
-                  value={form.admissionBadgeText}
-                  onChange={(value) => updateField("admissionBadgeText", value)}
-                />
-
-                <label className="flex items-center gap-3 text-sm font-bold text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={form.showAdmissionBadge}
-                    onChange={(e) =>
-                      updateField("showAdmissionBadge", e.target.checked)
-                    }
-                    className="w-5 h-5"
-                  />
-                  Show admission badge below school name
-                </label>
-              </div>
-            </EditorCard>
-
-            <EditorCard icon={LinkIcon} title="Footer Navigation Links" color={colors.gold}>
-              <div className="flex justify-end mb-6">
-                <button
-                  type="button"
-                  onClick={addNavLink}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
-                  style={{
-                    background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
-                  }}
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Link
-                </button>
-              </div>
-
-              <div className="space-y-5">
-                {form.navLinks.map((link, index) => (
-                  <div
-                    key={link.id}
-                    className="rounded-3xl p-5"
-                    style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-5">
-                      <div>
-                        <div className="font-black text-slate-950">
-                          Link {index + 1}
-                        </div>
-                        <div className="text-sm text-slate-500">
-                          {link.label}
-                        </div>
-                      </div>
-
-                      <VisibilityDeleteControls
-                        visible={link.visible}
-                        onToggle={() =>
-                          updateNavLink(link.id, "visible", !link.visible)
-                        }
-                        onDelete={() => deleteNavLink(link.id)}
-                      />
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <Field
-                        label="Label"
-                        value={link.label}
-                        onChange={(value) =>
-                          updateNavLink(link.id, "label", value)
-                        }
-                      />
-
-                      <Field
-                        label="Link"
-                        value={link.href}
-                        onChange={(value) =>
-                          updateNavLink(link.id, "href", value)
-                        }
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </EditorCard>
-
-            <EditorCard icon={Share2} title="Social Links" color={colors.purple}>
-              <div className="flex justify-end mb-6">
-                <button
-                  type="button"
-                  onClick={addSocial}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
-                  style={{
-                    background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
-                  }}
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Social
-                </button>
-              </div>
-
-              <div className="space-y-5">
-                {form.socials.map((social, index) => (
-                  <div
-                    key={social.id}
-                    className="rounded-3xl p-5"
-                    style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-5">
-                      <div>
-                        <div className="font-black text-slate-950">
-                          Social {index + 1}
-                        </div>
-                        <div className="text-sm text-slate-500">
-                          {social.label}
-                        </div>
-                      </div>
-
-                      <VisibilityDeleteControls
-                        visible={social.visible}
-                        onToggle={() =>
-                          updateSocial(social.id, "visible", !social.visible)
-                        }
-                        onDelete={() => deleteSocial(social.id)}
-                      />
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <Field
-                        label="Label"
-                        value={social.label}
-                        onChange={(value) =>
-                          updateSocial(social.id, "label", value)
-                        }
-                      />
-
-                      <div>
-                        <label className="block text-sm font-bold mb-2 text-slate-700">
-                          Type
-                        </label>
-
-                        <select
-                          value={social.type}
-                          onChange={(e) =>
-                            updateSocial(social.id, "type", e.target.value)
-                          }
-                          className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
-                          style={{
-                            background: "rgba(255,255,255,0.88)",
-                            border: "1px solid rgba(75,46,131,0.16)",
-                            color: colors.dark,
-                          }}
-                        >
-                          <option value="facebook">Facebook</option>
-                          <option value="youtube">YouTube</option>
-                          <option value="website">Website</option>
-                        </select>
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <Field
-                          label="URL"
-                          value={social.href}
-                          onChange={(value) =>
-                            updateSocial(social.id, "href", value)
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </EditorCard>
-
-            <EditorCard icon={Phone} title="Contact Details" color={colors.green}>
-              <div className="grid gap-5">
-                <Field
-                  label="Address"
-                  value={form.contact.address}
-                  onChange={(value) => updateContact("address", value)}
-                />
-
-                <TextArea
-                  label="Google Map URL"
-                  value={form.contact.mapUrl}
-                  onChange={(value) => updateContact("mapUrl", value)}
-                  rows={3}
-                />
-
-                <Field
-                  label="Email"
-                  value={form.contact.email}
-                  onChange={(value) => updateContact("email", value)}
-                />
-
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <label className="block text-sm font-bold text-slate-700">
-                      Phone Numbers
-                    </label>
-
-                    <button
-                      type="button"
-                      onClick={addPhone}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white"
-                      style={{
-                        background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
-                      }}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add Phone
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {form.contact.phones.map((phone, index) => (
-                      <div key={index} className="flex gap-3">
-                        <input
-                          value={phone}
-                          onChange={(e) => updatePhone(index, e.target.value)}
-                          placeholder="Phone number"
-                          className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
-                          style={{
-                            background: "rgba(255,255,255,0.88)",
-                            border: "1px solid rgba(75,46,131,0.16)",
-                            color: colors.dark,
-                          }}
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => deletePhone(index)}
-                          className="px-4 rounded-2xl"
-                          style={{
-                            background: "rgba(215,25,32,0.09)",
-                            color: colors.red,
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </EditorCard>
-
-            <EditorCard icon={Phone} title="Phone Popup Text" color={colors.red}>
-              <div className="grid gap-5">
-                <Field
-                  label="Popup Title"
-                  value={form.modalTitle}
-                  onChange={(value) => updateField("modalTitle", value)}
-                />
-
-                <Field
-                  label="Popup Hint"
-                  value={form.modalHint}
-                  onChange={(value) => updateField("modalHint", value)}
-                />
-
-                <Field
-                  label="Copied Text"
-                  value={form.copiedText}
-                  onChange={(value) => updateField("copiedText", value)}
-                />
-
-                <Field
-                  label="Close Button Text"
-                  value={form.closeButtonText}
-                  onChange={(value) => updateField("closeButtonText", value)}
-                />
-              </div>
-            </EditorCard>
-
-            <EditorCard icon={Footprints} title="Copyright" color={colors.purple}>
-              <TextArea
-                label="Copyright Text"
-                value={form.copyrightText}
-                onChange={(value) => updateField("copyrightText", value)}
-                rows={3}
-              />
-            </EditorCard>
-          </div>
-
-          <aside
-            className="rounded-3xl overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
-              border: "1px solid rgba(255,255,255,0.14)",
-              boxShadow: "0 22px 58px rgba(11,16,32,0.25)",
-            }}
+        <div className="grid md:grid-cols-4 gap-4 mt-8">
+          <button
+            type="button"
+            onClick={() => openEditor({ type: "identity" })}
+            className="rounded-2xl p-5 text-left bg-white border border-slate-100 hover:-translate-y-1 transition-all"
           >
-            <div className="p-5 border-b border-white/10">
-              <div className="text-white font-bold text-lg flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                Footer Preview
-              </div>
+            <UploadCloud className="w-5 h-5 mb-3" style={{ color: colors.purple }} />
+            <div className="font-black text-slate-950">Logo & School Info</div>
+            <div className="text-sm text-slate-500 mt-1">Logo, name, subtitle, admission badge.</div>
+          </button>
 
-              <div className="text-sm text-white/55">
-                Full preview updates while editing.
-              </div>
-            </div>
+          <button
+            type="button"
+            onClick={() => openEditor({ type: "navLinks" })}
+            className="rounded-2xl p-5 text-left bg-white border border-slate-100 hover:-translate-y-1 transition-all"
+          >
+            <LinkIcon className="w-5 h-5 mb-3" style={{ color: colors.gold }} />
+            <div className="font-black text-slate-950">Edit Footer Links</div>
+            <div className="text-sm text-slate-500 mt-1">Add, edit, hide, or delete footer links.</div>
+          </button>
 
-            <div className="bg-white">
-              <FooterPreview form={form} />
-            </div>
-          </aside>
+          <button
+            type="button"
+            onClick={() => openEditor({ type: "socials" })}
+            className="rounded-2xl p-5 text-left bg-white border border-slate-100 hover:-translate-y-1 transition-all"
+          >
+            <Share2 className="w-5 h-5 mb-3" style={{ color: colors.green }} />
+            <div className="font-black text-slate-950">Edit Social Links</div>
+            <div className="text-sm text-slate-500 mt-1">Add, edit, hide, or delete social links.</div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => openEditor({ type: "contact" })}
+            className="rounded-2xl p-5 text-left bg-white border border-slate-100 hover:-translate-y-1 transition-all"
+          >
+            <Phone className="w-5 h-5 mb-3" style={{ color: colors.red }} />
+            <div className="font-black text-slate-950">Contact Details</div>
+            <div className="text-sm text-slate-500 mt-1">Address, map URL, phones, email.</div>
+          </button>
         </div>
       </main>
+
+      <AnimatePresence>
+        {editingTarget && (
+          <motion.div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
+            style={{ background: "rgba(2,6,23,0.55)", backdropFilter: "blur(12px)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeEditor}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 14, scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 130, damping: 16 }}
+              className="w-full max-w-2xl rounded-[28px] overflow-hidden max-h-[92vh] overflow-y-auto"
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid rgba(255,255,255,0.75)",
+                boxShadow: "0 42px 110px rgba(0,0,0,0.28)",
+              }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div
+                className="h-1"
+                style={{ background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan}, ${colors.green})` }}
+              />
+
+              <div className="p-6">
+                <div className="flex items-start justify-between gap-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(56,189,248,0.18))",
+                        color: colors.dark,
+                      }}
+                    >
+                      <Pencil className="w-5 h-5" />
+                    </div>
+
+                    <div>
+                      <h3 className="text-xl font-black text-slate-950">{modalTitle}</h3>
+                      <p className="text-sm text-slate-500">Click Save Section to publish immediately.</p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={closeEditor}
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-5">
+                  {editingTarget.type === "identity" && (
+                    <>
+                      <div
+                        className="rounded-3xl p-5"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                        }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-24 h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center">
+                            {modalForm.logoUrl ? (
+                              <img src={modalForm.logoUrl} alt="Footer logo preview" className="w-full h-full object-contain p-2" />
+                            ) : (
+                              <ImageIcon className="w-12 h-12 text-slate-300" />
+                            )}
+                          </div>
+
+                          <div>
+                            <div className="text-white font-black">Footer Logo Preview</div>
+                            <div className="text-white/55 text-sm mt-1 leading-relaxed">
+                              Recommended: 512×512 square, PNG/JPG/WebP, max 2 MB.
+                            </div>
+                          </div>
+                        </div>
+
+                        <label
+                          className="mt-5 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black cursor-pointer"
+                          style={{ background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`, color: colors.dark }}
+                        >
+                          <UploadCloud className="w-4 h-4" />
+                          {uploadingLogo ? "Uploading..." : "Upload Footer Logo"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={uploadingLogo}
+                            onChange={(event) => {
+                              uploadLogo(event.target.files?.[0]);
+                              event.target.value = "";
+                            }}
+                            className="hidden"
+                          />
+                        </label>
+
+                        {modalForm.logoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => updateModalField("logoUrl", "")}
+                            className="mt-3 w-full px-4 py-3 rounded-2xl text-sm font-black text-white"
+                            style={{ background: "rgba(215,25,32,0.28)", border: "1px solid rgba(255,255,255,0.12)" }}
+                          >
+                            Remove Logo
+                          </button>
+                        )}
+                      </div>
+
+                      <Field label="Logo URL" value={modalForm.logoUrl} onChange={(value) => updateModalField("logoUrl", value)} />
+                      <Field label="School Name" value={modalForm.schoolName} onChange={(value) => updateModalField("schoolName", value)} />
+                      <Field label="School Subtitle" value={modalForm.schoolSubtitle} onChange={(value) => updateModalField("schoolSubtitle", value)} />
+                      <Field label="Admission Badge Text" value={modalForm.admissionBadgeText} onChange={(value) => updateModalField("admissionBadgeText", value)} />
+                      <Toggle checked={modalForm.showAdmissionBadge !== false} onChange={(value) => updateModalField("showAdmissionBadge", value)} label="Show admission badge" />
+                    </>
+                  )}
+
+                  {editingTarget.type === "navLinks" && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <div className="font-black text-slate-950">Footer Links</div>
+                          <div className="text-sm text-slate-500">Manage every footer navigation link from one place.</div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={addModalNavLink}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black text-white"
+                          style={{ background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})` }}
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add Link
+                        </button>
+                      </div>
+
+                      {(modalForm.navLinks || []).map((link, index) => (
+                        <div
+                          key={link.id || index}
+                          className="rounded-3xl p-5 space-y-4"
+                          style={{ background: "rgba(15,23,42,0.04)", border: "1px solid rgba(15,23,42,0.08)" }}
+                        >
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <div className="font-black text-slate-950">Link {index + 1}</div>
+                              <div className="text-sm text-slate-500">{link.label || "New Link"}</div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => deleteModalNavLink(index)}
+                              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-black"
+                              style={{ background: "rgba(215,25,32,0.09)", color: colors.red, border: "1px solid rgba(215,25,32,0.18)" }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Delete
+                            </button>
+                          </div>
+
+                          <Toggle
+                            checked={link.visible !== false}
+                            onChange={(value) => updateModalListItem("navLinks", index, "visible", value)}
+                            label="Show this footer link"
+                          />
+
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <Field
+                              label="Label"
+                              value={link.label}
+                              onChange={(value) => updateModalListItem("navLinks", index, "label", value)}
+                              placeholder="About"
+                            />
+
+                            <Field
+                              label="Link"
+                              value={link.href}
+                              onChange={(value) => updateModalListItem("navLinks", index, "href", value)}
+                              placeholder="/about"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {editingTarget.type === "navLink" && (
+                    <>
+                      <Toggle checked={modalForm.visible !== false} onChange={(value) => updateModalField("visible", value)} label="Show this footer link" />
+                      <Field label="Label" value={modalForm.label} onChange={(value) => updateModalField("label", value)} placeholder="About" />
+                      <Field label="Link" value={modalForm.href} onChange={(value) => updateModalField("href", value)} placeholder="/about" />
+                    </>
+                  )}
+
+                  {editingTarget.type === "socials" && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <div className="font-black text-slate-950">Social Links</div>
+                          <div className="text-sm text-slate-500">Manage every social icon from one place.</div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={addModalSocial}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black text-white"
+                          style={{ background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})` }}
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add Social
+                        </button>
+                      </div>
+
+                      {(modalForm.socials || []).map((social, index) => (
+                        <div
+                          key={social.id || index}
+                          className="rounded-3xl p-5 space-y-4"
+                          style={{ background: "rgba(15,23,42,0.04)", border: "1px solid rgba(15,23,42,0.08)" }}
+                        >
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <div className="font-black text-slate-950">Social {index + 1}</div>
+                              <div className="text-sm text-slate-500">{social.label || "Website"}</div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => deleteModalSocial(index)}
+                              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-black"
+                              style={{ background: "rgba(215,25,32,0.09)", color: colors.red, border: "1px solid rgba(215,25,32,0.18)" }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Delete
+                            </button>
+                          </div>
+
+                          <Toggle
+                            checked={social.visible !== false}
+                            onChange={(value) => updateModalListItem("socials", index, "visible", value)}
+                            label="Show this social link"
+                          />
+
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <Field
+                              label="Label"
+                              value={social.label}
+                              onChange={(value) => updateModalListItem("socials", index, "label", value)}
+                              placeholder="Facebook"
+                            />
+
+                            <SelectField
+                              label="Type"
+                              value={social.type}
+                              onChange={(value) => updateModalListItem("socials", index, "type", value)}
+                            >
+                              <option value="facebook">Facebook</option>
+                              <option value="youtube">YouTube</option>
+                              <option value="website">Website</option>
+                            </SelectField>
+                          </div>
+
+                          <Field
+                            label="URL"
+                            value={social.href}
+                            onChange={(value) => updateModalListItem("socials", index, "href", value)}
+                            placeholder="https://..."
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {editingTarget.type === "social" && (
+                    <>
+                      <Toggle checked={modalForm.visible !== false} onChange={(value) => updateModalField("visible", value)} label="Show this social link" />
+                      <Field label="Label" value={modalForm.label} onChange={(value) => updateModalField("label", value)} placeholder="Facebook" />
+                      <SelectField label="Type" value={modalForm.type} onChange={(value) => updateModalField("type", value)}>
+                        <option value="facebook">Facebook</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="website">Website</option>
+                      </SelectField>
+                      <Field label="URL" value={modalForm.href} onChange={(value) => updateModalField("href", value)} placeholder="https://..." />
+                    </>
+                  )}
+
+                  {editingTarget.type === "contact" && (
+                    <>
+                      <Field label="Address" value={modalForm.address} onChange={(value) => updateModalField("address", value)} />
+                      <TextArea label="Google Map URL or Address" value={modalForm.mapUrl} onChange={(value) => updateModalField("mapUrl", value)} rows={3} />
+                      <Field label="Email" value={modalForm.email} onChange={(value) => updateModalField("email", value)} placeholder="school@email.com" />
+
+                      <div>
+                        <div className="flex items-center justify-between gap-4 mb-3">
+                          <label className="block text-sm font-black text-slate-700">Phone Numbers</label>
+                          <button
+                            type="button"
+                            onClick={addModalPhone}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black text-white"
+                            style={{ background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})` }}
+                          >
+                            <Plus className="w-4 h-4" />
+                            Add Phone
+                          </button>
+                        </div>
+
+                        <div className="space-y-3">
+                          {(modalForm.phones || []).map((phone, index) => (
+                            <div key={index} className="flex gap-3">
+                              <input
+                                value={phone}
+                                onChange={(event) => updateModalPhone(index, event.target.value)}
+                                placeholder="Phone number"
+                                className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
+                                style={{
+                                  background: "rgba(255,255,255,0.92)",
+                                  border: "1px solid rgba(75,46,131,0.16)",
+                                  color: colors.dark,
+                                }}
+                              />
+
+                              <button
+                                type="button"
+                                onClick={() => deleteModalPhone(index)}
+                                className="px-4 rounded-2xl"
+                                style={{ background: "rgba(215,25,32,0.09)", color: colors.red }}
+                                title="Delete phone"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {editingTarget.type === "phonePopup" && (
+                    <>
+                      <Field label="Popup Title" value={modalForm.modalTitle} onChange={(value) => updateModalField("modalTitle", value)} />
+                      <Field label="Popup Hint" value={modalForm.modalHint} onChange={(value) => updateModalField("modalHint", value)} />
+                      <Field label="Copied Text" value={modalForm.copiedText} onChange={(value) => updateModalField("copiedText", value)} />
+                      <Field label="Close Button Text" value={modalForm.closeButtonText} onChange={(value) => updateModalField("closeButtonText", value)} />
+                    </>
+                  )}
+
+                  {editingTarget.type === "copyright" && (
+                    <TextArea label="Copyright Text" value={modalForm.copyrightText} onChange={(value) => updateModalField("copyrightText", value)} rows={4} />
+                  )}
+                </div>
+
+                <div className="flex gap-3 mt-7">
+                  <button
+                    type="button"
+                    onClick={closeEditor}
+                    disabled={saving || uploadingLogo}
+                    className="flex-1 py-3 rounded-2xl text-sm font-black disabled:opacity-60"
+                    style={{
+                      background: "rgba(15,23,42,0.06)",
+                      color: "rgba(15,23,42,0.65)",
+                      border: "1px solid rgba(15,23,42,0.08)",
+                    }}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={saveSelectedPart}
+                    disabled={saving || uploadingLogo}
+                    className="flex-1 py-3 rounded-2xl text-sm font-black inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                    style={{
+                      background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                      color: "#020617",
+                      boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
+                    }}
+                  >
+                    <Save className="w-4 h-4" />
+                    Save Section
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        <ConfirmDialog
+          target={confirmTarget}
+          onCancel={() => setConfirmTarget(null)}
+          onConfirm={confirmDelete}
+        />
+      </AnimatePresence>
     </section>
   );
 }

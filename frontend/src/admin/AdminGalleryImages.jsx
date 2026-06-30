@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "motion/react";
 import {
   ArrowLeft,
@@ -10,6 +10,7 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
+  Plus,
   Image as ImageIcon,
 } from "lucide-react";
 
@@ -23,7 +24,7 @@ const colors = {
 };
 
 const DEFAULT_GALLERY_CATEGORIES = ["Classroom", "Events", "Certificate"];
-const SUBCATEGORY_PARENT_CATEGORIES = ["Events", "Certificate"];
+// Subcategories are allowed for every saved category except the virtual "All" tab.
 
 const fallbackCategoryDescriptions = {
   Classroom:
@@ -88,15 +89,19 @@ const defaultGalleryContent = {
   bottomNote: "Click image to preview",
 };
 
-function normalizeCategories(categories = []) {
-  const cleaned = (Array.isArray(categories) ? categories : [])
+function normalizeCategories(categories = null) {
+  const hasSavedCategories = Array.isArray(categories);
+
+  const cleaned = (hasSavedCategories ? categories : DEFAULT_GALLERY_CATEGORIES)
     .map((item) => String(item || "").trim())
     .filter(Boolean)
     .filter((item) => item.toLowerCase() !== "all");
 
-  const combined = [...DEFAULT_GALLERY_CATEGORIES, ...cleaned];
+  const uniqueCategories = Array.from(new Set(cleaned));
 
-  return Array.from(new Set(combined));
+  return uniqueCategories.length > 0
+    ? uniqueCategories
+    : [...DEFAULT_GALLERY_CATEGORIES];
 }
 
 function normalizeImageCategory(category, categories = []) {
@@ -113,7 +118,8 @@ function normalizeImageCategory(category, categories = []) {
     Facilities: "Classroom",
   };
 
-  return legacyMap[clean] || "Classroom";
+  const normalizedCategories = normalizeCategories(categories);
+  return legacyMap[clean] || normalizedCategories[0] || "Classroom";
 }
 
 function normalizeCategoryDescriptions(descriptions = {}, categories = []) {
@@ -124,11 +130,13 @@ function normalizeCategoryDescriptions(descriptions = {}, categories = []) {
   }, {});
 }
 
-function normalizeSubcategories(subcategories = {}) {
-  return SUBCATEGORY_PARENT_CATEGORIES.reduce((acc, category) => {
+function normalizeSubcategories(subcategories = {}, categories = null) {
+  const parentCategories = normalizeCategories(categories);
+
+  return parentCategories.reduce((acc, category) => {
     const source = Array.isArray(subcategories?.[category])
       ? subcategories[category]
-      : fallbackSubcategories[category];
+      : fallbackSubcategories[category] || [];
 
     acc[category] = source
       .map((item, index) => {
@@ -166,7 +174,7 @@ function mergeGalleryContent(saved = {}) {
     categories
   );
 
-  const subcategories = normalizeSubcategories(saved.subcategories);
+  const subcategories = normalizeSubcategories(saved.subcategories, categories);
 
   return {
     ...defaultGalleryContent,
@@ -275,6 +283,7 @@ function TextArea({ label, value, onChange, rows = 4 }) {
 
 export default function AdminGalleryImages() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [form, setForm] = useState(defaultGalleryContent);
   const [selectedCategory, setSelectedCategory] = useState("Classroom");
@@ -308,13 +317,22 @@ export default function AdminGalleryImages() {
         const merged = mergeGalleryContent(savedContent);
 
         const categories = normalizeCategories(merged.categories);
-        const initialCategory = categories[0];
+        const requestedCategory = searchParams.get("category");
+        const requestedSubcategory = searchParams.get("subcategory");
+        const initialCategory = categories.includes(requestedCategory)
+          ? requestedCategory
+          : categories[0];
         const initialSubcategories =
-          normalizeSubcategories(merged.subcategories)[initialCategory] || [];
+          normalizeSubcategories(merged.subcategories, merged.categories)[initialCategory] || [];
+        const initialSubcategory = initialSubcategories.some(
+          (item) => item.name === requestedSubcategory
+        )
+          ? requestedSubcategory
+          : initialSubcategories[0]?.name || "";
 
         setForm(merged);
         setSelectedCategory(initialCategory);
-        setSelectedSubcategory(initialSubcategories[0]?.name || "");
+        setSelectedSubcategory(initialSubcategory);
         setError("");
       } catch (err) {
         console.error("Load gallery content error:", err);
@@ -323,13 +341,22 @@ export default function AdminGalleryImages() {
 
         const fallback = mergeGalleryContent(defaultGalleryContent);
         const categories = normalizeCategories(fallback.categories);
-        const initialCategory = categories[0];
+        const requestedCategory = searchParams.get("category");
+        const requestedSubcategory = searchParams.get("subcategory");
+        const initialCategory = categories.includes(requestedCategory)
+          ? requestedCategory
+          : categories[0];
         const initialSubcategories =
-          normalizeSubcategories(fallback.subcategories)[initialCategory] || [];
+          normalizeSubcategories(fallback.subcategories, fallback.categories)[initialCategory] || [];
+        const initialSubcategory = initialSubcategories.some(
+          (item) => item.name === requestedSubcategory
+        )
+          ? requestedSubcategory
+          : initialSubcategories[0]?.name || "";
 
         setForm(fallback);
         setSelectedCategory(initialCategory);
-        setSelectedSubcategory(initialSubcategories[0]?.name || "");
+        setSelectedSubcategory(initialSubcategory);
         setError(
           "Gallery content took too long to load. Default image manager is shown. Check backend if saved content is missing."
         );
@@ -345,10 +372,10 @@ export default function AdminGalleryImages() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [searchParams]);
 
   const categoryOptions = normalizeCategories(form.categories);
-  const normalizedSubcategories = normalizeSubcategories(form.subcategories);
+  const normalizedSubcategories = normalizeSubcategories(form.subcategories, form.categories);
 
   const selectedSubcategoryOptions =
     normalizedSubcategories[selectedCategory] || [];
@@ -375,7 +402,7 @@ export default function AdminGalleryImages() {
   const updateImageCategory = (id, category) => {
     const nextCategory = normalizeImageCategory(category, form.categories);
     const subcategoryOptions =
-      normalizeSubcategories(form.subcategories)[nextCategory] || [];
+      normalizeSubcategories(form.subcategories, form.categories)[nextCategory] || [];
 
     setForm((prev) => ({
       ...prev,
@@ -399,6 +426,150 @@ export default function AdminGalleryImages() {
         [selectedCategory]: value,
       },
     }));
+  };
+
+  const updateSelectedCategoryName = (value) => {
+    const nextName = String(value || "").trimStart();
+    if (!nextName) return;
+
+    const existing = categoryOptions.filter((category) => category !== selectedCategory);
+    if (existing.includes(nextName)) {
+      setError(`Category "${nextName}" already exists.`);
+      return;
+    }
+
+    const oldCategory = selectedCategory;
+
+    setForm((prev) => {
+      const categories = normalizeCategories(prev.categories).map((category) =>
+        category === oldCategory ? nextName : category
+      );
+
+      const nextDescriptions = { ...(prev.categoryDescriptions || {}) };
+      nextDescriptions[nextName] = nextDescriptions[oldCategory] || "";
+      delete nextDescriptions[oldCategory];
+
+      const normalizedSubcategories = normalizeSubcategories(prev.subcategories, prev.categories);
+      const nextSubcategories = { ...normalizedSubcategories };
+      nextSubcategories[nextName] = nextSubcategories[oldCategory] || [];
+      delete nextSubcategories[oldCategory];
+
+      return {
+        ...prev,
+        categories: Array.from(new Set(categories)),
+        categoryDescriptions: nextDescriptions,
+        subcategories: nextSubcategories,
+        images: prev.images.map((image) =>
+          image.category === oldCategory ? { ...image, category: nextName } : image
+        ),
+      };
+    });
+
+    setSelectedCategory(nextName);
+    setError("");
+  };
+
+  const addSubcategoryToSelectedCategory = () => {
+    setForm((prev) => {
+      const normalizedSubcategories = normalizeSubcategories(prev.subcategories, prev.categories);
+      const currentList = normalizedSubcategories[selectedCategory] || [];
+      const existingNames = new Set(currentList.map((item) => item.name));
+
+      let newName = `New ${selectedCategory} Subcategory`;
+      let counter = 1;
+      while (existingNames.has(newName)) {
+        counter += 1;
+        newName = `New ${selectedCategory} Subcategory ${counter}`;
+      }
+
+      const newSubcategory = {
+        id: `${selectedCategory.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
+        name: newName,
+        description: "",
+        visible: true,
+      };
+
+      return {
+        ...prev,
+        subcategories: {
+          ...normalizedSubcategories,
+          [selectedCategory]: [...currentList, newSubcategory],
+        },
+      };
+    });
+
+    setSelectedSubcategory(`New ${selectedCategory} Subcategory`);
+    setSuccess(`Subcategory added inside ${selectedCategory}. Click Save Changes to publish.`);
+    setError("");
+  };
+
+  const updateSubcategory = (subcategoryId, field, value) => {
+    setForm((prev) => {
+      const normalizedSubcategories = normalizeSubcategories(prev.subcategories, prev.categories);
+      const currentList = normalizedSubcategories[selectedCategory] || [];
+      const oldItem = currentList.find((item) => item.id === subcategoryId);
+
+      const cleanValue = field === "name" ? String(value || "").trimStart() : value;
+      if (field === "name" && !cleanValue) return prev;
+
+      const updatedList = currentList.map((item) =>
+        item.id === subcategoryId ? { ...item, [field]: cleanValue } : item
+      );
+
+      const updatedImages =
+        field === "name" && oldItem
+          ? prev.images.map((image) =>
+              image.category === selectedCategory && image.subcategory === oldItem.name
+                ? { ...image, subcategory: cleanValue }
+                : image
+            )
+          : prev.images;
+
+      return {
+        ...prev,
+        subcategories: {
+          ...normalizedSubcategories,
+          [selectedCategory]: updatedList,
+        },
+        images: updatedImages,
+      };
+    });
+
+    if (field === "name" && selectedSubcategoryOptions.some((item) => item.id === subcategoryId && item.name === selectedSubcategory)) {
+      setSelectedSubcategory(value);
+    }
+  };
+
+  const deleteSubcategoryFromSelectedCategory = (subcategory) => {
+    const ok = window.confirm(`Delete subcategory "${subcategory.name}"? Images using it will move to the general ${selectedCategory} album.`);
+    if (!ok) return;
+
+    setForm((prev) => {
+      const normalizedSubcategories = normalizeSubcategories(prev.subcategories, prev.categories);
+      const currentList = normalizedSubcategories[selectedCategory] || [];
+      const remaining = currentList.filter((item) => item.id !== subcategory.id);
+
+      return {
+        ...prev,
+        subcategories: {
+          ...normalizedSubcategories,
+          [selectedCategory]: remaining,
+        },
+        images: prev.images.map((image) =>
+          image.category === selectedCategory && image.subcategory === subcategory.name
+            ? { ...image, subcategory: "" }
+            : image
+        ),
+      };
+    });
+
+    if (selectedSubcategory === subcategory.name) {
+      const remaining = selectedSubcategoryOptions.filter((item) => item.id !== subcategory.id);
+      setSelectedSubcategory(remaining[0]?.name || "");
+    }
+
+    setSuccess("Subcategory removed. Click Save Changes to publish.");
+    setError("");
   };
 
   const validateImageFile = (file) => {
@@ -599,7 +770,7 @@ export default function AdminGalleryImages() {
         form.categoryDescriptions,
         cleanedCategories
       );
-      const cleanedSubcategories = normalizeSubcategories(form.subcategories);
+      const cleanedSubcategories = normalizeSubcategories(form.subcategories, cleanedCategories);
 
       const cleanedImages = form.images.map((image) => {
         const category = normalizeImageCategory(
@@ -812,7 +983,7 @@ export default function AdminGalleryImages() {
                 onChange={(e) => {
                   const nextCategory = e.target.value;
                   const nextSubcategories =
-                    normalizeSubcategories(form.subcategories)[nextCategory] ||
+                    normalizeSubcategories(form.subcategories, form.categories)[nextCategory] ||
                     [];
 
                   setSelectedCategory(nextCategory);
@@ -895,7 +1066,13 @@ export default function AdminGalleryImages() {
             </label>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 grid gap-5">
+            <Field
+              label="Selected Category Name"
+              value={selectedCategory}
+              onChange={updateSelectedCategoryName}
+            />
+
             <TextArea
               label={`${selectedCategory} Category Description`}
               value={
@@ -907,10 +1084,114 @@ export default function AdminGalleryImages() {
               rows={4}
             />
 
-            <p className="text-xs text-slate-500 mt-2">
-              This description is shared with the Gallery Editor and appears on
-              the public gallery page.
+            <p className="text-xs text-slate-500 -mt-3">
+              This text appears on the category block in the public Gallery page.
             </p>
+
+            <div
+              className="rounded-3xl p-5"
+              style={{
+                background: "rgba(15,23,42,0.035)",
+                border: "1px solid rgba(15,23,42,0.08)",
+              }}
+            >
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="font-black text-slate-950">
+                    Subcategories inside {selectedCategory}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Add, rename, hide, or delete subcategories for this category.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={addSubcategoryToSelectedCategory}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})`,
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Subcategory
+                </button>
+              </div>
+
+              <div className="grid gap-4">
+                {selectedSubcategoryOptions.map((sub) => (
+                  <div
+                    key={sub.id}
+                    className="rounded-2xl p-4"
+                    style={{
+                      background: "rgba(255,255,255,0.82)",
+                      border: "1px solid rgba(75,46,131,0.12)",
+                    }}
+                  >
+                    <div className="grid gap-4">
+                      <Field
+                        label="Subcategory Name"
+                        value={sub.name}
+                        onChange={(value) => updateSubcategory(sub.id, "name", value)}
+                      />
+
+                      <TextArea
+                        label="Subcategory Description"
+                        value={sub.description}
+                        onChange={(value) => updateSubcategory(sub.id, "description", value)}
+                        rows={3}
+                      />
+
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          onClick={() => updateSubcategory(sub.id, "visible", !sub.visible)}
+                          className="inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold"
+                          style={{
+                            background:
+                              sub.visible !== false
+                                ? "rgba(22,138,58,0.1)"
+                                : "rgba(100,116,139,0.12)",
+                            color: sub.visible !== false ? colors.green : "#64748B",
+                          }}
+                        >
+                          {sub.visible !== false ? (
+                            <>
+                              <Eye className="w-4 h-4" />
+                              Visible
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff className="w-4 h-4" />
+                              Hidden
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => deleteSubcategoryFromSelectedCategory(sub)}
+                          className="inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold"
+                          style={{
+                            background: "rgba(215,25,32,0.09)",
+                            color: colors.red,
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {selectedSubcategoryOptions.length === 0 && (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-5 text-sm font-semibold text-slate-500">
+                    No subcategories yet. Click Add Subcategory for this category.
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -972,7 +1253,7 @@ export default function AdminGalleryImages() {
               const checked = selectedIds.includes(item.id);
               const displayImage = item.image || item.images?.[0];
               const itemSubcategoryOptions =
-                normalizeSubcategories(form.subcategories)[item.category] || [];
+                normalizeSubcategories(form.subcategories, form.categories)[item.category] || [];
 
               return (
                 <div

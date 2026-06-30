@@ -33,7 +33,7 @@ const colors = {
 };
 
 const DEFAULT_GALLERY_CATEGORIES = ["Classroom", "Events", "Certificate"];
-const SUBCATEGORY_PARENT_CATEGORIES = ["Events", "Certificate"];
+// Subcategories are allowed for every saved category except the virtual "All" tab.
 
 const fallbackCategoryDescriptions = {
   Classroom:
@@ -95,14 +95,28 @@ const defaultGalleryContent = {
   bottomNote: "Click image to preview",
 };
 
-function normalizeCategories(categories = []) {
-  const cleaned = (Array.isArray(categories) ? categories : [])
+function normalizeCategories(categories = null) {
+  const hasSavedCategories = Array.isArray(categories);
+
+  const cleaned = (hasSavedCategories ? categories : DEFAULT_GALLERY_CATEGORIES)
     .map((item) => String(item || "").trim())
     .filter(Boolean)
     .filter((item) => item.toLowerCase() !== "all");
 
-  const combined = [...DEFAULT_GALLERY_CATEGORIES, ...cleaned];
-  return Array.from(new Set(combined));
+  const uniqueCategories = Array.from(new Set(cleaned));
+
+  return uniqueCategories.length > 0
+    ? uniqueCategories
+    : [...DEFAULT_GALLERY_CATEGORIES];
+}
+
+
+function safeCategoryId(value = "") {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "gallery-category";
 }
 
 function normalizeImageCategory(category, categories = []) {
@@ -117,7 +131,8 @@ function normalizeImageCategory(category, categories = []) {
     Facilities: "Classroom",
   };
 
-  return legacyMap[clean] || "Classroom";
+  const normalizedCategories = normalizeCategories(categories);
+  return legacyMap[clean] || normalizedCategories[0] || "Classroom";
 }
 
 function normalizeCategoryDescriptions(descriptions = {}, categories = []) {
@@ -128,11 +143,13 @@ function normalizeCategoryDescriptions(descriptions = {}, categories = []) {
   }, {});
 }
 
-function normalizeSubcategories(subcategories = {}) {
-  return SUBCATEGORY_PARENT_CATEGORIES.reduce((acc, category) => {
+function normalizeSubcategories(subcategories = {}, categories = null) {
+  const parentCategories = normalizeCategories(categories);
+
+  return parentCategories.reduce((acc, category) => {
     const source = Array.isArray(subcategories?.[category])
       ? subcategories[category]
-      : fallbackSubcategories[category];
+      : fallbackSubcategories[category] || [];
 
     acc[category] = source
       .map((item, index) => {
@@ -168,7 +185,7 @@ function mergeGalleryContent(saved = {}) {
     saved.categoryDescriptions,
     categories
   );
-  const subcategories = normalizeSubcategories(saved.subcategories);
+  const subcategories = normalizeSubcategories(saved.subcategories, categories);
 
   return {
     ...defaultGalleryContent,
@@ -269,7 +286,7 @@ function buildSubcategoryAlbums(content, parentCategory) {
   );
 
   const subcategoryList =
-    normalizeSubcategories(content.subcategories)[parentCategory] || [];
+    normalizeSubcategories(content.subcategories, content.categories)[parentCategory] || [];
 
   if (subcategoryList.length === 0) {
     return [buildSingleCategoryAlbum(content, parentCategory)];
@@ -334,7 +351,10 @@ function buildSubcategoryAlbums(content, parentCategory) {
 function buildCategoryAlbums(content, activeCategory) {
   if (activeCategory === "All") return buildMainCategoryAlbums(content);
 
-  if (SUBCATEGORY_PARENT_CATEGORIES.includes(activeCategory)) {
+  const subcategoryList =
+    normalizeSubcategories(content.subcategories, content.categories)[activeCategory] || [];
+
+  if (subcategoryList.length > 0) {
     return buildSubcategoryAlbums(content, activeCategory);
   }
 
@@ -492,12 +512,11 @@ function ConfirmDialog({ target, onCancel, onConfirm }) {
   );
 }
 
-function EditModal({ target, modalForm, setModalForm, onClose, onSave, onRequestDeleteSubcategory, onAddSubcategory }) {
+function EditModal({ target, modalForm, setModalForm, onClose, onSave, onRequestDeleteSubcategory }) {
   if (!target) return null;
 
   const isCategory = target.type === "category";
-  const isDefaultCategory = DEFAULT_GALLERY_CATEGORIES.includes(target.category);
-  const canUseSubcategories = SUBCATEGORY_PARENT_CATEGORIES.includes(target.category);
+  const canUseSubcategories = isCategory;
 
   return (
     <AnimatePresence>
@@ -594,15 +613,8 @@ function EditModal({ target, modalForm, setModalForm, onClose, onSave, onRequest
                 <Field
                   label="Category Name"
                   value={modalForm.name}
-                  disabled={isDefaultCategory}
                   onChange={(value) => setModalForm((prev) => ({ ...prev, name: value }))}
                 />
-
-                {isDefaultCategory && (
-                  <p className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
-                    Classroom, Events, and Certificate are default categories. Their names are protected, but description and subcategories can be edited.
-                  </p>
-                )}
 
                 <TextArea
                   label={`${target.category} Description`}
@@ -623,12 +635,6 @@ function EditModal({ target, modalForm, setModalForm, onClose, onSave, onRequest
                         </p>
                       </div>
 
-                      <IconButton
-                        icon={Plus}
-                        label="Add Subcategory"
-                        tone="green"
-                        onClick={onAddSubcategory}
-                      />
                     </div>
 
                     <div className="grid gap-4">
@@ -754,7 +760,7 @@ function EditModal({ target, modalForm, setModalForm, onClose, onSave, onRequest
 }
 
 function GalleryAlbumCard({ album, index, onEdit, onDelete, onManageImages }) {
-  const canDelete = !DEFAULT_GALLERY_CATEGORIES.includes(album.category);
+  const canDelete = album.category !== "All";
 
   return (
     <motion.div
@@ -762,13 +768,24 @@ function GalleryAlbumCard({ album, index, onEdit, onDelete, onManageImages }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.45, delay: Math.min(index * 0.04, 0.18) }}
+      id={`gallery-category-${safeCategoryId(album.category)}${album.subcategory ? `-${safeCategoryId(album.subcategory)}` : ""}`}
       className={`group relative grid items-center gap-12 rounded-[2rem] border border-dashed border-cyan-300/70 bg-white/30 p-4 lg:grid-cols-2 ${
         index % 2 !== 0 ? "lg:[&>*:first-child]:order-2" : ""
       }`}
     >
       <div className="absolute right-4 top-4 z-40 flex flex-wrap justify-end gap-2 opacity-100 md:opacity-0 md:transition-opacity md:duration-200 md:group-hover:opacity-100">
-        <IconButton icon={Edit3} label="Edit" tone="purple" onClick={onEdit} />
-        <IconButton icon={Upload} label="Images" tone="green" onClick={onManageImages} />
+        <IconButton
+          icon={Edit3}
+          label="Edit"
+          tone="purple"
+          onClick={() => onManageImages?.(album.category, album.subcategory)}
+        />
+        <IconButton
+          icon={Upload}
+          label="Upload"
+          tone="green"
+          onClick={() => onManageImages?.(album.category, album.subcategory)}
+        />
         {canDelete && (
           <IconButton icon={Trash2} label="Delete" tone="red" onClick={onDelete} />
         )}
@@ -826,7 +843,7 @@ function GalleryAlbumCard({ album, index, onEdit, onDelete, onManageImages }) {
   );
 }
 
-function GalleryVisualEditor({ form, activeCategory, setActiveCategory, onEditHero, onEditCategory, onEditBottom, onAddCategory, onDeleteCategory, onManageImages }) {
+function GalleryVisualEditor({ form, activeCategory, setActiveCategory, onEditHero, onEditCategory, onEditBottom, onAddCategory, onDeleteCategory, onDeleteSubcategory, onManageImages }) {
   const categories = ["All", ...normalizeCategories(form.categories)];
   const filteredAlbums = useMemo(
     () => buildCategoryAlbums(form, activeCategory),
@@ -864,12 +881,12 @@ function GalleryVisualEditor({ form, activeCategory, setActiveCategory, onEditHe
                 Admin Gallery Editor Active
               </div>
               <p className="mt-1 text-sm font-semibold text-white/70">
-                Hover heading/category/bottom sections. Use the floating edit buttons.
+                Use Edit or Upload to open the Gallery Image Manager. Add subcategories inside Gallery Image Manager.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <IconButton icon={Plus} label="Add Category" tone="green" onClick={onAddCategory} />
-              <IconButton icon={Upload} label="Manage Images" tone="purple" onClick={onManageImages} />
+              <IconButton icon={Upload} label="Manage Images" tone="purple" onClick={() => onManageImages?.(activeCategory === "All" ? "" : activeCategory)} />
             </div>
           </div>
         </div>
@@ -964,8 +981,12 @@ function GalleryVisualEditor({ form, activeCategory, setActiveCategory, onEditHe
                   key={`${album.category}-${album.subcategory || album.title}`}
                   album={album}
                   index={index}
-                  onEdit={() => onEditCategory(album.category)}
-                  onDelete={() => onDeleteCategory(album.category)}
+                  onEdit={() => onManageImages?.(album.category, album.subcategory)}
+                  onDelete={() =>
+                    album.subcategory
+                      ? onDeleteSubcategory(album.category, album.subcategory)
+                      : onDeleteCategory(album.category)
+                  }
                   onManageImages={onManageImages}
                 />
               ))}
@@ -1027,6 +1048,7 @@ export default function AdminGallery() {
   const [editingTarget, setEditingTarget] = useState(null);
   const [modalForm, setModalForm] = useState({});
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [busyOverlayText, setBusyOverlayText] = useState("");
 
   const token = localStorage.getItem("adminToken");
 
@@ -1090,7 +1112,7 @@ export default function AdminGallery() {
   };
 
   const openCategoryEditor = (category) => {
-    const normalizedSubcategories = normalizeSubcategories(form.subcategories);
+    const normalizedSubcategories = normalizeSubcategories(form.subcategories, form.categories);
 
     setEditingTarget({
       type: "category",
@@ -1116,9 +1138,13 @@ export default function AdminGallery() {
     setModalForm({});
   };
 
-  const addCategory = () => {
-    setForm((prev) => {
-      const categories = normalizeCategories(prev.categories);
+  const addCategory = async () => {
+    setSuccess("");
+    setError("");
+    setBusyOverlayText("Adding New Category");
+
+    try {
+      const categories = normalizeCategories(form.categories);
       let newName = "New Category";
       let counter = 1;
 
@@ -1127,59 +1153,256 @@ export default function AdminGallery() {
         newName = `New Category ${counter}`;
       }
 
-      return {
-        ...prev,
+      const nextForm = {
+        ...form,
         categories: [...categories, newName],
         categoryDescriptions: {
-          ...(prev.categoryDescriptions || {}),
+          ...(form.categoryDescriptions || {}),
           [newName]: "",
         },
+        subcategories: {
+          ...normalizeSubcategories(form.subcategories, form.categories),
+          [newName]: [],
+        },
       };
-    });
 
-    setActiveCategory("All");
-    setSuccess("New category added. Click Save Changes to publish.");
-    setError("");
+      const saved = await persistGalleryContent(
+        nextForm,
+        `Category "${newName}" added and saved.`
+      );
+
+      if (!saved) return;
+
+      setActiveCategory(newName);
+
+      window.setTimeout(() => {
+        const target = document.getElementById(
+          `gallery-category-${safeCategoryId(newName)}`
+        );
+
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 250);
+    } finally {
+      setBusyOverlayText("");
+    }
   };
 
   const requestDeleteCategory = (categoryToDelete) => {
     if (categoryToDelete === "All") return;
 
-    if (DEFAULT_GALLERY_CATEGORIES.includes(categoryToDelete)) {
-      setError("Default categories cannot be deleted.");
+    const categories = normalizeCategories(form.categories);
+
+    if (categories.length <= 1) {
+      setError("At least one gallery category is required.");
       return;
     }
+
+    const fallbackCategory = categories.find(
+      (category) => category !== categoryToDelete
+    );
 
     setDeleteTarget({
       type: "category",
       category: categoryToDelete,
-      message: `Delete category \"${categoryToDelete}\"? Images inside it will be moved to Classroom.`,
+      message: `Delete category \"${categoryToDelete}\"? Images inside it will be moved to ${fallbackCategory || "the remaining category"}.`,
     });
   };
 
-  const deleteCategoryNow = (categoryToDelete) => {
-    setForm((prev) => {
-      const categories = normalizeCategories(prev.categories).filter(
-        (category) => category !== categoryToDelete
+  const cleanGalleryForm = (draftForm) => {
+    const cleanedCategories = normalizeCategories(draftForm.categories);
+    const cleanedDescriptions = normalizeCategoryDescriptions(
+      draftForm.categoryDescriptions,
+      cleanedCategories
+    );
+    const cleanedSubcategories = normalizeSubcategories(
+      draftForm.subcategories,
+      cleanedCategories
+    );
+
+    const cleanedImages = (draftForm.images || []).map((image) => {
+      const category = normalizeImageCategory(image.category, cleanedCategories);
+      const subcategoryOptions = cleanedSubcategories[category] || [];
+
+      const validSubcategory = subcategoryOptions.some(
+        (item) => item.name === image.subcategory
       );
 
-      const nextDescriptions = { ...(prev.categoryDescriptions || {}) };
-      delete nextDescriptions[categoryToDelete];
+      return {
+        ...image,
+        category,
+        subcategory:
+          subcategoryOptions.length > 0
+            ? validSubcategory
+              ? image.subcategory
+              : subcategoryOptions[0]?.name || ""
+            : "",
+        images:
+          Array.isArray(image.images) && image.images.length > 0
+            ? image.images
+            : image.image
+            ? [image.image]
+            : [],
+      };
+    });
+
+    return {
+      ...draftForm,
+      categories: cleanedCategories,
+      categoryDescriptions: cleanedDescriptions,
+      subcategories: cleanedSubcategories,
+      images: cleanedImages,
+    };
+  };
+
+  const persistGalleryContent = async (draftForm, successMessage) => {
+    const cleanedForm = cleanGalleryForm(draftForm);
+
+    setSaving(true);
+    setError("");
+
+    try {
+      await axios.put(
+        "http://localhost:5000/api/site-content/gallery",
+        { content: cleanedForm },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 30000,
+        }
+      );
+
+      setForm(cleanedForm);
+      setSuccess(successMessage || "Gallery page content saved successfully.");
+      return true;
+    } catch (err) {
+      console.error("Save gallery content error:", err);
+      setError(
+        err.response?.data?.message ||
+          JSON.stringify(err.response?.data) ||
+          "Could not save gallery content."
+      );
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const buildCategoryDeleteForm = (sourceForm, categoryToDelete) => {
+    const categoriesBeforeDelete = normalizeCategories(sourceForm.categories);
+    const categories = categoriesBeforeDelete.filter(
+      (category) => category !== categoryToDelete
+    );
+    const fallbackCategory = categories[0] || categoriesBeforeDelete[0] || "Gallery";
+
+    const nextDescriptions = { ...(sourceForm.categoryDescriptions || {}) };
+    delete nextDescriptions[categoryToDelete];
+
+    const normalizedSubcategories = normalizeSubcategories(
+      sourceForm.subcategories,
+      sourceForm.categories
+    );
+    const nextSubcategories = { ...normalizedSubcategories };
+    delete nextSubcategories[categoryToDelete];
+
+    return {
+      ...sourceForm,
+      categories,
+      categoryDescriptions: nextDescriptions,
+      subcategories: nextSubcategories,
+      images: (sourceForm.images || []).map((image) =>
+        image.category === categoryToDelete
+          ? { ...image, category: fallbackCategory, subcategory: "" }
+          : image
+      ),
+    };
+  };
+
+  const deleteCategoryNow = async (categoryToDelete) => {
+    const categories = normalizeCategories(form.categories);
+
+    if (categories.length <= 1) {
+      setError("At least one gallery category is required.");
+      return;
+    }
+
+    const nextForm = buildCategoryDeleteForm(form, categoryToDelete);
+    setActiveCategory("All");
+    await persistGalleryContent(
+      nextForm,
+      `Category "${categoryToDelete}" deleted and saved.`
+    );
+  };
+
+  const requestDeleteSubcategoryFromBlock = (category, subcategoryName) => {
+    if (!category || !subcategoryName) return;
+
+    setDeleteTarget({
+      type: "subcategoryBlock",
+      category,
+      subcategoryName,
+      message: `Delete subcategory "${subcategoryName}" from ${category}? Images using it will move to the general ${category} album.`,
+    });
+  };
+
+  const deleteSubcategoryNow = (category, subcategoryName) => {
+    setForm((prev) => {
+      const normalizedSubcategories = normalizeSubcategories(prev.subcategories, prev.categories);
+      const currentList = normalizedSubcategories[category] || [];
 
       return {
         ...prev,
-        categories,
-        categoryDescriptions: nextDescriptions,
+        subcategories: {
+          ...normalizedSubcategories,
+          [category]: currentList.filter((item) => item.name !== subcategoryName),
+        },
         images: prev.images.map((image) =>
-          image.category === categoryToDelete
-            ? { ...image, category: "Classroom", subcategory: "" }
+          image.category === category && image.subcategory === subcategoryName
+            ? { ...image, subcategory: "" }
             : image
         ),
       };
     });
 
-    setActiveCategory("All");
-    setSuccess("Category deleted. Click Save Changes to publish.");
+    setSuccess("Subcategory deleted. Click Save Changes to publish.");
+    setError("");
+  };
+
+  const addSubcategoryToCategory = (category) => {
+    if (!category || category === "All") return;
+
+    setForm((prev) => {
+      const normalizedSubcategories = normalizeSubcategories(prev.subcategories, prev.categories);
+      const currentList = normalizedSubcategories[category] || [];
+
+      let newName = `New ${category} Subcategory`;
+      let counter = 1;
+      const existingNames = new Set(currentList.map((item) => item.name));
+
+      while (existingNames.has(newName)) {
+        counter += 1;
+        newName = `New ${category} Subcategory ${counter}`;
+      }
+
+      const newSubcategory = {
+        id: `${category.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
+        name: newName,
+        description: "",
+        visible: true,
+      };
+
+      return {
+        ...prev,
+        subcategories: {
+          ...normalizedSubcategories,
+          [category]: [...currentList, newSubcategory],
+        },
+      };
+    });
+
+    setActiveCategory(category);
+    setSuccess(`Subcategory added inside ${category}. Click Save Changes to publish.`);
+    setError("");
   };
 
   const addSubcategoryInModal = () => {
@@ -1247,10 +1470,7 @@ export default function AdminGallery() {
 
     if (editingTarget.type === "category") {
       const oldCategory = editingTarget.category;
-      const isDefaultCategory = DEFAULT_GALLERY_CATEGORIES.includes(oldCategory);
-      const newCategory = isDefaultCategory
-        ? oldCategory
-        : String(modalForm.name || "").trim();
+      const newCategory = String(modalForm.name || "").trim();
 
       if (!newCategory) {
         setError("Category name cannot be empty.");
@@ -1267,19 +1487,21 @@ export default function AdminGallery() {
         delete nextDescriptions[oldCategory];
         nextDescriptions[newCategory] = modalForm.description || "";
 
-        const normalizedSubcategories = normalizeSubcategories(prev.subcategories);
+        const normalizedSubcategories = normalizeSubcategories(prev.subcategories, prev.categories);
         const nextSubcategories = { ...normalizedSubcategories };
 
-        if (SUBCATEGORY_PARENT_CATEGORIES.includes(oldCategory)) {
-          nextSubcategories[oldCategory] = (modalForm.subcategories || [])
-            .map((sub) => ({
-              id: sub.id || `${oldCategory.toLowerCase()}-${Date.now()}`,
-              name: String(sub.name || "").trim(),
-              description: sub.description || "",
-              visible: sub.visible !== false,
-              originalName: sub.originalName || "",
-            }))
-            .filter((sub) => sub.name);
+        nextSubcategories[newCategory] = (modalForm.subcategories || [])
+          .map((sub) => ({
+            id: sub.id || `${newCategory.toLowerCase()}-${Date.now()}`,
+            name: String(sub.name || "").trim(),
+            description: sub.description || "",
+            visible: sub.visible !== false,
+            originalName: sub.originalName || "",
+          }))
+          .filter((sub) => sub.name);
+
+        if (oldCategory !== newCategory) {
+          delete nextSubcategories[oldCategory];
         }
 
         let nextImages = prev.images.map((image) =>
@@ -1288,34 +1510,32 @@ export default function AdminGallery() {
             : image
         );
 
-        if (SUBCATEGORY_PARENT_CATEGORIES.includes(oldCategory)) {
-          const newSubNames = new Set(
-            (nextSubcategories[oldCategory] || []).map((sub) => sub.name)
+        const newSubNames = new Set(
+          (nextSubcategories[newCategory] || []).map((sub) => sub.name)
+        );
+
+        nextImages = nextImages.map((image) => {
+          if (image.category !== oldCategory && image.category !== newCategory) {
+            return image;
+          }
+
+          const renamedSub = (modalForm.subcategories || []).find(
+            (sub) =>
+              sub.originalName &&
+              image.subcategory === sub.originalName &&
+              sub.name
           );
 
-          nextImages = nextImages.map((image) => {
-            if (image.category !== oldCategory && image.category !== newCategory) {
-              return image;
-            }
+          if (renamedSub) {
+            return { ...image, subcategory: renamedSub.name };
+          }
 
-            const renamedSub = (modalForm.subcategories || []).find(
-              (sub) =>
-                sub.originalName &&
-                image.subcategory === sub.originalName &&
-                sub.name
-            );
+          if (image.subcategory && !newSubNames.has(image.subcategory)) {
+            return { ...image, subcategory: "" };
+          }
 
-            if (renamedSub) {
-              return { ...image, subcategory: renamedSub.name };
-            }
-
-            if (image.subcategory && !newSubNames.has(image.subcategory)) {
-              return { ...image, subcategory: "" };
-            }
-
-            return image;
-          });
-        }
+          return image;
+        });
 
         return {
           ...prev,
@@ -1334,71 +1554,14 @@ export default function AdminGallery() {
   async function saveGalleryContent() {
     setSuccess("");
     setError("");
-    setSaving(true);
 
-    try {
-      const cleanedCategories = normalizeCategories(form.categories);
-      const cleanedDescriptions = normalizeCategoryDescriptions(
-        form.categoryDescriptions,
-        cleanedCategories
-      );
-      const cleanedSubcategories = normalizeSubcategories(form.subcategories);
+    const saved = await persistGalleryContent(
+      form,
+      "Gallery page content saved successfully."
+    );
 
-      const cleanedImages = form.images.map((image) => {
-        const category = normalizeImageCategory(image.category, cleanedCategories);
-        const subcategoryOptions = cleanedSubcategories[category] || [];
-
-        const validSubcategory = subcategoryOptions.some(
-          (item) => item.name === image.subcategory
-        );
-
-        return {
-          ...image,
-          category,
-          subcategory:
-            subcategoryOptions.length > 0
-              ? validSubcategory
-                ? image.subcategory
-                : subcategoryOptions[0]?.name || ""
-              : "",
-          images:
-            Array.isArray(image.images) && image.images.length > 0
-              ? image.images
-              : image.image
-              ? [image.image]
-              : [],
-        };
-      });
-
-      const cleanedForm = {
-        ...form,
-        categories: cleanedCategories,
-        categoryDescriptions: cleanedDescriptions,
-        subcategories: cleanedSubcategories,
-        images: cleanedImages,
-      };
-
-      await axios.put(
-        "http://localhost:5000/api/site-content/gallery",
-        { content: cleanedForm },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          timeout: 30000,
-        }
-      );
-
-      setForm(cleanedForm);
-      setSuccess("Gallery page content saved successfully.");
+    if (saved) {
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err) {
-      console.error("Save gallery content error:", err);
-      setError(
-        err.response?.data?.message ||
-          JSON.stringify(err.response?.data) ||
-          "Could not save gallery content."
-      );
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -1414,7 +1577,28 @@ export default function AdminGallery() {
     if (deleteTarget.type === "subcategory") {
       deleteSubcategoryInModal(deleteTarget.subcategory.id);
       setDeleteTarget(null);
+      return;
     }
+
+    if (deleteTarget.type === "subcategoryBlock") {
+      deleteSubcategoryNow(deleteTarget.category, deleteTarget.subcategoryName);
+      setDeleteTarget(null);
+    }
+  };
+
+  const openGalleryImageManager = (category = "", subcategory = "") => {
+    const params = new URLSearchParams();
+
+    if (category && category !== "All") {
+      params.set("category", category);
+    }
+
+    if (subcategory) {
+      params.set("subcategory", subcategory);
+    }
+
+    const query = params.toString();
+    navigate(`/admin/gallery-images${query ? `?${query}` : ""}`);
   };
 
   if (loading) {
@@ -1427,6 +1611,47 @@ export default function AdminGallery() {
 
   return (
     <section className="min-h-screen bg-[#FFF8EE]">
+      <AnimatePresence>
+        {busyOverlayText && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[999999] flex items-center justify-center px-6"
+            style={{
+              background: "rgba(2,6,23,0.52)",
+              backdropFilter: "blur(14px)",
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 18 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 18 }}
+              className="w-full max-w-sm rounded-[32px] p-8 text-center shadow-2xl"
+              style={{
+                background: "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(75,46,131,0.94))",
+                border: "1px solid rgba(255,255,255,0.16)",
+              }}
+            >
+              <div
+                className="mx-auto mb-5 h-14 w-14 animate-spin rounded-full"
+                style={{
+                  border: "4px solid rgba(255,255,255,0.22)",
+                  borderTopColor: colors.gold,
+                }}
+              />
+
+              <div className="text-2xl font-black text-white">
+                {busyOverlayText}
+              </div>
+
+              <p className="mt-2 text-sm font-semibold text-white/60">
+                Please wait. Saving it first so it will not disappear after reload.
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <header
         className="sticky top-0 z-40"
         style={{
@@ -1450,7 +1675,7 @@ export default function AdminGallery() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => navigate("/admin/gallery-images")}
+              onClick={() => openGalleryImageManager()}
               className="hidden items-center gap-2 rounded-2xl px-4 py-3 font-bold text-white transition-all hover:scale-105 md:inline-flex"
               style={{
                 background: "rgba(255,255,255,0.08)",
@@ -1564,7 +1789,8 @@ export default function AdminGallery() {
           onEditBottom={openBottomEditor}
           onAddCategory={addCategory}
           onDeleteCategory={requestDeleteCategory}
-          onManageImages={() => navigate("/admin/gallery-images")}
+          onDeleteSubcategory={requestDeleteSubcategoryFromBlock}
+          onManageImages={openGalleryImageManager}
         />
       </main>
 
@@ -1575,7 +1801,6 @@ export default function AdminGallery() {
         onClose={closeModal}
         onSave={saveEditingSection}
         onRequestDeleteSubcategory={requestDeleteSubcategory}
-        onAddSubcategory={addSubcategoryInModal}
       />
 
       <ConfirmDialog

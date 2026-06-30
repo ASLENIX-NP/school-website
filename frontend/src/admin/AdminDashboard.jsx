@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  LayoutDashboard, Home, Info, MessageSquareText, GraduationCap,
+  LayoutDashboard, Home, Info, GraduationCap,
   Bell, Images, Users, Phone, Footprints, LogOut, ArrowRight,
   Settings, School, Newspaper, Inbox, Mail, Menu, X, FileText,
   Megaphone, Clock, Star, ChevronRight, Zap, Globe, Shield,
@@ -14,7 +14,6 @@ import {
 import AdminHome from "./AdminHome";
 import AdminNavbar from "./AdminNavbar";
 import AdminAbout from "./AdminAbout";
-import AdminMessages from "./AdminMessages";
 import AdminAcademics from "./AdminAcademics";
 import AdminAdmissions from "./AdminAdmissions";
 import AdminNotices from "./AdminNotices";
@@ -35,7 +34,6 @@ const colors = {
 const adminSections = [
   { title: "Manage Home", icon: Home, color: colors.cyan, editorKey: "home" },
   { title: "Manage About", icon: Info, color: colors.purple, editorKey: "about" },
-  { title: "Manage Messages", icon: MessageSquareText, color: colors.green, editorKey: "messages" },
   { title: "Manage Academics", icon: GraduationCap, color: colors.red, editorKey: "academics" },
   { title: "Manage Admissions", icon: School, color: colors.cyan, editorKey: "admissions" },
   { title: "Manage Notices", icon: Bell, color: colors.red, editorKey: "notices" },
@@ -54,7 +52,6 @@ const navigationItems = [
   { title: "Manage Navbar", icon: Navigation, editorKey: "navbar" },
   { title: "Manage Home", icon: Home, editorKey: "home" },
   { title: "Manage About", icon: Info, editorKey: "about" },
-  { title: "Manage Messages", icon: MessageSquareText, editorKey: "messages" },
   { title: "Manage Academics", icon: GraduationCap, editorKey: "academics" },
   { title: "Manage Admissions", icon: School, editorKey: "admissions" },
   { title: "Manage Notices", icon: Bell, editorKey: "notices" },
@@ -536,7 +533,6 @@ export default function AdminDashboard() {
   {activeEditor === "navbar" && <AdminNavbar />}
   {activeEditor === "home" && <AdminHome />}
   {activeEditor === "about" && <AdminAbout />}
-                {activeEditor === "messages" && <AdminMessages />}
                 {activeEditor === "academics" && <AdminAcademics />}
                 {activeEditor === "admissions" && <AdminAdmissions />}
                 {activeEditor === "notices" && <AdminNotices />}

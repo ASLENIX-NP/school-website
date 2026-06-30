@@ -1,23 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowLeft,
   Save,
-  Contact,
+  Contact as ContactIcon,
   Type,
   MapPin,
   Phone,
   Mail,
   Clock,
-  Send,
   CheckCircle2,
   ExternalLink,
   Eye,
   MessageSquare,
   Map,
+  X,
+  Trash2,
+  Plus,
+  Pencil,
+  AlertCircle,
+  Inbox,
 } from "lucide-react";
+
+import {
+  Contact,
+  defaultContactContent,
+  mergeContactContent,
+  normalizeExternalUrl,
+} from "../app/components/Contact";
 
 const colors = {
   red: "#D71920",
@@ -31,90 +43,18 @@ const colors = {
   gold: "#FACC15",
 };
 
-const defaultContactContent = {
-  badgeText: "Get In Touch",
-  title: "We'd Love to Hear From You",
-  highlightedText: "Hear From You",
-  subtitle:
-    "Questions about admissions, curriculum, or school life? Our team is here to help.",
-  contactInfo: [
-    {
-      id: "address",
-      icon: "map",
-      label: "Address",
-      value: "Basudev Marga, Hetauda Sub-Metropolitan City, Ward No. 2",
-      color: "#D71920",
-    },
-    {
-      id: "phone",
-      icon: "phone",
-      label: "Phone",
-      value: "057-590144, 057-590145, 057-590146",
-      color: "#168A3A",
-    },
-    {
-      id: "email",
-      icon: "mail",
-      label: "Email",
-      value: "infobjess2046@gmail.com",
-      color: "#4B2E83",
-    },
-    {
-      id: "school",
-      icon: "clock",
-      label: "School",
-      value: "Baljagriti Secondary English Boarding School",
-      color: "#7C5CC4",
-    },
-  ],
-  mapCard: {
-    title: "Baljagriti Campus",
-    address: "Basudev Marga, Hetauda, Makawanpur",
-    buttonText: "Open in Maps",
-    mapUrl:
-      "https://www.google.com/maps/search/?api=1&query=Basudev+Marga+Hetauda+Makwanpur+Nepal",
-  },
-  form: {
-    title: "Send a Message",
-    nameLabel: "Your Name",
-    namePlaceholder: "Your full name",
-    emailLabel: "Email Address",
-    emailPlaceholder: "your@email.com",
-    subjectLabel: "Subject",
-    subjectPlaceholder: "Admissions inquiry",
-    messageLabel: "Message",
-    messagePlaceholder: "Tell us how we can help you...",
-    buttonText: "Send Message",
-    sendingText: "Sending...",
-    successMessage: "Message sent successfully!",
-    errorMessage: "Message could not be sent. Please try again.",
-  },
-};
-
-function mergeContactContent(saved = {}) {
-  return {
-    ...defaultContactContent,
-    ...saved,
-    contactInfo:
-      Array.isArray(saved.contactInfo) && saved.contactInfo.length
-        ? saved.contactInfo
-        : defaultContactContent.contactInfo,
-    mapCard: {
-      ...defaultContactContent.mapCard,
-      ...(saved.mapCard || {}),
-    },
-    form: {
-      ...defaultContactContent.form,
-      ...(saved.form || {}),
-    },
-  };
+function getAdminToken() {
+  return (
+    localStorage.getItem("adminToken") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("admin_token") ||
+    ""
+  );
 }
 
-function getContactIcon(icon) {
-  if (icon === "phone") return Phone;
-  if (icon === "mail") return Mail;
-  if (icon === "clock") return Clock;
-  return MapPin;
+function getAuthHeaders() {
+  const token = getAdminToken();
+  return token ? { Authorization: `Bearer ${token}` } : null;
 }
 
 function Field({ label, value, onChange, placeholder = "", type = "text" }) {
@@ -131,7 +71,7 @@ function Field({ label, value, onChange, placeholder = "", type = "text" }) {
         placeholder={placeholder}
         className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
         style={{
-          background: "rgba(255,255,255,0.88)",
+          background: "rgba(255,255,255,0.92)",
           border: "1px solid rgba(75,46,131,0.16)",
           color: colors.dark,
         }}
@@ -140,7 +80,7 @@ function Field({ label, value, onChange, placeholder = "", type = "text" }) {
   );
 }
 
-function TextArea({ label, value, onChange, placeholder = "" }) {
+function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
   return (
     <div>
       <label className="block text-sm font-bold mb-2 text-slate-700">
@@ -151,10 +91,10 @@ function TextArea({ label, value, onChange, placeholder = "" }) {
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        rows={4}
+        rows={rows}
         className="w-full px-4 py-3 rounded-2xl outline-none text-sm resize-none"
         style={{
-          background: "rgba(255,255,255,0.88)",
+          background: "rgba(255,255,255,0.92)",
           border: "1px solid rgba(75,46,131,0.16)",
           color: colors.dark,
         }}
@@ -163,146 +103,146 @@ function TextArea({ label, value, onChange, placeholder = "" }) {
   );
 }
 
-function EditorCard({ icon: Icon, title, color, children }) {
+function IconSelect({ value, onChange }) {
   return (
-    <div
-      className="rounded-3xl p-6 md:p-8"
-      style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
-        border: "1px solid rgba(11,16,32,0.08)",
-        boxShadow:
-          "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
-      }}
-    >
-      <div className="flex items-center gap-3 mb-6">
-        <Icon className="w-5 h-5" style={{ color }} />
-        <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
-      </div>
+    <div>
+      <label className="block text-sm font-bold mb-2 text-slate-700">
+        Icon
+      </label>
 
-      {children}
+      <select
+        value={value || "map"}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
+        style={{
+          background: "rgba(255,255,255,0.92)",
+          border: "1px solid rgba(75,46,131,0.16)",
+          color: colors.dark,
+        }}
+      >
+        <option value="map">Map Pin</option>
+        <option value="phone">Phone</option>
+        <option value="mail">Mail</option>
+        <option value="clock">Clock</option>
+      </select>
     </div>
   );
 }
 
-function ContactPreview({ form }) {
+function getContactIcon(icon) {
+  if (icon === "phone") return Phone;
+  if (icon === "mail") return Mail;
+  if (icon === "clock") return Clock;
+  return MapPin;
+}
+
+function EditorHint({ icon: Icon, title, text, color }) {
   return (
-    <div
-      className="min-h-full p-6"
-      style={{
-        background:
-          "radial-gradient(circle at top left, rgba(75,46,131,0.14), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
-      }}
-    >
-      <div className="text-center mb-8">
-        <span
-          className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold mb-4"
-          style={{
-            background: "rgba(215,25,32,0.09)",
-            color: colors.red,
-            border: "1px solid rgba(215,25,32,0.22)",
-          }}
-        >
-          {form.badgeText}
-        </span>
-
-        <h3
-          className="text-4xl leading-tight"
-          style={{
-            fontFamily: "var(--font-display)",
-            fontWeight: 800,
-            color: colors.dark,
-          }}
-        >
-          {form.title}
-        </h3>
-
-        <p className="text-sm text-slate-500 mt-3 leading-relaxed">
-          {form.subtitle}
-        </p>
+    <div className="rounded-2xl p-4 bg-white border border-slate-100">
+      <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+        style={{ background: `${color}12`, color }}
+      >
+        <Icon className="w-5 h-5" />
       </div>
+      <div className="font-black text-slate-950">{title}</div>
+      <div className="text-sm text-slate-500 mt-1">{text}</div>
+    </div>
+  );
+}
 
-      <div className="space-y-4 mb-6">
-        {form.contactInfo.map((info) => {
-          const Icon = getContactIcon(info.icon);
+function ModalShell({ title, subtitle, icon: Icon, onClose, children, onSave, saving, saveLabel = "Save" }) {
+  return (
+    <motion.div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
+      style={{ background: "rgba(2,6,23,0.58)", backdropFilter: "blur(14px)" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.94 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 14, scale: 0.96 }}
+        transition={{ type: "spring", stiffness: 130, damping: 16 }}
+        className="w-full max-w-2xl rounded-[30px] overflow-hidden max-h-[92vh] flex flex-col"
+        style={{
+          background: "#FFFFFF",
+          border: "1px solid rgba(255,255,255,0.75)",
+          boxShadow: "0 42px 110px rgba(0,0,0,0.28)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="h-1"
+          style={{ background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan}, ${colors.green})` }}
+        />
 
-          return (
+        <div className="p-6 border-b border-slate-100 flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
             <div
-              key={info.id}
-              className="flex gap-4 p-4 rounded-2xl bg-white"
+              className="w-12 h-12 rounded-2xl flex items-center justify-center"
               style={{
-                border: `1px solid ${info.color}22`,
-                boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
+                background: "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(56,189,248,0.18))",
+                color: colors.dark,
               }}
             >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{
-                  background: `${info.color}14`,
-                  color: info.color,
-                }}
-              >
-                <Icon className="w-5 h-5" />
-              </div>
-
-              <div>
-                <div className="text-xs font-bold uppercase text-slate-400">
-                  {info.label}
-                </div>
-                <div className="text-sm font-semibold text-slate-900">
-                  {info.value}
-                </div>
-              </div>
+              <Icon className="w-5 h-5" />
             </div>
-          );
-        })}
-      </div>
 
-      <div
-        className="rounded-3xl p-6 text-center"
-        style={{
-          background: "linear-gradient(135deg, #020617, #1E1B4B)",
-          boxShadow: "0 18px 42px rgba(15,23,42,0.22)",
-        }}
-      >
-        <MapPin className="w-8 h-8 mx-auto mb-3" style={{ color: colors.gold }} />
-        <div className="text-white font-bold">{form.mapCard.title}</div>
-        <div className="text-white/60 text-xs mt-1">{form.mapCard.address}</div>
-      </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-950">{title}</h3>
+              <p className="text-sm text-slate-500">{subtitle}</p>
+            </div>
+          </div>
 
-      <div
-        className="mt-6 rounded-3xl p-6 bg-white"
-        style={{
-          border: "1px solid rgba(75,46,131,0.14)",
-          boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-        }}
-      >
-        <div className="font-bold text-slate-950 mb-4">{form.form.title}</div>
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-400">
-            {form.form.namePlaceholder}
-          </div>
-          <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-400">
-            {form.form.emailPlaceholder}
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600 disabled:opacity-50"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-400 mb-3">
-          {form.form.subjectPlaceholder}
+
+        <div className="p-6 overflow-y-auto">
+          {children}
         </div>
-        <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-400 mb-4">
-          {form.form.messagePlaceholder}
+
+        <div className="p-6 border-t border-slate-100 flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="flex-1 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5 disabled:opacity-60"
+            style={{
+              background: "rgba(15,23,42,0.06)",
+              color: "rgba(15,23,42,0.65)",
+              border: "1px solid rgba(15,23,42,0.08)",
+            }}
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className="flex-1 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5 disabled:opacity-60 inline-flex items-center justify-center gap-2"
+            style={{
+              background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+              color: "#020617",
+              boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
+            }}
+          >
+            <Save className="w-4 h-4" />
+            {saving ? "Saving..." : saveLabel}
+          </button>
         </div>
-        <div
-          className="rounded-2xl py-3 text-center font-bold text-sm"
-          style={{
-            color: "#020617",
-            background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-          }}
-        >
-          {form.form.buttonText}
-        </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -314,108 +254,305 @@ export default function AdminContact() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-
-  const token = localStorage.getItem("adminToken");
+  const [editingTarget, setEditingTarget] = useState(null);
+  const [modalForm, setModalForm] = useState({});
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const addedIdRef = useRef(null);
 
   useEffect(() => {
+    let alive = true;
+
     const loadContactContent = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/contact"
+          "http://localhost:5000/api/site-content/contact",
+          { timeout: 20000 }
         );
+
+        if (!alive) return;
 
         const savedContent = res.data?.data?.content || {};
         setForm(mergeContactContent(savedContent));
       } catch (err) {
         console.error("Load contact content error:", err);
+        if (alive) {
+          setForm(defaultContactContent);
+          setError("Could not load saved contact content. Default editor is shown.");
+        }
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
     };
 
     loadContactContent();
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
-  const updateField = (name, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  useEffect(() => {
+    if (!addedIdRef.current) return;
+
+    const timer = setTimeout(() => {
+      const element = document.querySelector(`[data-contact-card-id="${addedIdRef.current}"]`);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      addedIdRef.current = null;
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [form.contactInfo]);
+
+  const selectedContactInfo = useMemo(() => {
+    if (editingTarget?.type !== "contactInfo") return null;
+    return form.contactInfo.find((item) => item.id === editingTarget.id) || null;
+  }, [editingTarget, form.contactInfo]);
+
+  const openHeroEditor = () => {
+    setEditingTarget({ type: "hero" });
+    setModalForm({
+      badgeText: form.badgeText || "",
+      title: form.title || "",
+      highlightedText: form.highlightedText || "",
+      subtitle: form.subtitle || "",
+    });
   };
 
-  const updateContactInfo = (id, name, value) => {
-    setForm((prev) => ({
-      ...prev,
-      contactInfo: prev.contactInfo.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              [name]: value,
-            }
-          : item
-      ),
-    }));
+  const openContactInfoEditor = (id) => {
+    const item = form.contactInfo.find((info) => info.id === id);
+    if (!item) return;
+
+    setEditingTarget({ type: "contactInfo", id });
+    setModalForm({ ...item });
   };
 
-  const updateMapCard = (name, value) => {
-    setForm((prev) => ({
-      ...prev,
+  const openMapEditor = () => {
+    setEditingTarget({ type: "mapCard" });
+    setModalForm({ ...form.mapCard });
+  };
+
+  const openFormEditor = () => {
+    setEditingTarget({ type: "form" });
+    setModalForm({ ...form.form });
+  };
+
+  const closeEditor = () => {
+    if (saving) return;
+    setEditingTarget(null);
+    setModalForm({});
+  };
+
+  const updateModalField = (name, value) => {
+    setModalForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const cleanBeforeSave = (content) => {
+    const merged = mergeContactContent(content);
+
+    return {
+      ...merged,
+      contactInfo: merged.contactInfo
+        .map((item, index) => ({
+          id: item.id || `contact-${Date.now()}-${index}`,
+          icon: item.icon || "map",
+          label: String(item.label || "Contact").trim() || "Contact",
+          value: String(item.value || "").trim(),
+          color: item.color || colors.purple,
+        }))
+        .filter((item) => item.label || item.value),
       mapCard: {
-        ...prev.mapCard,
-        [name]: value,
+        ...merged.mapCard,
+        title: merged.mapCard.title || "School Location",
+        address: merged.mapCard.address || "",
+        buttonText: merged.mapCard.buttonText || "Open in Maps",
+        mapUrl: normalizeExternalUrl(merged.mapCard.mapUrl),
       },
-    }));
-  };
-
-  const updateForm = (name, value) => {
-    setForm((prev) => ({
-      ...prev,
       form: {
-        ...prev.form,
-        [name]: value,
+        ...defaultContactContent.form,
+        ...(merged.form || {}),
       },
-    }));
+    };
   };
 
-  async function saveContactContent() {
+  async function saveContent(nextContent, successMessage = "Contact page content saved successfully.") {
     setSuccess("");
     setError("");
     setSaving(true);
 
     try {
+      const cleanContent = cleanBeforeSave(nextContent);
+      const authHeaders = getAuthHeaders();
+
+      if (!authHeaders) {
+        setError("Admin login expired. Please logout and login again.");
+        return null;
+      }
+
       await axios.put(
         "http://localhost:5000/api/site-content/contact",
+        { content: cleanContent },
         {
-          content: form,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: authHeaders,
+          timeout: 30000,
         }
       );
 
-      setSuccess("Contact page content saved successfully.");
+      setForm(cleanContent);
+      setSuccess(successMessage);
+      return cleanContent;
     } catch (err) {
       console.error("Save contact content error:", err);
       setError(err.response?.data?.message || "Could not save contact content.");
+      return null;
     } finally {
       setSaving(false);
     }
   }
 
+  const saveSelectedPart = async () => {
+    if (!editingTarget) return;
+
+    let nextForm = mergeContactContent(form);
+
+    if (editingTarget.type === "hero") {
+      nextForm = {
+        ...nextForm,
+        badgeText: modalForm.badgeText || "",
+        title: modalForm.title || "",
+        highlightedText: modalForm.highlightedText || "",
+        subtitle: modalForm.subtitle || "",
+      };
+    }
+
+    if (editingTarget.type === "contactInfo") {
+      nextForm = {
+        ...nextForm,
+        contactInfo: nextForm.contactInfo.map((item) =>
+          item.id === editingTarget.id
+            ? {
+                ...item,
+                label: modalForm.label || "",
+                icon: modalForm.icon || "map",
+                value: modalForm.value || "",
+                color: modalForm.color || colors.purple,
+              }
+            : item
+        ),
+      };
+    }
+
+    if (editingTarget.type === "mapCard") {
+      nextForm = {
+        ...nextForm,
+        mapCard: {
+          ...nextForm.mapCard,
+          title: modalForm.title || "",
+          address: modalForm.address || "",
+          buttonText: modalForm.buttonText || "Open in Maps",
+          mapUrl: normalizeExternalUrl(modalForm.mapUrl),
+        },
+      };
+    }
+
+    if (editingTarget.type === "form") {
+      nextForm = {
+        ...nextForm,
+        form: {
+          ...nextForm.form,
+          ...modalForm,
+        },
+      };
+    }
+
+    const saved = await saveContent(nextForm, "Selected contact item saved successfully.");
+
+    if (saved) {
+      closeEditor();
+    }
+  };
+
+  const addContactInfo = async () => {
+    const newId = `contact-${Date.now()}`;
+    const newItem = {
+      id: newId,
+      icon: "map",
+      label: "New Contact",
+      value: "Add contact detail here",
+      color: colors.purple,
+    };
+
+    const nextForm = {
+      ...mergeContactContent(form),
+      contactInfo: [...form.contactInfo, newItem],
+    };
+
+    addedIdRef.current = newId;
+    const saved = await saveContent(nextForm, "New contact block added. Edit it and save your changes.");
+
+    if (saved) {
+      setEditingTarget({ type: "contactInfo", id: newId });
+      setModalForm(newItem);
+    }
+  };
+
+  const requestDeleteContactInfo = (id) => {
+    const item = form.contactInfo.find((info) => info.id === id);
+    if (!item) return;
+    setDeleteTarget(item);
+  };
+
+  const confirmDeleteContactInfo = async () => {
+    if (!deleteTarget) return;
+
+    if (form.contactInfo.length <= 1) {
+      setDeleteTarget(null);
+      setError("At least one contact block must remain.");
+      return;
+    }
+
+    const nextForm = {
+      ...mergeContactContent(form),
+      contactInfo: form.contactInfo.filter((item) => item.id !== deleteTarget.id),
+    };
+
+    const saved = await saveContent(nextForm, "Contact block deleted successfully.");
+
+    if (saved) {
+      setDeleteTarget(null);
+    }
+  };
+
+  const modalTitle = useMemo(() => {
+    if (!editingTarget) return "";
+    if (editingTarget.type === "hero") return "Edit Contact Heading";
+    if (editingTarget.type === "contactInfo") {
+      return selectedContactInfo ? `Edit ${selectedContactInfo.label}` : "Edit Contact Block";
+    }
+    if (editingTarget.type === "mapCard") return "Edit Map Card";
+    if (editingTarget.type === "form") return "Edit Contact Form Text";
+    return "Edit Contact";
+  }, [editingTarget, selectedContactInfo]);
+
+  const modalIcon = useMemo(() => {
+    if (!editingTarget) return Pencil;
+    if (editingTarget.type === "hero") return Type;
+    if (editingTarget.type === "contactInfo") return getContactIcon(modalForm.icon);
+    if (editingTarget.type === "mapCard") return Map;
+    if (editingTarget.type === "form") return MessageSquare;
+    return Pencil;
+  }, [editingTarget, modalForm.icon]);
+
   if (loading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "#FFF8EE" }}
-      >
-        <div className="text-slate-600 font-semibold">
-          Loading contact editor...
-        </div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#FFF8EE" }}>
+        <div className="text-slate-600 font-semibold">Loading contact editor...</div>
       </div>
     );
   }
+
+  const ModalIcon = modalIcon;
 
   return (
     <section
@@ -449,6 +586,19 @@ export default function AdminContact() {
           </button>
 
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/admin/contact-messages")}
+              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.14)",
+              }}
+            >
+              <Inbox className="w-4 h-4" />
+              Messages
+            </button>
+
             <a
               href="/contact"
               target="_blank"
@@ -465,7 +615,7 @@ export default function AdminContact() {
 
             <button
               type="button"
-              onClick={saveContactContent}
+              onClick={() => saveContent(form)}
               disabled={saving}
               className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all hover:scale-105 disabled:opacity-60"
               style={{
@@ -496,8 +646,8 @@ export default function AdminContact() {
               border: "1px solid rgba(215,25,32,0.2)",
             }}
           >
-            <Contact className="w-4 h-4" />
-            Manage Contact Page
+            <ContactIcon className="w-4 h-4" />
+            Visual Contact Editor
           </span>
 
           <h1
@@ -513,292 +663,321 @@ export default function AdminContact() {
           </h1>
 
           <p className="text-slate-500 max-w-3xl text-lg">
-            Edit contact heading, address, phone, email, school details, map
-            card, and public message form text.
+            Hover the real Contact page below. Edit heading, contact cards, map card, and form text directly from the visual preview.
           </p>
         </motion.div>
 
         {success && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold"
-            style={{
-              background: "rgba(22,138,58,0.1)",
-              color: colors.green,
-              border: "1px solid rgba(22,138,58,0.2)",
-            }}
-          >
+          <div className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold bg-green-50 text-green-700 border border-green-100">
             <CheckCircle2 className="w-5 h-5" />
             {success}
           </div>
         )}
 
         {error && (
-          <div
-            className="mb-6 rounded-2xl px-5 py-4 font-semibold"
-            style={{
-              background: "rgba(215,25,32,0.1)",
-              color: colors.red,
-              border: "1px solid rgba(215,25,32,0.2)",
-            }}
-          >
+          <div className="mb-6 rounded-2xl px-5 py-4 flex items-center gap-3 font-semibold bg-red-50 text-red-700 border border-red-100">
+            <AlertCircle className="w-5 h-5" />
             {error}
           </div>
         )}
 
-        <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start">
-          <div className="space-y-8">
-            <EditorCard icon={Type} title="Top Heading Section" color={colors.red}>
+        <div className="grid md:grid-cols-4 gap-4 mb-8">
+          <EditorHint
+            icon={Type}
+            title="Heading"
+            text="Hover title area and click edit."
+            color={colors.red}
+          />
+          <EditorHint
+            icon={MapPin}
+            title="Contact Blocks"
+            text="Add, edit, or delete info cards."
+            color={colors.green}
+          />
+          <EditorHint
+            icon={Map}
+            title="Map"
+            text="Edit location text and Google Maps link."
+            color={colors.purple}
+          />
+          <EditorHint
+            icon={MessageSquare}
+            title="Form Text"
+            text="Edit labels, placeholders, and messages."
+            color={colors.gold}
+          />
+        </div>
+
+        <div
+          className="rounded-[34px] overflow-hidden"
+          style={{
+            border: "1px solid rgba(15,23,42,0.08)",
+            boxShadow: "0 24px 70px rgba(11,16,32,0.12)",
+            background: "#FFFFFF",
+          }}
+        >
+          <Contact
+            editMode
+            contentOverride={form}
+            onEditHero={openHeroEditor}
+            onEditContactInfo={openContactInfoEditor}
+            onDeleteContactInfo={requestDeleteContactInfo}
+            onAddContactInfo={addContactInfo}
+            onEditMap={openMapEditor}
+            onEditForm={openFormEditor}
+          />
+        </div>
+      </main>
+
+      <AnimatePresence>
+        {editingTarget && (
+          <ModalShell
+            title={modalTitle}
+            subtitle="Save only this selected contact item."
+            icon={ModalIcon}
+            onClose={closeEditor}
+            onSave={saveSelectedPart}
+            saving={saving}
+            saveLabel="Save Item"
+          >
+            {editingTarget.type === "hero" && (
               <div className="grid gap-5">
                 <Field
                   label="Small Badge Text"
-                  value={form.badgeText}
-                  onChange={(value) => updateField("badgeText", value)}
+                  value={modalForm.badgeText}
+                  onChange={(value) => updateModalField("badgeText", value)}
                 />
 
-                <div className="grid md:grid-cols-2 gap-5">
-                  <Field
-                    label="Main Title"
-                    value={form.title}
-                    onChange={(value) => updateField("title", value)}
-                  />
+                <Field
+                  label="Main Title"
+                  value={modalForm.title}
+                  onChange={(value) => updateModalField("title", value)}
+                />
 
-                  <Field
-                    label="Purple Italic Highlight Text"
-                    value={form.highlightedText}
-                    onChange={(value) => updateField("highlightedText", value)}
-                    placeholder="Example: Hear From You"
-                  />
-                </div>
+                <Field
+                  label="Purple Italic Highlight Text"
+                  value={modalForm.highlightedText}
+                  onChange={(value) => updateModalField("highlightedText", value)}
+                  placeholder="Example: Hear From You"
+                />
 
                 <TextArea
                   label="Subtitle"
-                  value={form.subtitle}
-                  onChange={(value) => updateField("subtitle", value)}
+                  value={modalForm.subtitle}
+                  onChange={(value) => updateModalField("subtitle", value)}
+                  rows={4}
                 />
               </div>
-            </EditorCard>
+            )}
 
-            <EditorCard icon={MapPin} title="Contact Information Cards" color={colors.green}>
-              <div className="space-y-5">
-                {form.contactInfo.map((info, index) => (
-                  <div
-                    key={info.id}
-                    className="rounded-2xl p-5"
-                    style={{
-                      background: "rgba(15,23,42,0.04)",
-                      border: "1px solid rgba(15,23,42,0.08)",
-                    }}
-                  >
-                    <div className="font-black text-slate-950 mb-4">
-                      Contact Card {index + 1}
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <Field
-                        label="Label"
-                        value={info.label}
-                        onChange={(value) =>
-                          updateContactInfo(info.id, "label", value)
-                        }
-                      />
-
-                      <div>
-                        <label className="block text-sm font-bold mb-2 text-slate-700">
-                          Icon
-                        </label>
-
-                        <select
-                          value={info.icon}
-                          onChange={(e) =>
-                            updateContactInfo(info.id, "icon", e.target.value)
-                          }
-                          className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
-                          style={{
-                            background: "rgba(255,255,255,0.88)",
-                            border: "1px solid rgba(75,46,131,0.16)",
-                            color: colors.dark,
-                          }}
-                        >
-                          <option value="map">Map Pin</option>
-                          <option value="phone">Phone</option>
-                          <option value="mail">Mail</option>
-                          <option value="clock">Clock</option>
-                        </select>
-                      </div>
-
-                      <Field
-                        label="Color"
-                        type="color"
-                        value={info.color}
-                        onChange={(value) =>
-                          updateContactInfo(info.id, "color", value)
-                        }
-                      />
-                    </div>
-
-                    <div className="mt-4">
-                      <TextArea
-                        label="Value"
-                        value={info.value}
-                        onChange={(value) =>
-                          updateContactInfo(info.id, "value", value)
-                        }
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </EditorCard>
-
-            <EditorCard icon={Map} title="Map Card" color={colors.purple}>
+            {editingTarget.type === "contactInfo" && (
               <div className="grid gap-5">
                 <div className="grid md:grid-cols-2 gap-5">
                   <Field
-                    label="Map Card Title"
-                    value={form.mapCard.title}
-                    onChange={(value) => updateMapCard("title", value)}
+                    label="Label"
+                    value={modalForm.label}
+                    onChange={(value) => updateModalField("label", value)}
                   />
 
-                  <Field
-                    label="Button Text"
-                    value={form.mapCard.buttonText}
-                    onChange={(value) => updateMapCard("buttonText", value)}
+                  <IconSelect
+                    value={modalForm.icon}
+                    onChange={(value) => updateModalField("icon", value)}
                   />
                 </div>
 
                 <Field
-                  label="Map Card Address"
-                  value={form.mapCard.address}
-                  onChange={(value) => updateMapCard("address", value)}
+                  label="Icon Color"
+                  type="color"
+                  value={modalForm.color || colors.purple}
+                  onChange={(value) => updateModalField("color", value)}
+                />
+
+                <TextArea
+                  label="Value"
+                  value={modalForm.value}
+                  onChange={(value) => updateModalField("value", value)}
+                  rows={5}
+                />
+              </div>
+            )}
+
+            {editingTarget.type === "mapCard" && (
+              <div className="grid gap-5">
+                <Field
+                  label="Map Card Title"
+                  value={modalForm.title}
+                  onChange={(value) => updateModalField("title", value)}
                 />
 
                 <Field
-                  label="Google Map Link"
-                  value={form.mapCard.mapUrl}
-                  onChange={(value) => updateMapCard("mapUrl", value)}
-                  placeholder="Paste Google Maps link here"
+                  label="Map Card Address"
+                  value={modalForm.address}
+                  onChange={(value) => updateModalField("address", value)}
                 />
-              </div>
-            </EditorCard>
 
-            <EditorCard icon={MessageSquare} title="Message Form Text" color={colors.gold}>
+                <Field
+                  label="Button Text"
+                  value={modalForm.buttonText}
+                  onChange={(value) => updateModalField("buttonText", value)}
+                />
+
+                <div>
+                  <Field
+                    label="Google Map Link"
+                    value={modalForm.mapUrl}
+                    onChange={(value) => updateModalField("mapUrl", value)}
+                    placeholder="Paste full Google Maps link, example: https://maps.app.goo.gl/..."
+                  />
+                  <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                    Paste the full link with https://. If admin pastes maps.app.goo.gl or google.com/maps without https://, it will be fixed automatically while saving.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {editingTarget.type === "form" && (
               <div className="grid gap-5">
                 <Field
                   label="Form Title"
-                  value={form.form.title}
-                  onChange={(value) => updateForm("title", value)}
+                  value={modalForm.title}
+                  onChange={(value) => updateModalField("title", value)}
                 />
 
                 <div className="grid md:grid-cols-2 gap-5">
                   <Field
                     label="Name Label"
-                    value={form.form.nameLabel}
-                    onChange={(value) => updateForm("nameLabel", value)}
+                    value={modalForm.nameLabel}
+                    onChange={(value) => updateModalField("nameLabel", value)}
                   />
-
                   <Field
                     label="Name Placeholder"
-                    value={form.form.namePlaceholder}
-                    onChange={(value) => updateForm("namePlaceholder", value)}
+                    value={modalForm.namePlaceholder}
+                    onChange={(value) => updateModalField("namePlaceholder", value)}
                   />
-
                   <Field
                     label="Email Label"
-                    value={form.form.emailLabel}
-                    onChange={(value) => updateForm("emailLabel", value)}
+                    value={modalForm.emailLabel}
+                    onChange={(value) => updateModalField("emailLabel", value)}
                   />
-
                   <Field
                     label="Email Placeholder"
-                    value={form.form.emailPlaceholder}
-                    onChange={(value) => updateForm("emailPlaceholder", value)}
+                    value={modalForm.emailPlaceholder}
+                    onChange={(value) => updateModalField("emailPlaceholder", value)}
                   />
-
+                  <Field
+                    label="Phone Label"
+                    value={modalForm.phoneLabel}
+                    onChange={(value) => updateModalField("phoneLabel", value)}
+                  />
+                  <Field
+                    label="Phone Placeholder"
+                    value={modalForm.phonePlaceholder}
+                    onChange={(value) => updateModalField("phonePlaceholder", value)}
+                  />
                   <Field
                     label="Subject Label"
-                    value={form.form.subjectLabel}
-                    onChange={(value) => updateForm("subjectLabel", value)}
+                    value={modalForm.subjectLabel}
+                    onChange={(value) => updateModalField("subjectLabel", value)}
                   />
-
                   <Field
                     label="Subject Placeholder"
-                    value={form.form.subjectPlaceholder}
-                    onChange={(value) => updateForm("subjectPlaceholder", value)}
+                    value={modalForm.subjectPlaceholder}
+                    onChange={(value) => updateModalField("subjectPlaceholder", value)}
                   />
-
                   <Field
                     label="Message Label"
-                    value={form.form.messageLabel}
-                    onChange={(value) => updateForm("messageLabel", value)}
+                    value={modalForm.messageLabel}
+                    onChange={(value) => updateModalField("messageLabel", value)}
                   />
-
                   <Field
                     label="Button Text"
-                    value={form.form.buttonText}
-                    onChange={(value) => updateForm("buttonText", value)}
+                    value={modalForm.buttonText}
+                    onChange={(value) => updateModalField("buttonText", value)}
+                  />
+                  <Field
+                    label="Sending Text"
+                    value={modalForm.sendingText}
+                    onChange={(value) => updateModalField("sendingText", value)}
+                  />
+                  <Field
+                    label="Success Message"
+                    value={modalForm.successMessage}
+                    onChange={(value) => updateModalField("successMessage", value)}
                   />
                 </div>
 
                 <TextArea
                   label="Message Placeholder"
-                  value={form.form.messagePlaceholder}
-                  onChange={(value) => updateForm("messagePlaceholder", value)}
+                  value={modalForm.messagePlaceholder}
+                  onChange={(value) => updateModalField("messagePlaceholder", value)}
+                  rows={4}
                 />
-
-                <div className="grid md:grid-cols-2 gap-5">
-                  <Field
-                    label="Sending Text"
-                    value={form.form.sendingText}
-                    onChange={(value) => updateForm("sendingText", value)}
-                  />
-
-                  <Field
-                    label="Success Message"
-                    value={form.form.successMessage}
-                    onChange={(value) => updateForm("successMessage", value)}
-                  />
-                </div>
 
                 <Field
                   label="Error Message"
-                  value={form.form.errorMessage}
-                  onChange={(value) => updateForm("errorMessage", value)}
+                  value={modalForm.errorMessage}
+                  onChange={(value) => updateModalField("errorMessage", value)}
                 />
               </div>
-            </EditorCard>
-          </div>
+            )}
+          </ModalShell>
+        )}
+      </AnimatePresence>
 
-          <aside
-            className="xl:sticky xl:top-28 rounded-3xl overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
-              border: "1px solid rgba(255,255,255,0.14)",
-              boxShadow: "0 22px 58px rgba(11,16,32,0.25)",
-            }}
+      <AnimatePresence>
+        {deleteTarget && (
+          <motion.div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
+            style={{ background: "rgba(2,6,23,0.58)", backdropFilter: "blur(14px)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setDeleteTarget(null)}
           >
-            <div className="p-5 border-b border-white/10">
-              <div className="text-white font-bold text-lg flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                Contact Page Preview
-              </div>
-
-              <div className="text-sm text-white/55">
-                Preview updates while editing.
-              </div>
-            </div>
-
-            <div
-              className="bg-white overflow-y-auto"
-              style={{
-                height: "760px",
-              }}
+            <motion.div
+              initial={{ opacity: 0, y: 24, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 14, scale: 0.96 }}
+              className="w-full max-w-md rounded-[30px] bg-white p-7"
+              style={{ boxShadow: "0 42px 110px rgba(0,0,0,0.28)" }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <ContactPreview form={form} />
-            </div>
-          </aside>
-        </div>
-      </main>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 bg-red-50 text-red-600 border border-red-100">
+                <Trash2 className="w-6 h-6" />
+              </div>
+
+              <h3 className="text-2xl font-black text-slate-950 mb-2">
+                Delete this contact block?
+              </h3>
+
+              <p className="text-sm text-slate-500 mb-6">
+                This will remove <b>{deleteTarget.label}</b> from the public Contact page after saving.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeleteTarget(null)}
+                  disabled={saving}
+                  className="flex-1 py-3 rounded-2xl text-sm font-black bg-slate-100 text-slate-600 disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={confirmDeleteContactInfo}
+                  disabled={saving}
+                  className="flex-1 py-3 rounded-2xl text-sm font-black text-white disabled:opacity-60"
+                  style={{ background: `linear-gradient(135deg, ${colors.red}, #9B1117)` }}
+                >
+                  {saving ? "Deleting..." : "Yes, Delete"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

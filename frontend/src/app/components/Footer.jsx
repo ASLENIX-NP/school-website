@@ -9,15 +9,20 @@ import {
   Phone,
   MapPin,
   School,
+  Pencil,
+  UploadCloud,
 } from "lucide-react";
 
 const palette = {
   cyan: "#38BDF8",
   gold: "#FACC15",
   green: "#22C55E",
+  red: "#D71920",
+  purple: "#4B2E83",
+  dark: "#020617",
 };
 
-const defaultFooterContent = {
+export const defaultFooterContent = {
   logoUrl: "",
   schoolName: "Baljagriti",
   schoolSubtitle: "Secondary English Boarding School",
@@ -73,7 +78,7 @@ const defaultFooterContent = {
     "© 2026 Baljagriti Secondary English Boarding School. All rights reserved.",
 };
 
-function mergeFooterContent(saved = {}) {
+export function mergeFooterContent(saved = {}) {
   return {
     ...defaultFooterContent,
     ...saved,
@@ -93,14 +98,120 @@ function mergeFooterContent(saved = {}) {
   };
 }
 
+export function normalizeExternalUrl(value = "") {
+  const cleanValue = String(value || "").trim();
+
+  if (!cleanValue) return "#";
+  if (cleanValue.startsWith("mailto:") || cleanValue.startsWith("tel:")) return cleanValue;
+  if (cleanValue.startsWith("http://") || cleanValue.startsWith("https://")) return cleanValue;
+  if (cleanValue.startsWith("/")) return cleanValue;
+  if (cleanValue.startsWith("#")) return cleanValue;
+
+  return `https://${cleanValue}`;
+}
+
+export function normalizeMapUrl(value = "", fallbackAddress = "") {
+  const cleanValue = String(value || "").trim();
+  const cleanAddress = String(fallbackAddress || "").trim();
+
+  if (!cleanValue && cleanAddress) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanAddress)}`;
+  }
+
+  if (!cleanValue) return "#";
+  if (cleanValue.startsWith("http://") || cleanValue.startsWith("https://")) return cleanValue;
+
+  if (
+    cleanValue.startsWith("www.") ||
+    cleanValue.startsWith("maps.app.goo.gl") ||
+    cleanValue.startsWith("goo.gl") ||
+    cleanValue.startsWith("google.com")
+  ) {
+    return `https://${cleanValue}`;
+  }
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanValue)}`;
+}
+
 function getSocialIcon(type) {
   if (type === "facebook") return Facebook;
   if (type === "youtube") return Youtube;
   return Globe;
 }
 
-export function Footer() {
-  const [content, setContent] = useState(defaultFooterContent);
+function stopEditNavigation(event, editMode) {
+  if (!editMode) return;
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+function AdminPillButton({ icon: Icon, label, onClick, tone = "edit" }) {
+  const toneStyles = {
+    edit: {
+      background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
+      color: palette.dark,
+    },
+    add: {
+      background: `linear-gradient(135deg, ${palette.green}, ${palette.cyan})`,
+      color: palette.dark,
+    },
+    delete: {
+      background: "rgba(215,25,32,0.96)",
+      color: "#FFFFFF",
+    },
+    dark: {
+      background: "rgba(2,6,23,0.94)",
+      color: "#FFFFFF",
+    },
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onClick?.();
+      }}
+      className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-black shadow-2xl transition-all hover:-translate-y-0.5 hover:scale-105"
+      style={{
+        ...(toneStyles[tone] || toneStyles.edit),
+        border: "1px solid rgba(255,255,255,0.35)",
+      }}
+    >
+      <Icon className="w-3.5 h-3.5" />
+      {label}
+    </button>
+  );
+}
+
+function EditToolbar({ children, position = "top-right" }) {
+  const positionClass =
+    position === "top-left"
+      ? "left-0 top-0 -translate-y-1/2"
+      : position === "bottom-right"
+      ? "right-0 bottom-0 translate-y-1/2"
+      : "right-0 top-0 -translate-y-1/2";
+
+  return (
+    <div
+      className={`absolute ${positionClass} z-[80] opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-200 flex flex-wrap gap-2`}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function Footer({
+  editMode = false,
+  contentOverride = null,
+  onEditTarget = () => {},
+  onAddTarget = () => {},
+  onDeleteTarget = () => {},
+}) {
+  const [content, setContent] = useState(
+    mergeFooterContent(contentOverride || defaultFooterContent)
+  );
   const [showContactModal, setShowContactModal] = useState(false);
   const [copied, setCopied] = useState("");
 
@@ -109,6 +220,11 @@ export function Footer() {
     /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   useEffect(() => {
+    if (contentOverride) {
+      setContent(mergeFooterContent(contentOverride));
+      return;
+    }
+
     const loadFooterContent = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/site-content/footer");
@@ -121,7 +237,7 @@ export function Footer() {
     };
 
     loadFooterContent();
-  }, []);
+  }, [contentOverride]);
 
   const copyPhone = async (phone) => {
     try {
@@ -141,15 +257,51 @@ export function Footer() {
     (social) => social.visible !== false
   );
 
+  const mapHref = normalizeMapUrl(content.contact.mapUrl, content.contact.address);
+
   return (
     <footer
-      className="relative overflow-hidden"
+      className={`relative overflow-hidden ${editMode ? "rounded-[32px]" : ""}`}
       style={{
         background:
           "linear-gradient(135deg, #020617 0%, #07111F 55%, #0F172A 100%)",
-        borderTop: "1px solid rgba(255,255,255,0.1)",
+        borderTop: editMode
+          ? "2px solid rgba(56,189,248,0.48)"
+          : "1px solid rgba(255,255,255,0.1)",
       }}
     >
+      {editMode && (
+        <div
+          className="relative z-[90] mx-auto max-w-[1450px] px-6 pt-5"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div
+            className="rounded-2xl px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(2,6,23,0.96), rgba(15,23,42,0.88))",
+              border: "1px solid rgba(56,189,248,0.28)",
+              boxShadow: "0 18px 52px rgba(0,0,0,0.22)",
+            }}
+          >
+            <div>
+              <div className="text-white font-black">Admin Footer Editor Active</div>
+              <div className="text-xs text-white/55 mt-1">
+                Hover footer areas to open the correct editor for logo, links, socials, contact details, and copyright.
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <AdminPillButton
+                icon={Pencil}
+                label="School Info"
+                onClick={() => onEditTarget({ type: "identity" })}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="absolute inset-0 pointer-events-none">
         <div
           className="absolute left-1/2 top-0 -translate-x-1/2 w-[900px] h-[300px]"
@@ -187,7 +339,21 @@ export function Footer() {
         }}
       >
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
-          <div className="flex items-center gap-3">
+          <div
+            className={`flex items-center gap-3 ${
+              editMode ? "relative group rounded-3xl p-2 -m-2 ring-2 ring-cyan-300/35" : ""
+            }`}
+          >
+            {editMode && (
+              <EditToolbar position="top-left">
+                <AdminPillButton
+                  icon={UploadCloud}
+                  label="Logo/Text"
+                  onClick={() => onEditTarget({ type: "identity" })}
+                />
+              </EditToolbar>
+            )}
+
             <div
               className="w-12 h-12 rounded-2xl bg-white overflow-hidden flex items-center justify-center"
               style={{
@@ -229,16 +395,33 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div
+            className={`flex flex-wrap gap-3 ${
+              editMode ? "relative group rounded-3xl p-2 -m-2 ring-2 ring-yellow-300/30" : ""
+            }`}
+          >
+            {editMode && (
+              <EditToolbar>
+                <AdminPillButton
+                  icon={Pencil}
+                  label="Edit Links"
+                  onClick={() => onEditTarget({ type: "navLinks" })}
+                />
+              </EditToolbar>
+            )}
+
             {visibleLinks.map((link) => (
               <Link
                 key={link.id}
-                to={link.href}
-                className="group relative overflow-hidden text-sm px-4 py-2 rounded-xl transition-all duration-500 hover:-translate-y-1 hover:scale-105"
+                to={link.href || "/"}
+                onClick={(event) => stopEditNavigation(event, editMode)}
+                className={`group/link relative overflow-hidden text-sm px-4 py-2 rounded-xl transition-all duration-500 hover:-translate-y-1 hover:scale-105 ${
+                  editMode ? "ring-1 ring-white/15" : ""
+                }`}
                 style={{ color: "rgba(226,232,240,0.72)" }}
               >
                 <div
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
+                  className="absolute inset-0 opacity-0 group-hover/link:opacity-100 transition-all duration-500"
                   style={{
                     background:
                       "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)",
@@ -250,18 +433,33 @@ export function Footer() {
             ))}
           </div>
 
-          <div className="flex gap-2">
+          <div
+            className={`flex gap-2 ${
+              editMode ? "relative group rounded-3xl p-2 -m-2 ring-2 ring-purple-300/30" : ""
+            }`}
+          >
+            {editMode && (
+              <EditToolbar>
+                <AdminPillButton
+                  icon={Pencil}
+                  label="Edit Social"
+                  onClick={() => onEditTarget({ type: "socials" })}
+                />
+              </EditToolbar>
+            )}
+
             {visibleSocials.map((social) => {
               const Icon = getSocialIcon(social.type);
 
               return (
                 <a
                   key={social.id}
-                  href={social.href}
+                  href={normalizeExternalUrl(social.href)}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 hover:scale-110 hover:-translate-y-2 hover:rotate-6"
+                  onClick={(event) => stopEditNavigation(event, editMode)}
+                  className="group/social relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 hover:scale-110 hover:-translate-y-2 hover:rotate-6"
                   style={{
                     background:
                       "linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))",
@@ -279,20 +477,39 @@ export function Footer() {
         </div>
 
         <div
-          className="mt-7 pt-6 border-t grid lg:grid-cols-3 gap-4 text-sm"
+          className={`mt-7 pt-6 border-t grid lg:grid-cols-3 gap-4 text-sm ${
+            editMode ? "relative group rounded-3xl p-4 -mx-4 ring-2 ring-green-300/25" : ""
+          }`}
           style={{
             borderColor: "rgba(255,255,255,0.09)",
             color: "rgba(226,232,240,0.58)",
           }}
         >
+          {editMode && (
+            <EditToolbar>
+              <AdminPillButton
+                icon={Pencil}
+                label="Contact"
+                onClick={() => onEditTarget({ type: "contact" })}
+              />
+              <AdminPillButton
+                icon={Pencil}
+                label="Popup"
+                tone="dark"
+                onClick={() => onEditTarget({ type: "phonePopup" })}
+              />
+            </EditToolbar>
+          )}
+
           <a
-            href={content.contact.mapUrl}
+            href={mapHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-start gap-2 transition-all duration-300 hover:text-cyan-300 hover:translate-x-1 group"
+            onClick={(event) => stopEditNavigation(event, editMode)}
+            className="flex items-start gap-2 transition-all duration-300 hover:text-cyan-300 hover:translate-x-1 group/address"
           >
             <MapPin
-              className="w-4 h-4 mt-0.5 flex-shrink-0 transition-all duration-300 group-hover:scale-110"
+              className="w-4 h-4 mt-0.5 flex-shrink-0 transition-all duration-300 group-hover/address:scale-110"
               style={{ color: palette.cyan }}
             />
 
@@ -305,10 +522,10 @@ export function Footer() {
               style={{ color: palette.green }}
             />
 
-            {isMobile ? (
+            {isMobile && !editMode ? (
               <>
                 {content.contact.phones.map((phone, index) => (
-                  <span key={phone} className="inline-flex items-center gap-1">
+                  <span key={`${phone}-${index}`} className="inline-flex items-center gap-1">
                     <a
                       href={`tel:${phone.replace(/[^0-9+]/g, "")}`}
                       className="hover:text-green-400"
@@ -338,6 +555,7 @@ export function Footer() {
 
             <a
               href={`mailto:${content.contact.email}`}
+              onClick={(event) => stopEditNavigation(event, editMode)}
               className="break-all hover:text-yellow-300 transition-colors"
             >
               {content.contact.email}
@@ -346,9 +564,20 @@ export function Footer() {
         </div>
 
         <div
-          className="mt-6 text-xs text-center"
+          className={`mt-6 text-xs text-center ${
+            editMode ? "relative group rounded-2xl px-4 py-3 ring-2 ring-cyan-300/20" : ""
+          }`}
           style={{ color: "rgba(226,232,240,0.38)" }}
         >
+          {editMode && (
+            <EditToolbar>
+              <AdminPillButton
+                icon={Pencil}
+                label="Copyright"
+                onClick={() => onEditTarget({ type: "copyright" })}
+              />
+            </EditToolbar>
+          )}
           {content.copyrightText}
         </div>
       </div>
@@ -402,9 +631,9 @@ export function Footer() {
               </div>
 
               <div className="space-y-3">
-                {content.contact.phones.map((phone) => (
+                {content.contact.phones.map((phone, index) => (
                   <button
-                    key={phone}
+                    key={`${phone}-${index}`}
                     type="button"
                     onClick={() => copyPhone(phone)}
                     className="group relative overflow-hidden w-full text-left p-4 rounded-2xl bg-white/5 border border-white/10 transition-all duration-500 hover:scale-[1.03] hover:bg-white/10"

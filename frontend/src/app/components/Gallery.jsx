@@ -23,7 +23,7 @@ const colors = {
 };
 
 const DEFAULT_GALLERY_CATEGORIES = ["Classroom", "Events", "Certificate"];
-const SUBCATEGORY_PARENT_CATEGORIES = ["Events", "Certificate"];
+// Subcategories are allowed for every saved category except the virtual "All" tab.
 
 const fallbackCategoryDescriptions = {
   Classroom:
@@ -88,15 +88,19 @@ const defaultGalleryContent = {
   bottomNote: "Click image to preview",
 };
 
-function normalizeCategories(categories = []) {
-  const cleaned = (Array.isArray(categories) ? categories : [])
+function normalizeCategories(categories = null) {
+  const hasSavedCategories = Array.isArray(categories);
+
+  const cleaned = (hasSavedCategories ? categories : DEFAULT_GALLERY_CATEGORIES)
     .map((item) => String(item || "").trim())
     .filter(Boolean)
     .filter((item) => item.toLowerCase() !== "all");
 
-  const combined = [...DEFAULT_GALLERY_CATEGORIES, ...cleaned];
+  const uniqueCategories = Array.from(new Set(cleaned));
 
-  return Array.from(new Set(combined));
+  return uniqueCategories.length > 0
+    ? uniqueCategories
+    : [...DEFAULT_GALLERY_CATEGORIES];
 }
 
 function normalizeImageCategory(category, categories = []) {
@@ -113,7 +117,8 @@ function normalizeImageCategory(category, categories = []) {
     Facilities: "Classroom",
   };
 
-  return legacyMap[clean] || "Classroom";
+  const normalizedCategories = normalizeCategories(categories);
+  return legacyMap[clean] || normalizedCategories[0] || "Classroom";
 }
 
 function normalizeCategoryDescriptions(descriptions = {}, categories = []) {
@@ -124,11 +129,13 @@ function normalizeCategoryDescriptions(descriptions = {}, categories = []) {
   }, {});
 }
 
-function normalizeSubcategories(subcategories = {}) {
-  return SUBCATEGORY_PARENT_CATEGORIES.reduce((acc, category) => {
+function normalizeSubcategories(subcategories = {}, categories = null) {
+  const parentCategories = normalizeCategories(categories);
+
+  return parentCategories.reduce((acc, category) => {
     const source = Array.isArray(subcategories?.[category])
       ? subcategories[category]
-      : fallbackSubcategories[category];
+      : fallbackSubcategories[category] || [];
 
     acc[category] = source
       .map((item, index) => {
@@ -166,7 +173,7 @@ function mergeGalleryContent(saved = {}) {
     categories
   );
 
-  const subcategories = normalizeSubcategories(saved.subcategories);
+  const subcategories = normalizeSubcategories(saved.subcategories, categories);
 
   return {
     ...defaultGalleryContent,
@@ -287,7 +294,7 @@ function buildSubcategoryAlbums(content, parentCategory) {
   );
 
   const subcategoryList =
-    normalizeSubcategories(content.subcategories)[parentCategory] || [];
+    normalizeSubcategories(content.subcategories, content.categories)[parentCategory] || [];
 
   if (subcategoryList.length === 0) {
     return [buildSingleCategoryAlbum(content, parentCategory)];
@@ -355,7 +362,10 @@ function buildCategoryAlbums(content, activeCategory) {
     return buildMainCategoryAlbums(content);
   }
 
-  if (SUBCATEGORY_PARENT_CATEGORIES.includes(activeCategory)) {
+  const subcategoryList =
+    normalizeSubcategories(content.subcategories, content.categories)[activeCategory] || [];
+
+  if (subcategoryList.length > 0) {
     return buildSubcategoryAlbums(content, activeCategory);
   }
 

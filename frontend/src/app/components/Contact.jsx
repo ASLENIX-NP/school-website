@@ -1,10 +1,19 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
-import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
+import {
+  MapPin,
+  Phone,
+  Mail,
+  Clock,
+  Send,
+  Pencil,
+  Trash2,
+  Plus,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 
-const colors = {
+export const colors = {
   red: "#D71920",
   green: "#168A3A",
   purple: "#4B2E83",
@@ -16,7 +25,7 @@ const colors = {
   gold: "#FACC15",
 };
 
-const defaultContactContent = {
+export const defaultContactContent = {
   badgeText: "Get In Touch",
   title: "We'd Love to Hear From You",
   highlightedText: "Hear From You",
@@ -78,13 +87,19 @@ const defaultContactContent = {
   },
 };
 
-function mergeContactContent(saved = {}) {
+export function mergeContactContent(saved = {}) {
   return {
     ...defaultContactContent,
     ...saved,
     contactInfo:
       Array.isArray(saved.contactInfo) && saved.contactInfo.length
-        ? saved.contactInfo
+        ? saved.contactInfo.map((item, index) => ({
+            id: item.id || `contact-${index}-${Date.now()}`,
+            icon: item.icon || "map",
+            label: item.label || "Contact",
+            value: item.value || "",
+            color: item.color || colors.purple,
+          }))
         : defaultContactContent.contactInfo,
     mapCard: {
       ...defaultContactContent.mapCard,
@@ -95,6 +110,28 @@ function mergeContactContent(saved = {}) {
       ...(saved.form || {}),
     },
   };
+}
+
+export function normalizeExternalUrl(url = "") {
+  const cleanUrl = String(url || "").trim();
+
+  if (!cleanUrl) return "#";
+
+  if (/^(https?:|mailto:|tel:|sms:)/i.test(cleanUrl)) {
+    return cleanUrl;
+  }
+
+  if (cleanUrl.startsWith("//")) {
+    return `https:${cleanUrl}`;
+  }
+
+  if (/^[\w.-]+\.[a-z]{2,}([/:?#].*)?$/i.test(cleanUrl)) {
+    return `https://${cleanUrl}`;
+  }
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    cleanUrl
+  )}`;
 }
 
 function getContactIcon(icon) {
@@ -143,10 +180,58 @@ function ErrorText({ children }) {
   );
 }
 
-function Contact() {
-  const [content, setContent] = useState(defaultContactContent);
+function AdminActionButton({ label, icon: Icon, onClick, tone = "purple" }) {
+  const toneStyles = {
+    purple: {
+      background: "linear-gradient(135deg, #4B2E83, #7C5CC4)",
+      color: "#FFFFFF",
+    },
+    green: {
+      background: "linear-gradient(135deg, #168A3A, #22C55E)",
+      color: "#FFFFFF",
+    },
+    red: {
+      background: "linear-gradient(135deg, #D71920, #9B1117)",
+      color: "#FFFFFF",
+    },
+    gold: {
+      background: "linear-gradient(135deg, #FACC15, #38BDF8)",
+      color: "#020617",
+    },
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onClick?.();
+      }}
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black shadow-xl transition-all hover:-translate-y-0.5 hover:scale-105"
+      style={toneStyles[tone] || toneStyles.purple}
+    >
+      <Icon className="w-4 h-4" />
+      {label}
+    </button>
+  );
+}
+
+export function Contact({
+  editMode = false,
+  contentOverride = null,
+  onEditHero = () => {},
+  onEditContactInfo = () => {},
+  onDeleteContactInfo = () => {},
+  onAddContactInfo = () => {},
+  onEditMap = () => {},
+  onEditForm = () => {},
+} = {}) {
+  const [loadedContent, setLoadedContent] = useState(defaultContactContent);
   const [submitMessage, setSubmitMessage] = useState("");
   const [submitError, setSubmitError] = useState("");
+
+  const content = contentOverride || loadedContent;
 
   const {
     register,
@@ -156,6 +241,8 @@ function Contact() {
   } = useForm();
 
   useEffect(() => {
+    if (contentOverride) return;
+
     const loadContactContent = async () => {
       try {
         const res = await axios.get(
@@ -163,17 +250,19 @@ function Contact() {
         );
 
         const savedContent = res.data?.data?.content || {};
-        setContent(mergeContactContent(savedContent));
+        setLoadedContent(mergeContactContent(savedContent));
       } catch (error) {
         console.error("Contact content load error:", error);
-        setContent(defaultContactContent);
+        setLoadedContent(defaultContactContent);
       }
     };
 
     loadContactContent();
-  }, []);
+  }, [contentOverride]);
 
   const onSubmit = async (data) => {
+    if (editMode) return;
+
     setSubmitMessage("");
     setSubmitError("");
 
@@ -228,12 +317,61 @@ function Contact() {
       />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
+        {editMode && (
+          <div className="mb-8 rounded-[28px] p-5 bg-slate-950 text-white border border-white/10 shadow-2xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="text-xs uppercase tracking-[0.22em] text-white/45 font-black">
+                Admin Contact Editor Active
+              </div>
+              <div className="text-lg font-black mt-1">
+                Hover each block and click edit/delete. Public page stays normal.
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <AdminActionButton
+                label="Edit Heading"
+                icon={Pencil}
+                tone="gold"
+                onClick={onEditHero}
+              />
+              <AdminActionButton
+                label="Add Contact Block"
+                icon={Plus}
+                tone="green"
+                onClick={onAddContactInfo}
+              />
+              <AdminActionButton
+                label="Edit Form"
+                icon={Pencil}
+                tone="purple"
+                onClick={onEditForm}
+              />
+            </div>
+          </div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
-          className="text-center mb-16"
+          className={`text-center mb-16 relative group ${
+            editMode
+              ? "rounded-[32px] p-6 border-2 border-dashed border-sky-300/70 bg-white/25"
+              : ""
+          }`}
         >
+          {editMode && (
+            <div className="absolute right-4 top-4 z-30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+              <AdminActionButton
+                label="Edit"
+                icon={Pencil}
+                tone="gold"
+                onClick={onEditHero}
+              />
+            </div>
+          )}
+
           <span
             className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold mb-4"
             style={{
@@ -278,16 +416,36 @@ function Contact() {
               return (
                 <div
                   key={info.id || info.label}
-                  className="flex gap-4 p-5 rounded-2xl"
+                  data-contact-card-id={info.id}
+                  className={`flex gap-4 p-5 rounded-2xl relative group ${
+                    editMode ? "border-2 border-dashed border-sky-300/70" : ""
+                  }`}
                   style={{
                     background:
                       "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.74))",
-                    border: `1px solid ${info.color}22`,
+                    border: editMode ? undefined : `1px solid ${info.color}22`,
                     boxShadow:
                       "0 18px 46px rgba(11,16,32,0.09), 0 0 0 1px rgba(255,255,255,0.55)",
                     backdropFilter: "blur(16px)",
                   }}
                 >
+                  {editMode && (
+                    <div className="absolute right-3 top-3 z-30 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                      <AdminActionButton
+                        label="Edit"
+                        icon={Pencil}
+                        tone="purple"
+                        onClick={() => onEditContactInfo(info.id)}
+                      />
+                      <AdminActionButton
+                        label="Delete"
+                        icon={Trash2}
+                        tone="red"
+                        onClick={() => onDeleteContactInfo(info.id)}
+                      />
+                    </div>
+                  )}
+
                   <div
                     className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
                     style={{
@@ -299,7 +457,7 @@ function Contact() {
                     <Icon className="w-5 h-5" style={{ color: info.color }} />
                   </div>
 
-                  <div>
+                  <div className={editMode ? "pr-24 md:pr-0" : ""}>
                     <div
                       className="text-xs font-semibold mb-0.5 uppercase tracking-wide"
                       style={{ color: "#94a3b8" }}
@@ -318,16 +476,29 @@ function Contact() {
             })}
 
             <div
-              className="rounded-3xl overflow-hidden h-48 relative flex items-center justify-center"
+              className={`rounded-3xl overflow-hidden h-48 relative flex items-center justify-center group ${
+                editMode ? "border-2 border-dashed border-sky-300/70" : ""
+              }`}
               style={{
                 background:
                   "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07)), linear-gradient(135deg, #020617, #1E1B4B)",
-                border: "1px solid rgba(255,255,255,0.18)",
+                border: editMode ? undefined : "1px solid rgba(255,255,255,0.18)",
                 boxShadow:
                   "0 24px 64px rgba(11,16,32,0.28), 0 0 44px rgba(56,189,248,0.12)",
                 backdropFilter: "blur(18px)",
               }}
             >
+              {editMode && (
+                <div className="absolute right-4 top-4 z-30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <AdminActionButton
+                    label="Edit Map"
+                    icon={Pencil}
+                    tone="gold"
+                    onClick={onEditMap}
+                  />
+                </div>
+              )}
+
               <div
                 className="absolute inset-0 opacity-15"
                 style={{
@@ -377,9 +548,15 @@ function Contact() {
                 </div>
 
                 <a
-                  href={content.mapCard.mapUrl}
+                  href={normalizeExternalUrl(content.mapCard.mapUrl)}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={(event) => {
+                    if (editMode) {
+                      event.preventDefault();
+                      onEditMap();
+                    }
+                  }}
                   className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 hover:scale-105"
                   style={{
                     color: "#020617",
@@ -402,17 +579,33 @@ function Contact() {
             className="lg:col-span-3"
           >
             <div
-              className="p-8 md:p-10 rounded-3xl h-full"
+              className={`p-8 md:p-10 rounded-3xl h-full relative group ${
+                editMode ? "border-2 border-dashed border-sky-300/70" : ""
+              }`}
               style={{
                 background:
                   "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.74))",
-                border: "1px solid rgba(75,46,131,0.14)",
+                border: editMode ? undefined : "1px solid rgba(75,46,131,0.14)",
                 boxShadow:
                   "0 24px 70px rgba(11,16,32,0.12), 0 0 0 1px rgba(255,255,255,0.55)",
                 backdropFilter: "blur(16px)",
               }}
             >
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              {editMode && (
+                <div className="absolute right-4 top-4 z-30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <AdminActionButton
+                    label="Edit Form"
+                    icon={Pencil}
+                    tone="purple"
+                    onClick={onEditForm}
+                  />
+                </div>
+              )}
+
+              <form
+                onSubmit={editMode ? (event) => event.preventDefault() : handleSubmit(onSubmit)}
+                className="space-y-5"
+              >
                 <h3
                   className="text-xl font-semibold mb-6"
                   style={{
@@ -461,8 +654,9 @@ function Contact() {
                       {...register("name", {
                         required: "Name is required.",
                       })}
+                      disabled={editMode}
                       placeholder={content.form.namePlaceholder}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all disabled:opacity-70"
                       style={{
                         background: "rgba(255,255,255,0.82)",
                         border: "1px solid rgba(75,46,131,0.16)",
@@ -484,9 +678,10 @@ function Contact() {
                       {...register("email", {
                         required: "Email is required.",
                       })}
+                      disabled={editMode}
                       type="email"
                       placeholder={content.form.emailPlaceholder}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all disabled:opacity-70"
                       style={{
                         background: "rgba(255,255,255,0.82)",
                         border: "1px solid rgba(75,46,131,0.16)",
@@ -513,9 +708,10 @@ function Contact() {
                           isValidPhone(value) ||
                           "Please enter a valid phone number.",
                       })}
+                      disabled={editMode}
                       type="tel"
                       placeholder={content.form.phonePlaceholder}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all disabled:opacity-70"
                       style={{
                         background: "rgba(255,255,255,0.82)",
                         border: "1px solid rgba(75,46,131,0.16)",
@@ -537,8 +733,9 @@ function Contact() {
                       {...register("subject", {
                         required: "Subject is required.",
                       })}
+                      disabled={editMode}
                       placeholder={content.form.subjectPlaceholder}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all disabled:opacity-70"
                       style={{
                         background: "rgba(255,255,255,0.82)",
                         border: "1px solid rgba(75,46,131,0.16)",
@@ -561,9 +758,10 @@ function Contact() {
                     {...register("message", {
                       required: "Message is required.",
                     })}
+                    disabled={editMode}
                     rows={5}
                     placeholder={content.form.messagePlaceholder}
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all resize-none"
+                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all resize-none disabled:opacity-70"
                     style={{
                       background: "rgba(255,255,255,0.82)",
                       border: "1px solid rgba(75,46,131,0.16)",
@@ -576,7 +774,7 @@ function Contact() {
 
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || editMode}
                   className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold transition-all duration-300 hover:scale-[1.01] disabled:opacity-60"
                   style={{
                     color: "#020617",
@@ -600,5 +798,4 @@ function Contact() {
   );
 }
 
-export { Contact };
 export default Contact;

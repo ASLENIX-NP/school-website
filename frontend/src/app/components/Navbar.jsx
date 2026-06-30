@@ -15,7 +15,6 @@ export const defaultNavbarContent = {
   links: [
     { id: "home", label: "Home", href: "/", visible: true },
     { id: "about", label: "About", href: "/about", visible: true },
-    { id: "messages", label: "Messages", href: "/messages", visible: true },
     { id: "academics", label: "Academics", href: "/academics", visible: true },
     { id: "notices", label: "Notices", href: "/notices", visible: true },
     { id: "facilities", label: "Facilities", href: "/facilities", visible: true },

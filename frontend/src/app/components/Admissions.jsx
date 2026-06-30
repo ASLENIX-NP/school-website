@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
 import { useForm } from "react-hook-form";
+import { Pencil, Plus, Trash2, EyeOff } from "lucide-react";
 
-const colors = {
+export const colors = {
   red: "#D71920",
   green: "#168A3A",
   purple: "#4B2E83",
@@ -12,7 +13,16 @@ const colors = {
   cream: "#FFF8EE",
 };
 
-const defaultAdmissionsContent = {
+export const stepColorOptions = [
+  "#D71920",
+  "#168A3A",
+  "#7C5CC4",
+  "#38BDF8",
+  "#F97316",
+  "#4B2E83",
+];
+
+export const defaultAdmissionsContent = {
   badgeText: "Admissions",
   title: "Your Journey Starts Here",
   highlightedText: "Starts Here",
@@ -89,16 +99,26 @@ const defaultAdmissionsContent = {
   successMessage: "We will contact you soon with admission details.",
 };
 
-function mergeAdmissionsContent(saved = {}) {
+export function mergeAdmissionsContent(saved = {}) {
   return {
     ...defaultAdmissionsContent,
     ...saved,
-    steps: Array.isArray(saved.steps)
-      ? saved.steps
-      : defaultAdmissionsContent.steps,
-    grades: Array.isArray(saved.grades)
-      ? saved.grades
-      : defaultAdmissionsContent.grades,
+    steps:
+      Array.isArray(saved.steps) && saved.steps.length
+        ? saved.steps.map((step, index) => ({
+            ...step,
+            id: step.id || Date.now() + index,
+            step: step.step || String(index + 1).padStart(2, "0"),
+            title: step.title || "Admission Step",
+            desc: step.desc || "Step description.",
+            color: step.color || stepColorOptions[index % stepColorOptions.length],
+            visible: step.visible !== false,
+          }))
+        : defaultAdmissionsContent.steps,
+    grades:
+      Array.isArray(saved.grades) && saved.grades.length
+        ? saved.grades
+        : defaultAdmissionsContent.grades,
     messageLabel: saved.messageLabel || defaultAdmissionsContent.messageLabel,
     messagePlaceholder:
       saved.messagePlaceholder || defaultAdmissionsContent.messagePlaceholder,
@@ -142,11 +162,75 @@ function ErrorText({ children }) {
   );
 }
 
-function Admissions() {
-  const [content, setContent] = useState(defaultAdmissionsContent);
+function AdminEditButton({ label, icon: Icon = Pencil, onClick, tone = "purple" }) {
+  const palette = {
+    purple: {
+      background: "rgba(75,46,131,0.95)",
+      color: "#FFFFFF",
+    },
+    green: {
+      background: "rgba(22,138,58,0.95)",
+      color: "#FFFFFF",
+    },
+    red: {
+      background: "rgba(215,25,32,0.95)",
+      color: "#FFFFFF",
+    },
+    dark: {
+      background: "rgba(11,16,32,0.95)",
+      color: "#FFFFFF",
+    },
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onClick?.();
+      }}
+      className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-black shadow-2xl transition-all hover:-translate-y-0.5 hover:scale-105"
+      style={palette[tone] || palette.purple}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </button>
+  );
+}
+
+function EditShell({ editMode, children, className = "", style = {} }) {
+  if (!editMode) return children;
+
+  return (
+    <div
+      className={`relative rounded-[2rem] ${className}`}
+      style={{
+        outline: "2px dashed rgba(56,189,248,0.75)",
+        outlineOffset: "8px",
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Admissions({
+  editMode = false,
+  contentOverride = null,
+  onEditHero = () => {},
+  onEditStep = () => {},
+  onAddStep = () => {},
+  onDeleteStep = () => {},
+  onEditForm = () => {},
+} = {}) {
+  const [loadedContent, setLoadedContent] = useState(defaultAdmissionsContent);
   const [submitMessage, setSubmitMessage] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [submitted, setSubmitted] = useState(false);
+
+  const content = contentOverride || loadedContent;
 
   const {
     register,
@@ -156,6 +240,8 @@ function Admissions() {
   } = useForm();
 
   useEffect(() => {
+    if (contentOverride) return;
+
     const loadAdmissionsContent = async () => {
       try {
         const res = await axios.get(
@@ -163,17 +249,19 @@ function Admissions() {
         );
 
         const savedContent = res.data?.data?.content || {};
-        setContent(mergeAdmissionsContent(savedContent));
+        setLoadedContent(mergeAdmissionsContent(savedContent));
       } catch (error) {
         console.error("Admissions content load error:", error);
-        setContent(defaultAdmissionsContent);
+        setLoadedContent(defaultAdmissionsContent);
       }
     };
 
     loadAdmissionsContent();
-  }, []);
+  }, [contentOverride]);
 
   const onSubmit = async (data) => {
+    if (editMode) return;
+
     setSubmitMessage("");
     setSubmitError("");
     setSubmitted(false);
@@ -208,7 +296,9 @@ function Admissions() {
     }
   };
 
-  const visibleSteps = content.steps.filter((step) => step.visible !== false);
+  const visibleSteps = (content.steps || []).filter(
+    (step) => step.visible !== false || editMode
+  );
 
   return (
     <section
@@ -241,41 +331,76 @@ function Admissions() {
       />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
+        {editMode && (
+          <div
+            className="mb-10 rounded-[2rem] p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+            style={{
+              background:
+                "linear-gradient(145deg, rgba(2,6,23,0.96), rgba(15,23,42,0.9))",
+              border: "1px solid rgba(255,255,255,0.14)",
+              boxShadow: "0 24px 70px rgba(11,16,32,0.22)",
+            }}
+          >
+            <div>
+              <div className="text-white font-black text-lg">
+                Admin Admissions Editor Active
+              </div>
+              <div className="text-white/60 text-sm">
+                Edit real page sections directly. Save changes from the admin top bar.
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <AdminEditButton label="Edit Heading" icon={Pencil} onClick={onEditHero} />
+              <AdminEditButton label="Add Step" icon={Plus} tone="green" onClick={onAddStep} />
+              <AdminEditButton label="Edit Form" icon={Pencil} tone="dark" onClick={onEditForm} />
+            </div>
+          </div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65 }}
-          className="text-center mb-16"
+          className="text-center mb-16 relative group"
         >
-          <span
-            className="inline-flex items-center px-5 py-2 rounded-full text-sm font-bold mb-5"
-            style={{
-              background: "rgba(215,25,32,0.08)",
-              color: colors.red,
-              border: "1px solid rgba(215,25,32,0.16)",
-            }}
-          >
-            {content.badgeText}
-          </span>
+          {editMode && (
+            <div className="absolute right-0 top-0 z-30">
+              <AdminEditButton label="Edit" icon={Pencil} onClick={onEditHero} />
+            </div>
+          )}
 
-          <h1
-            className="text-5xl md:text-7xl leading-tight"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 850,
-              color: colors.dark,
-              letterSpacing: "-0.055em",
-            }}
-          >
-            <HighlightedTitle
-              title={content.title}
-              highlightedText={content.highlightedText}
-            />
-          </h1>
+          <EditShell editMode={editMode}>
+            <span
+              className="inline-flex items-center px-5 py-2 rounded-full text-sm font-bold mb-5"
+              style={{
+                background: "rgba(215,25,32,0.08)",
+                color: colors.red,
+                border: "1px solid rgba(215,25,32,0.16)",
+              }}
+            >
+              {content.badgeText}
+            </span>
 
-          <p className="max-w-3xl mx-auto mt-6 text-lg md:text-xl text-slate-600 leading-relaxed">
-            {content.subtitle}
-          </p>
+            <h1
+              className="text-5xl md:text-7xl leading-tight"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 850,
+                color: colors.dark,
+                letterSpacing: "-0.055em",
+              }}
+            >
+              <HighlightedTitle
+                title={content.title}
+                highlightedText={content.highlightedText}
+              />
+            </h1>
+
+            <p className="max-w-3xl mx-auto mt-6 text-lg md:text-xl text-slate-600 leading-relaxed">
+              {content.subtitle}
+            </p>
+          </EditShell>
         </motion.div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
@@ -289,6 +414,7 @@ function Admissions() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.08 }}
+                id={`admission-step-${step.id}`}
                 className="relative group"
               >
                 {index < visibleSteps.length - 1 && (
@@ -300,26 +426,56 @@ function Admissions() {
                   />
                 )}
 
+                {editMode && (
+                  <div className="absolute right-4 top-4 z-30 flex flex-wrap gap-2">
+                    <AdminEditButton
+                      label="Edit"
+                      icon={Pencil}
+                      onClick={() => onEditStep(step)}
+                    />
+                    <AdminEditButton
+                      label="Delete"
+                      icon={Trash2}
+                      tone="red"
+                      onClick={() => onDeleteStep(step)}
+                    />
+                  </div>
+                )}
+
                 <div
-                  className="p-6 rounded-3xl h-full transition-all duration-300 group-hover:-translate-y-2 cursor-default"
+                  className="p-6 rounded-3xl h-full transition-all duration-300 group-hover:-translate-y-2 cursor-default relative"
                   style={{
                     background:
-                      "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.82))",
-                    border: `1px solid ${stepColor}24`,
+                      step.visible === false && editMode
+                        ? "linear-gradient(145deg, rgba(248,250,252,0.75), rgba(255,255,255,0.62))"
+                        : "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.82))",
+                    border: editMode
+                      ? `2px dashed ${stepColor}88`
+                      : `1px solid ${stepColor}24`,
                     boxShadow:
                       "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
                     backdropFilter: "blur(16px)",
+                    opacity: step.visible === false && editMode ? 0.62 : 1,
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.boxShadow = `0 26px 64px rgba(11,16,32,0.14), 0 0 0 1px ${stepColor}22`;
-                    e.currentTarget.style.borderColor = `${stepColor}55`;
+                    e.currentTarget.style.borderColor = `${stepColor}88`;
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.boxShadow =
                       "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)";
-                    e.currentTarget.style.borderColor = `${stepColor}24`;
+                    e.currentTarget.style.borderColor = editMode
+                      ? `${stepColor}88`
+                      : `${stepColor}24`;
                   }}
                 >
+                  {step.visible === false && editMode && (
+                    <div className="absolute left-4 top-4 z-20 inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1.5 text-xs font-black text-white">
+                      <EyeOff className="h-3.5 w-3.5" />
+                      Hidden
+                    </div>
+                  )}
+
                   <div className="flex items-start justify-between gap-4 mb-6">
                     <span
                       className="text-sm font-black tracking-widest"
@@ -358,14 +514,22 @@ function Admissions() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.65 }}
-          className="max-w-3xl mx-auto"
+          className="max-w-3xl mx-auto relative"
         >
+          {editMode && (
+            <div className="absolute right-4 top-4 z-30">
+              <AdminEditButton label="Edit Form" icon={Pencil} onClick={onEditForm} />
+            </div>
+          )}
+
           <div
             className="group p-8 md:p-10 rounded-3xl transition-all duration-300"
             style={{
               background:
                 "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.82))",
-              border: "1px solid rgba(11,16,32,0.08)",
+              border: editMode
+                ? "2px dashed rgba(56,189,248,0.75)"
+                : "1px solid rgba(11,16,32,0.08)",
               backdropFilter: "blur(18px)",
               boxShadow:
                 "0 24px 70px rgba(11,16,32,0.12), inset 0 1px 0 rgba(255,255,255,0.85)",
@@ -373,12 +537,16 @@ function Admissions() {
             onMouseEnter={(e) => {
               e.currentTarget.style.boxShadow =
                 "0 32px 86px rgba(11,16,32,0.16), 0 0 0 1px rgba(22,138,58,0.12)";
-              e.currentTarget.style.borderColor = "rgba(22,138,58,0.2)";
+              e.currentTarget.style.borderColor = editMode
+                ? "rgba(56,189,248,0.95)"
+                : "rgba(22,138,58,0.2)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.boxShadow =
                 "0 24px 70px rgba(11,16,32,0.12), inset 0 1px 0 rgba(255,255,255,0.85)";
-              e.currentTarget.style.borderColor = "rgba(11,16,32,0.08)";
+              e.currentTarget.style.borderColor = editMode
+                ? "rgba(56,189,248,0.75)"
+                : "rgba(11,16,32,0.08)";
             }}
           >
             <div
@@ -441,7 +609,17 @@ function Admissions() {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              <form
+                onSubmit={(event) => {
+                  if (editMode) {
+                    event.preventDefault();
+                    return;
+                  }
+
+                  handleSubmit(onSubmit)(event);
+                }}
+                className="space-y-5"
+              >
                 {submitError && (
                   <div
                     className="p-4 rounded-xl text-sm font-semibold"
@@ -463,10 +641,11 @@ function Admissions() {
 
                     <input
                       {...register("name", {
-                        required: "Name is required.",
+                        required: editMode ? false : "Name is required.",
                       })}
+                      disabled={editMode}
                       placeholder={content.namePlaceholder}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10"
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 disabled:opacity-75"
                     />
                     <ErrorText>{errors.name?.message}</ErrorText>
                   </div>
@@ -478,11 +657,12 @@ function Admissions() {
 
                     <input
                       {...register("email", {
-                        required: "Email is required.",
+                        required: editMode ? false : "Email is required.",
                       })}
+                      disabled={editMode}
                       type="email"
                       placeholder={content.emailPlaceholder}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10"
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 disabled:opacity-75"
                     />
                     <ErrorText>{errors.email?.message}</ErrorText>
                   </div>
@@ -496,14 +676,16 @@ function Admissions() {
 
                     <input
                       {...register("phone", {
-                        required: "Phone number is required.",
+                        required: editMode ? false : "Phone number is required.",
                         validate: (value) =>
+                          editMode ||
                           isValidPhone(value) ||
                           "Please enter a valid phone number.",
                       })}
+                      disabled={editMode}
                       type="tel"
                       placeholder={content.phonePlaceholder}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10"
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 disabled:opacity-75"
                     />
                     <ErrorText>{errors.phone?.message}</ErrorText>
                   </div>
@@ -515,9 +697,10 @@ function Admissions() {
 
                     <select
                       {...register("grade", {
-                        required: "Please select grade.",
+                        required: editMode ? false : "Please select grade.",
                       })}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10"
+                      disabled={editMode}
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 disabled:opacity-75"
                     >
                       <option value="">{content.gradePlaceholder}</option>
 
@@ -538,15 +721,16 @@ function Admissions() {
 
                   <textarea
                     {...register("message")}
+                    disabled={editMode}
                     rows={4}
                     placeholder={content.messagePlaceholder}
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 resize-none"
+                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all bg-white border border-slate-200 text-slate-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 resize-none disabled:opacity-75"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || editMode}
                   className="w-full py-4 rounded-xl font-bold text-white mt-2 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{
                     background: `linear-gradient(135deg, ${colors.red}, ${colors.green})`,
