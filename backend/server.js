@@ -11,7 +11,7 @@ import noticeRoutes from "./routes/noticeRoutes.js";
 import noticeSettingsRoutes from "./routes/noticeSettingsRoutes.js";
 import adminSettingsRoutes from "./routes/adminSettingsRoutes.js";
 import announcementRoutes from "./routes/announcementRoutes.js";
-
+console.log("JWT_SECRET =", process.env.JWT_SECRET);
 
 dotenv.config();
 
