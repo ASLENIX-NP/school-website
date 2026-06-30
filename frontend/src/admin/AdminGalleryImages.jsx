@@ -577,7 +577,7 @@ export default function AdminGalleryImages() {
       return "Please upload only image files.";
     }
 
-    if (file.size > 3 * 1024 * 1024) {
+    if (file.size > 6 * 1024 * 1024) {
       return "Image is too large. Please upload images under 3 MB.";
     }
 
@@ -1362,7 +1362,7 @@ export default function AdminGalleryImages() {
                       </label>
 
                       <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                        Recommended size: 1200 × 800 px. Max 3 MB.
+                        Recommended size: 1200 × 800 px. max 6 MB.
                       </p>
                     </div>
 

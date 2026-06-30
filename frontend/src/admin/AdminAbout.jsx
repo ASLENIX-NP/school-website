@@ -324,7 +324,7 @@ export default function AdminAbout() {
     if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    const maxSize = 3 * 1024 * 1024;
+    const maxSize = 6 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       setError("Please upload only PNG, JPG, or WebP image.");
@@ -332,7 +332,7 @@ export default function AdminAbout() {
     }
 
     if (file.size > maxSize) {
-      setError("Image must be less than 3 MB.");
+      setError("Image must be less than 6 MB.");
       return;
     }
 
@@ -968,7 +968,7 @@ export default function AdminAbout() {
                           <div>
                             <div className="text-white font-black">Image Preview</div>
                             <div className="text-white/55 text-sm mt-1 leading-relaxed">
-                              Recommended: JPG/PNG/WebP, max 3 MB.
+                              Recommended: JPG/PNG/WebP, max 6 MB.
                             </div>
                           </div>
                         </div>

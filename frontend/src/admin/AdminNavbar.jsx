@@ -219,7 +219,7 @@ function getAuthHeaders() {
     if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    const maxSize = 2 * 1024 * 1024;
+    const maxSize = 6 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       setError("Please upload only PNG, JPG, or WebP image.");
@@ -227,7 +227,7 @@ function getAuthHeaders() {
     }
 
     if (file.size > maxSize) {
-      setError("Logo image must be less than 2 MB.");
+      setError("Logo image must be less than 6 MB.");
       return;
     }
 
@@ -604,7 +604,7 @@ await axios.put(
                               Logo Preview
                             </div>
                             <div className="text-white/55 text-sm mt-1 leading-relaxed">
-                              Recommended: 512×512 square, PNG/JPG/WebP, max 2 MB.
+                              Recommended: 512×512 square, PNG/JPG/WebP, max 6 MB.
                             </div>
                           </div>
                         </div>

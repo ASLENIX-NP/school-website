@@ -432,14 +432,14 @@ export default function AdminAnnouncements() {
     if (!file) return null;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    const maxSize = 5 * 1024 * 1024;
+    const maxSize = 6 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       setError("Please upload only PNG, JPG, WebP, or GIF images.");
       return null;
     }
     if (file.size > maxSize) {
-      setError("Image must be less than 5 MB.");
+      setError("Image must be less than 6 MB.");
       return null;
     }
 

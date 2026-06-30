@@ -177,7 +177,7 @@ function ImageUploadField({ label, imageUrl, onUpload, onRemove, uploading }) {
         </span>
 
         <span className="text-xs text-slate-400 leading-relaxed">
-          PNG, JPG, WebP • Max 3 MB
+          PNG, JPG, WebP • max 6 MB
         </span>
 
         <input
@@ -518,8 +518,8 @@ export default function AdminMessages() {
     }
 
     // Validate file size (max 3MB)
-    if (file.size > 3 * 1024 * 1024) {
-      setError("Image must be less than 3 MB.");
+    if (file.size > 6 * 1024 * 1024) {
+      setError("Image must be less than 6 MB.");
       return;
     }
 

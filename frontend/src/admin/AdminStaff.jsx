@@ -249,7 +249,7 @@ export default function AdminStaff() {
     if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    const maxSize = 2 * 1024 * 1024;
+    const maxSize = 6 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       setError("Please upload only PNG, JPG, or WebP image.");
@@ -257,7 +257,7 @@ export default function AdminStaff() {
     }
 
     if (file.size > maxSize) {
-      setError("Staff photo must be less than 2 MB.");
+      setError("Staff photo must be less than 6 MB.");
       return;
     }
 
@@ -651,7 +651,7 @@ export default function AdminStaff() {
                           <div>
                             <div className="text-white font-black">Photo Preview</div>
                             <div className="text-white/55 text-sm mt-1 leading-relaxed">
-                              Recommended: JPG/PNG/WebP, max 2 MB.
+                              Recommended: JPG/PNG/WebP, max 6 MB.
                             </div>
                           </div>
                         </div>
@@ -924,3 +924,4 @@ export default function AdminStaff() {
     </div>
   );
 }
+
