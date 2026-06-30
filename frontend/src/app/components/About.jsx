@@ -409,16 +409,20 @@ export function About({
   onAddTarget = () => {},
 }) {
   const [content, setContent] = useState(
-    mergeAboutContent(contentOverride || defaultAboutContent)
+    contentOverride ? mergeAboutContent(contentOverride) : null
   );
+  const [loading, setLoading] = useState(!contentOverride);
 
   useEffect(() => {
     if (contentOverride) {
       setContent(mergeAboutContent(contentOverride));
+      setLoading(false);
       return;
     }
 
     const loadAboutContent = async () => {
+      setLoading(true);
+
       try {
         const res = await axios.get(
           "http://localhost:5000/api/site-content/about"
@@ -428,11 +432,29 @@ export function About({
       } catch (error) {
         console.error("About content load error:", error);
         setContent(defaultAboutContent);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadAboutContent();
   }, [contentOverride]);
+
+  if (!content || loading) {
+    return (
+      <section
+        id="about"
+        className="pt-28 pb-28 relative overflow-hidden min-h-screen"
+        style={{
+          background: `
+          radial-gradient(circle at top right, rgba(124,92,196,0.18), transparent 34%),
+          radial-gradient(circle at bottom left, rgba(22,138,58,0.14), transparent 32%),
+          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
+        `,
+        }}
+      />
+    );
+  }
 
   const visiblePillars = (content.pillars || []).filter(
     (item) => item.visible !== false

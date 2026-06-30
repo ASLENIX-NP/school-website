@@ -529,7 +529,7 @@ export function Staff({
   onAddTarget = () => {},
 }) {
   const [content, setContent] = useState(
-    mergeStaffContent(contentOverride || defaultStaffContent)
+    contentOverride ? mergeStaffContent(contentOverride) : null
   );
   const [loading, setLoading] = useState(!contentOverride);
   const [selectedStaff, setSelectedStaff] = useState(null);
@@ -542,6 +542,8 @@ export function Staff({
     }
 
     const loadStaffContent = async () => {
+      setLoading(true);
+
       try {
         const res = await axios.get(
           "http://localhost:5000/api/site-content/staff"
@@ -572,6 +574,22 @@ export function Staff({
       document.body.style.overflow = "auto";
     };
   }, [selectedStaff, editMode]);
+
+  if (!content || loading) {
+    return (
+      <section
+        className="min-h-screen pt-32 pb-24 relative overflow-hidden"
+        style={{
+          background: `
+          radial-gradient(circle at top left, rgba(75,46,131,0.12), transparent 34%),
+          radial-gradient(circle at top right, rgba(22,138,58,0.10), transparent 36%),
+          radial-gradient(circle at bottom right, rgba(250,204,21,0.10), transparent 34%),
+          linear-gradient(180deg, #FFF8EE 0%, #F8FAFC 100%)
+        `,
+        }}
+      />
+    );
+  }
 
   const visibleStaff = content.staff.filter((staff) => staff.visible !== false);
 

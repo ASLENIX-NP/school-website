@@ -280,18 +280,22 @@ function Stats({
   onEditTarget = () => {},
 }) {
   const [statsData, setStatsData] = useState(
-    mergeStatsSectionData(contentOverride || defaultStatsSectionData)
+    contentOverride ? mergeStatsSectionData(contentOverride) : null
   );
+  const [loading, setLoading] = useState(!contentOverride);
   const [notices, setNotices] = useState([]);
   const [selectedNotice, setSelectedNotice] = useState(null);
 
   useEffect(() => {
     if (contentOverride) {
       setStatsData(mergeStatsSectionData(contentOverride));
+      setLoading(false);
       return;
     }
 
     const loadStatsContent = async () => {
+      setLoading(true);
+
       try {
         const res = await axios.get(
           "http://localhost:5000/api/site-content/home"
@@ -301,6 +305,9 @@ function Stats({
         setStatsData(mergeStatsSectionData(savedStats || {}));
       } catch (error) {
         console.error("Stats content load error:", error);
+        setStatsData(defaultStatsSectionData);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -318,6 +325,18 @@ function Stats({
       })
       .catch((err) => console.log(err));
   }, [editMode]);
+
+  if (!statsData || loading) {
+    return (
+      <section
+        className="relative overflow-hidden py-16 min-h-[620px]"
+        style={{
+          background:
+            "linear-gradient(180deg, #FFF8EE 0%, #F8FAFC 45%, #F7F4EF 100%)",
+        }}
+      />
+    );
+  }
 
   return (
     <>

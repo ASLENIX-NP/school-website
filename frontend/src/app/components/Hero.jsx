@@ -483,33 +483,50 @@ function Hero({
   onEditTarget = () => {},
 }) {
   const [heroData, setHeroData] = useState(
-    mergeHeroData(contentOverride || defaultHeroData)
+    contentOverride ? mergeHeroData(contentOverride) : null
   );
+  const [loading, setLoading] = useState(!contentOverride);
 
   useEffect(() => {
     if (contentOverride) {
       setHeroData(mergeHeroData(contentOverride));
+      setLoading(false);
       return;
     }
 
     const loadHeroContent = async () => {
+      setLoading(true);
+
       try {
         const res = await axios.get(
           "http://localhost:5000/api/site-content/home"
         );
 
         const savedHero = res.data?.data?.content?.hero;
-
-        if (savedHero) {
-          setHeroData(mergeHeroData(savedHero));
-        }
+        setHeroData(mergeHeroData(savedHero || {}));
       } catch (error) {
         console.error("Hero content load error:", error);
+        setHeroData(defaultHeroData);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadHeroContent();
   }, [contentOverride]);
+
+  if (!heroData || loading) {
+    return (
+      <section
+        id="home"
+        className="relative overflow-hidden pt-20 pb-20 lg:pb-14 min-h-[720px]"
+        style={{
+          background:
+            "radial-gradient(circle at 9% 18%, rgba(56,189,248,0.30), transparent 32%), radial-gradient(circle at 86% 14%, rgba(250,204,21,0.28), transparent 31%), radial-gradient(circle at 58% 78%, rgba(139,92,246,0.16), transparent 38%), linear-gradient(135deg, #F8FCFF 0%, #FFF8EE 45%, #F1F7FF 100%)",
+        }}
+      />
+    );
+  }
 
   return (
     <section
