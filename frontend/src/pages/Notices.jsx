@@ -446,20 +446,7 @@ function NoticeCard({
           </div>
 
           <div className="flex flex-col gap-3 md:items-end">
-            <span
-              className="rounded-2xl px-5 py-3 text-sm font-black text-center"
-              style={{
-                background: fileUrl
-                  ? "rgba(75,46,131,0.08)"
-                  : "rgba(100,116,139,0.08)",
-                color: fileUrl ? colors.purple : "#94A3B8",
-                border: fileUrl
-                  ? "1px solid rgba(75,46,131,0.15)"
-                  : "1px solid rgba(100,116,139,0.1)",
-              }}
-            >
-              {fileUrl ? (editMode ? "Edit Notice" : "Click to View") : "No File"}
-            </span>
+           
 
             {fileUrl && !editMode && (
               <button
@@ -1201,46 +1188,7 @@ export default function Notices({
                 </div>
               </EditableWrap>
 
-              <EditableWrap
-                editMode={editMode}
-                target={{ type: "sidebar" }}
-                onEditTarget={onEditTarget}
-              >
-                <div
-                  className="rounded-[28px] p-6"
-                  style={{
-                    background: `linear-gradient(135deg, ${colors.dark}, ${colors.purple})`,
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    boxShadow: "0 18px 46px rgba(15,23,42,0.2)",
-                  }}
-                >
-                  <div
-                    className="w-16 h-1.5 rounded-full mb-5"
-                    style={{
-                      background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan})`,
-                    }}
-                  />
-
-                  <h3 className="text-white font-black text-xl">
-                    {settings.sidebar_title}
-                  </h3>
-
-                  <p className="text-sm leading-relaxed mt-3 mb-5 text-white/70">
-                    {settings.sidebar_description}
-                  </p>
-
-                  <a
-                    href={settings.sidebar_button_link}
-                    onClick={(event) => {
-                      if (editMode) event.preventDefault();
-                    }}
-                    className="inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-black transition-all duration-300 hover:-translate-y-0.5"
-                    style={{ color: colors.dark }}
-                  >
-                    {settings.sidebar_button_text}
-                  </a>
-                </div>
-              </EditableWrap>
+              
             </motion.aside>
           </div>
         </div>

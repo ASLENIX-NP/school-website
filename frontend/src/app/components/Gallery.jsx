@@ -373,6 +373,22 @@ function buildCategoryAlbums(content, activeCategory) {
 }
 
 function GalleryCategoryCard({ album, index, onClick }) {
+  const [currentImage, setCurrentImage] = useState(0);
+
+  useEffect(() => {
+    if (!album.photos || album.photos.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % album.photos.length);
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [album.photos]);
+
+  const currentImageUrl = album.photos && album.photos.length > 0
+    ? album.photos[currentImage]?.url || album.cover
+    : album.cover;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }}
@@ -384,11 +400,15 @@ function GalleryCategoryCard({ album, index, onClick }) {
       }`}
     >
       <div className="overflow-hidden rounded-[32px] shadow-2xl bg-white">
-        {album.cover ? (
-          <img
-            src={album.cover}
+        {currentImageUrl ? (
+          <motion.img
+            key={currentImage}
+            src={currentImageUrl}
             alt={album.title}
             className="w-full h-[450px] object-cover hover:scale-105 transition duration-700"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7 }}
           />
         ) : (
           <div className="w-full h-[450px] bg-slate-100 flex items-center justify-center">
@@ -746,50 +766,6 @@ function Gallery() {
             </div>
           )}
         </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 22 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.55 }}
-          className="mt-10 rounded-3xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(11,16,32,0.96), rgba(75,46,131,0.9))",
-            border: "1px solid rgba(255,255,255,0.12)",
-            boxShadow: "0 22px 58px rgba(11,16,32,0.28)",
-          }}
-        >
-          <div className="flex items-center gap-4">
-            <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center"
-              style={{
-                background: "rgba(255,255,255,0.12)",
-                border: "1px solid rgba(255,255,255,0.18)",
-              }}
-            >
-              <Layers className="w-6 h-6 text-white" />
-            </div>
-
-            <div>
-              <div className="text-white font-bold">{content.bottomTitle}</div>
-              <div
-                className="text-sm"
-                style={{ color: "rgba(255,255,255,0.68)" }}
-              >
-                {content.bottomDescription}
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="inline-flex items-center gap-2 text-sm font-semibold"
-            style={{ color: "rgba(255,255,255,0.72)" }}
-          >
-            <Sparkles className="w-4 h-4" style={{ color: "#FACC15" }} />
-            {content.bottomNote}
-          </div>
-        </motion.div>
       </div>
 
       <AnimatePresence>
