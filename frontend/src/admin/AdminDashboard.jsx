@@ -96,6 +96,7 @@ export default function AdminDashboard() {
   const [messages, setMessages] = useState([]);
   const [notices, setNotices] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const [staff, setStaff] = useState([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [currentTime] = useState(getCurrentTime());
@@ -112,6 +113,9 @@ export default function AdminDashboard() {
         setNotices(Array.isArray(noticeRes.data?.data) ? noticeRes.data.data : []);
         const annRes = await axios.get("http://localhost:5000/api/announcements");
         setAnnouncements(Array.isArray(annRes.data?.data) ? annRes.data.data : []);
+        const staffRes = await axios.get("http://localhost:5000/api/site-content/staff");
+        const staffContent = staffRes.data?.data?.content;
+        setStaff(Array.isArray(staffContent?.staff) ? staffContent.staff : []);
       } catch (err) {
         console.error("Dashboard data load error:", err);
       } finally {
@@ -156,7 +160,7 @@ export default function AdminDashboard() {
     { icon: FileText,  label: "Total Notices",  value: noticeCount,       sub: `${pinnedCount} pinned`,  color: colors.red,    trend: "+5%" },
     { icon: Megaphone, label: "Announcements",  value: announcementCount, sub: `${announcements.filter(a => a.active !== false).length} active`, color: colors.orange, trend: "+3%" },
     { icon: Inbox,     label: "Messages",        value: messages.length,   sub: `${unreadCount} unread`, color: colors.purple, trend: unreadCount > 0 ? `${unreadCount} new` : "All read" },
-    { icon: Users,     label: "Staff Members",   value: "12",              sub: "Active teachers",        color: colors.cyan,   trend: "Active" },
+    { icon: Users,     label: "Staff Members",   value: staff.length,      sub: "Active teachers",        color: colors.cyan,   trend: "Active" },
   ];
 
   // ── Sidebar component ──────────────────────────────────────────────
@@ -284,11 +288,12 @@ export default function AdminDashboard() {
 
         {/* Topbar */}
         <header
-          className="flex-shrink-0 sticky top-0 z-30 px-4 sm:px-6"
+          className="flex-shrink-0 sticky top-0 z-30 px-3 sm:px-4 md:px-6"
           style={{ background: bg.header, backdropFilter: "blur(20px)", borderBottom: `1px solid ${bg.border}` }}
         >
-          <div className="h-14 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
+          <div className="h-12 sm:h-14 flex items-center justify-between gap-1 sm:gap-2 md:gap-4">
+            {/* Left section - Menu + Title */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="lg:hidden w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -296,60 +301,68 @@ export default function AdminDashboard() {
               >
                 {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
               </button>
-              <div>
-                <h1 className="font-black text-slate-950 text-sm">
+              
+              <div className="min-w-0">
+                <h1 className="font-black text-slate-950 text-xs sm:text-sm truncate">
                   {activeEditor ? `Editing: ${activeEditor.charAt(0).toUpperCase() + activeEditor.slice(1)}` : "Dashboard"}
                 </h1>
-                <p className="text-[10px] hidden sm:block" style={{ color: "rgba(15,23,42,0.4)" }}>{currentTime}</p>
+                <p className="text-[8px] sm:text-[10px] truncate" style={{ color: "rgba(15,23,42,0.4)" }}>
+                  {currentTime}
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Right section - Badges + Buttons */}
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              {/* Live Badge */}
               <div
-                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full"
+                className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-full"
                 style={{ background: "rgba(22,138,58,0.08)", border: "1px solid rgba(22,138,58,0.12)" }}
               >
-                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: colors.green }} />
-                <span className="text-[10px] font-bold" style={{ color: colors.green }}>Live</span>
+                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full animate-pulse" style={{ background: colors.green }} />
+                <span className="text-[7px] sm:text-[10px] font-bold whitespace-nowrap" style={{ color: colors.green }}>Live</span>
               </div>
 
+              {/* View Site - desktop shows full text, mobile shows icon only */}
               <a
                 href="/"
                 target="_blank"
                 rel="noreferrer"
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all hover:-translate-y-0.5"
+                className="flex items-center gap-1 px-1.5 sm:px-3 py-1 rounded-xl text-[8px] sm:text-xs font-bold transition-all hover:-translate-y-0.5 whitespace-nowrap"
                 style={{ background: "rgba(15,23,42,0.05)", color: "rgba(15,23,42,0.5)", border: `1px solid ${bg.border}` }}
               >
-                <Globe className="w-3.5 h-3.5" />
-                View Site
+                <Globe className="w-2.5 sm:w-3.5 h-2.5 sm:h-3.5" />
+                <span className="hidden sm:inline">View Site</span>
               </a>
 
+              {/* Close Editor - only shows when active */}
               {activeEditor && (
                 <button
                   onClick={() => setActiveEditor(null)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-black transition-all hover:-translate-y-0.5"
+                  className="flex items-center gap-1 px-1.5 sm:px-3 py-1 rounded-xl text-[8px] sm:text-xs font-black transition-all hover:-translate-y-0.5 whitespace-nowrap"
                   style={{
                     background: "rgba(15,23,42,0.06)",
                     color: "rgba(15,23,42,0.6)",
                     border: `1px solid ${bg.border}`,
                   }}
                 >
-                  <X className="w-3.5 h-3.5" />
-                  Close Editor
+                  <X className="w-2.5 sm:w-3.5 h-2.5 sm:h-3.5" />
+                  <span className="hidden sm:inline">Close</span>
                 </button>
               )}
 
+              {/* Logout Button */}
               <button
                 onClick={() => setShowLogoutConfirm(true)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-black transition-all hover:-translate-y-0.5"
+                className="flex items-center gap-1 px-1.5 sm:px-3 py-1 rounded-xl text-[8px] sm:text-xs font-black transition-all hover:-translate-y-0.5 whitespace-nowrap"
                 style={{
                   background: "rgba(215,25,32,0.08)",
                   color: "#D71920",
                   border: "1px solid rgba(215,25,32,0.15)",
                 }}
               >
-                <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden sm:block">Logout</span>
+                <LogOut className="w-2.5 sm:w-3.5 h-2.5 sm:h-3.5" />
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </div>
           </div>
@@ -357,59 +370,61 @@ export default function AdminDashboard() {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="px-4 sm:px-6 py-5 max-w-full">
+          <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 max-w-full">
 
             {!activeEditor ? (
               // ── Dashboard View ──
-              <div className="space-y-5">
+              <div className="space-y-3 sm:space-y-4 md:space-y-5">
                 {/* Welcome banner */}
                 <motion.div
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.45 }}
-                  className="relative overflow-hidden rounded-[24px] p-6 md:p-7"
+                  className="relative overflow-hidden rounded-[16px] sm:rounded-[20px] md:rounded-[24px] p-4 sm:p-5 md:p-7"
                   style={{
                     background: "linear-gradient(135deg, #E8EDF5 0%, #DCE3EF 50%, #E8E0F0 100%)",
                     border: `1px solid ${bg.border}`,
                     boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
                   }}
                 >
-                  <div className="absolute top-0 right-0 w-72 h-72 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(56,189,248,0.08), transparent 70%)", transform: "translate(30%,-30%)" }} />
-                  <div className="absolute bottom-0 left-0 w-56 h-56 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(250,204,21,0.06), transparent 70%)", transform: "translate(-30%,30%)" }} />
+                  <div className="absolute top-0 right-0 w-40 sm:w-56 md:w-72 h-40 sm:h-56 md:h-72 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(56,189,248,0.08), transparent 70%)", transform: "translate(30%,-30%)" }} />
+                  <div className="absolute bottom-0 left-0 w-32 sm:w-44 md:w-56 h-32 sm:h-44 md:h-56 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(250,204,21,0.06), transparent 70%)", transform: "translate(-30%,30%)" }} />
 
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                  <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 md:gap-5">
                     <div>
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
                         <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: colors.green }} />
-                        <span className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: "rgba(15,23,42,0.4)" }}>Admin Dashboard</span>
+                        <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: "rgba(15,23,42,0.4)" }}>Admin Dashboard</span>
                       </div>
-                      <h2 className="text-2xl md:text-3xl font-black text-slate-950 leading-tight mb-1.5" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.04em" }}>
+                      <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-slate-950 leading-tight mb-0.5 sm:mb-1.5" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.04em" }}>
                         Hello, {adminUser.name || "Admin"}!
                       </h2>
-                      <p className="text-sm text-slate-500">Manage your school website — notices, staff, gallery, and more.</p>
+                      <p className="text-xs sm:text-sm text-slate-500">Manage your school website — notices, staff, gallery, and more.</p>
                     </div>
 
-                    <div className="flex flex-wrap gap-2.5">
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2 md:gap-2.5 flex-shrink-0">
                       <button
                         onClick={() => setActiveEditor("notices")}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-black transition-all hover:-translate-y-0.5"
+                        className="inline-flex items-center gap-1 sm:gap-1.5 md:gap-2 px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-xl text-[10px] sm:text-xs md:text-sm font-black transition-all hover:-translate-y-0.5 whitespace-nowrap"
                         style={{ background: "linear-gradient(135deg, #D71920, #9B1117)", color: "#fff", boxShadow: "0 4px 14px rgba(215,25,32,0.2)" }}
                       >
-                        <Bell className="w-4 h-4" /> Add Notice
+                        <Bell className="w-3 sm:w-3.5 md:w-4 h-3 sm:h-3.5 md:h-4" /> 
+                        <span className="hidden xs:inline">Add</span> Notice
                       </button>
                       <button
                         onClick={() => setActiveEditor("announcements")}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-black transition-all hover:-translate-y-0.5"
+                        className="inline-flex items-center gap-1 sm:gap-1.5 md:gap-2 px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-xl text-[10px] sm:text-xs md:text-sm font-black transition-all hover:-translate-y-0.5 whitespace-nowrap"
                         style={{ background: "rgba(15,23,42,0.06)", color: "rgba(15,23,42,0.7)", border: `1px solid ${bg.border}` }}
                       >
-                        <Megaphone className="w-4 h-4" /> Announcement
+                        <Megaphone className="w-3 sm:w-3.5 md:w-4 h-3 sm:h-3.5 md:h-4" /> 
+                        <span className="hidden xs:inline">Add</span> Announcement
                       </button>
                     </div>
                   </div>
                 </motion.div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-3">
                   {stats.map((stat, i) => {
                     const Icon = stat.icon;
                     return (
@@ -418,140 +433,95 @@ export default function AdminDashboard() {
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.35, delay: i * 0.06 }}
-                        className="relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1"
+                        className="relative overflow-hidden rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all duration-300 hover:-translate-y-1"
                         style={{ background: bg.card, border: `1px solid ${bg.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}
                       >
-                        <div className="absolute top-0 right-0 w-16 h-16 rounded-full pointer-events-none" style={{ background: `radial-gradient(circle, ${stat.color}10, transparent 70%)`, transform: "translate(30%,-30%)" }} />
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="p-2 rounded-xl" style={{ background: `${stat.color}10` }}>
-                            <Icon className="w-4 h-4" style={{ color: stat.color }} />
+                        <div className="absolute top-0 right-0 w-12 sm:w-16 h-12 sm:h-16 rounded-full pointer-events-none" style={{ background: `radial-gradient(circle, ${stat.color}10, transparent 70%)`, transform: "translate(30%,-30%)" }} />
+                        <div className="flex items-start justify-between mb-1.5 sm:mb-2 md:mb-3">
+                          <div className="p-1.5 sm:p-2 rounded-xl" style={{ background: `${stat.color}10` }}>
+                            <Icon className="w-3 sm:w-3.5 md:w-4 h-3 sm:h-3.5 md:h-4" style={{ color: stat.color }} />
                           </div>
-                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={{ background: `${stat.color}10`, color: stat.color }}>
+                          <span className="text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-full" style={{ background: `${stat.color}10`, color: stat.color }}>
                             {stat.trend}
                           </span>
                         </div>
-                        <div className="text-2xl font-black text-slate-950 mb-0.5">{stat.value}</div>
-                        <div className="text-xs font-bold text-slate-500">{stat.label}</div>
-                        <div className="text-[10px] mt-0.5 text-slate-400">{stat.sub}</div>
+                        <div className="text-lg sm:text-xl md:text-2xl font-black text-slate-950 mb-0.5">{stat.value}</div>
+                        <div className="text-[9px] sm:text-[10px] md:text-xs font-bold text-slate-500">{stat.label}</div>
+                        <div className="text-[8px] sm:text-[10px] mt-0.5 text-slate-400">{stat.sub}</div>
                       </motion.div>
                     );
                   })}
                 </div>
 
-                {/* ── Two Column Layout: Recent Messages + Quick Stats ── */}
-                <div className="grid lg:grid-cols-3 gap-4">
-                  {/* Recent Messages - takes 2/3 */}
-                  <div className="lg:col-span-2 rounded-2xl overflow-hidden" style={{ background: bg.card, border: `1px solid ${bg.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-                    <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${bg.borderSoft}` }}>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl" style={{ background: "rgba(75,46,131,0.08)" }}>
-                          <Mail className="w-4 h-4" style={{ color: colors.purple }} />
-                        </div>
-                        <div>
-                          <h3 className="font-black text-slate-950 text-sm">Recent Messages</h3>
-                          <p className="text-[11px] text-slate-400">Latest inquiries from visitors</p>
-                        </div>
+                {/* ── Recent Messages (full width) ── */}
+                <div className="rounded-xl sm:rounded-2xl overflow-hidden" style={{ background: bg.card, border: `1px solid ${bg.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+                  <div className="flex items-center justify-between px-3 sm:px-4 md:px-5 py-3 sm:py-4" style={{ borderBottom: `1px solid ${bg.borderSoft}` }}>
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="p-1.5 sm:p-2 rounded-xl" style={{ background: "rgba(75,46,131,0.08)" }}>
+                        <Mail className="w-3.5 sm:w-4 h-3.5 sm:h-4" style={{ color: colors.purple }} />
                       </div>
-                      <button
-                        onClick={() => navigate("/admin/contact-messages")}
-                        className="flex items-center gap-1 text-xs font-bold transition-colors text-slate-400 hover:text-slate-950"
-                      >
-                        View All <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
+                      <div>
+                        <h3 className="font-black text-slate-950 text-xs sm:text-sm">Recent Messages</h3>
+                        <p className="text-[9px] sm:text-[10px] md:text-[11px] text-slate-400">Latest inquiries from visitors</p>
+                      </div>
                     </div>
-
-                    <div className="p-4 space-y-2">
-                      {messagesLoading ? (
-                        <div className="py-8 text-center text-sm text-slate-400">Loading messages...</div>
-                      ) : latestMessages.length === 0 ? (
-                        <div className="py-8 text-center">
-                          <Mail className="w-8 h-8 mx-auto mb-2 text-slate-200" />
-                          <p className="text-sm text-slate-400">No messages yet</p>
-                        </div>
-                      ) : (
-                        latestMessages.map((message) => (
-                          <div
-                            key={message.id}
-                            className="rounded-xl p-4 transition-all duration-200 cursor-pointer"
-                            style={{
-                              background: message.is_read ? "rgba(15,23,42,0.02)" : "rgba(75,46,131,0.06)",
-                              border: message.is_read ? `1px solid ${bg.borderSoft}` : "1px solid rgba(75,46,131,0.12)",
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = "rgba(15,23,42,0.04)"}
-                            onMouseLeave={e => e.currentTarget.style.background = message.is_read ? "rgba(15,23,42,0.02)" : "rgba(75,46,131,0.06)"}
-                          >
-                            <div className="flex items-start justify-between gap-3 mb-1.5">
-                              <div className="flex items-center gap-2">
-                                {!message.is_read && <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: colors.green }} />}
-                                <span className="font-black text-slate-950 text-sm">{message.name || "Unknown Sender"}</span>
-                              </div>
-                              <span
-                                className="px-2 py-0.5 rounded-full text-[10px] font-black flex-shrink-0"
-                                style={{
-                                  background: message.source === "admission" ? "rgba(75,46,131,0.1)" : "rgba(215,25,32,0.08)",
-                                  color: message.source === "admission" ? colors.purple : colors.red,
-                                }}
-                              >
-                                {getSourceLabel(message.source)}
-                              </span>
-                            </div>
-                            <p className="text-xs leading-relaxed line-clamp-2 text-slate-500">{message.message || "No message text."}</p>
-                            <p className="text-[10px] mt-1.5 text-slate-400">{formatDate(message.created_at)}</p>
-                          </div>
-                        ))
-                      )}
-                    </div>
+                    <button
+                      onClick={() => navigate("/admin/contact-messages")}
+                      className="flex items-center gap-1 text-[9px] sm:text-[10px] md:text-xs font-bold transition-colors text-slate-400 hover:text-slate-950 whitespace-nowrap"
+                    >
+                      View All <ChevronRight className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
+                    </button>
                   </div>
 
-                  {/* Right sidebar - Quick Stats + Recent Activity */}
-                  <div className="space-y-3">
-                    {/* Quick stats */}
-                    <div className="rounded-2xl p-5" style={{ background: "linear-gradient(145deg, #E8EDF5, #E8E0F0)", border: `1px solid ${bg.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-                      <div className="flex items-center gap-2 mb-4">
-                        <Zap className="w-4 h-4" style={{ color: colors.gold }} />
-                        <span className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Quick Stats</span>
+                  <div className="p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3">
+                    {messagesLoading ? (
+                      <div className="py-6 sm:py-8 text-center text-xs sm:text-sm text-slate-400">Loading messages...</div>
+                    ) : latestMessages.length === 0 ? (
+                      <div className="py-6 sm:py-8 text-center">
+                        <Mail className="w-6 sm:w-8 h-6 sm:h-8 mx-auto mb-2 text-slate-200" />
+                        <p className="text-xs sm:text-sm text-slate-400">No messages yet</p>
                       </div>
-                      {[
-                        { label: "Total Notices", value: noticeCount, color: colors.red },
-                        { label: "Announcements", value: announcementCount, color: colors.orange },
-                        { label: "Unread Messages", value: unreadCount, color: unreadCount > 0 ? colors.green : "rgba(15,23,42,0.3)" },
-                        { label: "Staff Members", value: "12", color: colors.cyan },
-                      ].map((item, i, arr) => (
-                        <div key={i} className="flex items-center justify-between py-2.5" style={{ borderBottom: i < arr.length - 1 ? `1px solid ${bg.borderSoft}` : "none" }}>
-                          <span className="text-xs text-slate-500">{item.label}</span>
-                          <span className="text-sm font-black" style={{ color: item.color }}>{item.value}</span>
+                    ) : (
+                      latestMessages.map((message) => (
+                        <div
+                          key={message.id}
+                          className="rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5 transition-all duration-200 cursor-pointer"
+                          style={{
+                            background: message.is_read ? "rgba(15,23,42,0.02)" : "rgba(75,46,131,0.06)",
+                            border: message.is_read ? `1px solid ${bg.borderSoft}` : "1px solid rgba(75,46,131,0.12)",
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = "rgba(15,23,42,0.04)"}
+                          onMouseLeave={e => e.currentTarget.style.background = message.is_read ? "rgba(15,23,42,0.02)" : "rgba(75,46,131,0.06)"}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1.5 sm:gap-2 mb-1.5">
+                            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                              {!message.is_read && <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: colors.green }} />}
+                              <span className="font-black text-slate-950 text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[200px]">{message.name || "Unknown Sender"}</span>
+                            </div>
+                            <span
+                              className="px-1.5 sm:px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-black flex-shrink-0 self-start sm:self-auto"
+                              style={{
+                                background: message.source === "admission" ? "rgba(75,46,131,0.1)" : "rgba(215,25,32,0.08)",
+                                color: message.source === "admission" ? colors.purple : colors.red,
+                              }}
+                            >
+                              {getSourceLabel(message.source)}
+                            </span>
+                          </div>
+                          <p className="text-xs sm:text-sm leading-relaxed line-clamp-2 text-slate-500">{message.message || "No message text."}</p>
+                          <p className="text-[8px] sm:text-[10px] mt-1.5 text-slate-400">{formatDate(message.created_at)}</p>
                         </div>
-                      ))}
-                    </div>
-
-                    {/* Recent activity */}
-                    <div className="rounded-2xl p-5" style={{ background: bg.card, border: `1px solid ${bg.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-                      <div className="flex items-center gap-2 mb-4">
-                        <Clock className="w-3.5 h-3.5" style={{ color: "rgba(15,23,42,0.3)" }} />
-                        <span className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Recent Activity</span>
-                      </div>
-                      {[
-                        { dot: colors.green,  text: "Notice added",            time: "2 min ago"  },
-                        { dot: colors.blue,   text: "Announcement published",  time: "1 hr ago"   },
-                        { dot: colors.purple, text: "New message received",    time: "3 hrs ago"  },
-                        { dot: colors.gold,   text: "Gallery updated",         time: "Yesterday"  },
-                      ].map((item, i, arr) => (
-                        <div key={i} className="flex items-center gap-3 py-2" style={{ borderBottom: i < arr.length - 1 ? `1px solid ${bg.borderSoft}` : "none" }}>
-                          <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.dot }} />
-                          <span className="text-xs flex-1 truncate text-slate-500">{item.text}</span>
-                          <span className="text-[10px] flex-shrink-0 text-slate-400">{item.time}</span>
-                        </div>
-                      ))}
-                    </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
             ) : (
               // ── Editor View ──
-              <div>
-  {activeEditor === "navbar" && <AdminNavbar />}
-  {activeEditor === "home" && <AdminHome />}
-  {activeEditor === "about" && <AdminAbout />}
+              <div className="overflow-x-auto">
+                {activeEditor === "navbar" && <AdminNavbar />}
+                {activeEditor === "home" && <AdminHome />}
+                {activeEditor === "about" && <AdminAbout />}
                 {activeEditor === "academics" && <AdminAcademics />}
                 {activeEditor === "admissions" && <AdminAdmissions />}
                 {activeEditor === "notices" && <AdminNotices />}
@@ -573,7 +543,7 @@ export default function AdminDashboard() {
       <AnimatePresence>
         {showLogoutConfirm && (
           <motion.div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-6"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6"
             style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)" }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setShowLogoutConfirm(false)}
@@ -583,33 +553,33 @@ export default function AdminDashboard() {
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.92, y: 10, opacity: 0 }}
               transition={{ type: "spring", stiffness: 130, damping: 16 }}
-              className="w-full max-w-sm overflow-hidden rounded-[28px]"
+              className="w-full max-w-sm overflow-hidden rounded-[24px] sm:rounded-[28px]"
               style={{ background: "#FFFFFF", border: `1px solid ${bg.border}`, boxShadow: "0 40px 80px rgba(0,0,0,0.15)" }}
               onClick={e => e.stopPropagation()}
             >
               <div className="h-1" style={{ background: "linear-gradient(90deg, #D71920, #FACC15)" }} />
-              <div className="p-7 text-center">
+              <div className="p-5 sm:p-7 text-center">
                 <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5"
+                  className="w-12 sm:w-14 h-12 sm:h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-5"
                   style={{ background: "rgba(215,25,32,0.08)", border: "1px solid rgba(215,25,32,0.12)" }}
                 >
-                  <LogOut className="w-6 h-6" style={{ color: "#D71920" }} />
+                  <LogOut className="w-5 sm:w-6 h-5 sm:h-6" style={{ color: "#D71920" }} />
                 </div>
-                <h3 className="text-xl font-black text-slate-950 mb-2">Log out?</h3>
-                <p className="text-sm mb-6 text-slate-500">
+                <h3 className="text-lg sm:text-xl font-black text-slate-950 mb-2">Log out?</h3>
+                <p className="text-xs sm:text-sm mb-5 sm:mb-6 text-slate-500">
                   You'll need to sign in again to access the admin panel.
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowLogoutConfirm(false)}
-                    className="flex-1 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5"
+                    className="flex-1 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-black transition-all hover:-translate-y-0.5"
                     style={{ background: "rgba(15,23,42,0.06)", color: "rgba(15,23,42,0.6)", border: `1px solid ${bg.border}` }}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={logout}
-                    className="flex-1 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5"
+                    className="flex-1 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-black transition-all hover:-translate-y-0.5"
                     style={{ background: "linear-gradient(135deg, #D71920, #9B1117)", color: "#fff", boxShadow: "0 4px 14px rgba(215,25,32,0.2)" }}
                   >
                     Yes, Logout
