@@ -10,6 +10,7 @@ import {
   Link as LinkIcon,
   Pencil,
   Save,
+  Trash2,
   UploadCloud,
   X,
 } from "lucide-react";
@@ -139,6 +140,18 @@ function getAuthHeaders() {
   };
 }
 
+function normalizeImageList(images = [], fallbackImage = "") {
+  const source = Array.isArray(images) ? images : [];
+
+  const cleanImages = source
+    .map((item) => String(item || "").trim())
+    .filter(Boolean);
+
+  const fallback = String(fallbackImage || "").trim();
+
+  return Array.from(new Set(fallback ? [fallback, ...cleanImages] : cleanImages));
+}
+
 export default function AdminHome() {
   const [form, setForm] = useState(defaultHomeContent);
   const [loading, setLoading] = useState(true);
@@ -210,8 +223,11 @@ export default function AdminHome() {
     }
 
     if (target.type === "heroImage") {
+      const heroImages = normalizeImageList(form.hero.images, form.hero.image);
+
       setModalForm({
-        image: form.hero.image || "",
+        image: heroImages[0] || form.hero.image || "",
+        images: heroImages,
       });
       return;
     }
@@ -338,18 +354,22 @@ export default function AdminHome() {
     }));
   };
 
-  const uploadImage = async (file) => {
-    if (!file) return;
+  const uploadImages = async (files) => {
+    const selectedFiles = Array.from(files || []);
+
+    if (selectedFiles.length === 0) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     const maxSize = 6 * 1024 * 1024;
 
-    if (!allowedTypes.includes(file.type)) {
+    const invalidType = selectedFiles.find((file) => !allowedTypes.includes(file.type));
+    if (invalidType) {
       setError("Please upload only PNG, JPG, or WebP image.");
       return;
     }
 
-    if (file.size > maxSize) {
+    const oversizedFile = selectedFiles.find((file) => file.size > maxSize);
+    if (oversizedFile) {
       setError("Image must be less than 6 MB.");
       return;
     }
@@ -366,31 +386,107 @@ export default function AdminHome() {
     setUploadingImage(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const uploadedUrls = [];
 
-      const res = await axios.post("http://localhost:5000/api/upload", formData, {
-        headers: {
-          ...authHeaders,
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append("file", file);
 
-      const uploadedUrl = getUploadUrl(res.data);
+        const res = await axios.post("http://localhost:5000/api/upload", formData, {
+          headers: {
+            ...authHeaders,
+            "Content-Type": "multipart/form-data",
+          },
+        });
 
-      if (!uploadedUrl) {
-        setError("Image uploaded but backend did not return image URL.");
-        return;
+        const uploadedUrl = getUploadUrl(res.data);
+
+        if (!uploadedUrl) {
+          throw new Error("Image uploaded but backend did not return image URL.");
+        }
+
+        uploadedUrls.push(uploadedUrl);
       }
 
-      updateModalField("image", uploadedUrl);
-      setSuccess("Image uploaded. Click Save to publish this selected item.");
+      if (editingTarget?.type === "heroImage") {
+        setModalForm((prev) => {
+          const nextImages = normalizeImageList(
+            [...(Array.isArray(prev.images) ? prev.images : []), ...uploadedUrls],
+            prev.image
+          );
+
+          return {
+            ...prev,
+            image: nextImages[0] || "",
+            images: nextImages,
+          };
+        });
+
+        setSuccess(
+          `${uploadedUrls.length} hero image${
+            uploadedUrls.length === 1 ? "" : "s"
+          } uploaded. Click Save Hero Images to publish.`
+        );
+      } else {
+        setModalForm((prev) => ({
+          ...prev,
+          image: uploadedUrls[0] || prev.image || "",
+        }));
+
+        setSuccess("Image uploaded. Click Save to publish this selected item.");
+      }
     } catch (err) {
       console.error("Image upload error:", err);
-      setError(err.response?.data?.message || "Image upload failed.");
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Image upload failed."
+      );
     } finally {
       setUploadingImage(false);
     }
+  };
+
+  const removeHeroImageFromModal = (indexToRemove) => {
+    setModalForm((prev) => {
+      const nextImages = normalizeImageList(prev.images, prev.image).filter(
+        (_, index) => index !== indexToRemove
+      );
+
+      return {
+        ...prev,
+        image: nextImages[0] || "",
+        images: nextImages,
+      };
+    });
+  };
+
+  const makeHeroImageMainInModal = (indexToMove) => {
+    setModalForm((prev) => {
+      const currentImages = normalizeImageList(prev.images, prev.image);
+      const selectedImage = currentImages[indexToMove];
+
+      if (!selectedImage) return prev;
+
+      const nextImages = [
+        selectedImage,
+        ...currentImages.filter((_, index) => index !== indexToMove),
+      ];
+
+      return {
+        ...prev,
+        image: selectedImage,
+        images: nextImages,
+      };
+    });
+  };
+
+  const deleteAllHeroImagesFromModal = () => {
+    setModalForm((prev) => ({
+      ...prev,
+      image: "",
+      images: [],
+    }));
   };
 
   const saveSelectedPart = async () => {
@@ -444,9 +540,12 @@ export default function AdminHome() {
       }
 
       if (editingTarget.type === "heroImage") {
+        const heroImages = normalizeImageList(modalForm.images, modalForm.image);
+
         nextForm.hero = {
           ...nextForm.hero,
-          image: modalForm.image || "",
+          image: heroImages[0] || "",
+          images: heroImages,
         };
       }
 
@@ -657,7 +756,7 @@ export default function AdminHome() {
   const saveButtonText = useMemo(() => {
     if (!editingTarget) return "Save";
 
-    if (editingTarget.type === "heroImage") return "Save Hero Image";
+    if (editingTarget.type === "heroImage") return "Save Hero Images";
     if (editingTarget.type === "storyImage") return "Save Story Image";
     if (editingTarget.type === "heroTitle") return "Save Hero Title";
     if (editingTarget.type === "heroButtons") return "Save Buttons";
@@ -902,8 +1001,164 @@ export default function AdminHome() {
                 </div>
 
                 <div className="space-y-5">
-                  {(editingTarget.type === "heroImage" ||
-                    editingTarget.type === "storyImage") && (
+                  {editingTarget.type === "heroImage" && (
+                    <>
+                      <div
+                        className="rounded-3xl p-5"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                        }}
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="w-32 h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center shrink-0">
+                            {modalForm.image ? (
+                              <img
+                                src={modalForm.image}
+                                alt="Hero preview"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon className="w-8 h-8 text-slate-300" />
+                            )}
+                          </div>
+
+                          <div className="min-w-0">
+                            <div className="text-white font-black">
+                              Hero Images
+                            </div>
+                            <div className="text-white/55 text-sm mt-1 leading-relaxed">
+                              You can keep one image or multiple images. The first image is shown first.
+                            </div>
+                            <div className="mt-2 text-xs font-black uppercase tracking-[0.16em] text-white/45">
+                              {normalizeImageList(modalForm.images, modalForm.image).length} image
+                              {normalizeImageList(modalForm.images, modalForm.image).length === 1 ? "" : "s"} saved here
+                            </div>
+                          </div>
+                        </div>
+
+                        <label
+                          className="mt-5 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black cursor-pointer"
+                          style={{
+                            background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                            color: colors.dark,
+                          }}
+                        >
+                          <UploadCloud className="w-4 h-4" />
+                          {uploadingImage ? "Uploading..." : "Upload One or Many Images"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            disabled={uploadingImage}
+                            onChange={(e) => {
+                              uploadImages(e.target.files);
+                              e.target.value = "";
+                            }}
+                            className="hidden"
+                          />
+                        </label>
+
+                        {normalizeImageList(modalForm.images, modalForm.image).length > 0 && (
+                          <button
+                            type="button"
+                            onClick={deleteAllHeroImagesFromModal}
+                            disabled={uploadingImage || saving}
+                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black disabled:opacity-50"
+                            style={{
+                              background: "rgba(215,25,32,0.16)",
+                              color: "#FFFFFF",
+                              border: "1px solid rgba(255,255,255,0.12)",
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete All Hero Images
+                          </button>
+                        )}
+                      </div>
+
+                      <Field
+                        label="Main Image URL"
+                        value={modalForm.image}
+                        onChange={(value) =>
+                          setModalForm((prev) => ({
+                            ...prev,
+                            image: value,
+                            images: normalizeImageList(prev.images, value),
+                          }))
+                        }
+                        placeholder="First image URL appears here after upload"
+                      />
+
+                      <div className="grid gap-3">
+                        {normalizeImageList(modalForm.images, modalForm.image).map(
+                          (imageUrl, index) => (
+                            <div
+                              key={`${imageUrl}-${index}`}
+                              className="rounded-2xl border border-slate-100 bg-slate-50 p-3"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="h-16 w-20 shrink-0 overflow-hidden rounded-xl bg-white">
+                                  <img
+                                    src={imageUrl}
+                                    alt={`Hero ${index + 1}`}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                                    {index === 0 ? "Main Image" : `Image ${index + 1}`}
+                                  </div>
+                                  <div className="truncate text-sm font-semibold text-slate-600">
+                                    {imageUrl}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {index !== 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => makeHeroImageMainInModal(index)}
+                                    className="rounded-xl px-3 py-2 text-xs font-black"
+                                    style={{
+                                      background: "rgba(75,46,131,0.08)",
+                                      color: colors.purple,
+                                    }}
+                                  >
+                                    Make Main
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => removeHeroImageFromModal(index)}
+                                  className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black"
+                                  style={{
+                                    background: "rgba(215,25,32,0.08)",
+                                    color: colors.red,
+                                  }}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        )}
+
+                        {normalizeImageList(modalForm.images, modalForm.image).length === 0 && (
+                          <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-center text-sm font-semibold text-slate-400">
+                            No hero images added yet. Upload at least one image.
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {editingTarget.type === "storyImage" && (
                     <>
                       <div
                         className="rounded-3xl p-5"
@@ -950,7 +1205,7 @@ export default function AdminHome() {
                             accept="image/*"
                             disabled={uploadingImage}
                             onChange={(e) => {
-                              uploadImage(e.target.files?.[0]);
+                              uploadImages(e.target.files);
                               e.target.value = "";
                             }}
                             className="hidden"

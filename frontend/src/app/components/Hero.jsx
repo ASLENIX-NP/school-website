@@ -22,6 +22,9 @@ export const defaultHeroData = {
     "Baljagriti Secondary English School blends academic discipline, digital learning, creativity, sports, and values for students from Play Group to Grade 10.",
   image:
     "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1100&h=900&fit=crop&auto=format",
+  images: [
+    "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1100&h=900&fit=crop&auto=format",
+  ],
 
   primaryButtonText: "Start Admission",
   primaryButtonLink: "/admissions",
@@ -51,9 +54,38 @@ export const defaultHeroData = {
 };
 
 export function mergeHeroData(saved = {}) {
-  return {
+  const merged = {
     ...defaultHeroData,
     ...(saved || {}),
+  };
+
+  const savedImages = Array.isArray(saved?.images)
+    ? saved.images
+    : Array.isArray(merged.images)
+    ? merged.images
+    : [];
+
+  const cleanImages = Array.from(
+    new Set(
+      savedImages
+        .map((item) => String(item || "").trim())
+        .filter(Boolean)
+    )
+  );
+
+  const fallbackImage =
+    String(saved?.image || merged.image || defaultHeroData.image || "").trim();
+
+  const images = cleanImages.length > 0
+    ? cleanImages
+    : fallbackImage
+    ? [fallbackImage]
+    : [defaultHeroData.image];
+
+  return {
+    ...merged,
+    image: images[0] || defaultHeroData.image,
+    images,
   };
 }
 
@@ -334,6 +366,31 @@ function Premium3DBackground({ editMode = false }) {
 }
 
 function HeroImageStage({ heroData, editMode, onEditTarget }) {
+  const heroImages =
+    Array.isArray(heroData.images) && heroData.images.filter(Boolean).length > 0
+      ? heroData.images.filter(Boolean)
+      : heroData.image
+      ? [heroData.image]
+      : [defaultHeroData.image];
+
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [heroImages.join("|")]);
+
+  useEffect(() => {
+    if (editMode || heroImages.length <= 1) return undefined;
+
+    const timer = window.setInterval(() => {
+      setActiveImageIndex((current) => (current + 1) % heroImages.length);
+    }, 4500);
+
+    return () => window.clearInterval(timer);
+  }, [editMode, heroImages.length]);
+
+  const activeImage = heroImages[activeImageIndex] || heroImages[0] || heroData.image;
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96, y: 24 }}
@@ -359,7 +416,7 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
         target={{ type: "heroImage" }}
         onEditTarget={onEditTarget}
         icon={Camera}
-        label="Change hero image"
+        label="Change hero images"
         className="relative z-10 w-[88%]"
       >
         <motion.div
@@ -380,9 +437,13 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
               : "1px solid rgba(255,255,255,0.76)",
           }}
         >
-          <img
-            src={heroData.image}
+          <motion.img
+            key={activeImage}
+            src={activeImage}
             alt="Baljagriti school students"
+            initial={{ opacity: 0.25, scale: 1.02 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.55 }}
             className="w-full h-full object-cover"
           />
 
@@ -393,6 +454,35 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
                 "linear-gradient(to top, rgba(15,23,42,0.58) 0%, rgba(15,23,42,0.10) 52%, transparent 100%)",
             }}
           />
+
+          {heroImages.length > 1 && (
+            <div className="absolute left-5 top-5 z-30 flex items-center gap-2 rounded-full bg-white/86 px-3 py-2 shadow-xl backdrop-blur-md">
+              <span className="text-xs font-black text-slate-800">
+                {activeImageIndex + 1}/{heroImages.length}
+              </span>
+
+              <div className="flex items-center gap-1.5">
+                {heroImages.map((image, index) => (
+                  <button
+                    key={`${image}-${index}`}
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setActiveImageIndex(index);
+                    }}
+                    className="h-2.5 rounded-full transition-all"
+                    style={{
+                      width: activeImageIndex === index ? "18px" : "10px",
+                      background:
+                        activeImageIndex === index ? palette.cyan : "rgba(15,23,42,0.28)",
+                    }}
+                    aria-label={`Show hero image ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           <EditableWrap
             editMode={editMode}
@@ -476,6 +566,7 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
     </motion.div>
   );
 }
+
 
 function Hero({
   editMode = false,
