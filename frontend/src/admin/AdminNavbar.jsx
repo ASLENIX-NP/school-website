@@ -477,6 +477,196 @@ await axios.put(
         `}
       </style>
 
+
+      <style>
+        {`
+          @media (max-width: 767px) {
+            .admin-navbar-preview-frame {
+              position: relative !important;
+              overflow: hidden !important;
+              isolation: isolate !important;
+            }
+
+            .admin-navbar-preview-frame nav,
+            .admin-navbar-preview-frame header {
+              position: relative !important;
+              z-index: 60 !important;
+            }
+
+            .admin-navbar-preview-frame [class*="fixed"] {
+              position: absolute !important;
+              inset: 4.25rem 0 auto 0 !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              height: auto !important;
+              max-height: 360px !important;
+              overflow-y: auto !important;
+              border-radius: 1.5rem !important;
+              z-index: 35 !important;
+            }
+
+            .admin-navbar-preview-frame [class*="fixed"][class*="inset-0"],
+            .admin-navbar-preview-frame [class*="fixed"][class*="inset"] {
+              inset: 4.25rem 0 auto 0 !important;
+            }
+
+            .admin-navbar-preview-frame [class*="fixed"]::before,
+            .admin-navbar-preview-frame [class*="fixed"]::after {
+              display: none !important;
+            }
+
+            .admin-navbar-preview-frame button,
+            .admin-navbar-preview-frame a {
+              pointer-events: auto !important;
+            }
+
+            .admin-navbar-preview-frame button[aria-label],
+            .admin-navbar-preview-frame button[type="button"] {
+              position: relative !important;
+              z-index: 70 !important;
+            }
+
+            .admin-navbar-preview-frame .group .opacity-0,
+            .admin-navbar-preview-frame .group [class*="opacity-0"],
+            .admin-navbar-preview-frame .group [class*="group-hover:opacity"],
+            .admin-navbar-preview-frame [class*="group-hover:opacity"],
+            .admin-navbar-preview-frame button[class*="opacity-0"],
+            .admin-navbar-preview-frame button[class*="group-hover:opacity"] {
+              opacity: 1 !important;
+              visibility: visible !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-navbar-preview-frame [class*="absolute"] button,
+            .admin-navbar-preview-frame button[class*="rounded-full"] {
+              min-width: 2.25rem !important;
+              min-height: 2.25rem !important;
+              z-index: 75 !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-navbar-preview-frame [class*="z-50"],
+            .admin-navbar-preview-frame [class*="z-[50]"],
+            .admin-navbar-preview-frame [class*="z-[60]"],
+            .admin-navbar-preview-frame [class*="z-[70]"],
+            .admin-navbar-preview-frame [class*="z-[80]"],
+            .admin-navbar-preview-frame [class*="z-[90]"],
+            .admin-navbar-preview-frame [class*="z-[999]"] {
+              z-index: 35 !important;
+            }
+
+            .admin-navbar-preview-frame nav [class*="z-50"],
+            .admin-navbar-preview-frame nav [class*="z-[50]"],
+            .admin-navbar-preview-frame nav [class*="z-[60]"],
+            .admin-navbar-preview-frame nav [class*="z-[70]"],
+            .admin-navbar-preview-frame nav [class*="z-[80]"],
+            .admin-navbar-preview-frame nav [class*="z-[90]"],
+            .admin-navbar-preview-frame nav [class*="z-[999]"] {
+              z-index: 70 !important;
+            }
+          }
+        `}
+      </style>
+
+
+      <style>
+        {`
+          @media (max-width: 767px) {
+            .admin-navbar-preview-frame {
+              min-height: 430px !important;
+              overflow: hidden !important;
+            }
+
+            .admin-navbar-preview-frame [class*="fixed"] {
+              position: absolute !important;
+              top: 4.25rem !important;
+              left: 0.75rem !important;
+              right: 0.75rem !important;
+              bottom: auto !important;
+              width: auto !important;
+              max-width: calc(100% - 1.5rem) !important;
+              height: auto !important;
+              max-height: 320px !important;
+              overflow-y: auto !important;
+              border-radius: 1.5rem !important;
+              z-index: 45 !important;
+            }
+
+            .admin-navbar-preview-frame [class*="fixed"][class*="inset-0"],
+            .admin-navbar-preview-frame [class*="fixed"][class*="inset"] {
+              inset: 4.25rem 0.75rem auto 0.75rem !important;
+            }
+
+            .admin-navbar-preview-frame nav,
+            .admin-navbar-preview-frame header {
+              position: relative !important;
+              z-index: 80 !important;
+            }
+
+            .admin-navbar-preview-frame nav button,
+            .admin-navbar-preview-frame header button {
+              position: relative !important;
+              z-index: 90 !important;
+              pointer-events: auto !important;
+            }
+          }
+        `}
+      </style>
+
+
+      <style>
+        {`
+          @media (max-width: 767px) {
+            .admin-navbar-preview-frame {
+              min-height: 660px !important;
+              overflow: hidden !important;
+              position: relative !important;
+            }
+
+            .admin-navbar-preview-frame [class*="fixed"] {
+              position: absolute !important;
+              top: 4.25rem !important;
+              left: 0.75rem !important;
+              right: 0.75rem !important;
+              bottom: auto !important;
+              width: auto !important;
+              max-width: calc(100% - 1.5rem) !important;
+              height: auto !important;
+              min-height: auto !important;
+              max-height: none !important;
+              overflow: visible !important;
+              border-radius: 1.5rem !important;
+              z-index: 45 !important;
+            }
+
+            .admin-navbar-preview-frame [class*="fixed"][class*="inset-0"],
+            .admin-navbar-preview-frame [class*="fixed"][class*="inset"] {
+              inset: 4.25rem 0.75rem auto 0.75rem !important;
+            }
+
+            .admin-navbar-preview-frame [class*="fixed"] > div,
+            .admin-navbar-preview-frame [class*="fixed"] ul,
+            .admin-navbar-preview-frame [class*="fixed"] li {
+              max-height: none !important;
+              overflow: visible !important;
+            }
+
+            .admin-navbar-preview-frame nav,
+            .admin-navbar-preview-frame header {
+              position: relative !important;
+              z-index: 80 !important;
+            }
+
+            .admin-navbar-preview-frame nav button,
+            .admin-navbar-preview-frame header button {
+              position: relative !important;
+              z-index: 90 !important;
+              pointer-events: auto !important;
+            }
+          }
+        `}
+      </style>
+
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
@@ -527,7 +717,7 @@ await axios.put(
         )}
 
         <div
-  className="admin-navbar-preview-frame rounded-[2rem] p-3 sm:p-4 md:p-6 overflow-x-auto"
+  className="admin-navbar-preview-frame rounded-[2rem] p-3 sm:p-4 md:p-6 overflow-hidden"
   style={{
     background:
       "radial-gradient(circle at top left, rgba(56,189,248,0.14), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
