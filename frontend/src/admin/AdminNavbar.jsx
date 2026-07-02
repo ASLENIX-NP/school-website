@@ -409,10 +409,78 @@ await axios.put(
 
   return (
     <div className="space-y-6">
+      <style>
+        {`
+          @media (max-width: 767px) {
+            .admin-navbar-preview-frame [class*="opacity-0"] {
+              opacity: 1 !important;
+            }
+
+            .admin-navbar-preview-frame [class*="group-hover:opacity"] {
+              opacity: 1 !important;
+            }
+
+            .admin-navbar-preview-frame [class*="z-50"],
+            .admin-navbar-preview-frame [class*="z-[50]"],
+            .admin-navbar-preview-frame [class*="z-[60]"],
+            .admin-navbar-preview-frame [class*="z-[70]"],
+            .admin-navbar-preview-frame [class*="z-[80]"],
+            .admin-navbar-preview-frame [class*="z-[90]"],
+            .admin-navbar-preview-frame [class*="z-[999]"] {
+              z-index: 20 !important;
+            }
+          }
+        `}
+      </style>
+
+      <style>
+        {`
+          @media (max-width: 767px) {
+            .admin-navbar-preview-frame {
+              overflow: visible !important;
+            }
+
+            .admin-navbar-preview-frame .group .opacity-0,
+            .admin-navbar-preview-frame .group [class*="opacity-0"],
+            .admin-navbar-preview-frame .group [class*="group-hover:opacity"],
+            .admin-navbar-preview-frame [class*="group-hover:opacity"],
+            .admin-navbar-preview-frame button[class*="opacity-0"],
+            .admin-navbar-preview-frame button[class*="group-hover:opacity"] {
+              opacity: 1 !important;
+              visibility: visible !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-navbar-preview-frame .group .pointer-events-none,
+            .admin-navbar-preview-frame .group [class*="pointer-events-none"] {
+              pointer-events: auto !important;
+            }
+
+            .admin-navbar-preview-frame [class*="absolute"] button,
+            .admin-navbar-preview-frame button[class*="rounded-full"] {
+              min-width: 2.25rem !important;
+              min-height: 2.25rem !important;
+              z-index: 30 !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-navbar-preview-frame [class*="absolute"][class*="z-50"],
+            .admin-navbar-preview-frame [class*="absolute"][class*="z-[50]"],
+            .admin-navbar-preview-frame [class*="absolute"][class*="z-[60]"],
+            .admin-navbar-preview-frame [class*="absolute"][class*="z-[70]"],
+            .admin-navbar-preview-frame [class*="absolute"][class*="z-[80]"],
+            .admin-navbar-preview-frame [class*="absolute"][class*="z-[90]"],
+            .admin-navbar-preview-frame [class*="absolute"][class*="z-[999]"] {
+              z-index: 30 !important;
+            }
+          }
+        `}
+      </style>
+
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-[24px] p-5 md:p-6"
+        className="rounded-[24px] p-4 sm:p-5 md:p-6"
         style={{
           background:
             "linear-gradient(135deg, #E8EDF5 0%, #DCE3EF 50%, #E8E0F0 100%)",
@@ -459,7 +527,7 @@ await axios.put(
         )}
 
         <div
-  className="rounded-[2rem] p-4 md:p-6 overflow-x-auto"
+  className="admin-navbar-preview-frame rounded-[2rem] p-3 sm:p-4 md:p-6 overflow-x-auto"
   style={{
     background:
       "radial-gradient(circle at top left, rgba(56,189,248,0.14), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
@@ -467,7 +535,7 @@ await axios.put(
     minHeight: "170px",
   }}
 >
-  <div className="min-w-[1250px]">
+  <div className="w-full min-w-0">
     <Navbar editMode contentOverride={form} onEditTarget={openEditor} />
   </div>
 </div>
@@ -508,7 +576,7 @@ await axios.put(
       <AnimatePresence>
         {editingTarget && (
           <motion.div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5"
             style={{
               background: "rgba(2,6,23,0.55)",
               backdropFilter: "blur(12px)",

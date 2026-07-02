@@ -32,6 +32,14 @@ const colors = {
   cream: "#FFF8EE",
 };
 
+const lightAdminPanelStyle = {
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95))",
+  border: "1px solid rgba(75,46,131,0.12)",
+  boxShadow: "0 18px 44px rgba(15,23,42,0.08)",
+  backdropFilter: "blur(14px)",
+};
+
 const DEFAULT_GALLERY_CATEGORIES = ["Classroom", "Events", "Certificate"];
 // Subcategories are allowed for every saved category except the virtual "All" tab.
 
@@ -109,7 +117,6 @@ function normalizeCategories(categories = null) {
     ? uniqueCategories
     : [...DEFAULT_GALLERY_CATEGORIES];
 }
-
 
 function safeCategoryId(value = "") {
   return String(value || "")
@@ -537,16 +544,22 @@ function EditModal({ target, modalForm, setModalForm, onClose, onSave, onRequest
           <div
             className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-5"
             style={{
-              background:
-                "linear-gradient(145deg, rgba(2,6,23,0.98), rgba(15,23,42,0.94))",
-              borderBottom: "1px solid rgba(255,255,255,0.12)",
+              ...lightAdminPanelStyle,
+              borderLeft: "0",
+              borderRight: "0",
+              borderTop: "0",
+              borderRadius: "0",
+              boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
             }}
           >
             <div>
-              <div className="text-xs font-black uppercase tracking-[0.18em] text-white/45">
+              <div
+                className="text-xs font-black uppercase tracking-[0.18em]"
+                style={{ color: colors.softPurple }}
+              >
                 Gallery Editor
               </div>
-              <h2 className="text-2xl font-black text-white">
+              <h2 className="text-2xl font-black" style={{ color: colors.dark }}>
                 {target.label}
               </h2>
             </div>
@@ -554,7 +567,7 @@ function EditModal({ target, modalForm, setModalForm, onClose, onSave, onRequest
             <button
               type="button"
               onClick={onClose}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-600"
             >
               <X className="h-5 w-5" />
             </button>
@@ -769,7 +782,7 @@ function GalleryAlbumCard({ album, index, onEdit, onDelete, onManageImages }) {
       viewport={{ once: true }}
       transition={{ duration: 0.45, delay: Math.min(index * 0.04, 0.18) }}
       id={`gallery-category-${safeCategoryId(album.category)}${album.subcategory ? `-${safeCategoryId(album.subcategory)}` : ""}`}
-      className={`group relative grid items-center gap-12 rounded-[2rem] border border-dashed border-cyan-300/70 bg-white/30 p-4 lg:grid-cols-2 ${
+      className={`group relative grid items-center gap-6 lg:gap-12 rounded-[2rem] border border-dashed border-cyan-300/70 bg-white/30 p-4 lg:grid-cols-2 ${
         index % 2 !== 0 ? "lg:[&>*:first-child]:order-2" : ""
       }`}
     >
@@ -796,10 +809,10 @@ function GalleryAlbumCard({ album, index, onEdit, onDelete, onManageImages }) {
           <img
             src={album.cover}
             alt={album.title}
-            className="h-[450px] w-full object-cover transition duration-700 group-hover:scale-105"
+            className="h-64 sm:h-80 lg:h-[450px] w-full object-cover transition duration-700 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-[450px] w-full items-center justify-center bg-slate-100">
+          <div className="flex h-64 sm:h-80 lg:h-[450px] w-full items-center justify-center bg-slate-100">
             <ImageIcon className="h-16 w-16 text-slate-300" />
           </div>
         )}
@@ -817,7 +830,7 @@ function GalleryAlbumCard({ album, index, onEdit, onDelete, onManageImages }) {
           )}
         </div>
 
-        <h2 className="mt-5 text-5xl font-black text-slate-900">
+        <h2 className="mt-5 text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900">
           {album.title}
         </h2>
         <p className="mt-3 text-slate-500">{album.date}</p>
@@ -851,8 +864,59 @@ function GalleryVisualEditor({ form, activeCategory, setActiveCategory, onEditHe
   );
 
   return (
-    <section
-      id="gallery-admin-preview"
+    <>
+      <style>
+        {`
+          @media (max-width: 767px) {
+            #gallery-admin-preview .group .opacity-0,
+            #gallery-admin-preview .group [class*="opacity-0"],
+            #gallery-admin-preview .group .md\\:opacity-0,
+            #gallery-admin-preview .group [class*="md:opacity-0"],
+            #gallery-admin-preview .group [class*="group-hover:opacity"],
+            #gallery-admin-preview [class*="group-hover:opacity"] {
+              opacity: 1 !important;
+              visibility: visible !important;
+              pointer-events: auto !important;
+            }
+
+            #gallery-admin-preview .group .pointer-events-none,
+            #gallery-admin-preview .group [class*="pointer-events-none"] {
+              pointer-events: auto !important;
+            }
+
+            #gallery-admin-preview .group button[class*="opacity-0"],
+            #gallery-admin-preview button[class*="group-hover:opacity"],
+            #gallery-admin-preview button[class*="opacity-0"] {
+              opacity: 1 !important;
+              visibility: visible !important;
+              pointer-events: auto !important;
+            }
+
+            #gallery-admin-preview [class*="absolute"] button,
+            #gallery-admin-preview button[class*="rounded-full"] {
+              min-width: 2.25rem !important;
+              min-height: 2.25rem !important;
+              max-width: calc(100vw - 2rem) !important;
+              white-space: nowrap !important;
+              z-index: 30 !important;
+              pointer-events: auto !important;
+            }
+
+            #gallery-admin-preview [class*="z-50"],
+            #gallery-admin-preview [class*="z-[50]"],
+            #gallery-admin-preview [class*="z-[60]"],
+            #gallery-admin-preview [class*="z-[70]"],
+            #gallery-admin-preview [class*="z-[80]"],
+            #gallery-admin-preview [class*="z-[90]"],
+            #gallery-admin-preview [class*="z-[999]"] {
+              z-index: 30 !important;
+            }
+          }
+        `}
+      </style>
+
+      <section
+        id="gallery-admin-preview"
       className="relative min-h-screen overflow-hidden pb-24 pt-10"
       style={{
         background: `
@@ -862,25 +926,23 @@ function GalleryVisualEditor({ form, activeCategory, setActiveCategory, onEditHe
         `,
       }}
     >
-      <div className="pointer-events-none absolute right-0 top-0 h-[520px] w-[520px] rounded-full bg-purple-500/10 blur-2xl" />
-      <div className="pointer-events-none absolute bottom-0 left-0 h-[420px] w-[420px] rounded-full bg-green-500/10 blur-2xl" />
+      <div className="pointer-events-none absolute right-0 top-0 h-[280px] w-[280px] sm:h-[520px] sm:w-[520px] rounded-full bg-purple-500/10 blur-2xl" />
+      <div className="pointer-events-none absolute bottom-0 left-0 h-[260px] w-[260px] sm:h-[420px] sm:w-[420px] rounded-full bg-green-500/10 blur-2xl" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
         <div
-          className="mb-8 rounded-[28px] p-5"
-          style={{
-            background:
-              "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
-            border: "1px solid rgba(255,255,255,0.14)",
-            boxShadow: "0 20px 60px rgba(11,16,32,0.22)",
-          }}
+          className="mb-6 sm:mb-8 rounded-[28px] p-4 sm:p-5"
+          style={lightAdminPanelStyle}
         >
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <div className="text-xs font-black uppercase tracking-[0.22em] text-white/45">
+              <div
+                className="text-xs font-black uppercase tracking-[0.22em]"
+                style={{ color: colors.softPurple }}
+              >
                 Admin Gallery Editor Active
               </div>
-              <p className="mt-1 text-sm font-semibold text-white/70">
+              <p className="mt-1 text-sm font-semibold text-slate-600">
                 Use Edit or Upload to open the Gallery Image Manager. Add subcategories inside Gallery Image Manager.
               </p>
             </div>
@@ -895,7 +957,7 @@ function GalleryVisualEditor({ form, activeCategory, setActiveCategory, onEditHe
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55 }}
-          className="group relative mb-12 rounded-[32px] border border-dashed border-cyan-300/80 p-8 text-center"
+          className="group relative mb-8 sm:mb-12 rounded-[32px] border border-dashed border-cyan-300/80 p-5 sm:p-8 text-center"
         >
           <div className="absolute right-5 top-5 z-30 opacity-100 md:opacity-0 md:transition-opacity md:duration-200 md:group-hover:opacity-100">
             <IconButton icon={Edit3} label="Edit Heading" tone="purple" onClick={onEditHero} />
@@ -933,7 +995,7 @@ function GalleryVisualEditor({ form, activeCategory, setActiveCategory, onEditHe
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.08 }}
-          className="mb-12 flex flex-wrap justify-center gap-3"
+          className="mb-8 sm:mb-12 flex flex-wrap justify-center gap-3"
         >
           {categories.map((category) => {
             const active = activeCategory === category;
@@ -975,7 +1037,7 @@ function GalleryVisualEditor({ form, activeCategory, setActiveCategory, onEditHe
           }}
         >
           {filteredAlbums.length > 0 ? (
-            <div className="space-y-24">
+            <div className="space-y-10 sm:space-y-16 lg:space-y-24">
               {filteredAlbums.map((album, index) => (
                 <GalleryAlbumCard
                   key={`${album.category}-${album.subcategory || album.title}`}
@@ -1006,33 +1068,36 @@ function GalleryVisualEditor({ form, activeCategory, setActiveCategory, onEditHe
           viewport={{ once: true }}
           transition={{ duration: 0.45 }}
           className="group relative mt-10 flex flex-col gap-4 rounded-3xl border border-dashed border-cyan-300/70 p-6 md:flex-row md:items-center md:justify-between"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(11,16,32,0.96), rgba(75,46,131,0.9))",
-            boxShadow: "0 22px 58px rgba(11,16,32,0.28)",
-          }}
+          style={lightAdminPanelStyle}
         >
           <div className="absolute right-4 top-4 z-30 opacity-100 md:opacity-0 md:transition-opacity md:duration-200 md:group-hover:opacity-100">
             <IconButton icon={Edit3} label="Edit Bottom" tone="green" onClick={onEditBottom} />
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-white">
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-2xl"
+              style={{
+                background: "rgba(75,46,131,0.1)",
+                color: colors.purple,
+              }}
+            >
               <Layers className="h-6 w-6" />
             </div>
             <div>
-              <div className="font-bold text-white">{form.bottomTitle}</div>
-              <div className="text-sm text-white/70">{form.bottomDescription}</div>
+              <div className="font-black text-slate-950">{form.bottomTitle}</div>
+              <div className="text-sm text-slate-500">{form.bottomDescription}</div>
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-2 text-sm font-semibold text-white/75">
+          <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600">
             <Sparkles className="h-4 w-4" style={{ color: colors.gold }} />
             {form.bottomNote}
           </div>
         </motion.div>
       </div>
-    </section>
+      </section>
+    </>
   );
 }
 
@@ -1598,7 +1663,11 @@ export default function AdminGallery() {
     }
 
     const query = params.toString();
-    navigate(`/admin/gallery-images${query ? `?${query}` : ""}`);
+    navigate(`/admin/gallery-images${query ? `?${query}` : ""}`, {
+      state: {
+        fromAdminGalleryEditor: true,
+      },
+    });
   };
 
   if (loading) {
@@ -1610,7 +1679,7 @@ export default function AdminGallery() {
   }
 
   return (
-    <section className="min-h-screen bg-[#FFF8EE]">
+    <section className="min-h-screen bg-[#FFF8EE] overflow-x-hidden">
       <AnimatePresence>
         {busyOverlayText && (
           <motion.div
@@ -1628,24 +1697,21 @@ export default function AdminGallery() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 18 }}
               className="w-full max-w-sm rounded-[32px] p-8 text-center shadow-2xl"
-              style={{
-                background: "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(75,46,131,0.94))",
-                border: "1px solid rgba(255,255,255,0.16)",
-              }}
+              style={lightAdminPanelStyle}
             >
               <div
                 className="mx-auto mb-5 h-14 w-14 animate-spin rounded-full"
                 style={{
-                  border: "4px solid rgba(255,255,255,0.22)",
+                  border: "4px solid rgba(75,46,131,0.14)",
                   borderTopColor: colors.gold,
                 }}
               />
 
-              <div className="text-2xl font-black text-white">
+              <div className="text-2xl font-black text-slate-950">
                 {busyOverlayText}
               </div>
 
-              <p className="mt-2 text-sm font-semibold text-white/60">
+              <p className="mt-2 text-sm font-semibold text-slate-500">
                 Please wait. Saving it first so it will not disappear after reload.
               </p>
             </motion.div>
@@ -1653,33 +1719,36 @@ export default function AdminGallery() {
         )}
       </AnimatePresence>
       <header
-        className="sticky top-0 z-40"
+        className="relative z-0"
         style={{
           background:
-            "linear-gradient(145deg, rgba(2,6,23,0.96), rgba(15,23,42,0.88))",
-          borderBottom: "1px solid rgba(255,255,255,0.12)",
-          boxShadow: "0 18px 52px rgba(0,0,0,0.22)",
-          backdropFilter: "blur(22px)",
+            "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95))",
+          borderBottom: "1px solid rgba(75,46,131,0.12)",
+          boxShadow: "0 14px 36px rgba(15,23,42,0.08)",
+          backdropFilter: "blur(18px)",
         }}
       >
-        <div className="mx-auto flex h-20 max-w-[1600px] items-center justify-between px-6">
+        <div className="mx-auto flex min-h-20 max-w-[1600px] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <button
             type="button"
             onClick={() => navigate("/admin/dashboard")}
-            className="inline-flex items-center gap-2 font-bold text-white"
+            className="inline-flex items-center gap-2 font-black transition-all hover:-translate-x-1"
+            style={{ color: colors.dark }}
           >
             <ArrowLeft className="h-5 w-5" />
             Back to Dashboard
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => openGalleryImageManager()}
-              className="hidden items-center gap-2 rounded-2xl px-4 py-3 font-bold text-white transition-all hover:scale-105 md:inline-flex"
+              className="hidden items-center gap-2 rounded-2xl px-4 py-3 font-black transition-all hover:scale-105 md:inline-flex"
               style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.14)",
+                color: colors.dark,
+                background: "rgba(255,255,255,0.72)",
+                border: "1px solid rgba(75,46,131,0.12)",
+                boxShadow: "0 10px 26px rgba(15,23,42,0.06)",
               }}
             >
               <Upload className="h-4 w-4" />
@@ -1690,10 +1759,12 @@ export default function AdminGallery() {
               href="/gallery"
               target="_blank"
               rel="noreferrer"
-              className="hidden items-center gap-2 rounded-2xl px-4 py-3 font-bold text-white transition-all hover:scale-105 md:inline-flex"
+              className="hidden items-center gap-2 rounded-2xl px-4 py-3 font-black transition-all hover:scale-105 md:inline-flex"
               style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.14)",
+                color: colors.dark,
+                background: "rgba(255,255,255,0.72)",
+                border: "1px solid rgba(75,46,131,0.12)",
+                boxShadow: "0 10px 26px rgba(15,23,42,0.06)",
               }}
             >
               <ExternalLink className="h-4 w-4" />
@@ -1720,7 +1791,7 @@ export default function AdminGallery() {
       </header>
 
       <main>
-        <div className="mx-auto max-w-[1600px] px-6 pt-8">
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 pt-6 sm:pt-8">
           <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}>
             <span
               className="mb-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold"

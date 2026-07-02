@@ -679,10 +679,62 @@ export default function AdminHome() {
 
   return (
     <div className="space-y-6">
+
+      <style>
+        {`
+          @media (max-width: 767px) {
+            .admin-home-preview-frame .group .opacity-0,
+            .admin-home-preview-frame .group [class*="opacity-0"],
+            .admin-home-preview-frame .group [class*="group-hover:opacity"],
+            .admin-home-preview-frame [class*="group-hover:opacity"] {
+              opacity: 1 !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-home-preview-frame .group .pointer-events-none,
+            .admin-home-preview-frame .group [class*="pointer-events-none"] {
+              pointer-events: auto !important;
+            }
+
+            .admin-home-preview-frame .group button[class*="opacity-0"],
+            .admin-home-preview-frame button[class*="group-hover:opacity"],
+            .admin-home-preview-frame button[class*="opacity-0"] {
+              opacity: 1 !important;
+              pointer-events: auto !important;
+              visibility: visible !important;
+            }
+
+            .admin-home-preview-frame .group .hidden,
+            .admin-home-preview-frame .group [class*="hidden"] {
+              display: inline-flex !important;
+            }
+
+            .admin-home-preview-frame [class*="absolute"] button,
+            .admin-home-preview-frame button[class*="rounded-full"] {
+              min-width: 2.25rem !important;
+              min-height: 2.25rem !important;
+              max-width: calc(100vw - 2rem) !important;
+              white-space: nowrap !important;
+              z-index: 30 !important;
+            }
+
+            .admin-home-preview-frame [class*="absolute"][class*="z-50"],
+            .admin-home-preview-frame [class*="absolute"][class*="z-[50]"],
+            .admin-home-preview-frame [class*="absolute"][class*="z-[60]"],
+            .admin-home-preview-frame [class*="absolute"][class*="z-[70]"],
+            .admin-home-preview-frame [class*="absolute"][class*="z-[80]"],
+            .admin-home-preview-frame [class*="absolute"][class*="z-[90]"],
+            .admin-home-preview-frame [class*="absolute"][class*="z-[999]"] {
+              z-index: 30 !important;
+            }
+          }
+        `}
+      </style>
+
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-[24px] p-5 md:p-6"
+        className="rounded-[24px] p-4 sm:p-5 md:p-6"
         style={{
           background:
             "linear-gradient(135deg, #E8EDF5 0%, #DCE3EF 50%, #E8E0F0 100%)",
@@ -729,14 +781,14 @@ export default function AdminHome() {
         )}
 
         <div
-          className="rounded-[2rem] overflow-x-auto"
+          className="admin-home-preview-frame rounded-[2rem] overflow-x-auto"
           style={{
             background:
               "radial-gradient(circle at top left, rgba(56,189,248,0.14), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
             border: "1px solid rgba(15,23,42,0.08)",
           }}
         >
-          <div className="min-w-[1180px] bg-white">
+          <div className="w-full min-w-0 bg-white">
             <Hero
               editMode
               contentOverride={form.hero}
@@ -786,7 +838,7 @@ export default function AdminHome() {
       <AnimatePresence>
         {editingTarget && (
           <motion.div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5"
             style={{
               background: "rgba(2,6,23,0.55)",
               backdropFilter: "blur(12px)",

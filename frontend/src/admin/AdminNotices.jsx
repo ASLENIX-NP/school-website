@@ -36,6 +36,14 @@ const colors = {
   gold: "#FACC15",
 };
 
+const lightAdminPanelStyle = {
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95))",
+  border: "1px solid rgba(75,46,131,0.12)",
+  boxShadow: "0 18px 44px rgba(15,23,42,0.08)",
+  backdropFilter: "blur(14px)",
+};
+
 function Field({ label, value, onChange, placeholder = "", type = "text" }) {
   return (
     <div>
@@ -567,16 +575,81 @@ export default function AdminNotices() {
 
   return (
     <div className="space-y-6">
+      <style>
+        {`
+          .admin-notices-preview-frame .bg-slate-950 {
+            background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95)) !important;
+            color: #0F172A !important;
+            border: 1px solid rgba(75,46,131,0.12) !important;
+            box-shadow: 0 18px 44px rgba(15,23,42,0.08) !important;
+          }
+
+          .admin-notices-preview-frame .bg-slate-950 [class*="text-white"] {
+            color: #0F172A !important;
+          }
+
+          .admin-notices-preview-frame .bg-slate-950 [class*="text-white/"] {
+            color: #64748B !important;
+          }
+
+
+          @media (max-width: 767px) {
+            .admin-notices-preview-frame .group .opacity-0,
+            .admin-notices-preview-frame .group [class*="opacity-0"],
+            .admin-notices-preview-frame .group .md\\:opacity-0,
+            .admin-notices-preview-frame .group [class*="md:opacity-0"],
+            .admin-notices-preview-frame .group [class*="group-hover:opacity"],
+            .admin-notices-preview-frame [class*="group-hover:opacity"] {
+              opacity: 1 !important;
+              visibility: visible !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-notices-preview-frame .group .pointer-events-none,
+            .admin-notices-preview-frame .group [class*="pointer-events-none"] {
+              pointer-events: auto !important;
+            }
+
+            .admin-notices-preview-frame .group button[class*="opacity-0"],
+            .admin-notices-preview-frame button[class*="group-hover:opacity"],
+            .admin-notices-preview-frame button[class*="opacity-0"] {
+              opacity: 1 !important;
+              visibility: visible !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-notices-preview-frame .group .hidden,
+            .admin-notices-preview-frame .group [class*="hidden"] {
+              display: inline-flex !important;
+            }
+
+            .admin-notices-preview-frame [class*="absolute"] button,
+            .admin-notices-preview-frame button[class*="rounded-full"] {
+              min-width: 2.25rem !important;
+              min-height: 2.25rem !important;
+              max-width: calc(100vw - 2rem) !important;
+              white-space: nowrap !important;
+              z-index: 30 !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-notices-preview-frame [class*="absolute"][class*="z-50"],
+            .admin-notices-preview-frame [class*="absolute"][class*="z-[50]"],
+            .admin-notices-preview-frame [class*="absolute"][class*="z-[60]"],
+            .admin-notices-preview-frame [class*="absolute"][class*="z-[70]"],
+            .admin-notices-preview-frame [class*="absolute"][class*="z-[80]"],
+            .admin-notices-preview-frame [class*="absolute"][class*="z-[90]"],
+            .admin-notices-preview-frame [class*="absolute"][class*="z-[999]"] {
+              z-index: 30 !important;
+            }
+          }
+        `}
+      </style>
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-[24px] p-5 md:p-6"
-        style={{
-          background:
-            "linear-gradient(135deg, #E8EDF5 0%, #DCE3EF 50%, #E8E0F0 100%)",
-          border: "1px solid rgba(15,23,42,0.06)",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
-        }}
+        className="rounded-[24px] p-4 sm:p-5 md:p-6"
+        style={lightAdminPanelStyle}
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
           <div>
@@ -658,14 +731,14 @@ export default function AdminNotices() {
         )}
 
         <div
-          className="rounded-[2rem] overflow-x-auto"
+          className="admin-notices-preview-frame rounded-[2rem] overflow-x-auto"
           style={{
             background:
               "radial-gradient(circle at top left, rgba(56,189,248,0.14), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
             border: "1px solid rgba(15,23,42,0.08)",
           }}
         >
-          <div className="min-w-[1180px] bg-white">
+          <div className="admin-notices-preview-frame w-full min-w-0 bg-white">
             <Notices
               editMode
               noticesOverride={notices}
@@ -684,7 +757,7 @@ export default function AdminNotices() {
       <AnimatePresence>
         {editingTarget && (
           <motion.div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5"
             style={{ background: "rgba(2,6,23,0.55)", backdropFilter: "blur(12px)" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -842,11 +915,7 @@ export default function AdminNotices() {
 
                       <div
                         className="rounded-3xl p-5"
-                        style={{
-                          background:
-                            "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))",
-                          border: "1px solid rgba(255,255,255,0.12)",
-                        }}
+                        style={lightAdminPanelStyle}
                       >
                         <div className="flex items-center gap-4">
                           <div className="w-24 h-20 rounded-2xl bg-white overflow-hidden flex items-center justify-center">
@@ -858,8 +927,8 @@ export default function AdminNotices() {
                           </div>
 
                           <div>
-                            <div className="text-white font-black">Notice PDF</div>
-                            <div className="text-white/55 text-sm mt-1 leading-relaxed">
+                            <div className="font-black text-slate-950">Notice PDF</div>
+                            <div className="text-slate-500 text-sm mt-1 leading-relaxed">
                               PDF only, maximum 10 MB.
                             </div>
                           </div>
@@ -978,7 +1047,7 @@ export default function AdminNotices() {
 
         {deleteTarget && (
           <motion.div
-            className="fixed inset-0 z-[10000] flex items-center justify-center p-5"
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-5"
             style={{ background: "rgba(2,6,23,0.62)", backdropFilter: "blur(14px)" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1048,7 +1117,7 @@ export default function AdminNotices() {
 
         {showAllNotices && (
           <motion.div
-            className="fixed inset-0 z-[9998] flex items-center justify-center p-5"
+            className="fixed inset-0 z-[9998] flex items-center justify-center p-3 sm:p-5"
             style={{ background: "rgba(2,6,23,0.72)", backdropFilter: "blur(14px)" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1071,13 +1140,19 @@ export default function AdminNotices() {
               <div
                 className="p-5 flex items-center justify-between gap-4"
                 style={{
-                  background:
-                    "linear-gradient(145deg, rgba(2,6,23,0.96), rgba(15,23,42,0.9))",
+                  ...lightAdminPanelStyle,
+                  borderLeft: "0",
+                  borderRight: "0",
+                  borderTop: "0",
+                  borderRadius: "0",
+                  boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
                 }}
               >
                 <div>
-                  <div className="text-white text-xl font-black">All Notices</div>
-                  <div className="text-sm text-white/55">
+                  <div className="text-xl font-black" style={{ color: colors.dark }}>
+                    All Notices
+                  </div>
+                  <div className="text-sm text-slate-500">
                     Select one, many, or all notices to delete. Click edit to update any notice.
                   </div>
                 </div>
@@ -1085,10 +1160,9 @@ export default function AdminNotices() {
                 <button
                   type="button"
                   onClick={() => setShowAllNotices(false)}
-                  className="p-3 rounded-2xl text-white"
+                  className="p-3 rounded-2xl bg-slate-100 text-slate-600"
                   style={{
-                    background: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.14)",
+                    border: "1px solid rgba(15,23,42,0.08)",
                   }}
                 >
                   <X className="w-5 h-5" />

@@ -6,11 +6,8 @@ import {
   ArrowLeft,
   CheckCircle2,
   ExternalLink,
-  Eye,
-  EyeOff,
   GraduationCap,
   Pencil,
-  Plus,
   Save,
   Trash2,
   X,
@@ -31,6 +28,14 @@ const colors = {
   dark: "#0B1020",
   cyan: "#38BDF8",
   gold: "#FACC15",
+};
+
+const lightAdminPanelStyle = {
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95))",
+  border: "1px solid rgba(75,46,131,0.12)",
+  boxShadow: "0 18px 44px rgba(15,23,42,0.08)",
+  backdropFilter: "blur(14px)",
 };
 
 function getAdminToken() {
@@ -126,7 +131,7 @@ function Toggle({ checked, onChange, label }) {
 function ModalShell({ title, subtitle, icon: Icon, children, onClose }) {
   return (
     <motion.div
-      className="fixed inset-0 z-[99999] flex items-center justify-center p-5"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-5"
       style={{
         background: "rgba(2,6,23,0.58)",
         backdropFilter: "blur(14px)",
@@ -142,7 +147,7 @@ function ModalShell({ title, subtitle, icon: Icon, children, onClose }) {
         exit={{ opacity: 0, y: 12, scale: 0.96 }}
         transition={{ type: "spring", stiffness: 130, damping: 16 }}
         onClick={(event) => event.stopPropagation()}
-        className="w-full max-w-3xl rounded-[30px] overflow-hidden max-h-[92vh] overflow-y-auto"
+        className="w-full max-w-3xl rounded-[26px] sm:rounded-[30px] overflow-hidden max-h-[92vh] overflow-y-auto"
         style={{
           background: "#FFFFFF",
           border: "1px solid rgba(255,255,255,0.78)",
@@ -156,11 +161,11 @@ function ModalShell({ title, subtitle, icon: Icon, children, onClose }) {
           }}
         />
 
-        <div className="p-6 md:p-7">
+        <div className="p-5 md:p-7">
           <div className="flex items-start justify-between gap-4 mb-6">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0"
                 style={{
                   background:
                     "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(56,189,248,0.18))",
@@ -170,8 +175,8 @@ function ModalShell({ title, subtitle, icon: Icon, children, onClose }) {
                 <Icon className="w-5 h-5" />
               </div>
 
-              <div>
-                <h3 className="text-2xl font-black text-slate-950">
+              <div className="min-w-0">
+                <h3 className="text-xl sm:text-2xl font-black text-slate-950">
                   {title}
                 </h3>
                 <p className="text-sm text-slate-500">{subtitle}</p>
@@ -181,7 +186,7 @@ function ModalShell({ title, subtitle, icon: Icon, children, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600"
+              className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600 shrink-0"
             >
               <X className="w-5 h-5" />
             </button>
@@ -273,19 +278,6 @@ export default function AdminAdmissions() {
     () => (form.steps || []).filter((item) => item.visible !== false).length,
     [form.steps]
   );
-
-  const updateField = (name, value) => {
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const updateStep = (id, field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      steps: prev.steps.map((item) =>
-        item.id === id ? { ...item, [field]: value } : item
-      ),
-    }));
-  };
 
   const openHeroEditor = () => {
     setSuccess("");
@@ -524,35 +516,124 @@ export default function AdminAdmissions() {
         `,
       }}
     >
+      <style>
+        {`
+          .admin-admissions-preview-frame .bg-slate-950 {
+            background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95)) !important;
+            color: #0F172A !important;
+            border: 1px solid rgba(75,46,131,0.12) !important;
+            box-shadow: 0 18px 44px rgba(15,23,42,0.08) !important;
+          }
+
+          .admin-admissions-preview-frame .bg-slate-950 [class*="text-white"] {
+            color: #0F172A !important;
+          }
+
+          .admin-admissions-preview-frame .bg-slate-950 [class*="text-white/45"],
+          .admin-admissions-preview-frame .bg-slate-950 [class*="text-white/55"],
+          .admin-admissions-preview-frame .bg-slate-950 [class*="text-white/70"] {
+            color: #7C5CC4 !important;
+          }
+
+          @media (max-width: 767px) {
+            .admin-admissions-preview-frame .group .md\\:opacity-0 {
+              opacity: 1 !important;
+            }
+
+            .admin-admissions-preview-frame button {
+              max-width: calc(100vw - 40px);
+            }
+          }
+        `}
+      </style>
+
+      <style>
+        {`
+          @media (max-width: 767px) {
+            .admin-admissions-preview-frame .group .opacity-0,
+            .admin-admissions-preview-frame .group [class*="opacity-0"],
+            .admin-admissions-preview-frame .group .md\\:opacity-0,
+            .admin-admissions-preview-frame .group [class*="md:opacity-0"],
+            .admin-admissions-preview-frame .group [class*="group-hover:opacity"],
+            .admin-admissions-preview-frame [class*="group-hover:opacity"] {
+              opacity: 1 !important;
+              visibility: visible !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-admissions-preview-frame .group .pointer-events-none,
+            .admin-admissions-preview-frame .group [class*="pointer-events-none"] {
+              pointer-events: auto !important;
+            }
+
+            .admin-admissions-preview-frame .group button[class*="opacity-0"],
+            .admin-admissions-preview-frame button[class*="group-hover:opacity"],
+            .admin-admissions-preview-frame button[class*="opacity-0"] {
+              opacity: 1 !important;
+              visibility: visible !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-admissions-preview-frame .group .hidden,
+            .admin-admissions-preview-frame .group [class*="hidden"] {
+              display: inline-flex !important;
+            }
+
+            .admin-admissions-preview-frame [class*="absolute"] button,
+            .admin-admissions-preview-frame button[class*="rounded-full"] {
+              min-width: 2.25rem !important;
+              min-height: 2.25rem !important;
+              max-width: calc(100vw - 2rem) !important;
+              white-space: nowrap !important;
+              z-index: 30 !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-admissions-preview-frame [class*="absolute"][class*="z-50"],
+            .admin-admissions-preview-frame [class*="absolute"][class*="z-[50]"],
+            .admin-admissions-preview-frame [class*="absolute"][class*="z-[60]"],
+            .admin-admissions-preview-frame [class*="absolute"][class*="z-[70]"],
+            .admin-admissions-preview-frame [class*="absolute"][class*="z-[80]"],
+            .admin-admissions-preview-frame [class*="absolute"][class*="z-[90]"],
+            .admin-admissions-preview-frame [class*="absolute"][class*="z-[999]"] {
+              z-index: 30 !important;
+            }
+          }
+        `}
+      </style>
+
       <header
-        className="sticky top-0 z-40"
+        className="relative z-0"
         style={{
           background:
-            "linear-gradient(145deg, rgba(2,6,23,0.96), rgba(15,23,42,0.88))",
-          borderBottom: "1px solid rgba(255,255,255,0.12)",
-          boxShadow: "0 18px 52px rgba(0,0,0,0.22)",
-          backdropFilter: "blur(22px)",
+            "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95))",
+          borderBottom: "1px solid rgba(75,46,131,0.12)",
+          boxShadow: "0 14px 36px rgba(15,23,42,0.08)",
+          backdropFilter: "blur(18px)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <button
             type="button"
             onClick={() => navigate("/admin/dashboard")}
-            className="inline-flex items-center gap-2 text-white font-bold"
+            className="inline-flex w-fit items-center gap-2 font-black transition-all hover:-translate-x-1"
+            style={{ color: colors.dark }}
           >
             <ArrowLeft className="w-5 h-5" />
             Back to Dashboard
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <a
               href="/admissions"
               target="_blank"
               rel="noreferrer"
-              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
+              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-black transition-all hover:scale-105"
               style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.14)",
+                color: colors.dark,
+                background: "rgba(255,255,255,0.72)",
+                border: "1px solid rgba(75,46,131,0.12)",
+                boxShadow: "0 10px 26px rgba(15,23,42,0.06)",
               }}
             >
               <ExternalLink className="w-4 h-4" />
@@ -578,11 +659,12 @@ export default function AdminAdmissions() {
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-6 py-10">
+      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 sm:py-10">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-6 sm:mb-8 rounded-[28px] sm:rounded-[34px] p-5 sm:p-8"
+          style={lightAdminPanelStyle}
         >
           <span
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-5"
@@ -597,7 +679,7 @@ export default function AdminAdmissions() {
           </span>
 
           <h1
-            className="text-4xl md:text-6xl mb-4"
+            className="text-3xl md:text-6xl mb-4"
             style={{
               fontFamily: "var(--font-display)",
               fontWeight: 850,
@@ -608,7 +690,7 @@ export default function AdminAdmissions() {
             Edit Admissions Page
           </h1>
 
-          <p className="text-slate-500 max-w-3xl text-lg">
+          <p className="text-slate-500 max-w-3xl text-base sm:text-lg">
             Hover and edit the real admissions page. Steps can be added,
             hidden, edited, or deleted. {visibleCount} step
             {visibleCount === 1 ? "" : "s"} visible on the public page.
@@ -642,7 +724,7 @@ export default function AdminAdmissions() {
           </div>
         )}
 
-        <div className="rounded-[2rem] overflow-hidden bg-white shadow-2xl">
+        <div className="admin-admissions-preview-frame rounded-[2rem] overflow-hidden bg-white shadow-2xl">
           <Admissions
             editMode
             contentOverride={form}

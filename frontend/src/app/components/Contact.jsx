@@ -162,8 +162,12 @@ function HighlightedTitle({ title, highlightedText }) {
   return (
     <>
       {before}
-      <span className="italic" style={{ color: colors.purple }}>
+      <span className="relative inline-block italic" style={{ color: colors.purple }}>
         {highlightedText}
+        <span
+          className="absolute left-0 right-0 -bottom-1 h-2 rounded-full -z-10"
+          style={{ background: "rgba(250,204,21,0.58)" }}
+        />
       </span>
       {after}
     </>
@@ -285,33 +289,50 @@ export function Contact({
     }
   };
 
+  const inputStyle = {
+    background: "rgba(255,255,255,0.92)",
+    border: "1px solid rgba(75,46,131,0.14)",
+    color: colors.dark,
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.95)",
+  };
+
   return (
     <section
       id="contact"
-      className="pt-36 pb-28 relative overflow-hidden min-h-screen"
+      className="pt-32 pb-24 relative overflow-hidden min-h-screen"
       style={{
         background: `
-          radial-gradient(circle at top left, rgba(75,46,131,0.14), transparent 34%),
-          radial-gradient(circle at bottom right, rgba(22,138,58,0.14), transparent 34%),
-          radial-gradient(circle at bottom left, rgba(215,25,32,0.08), transparent 30%),
-          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
+          radial-gradient(circle at 8% 10%, rgba(250,204,21,0.2), transparent 26%),
+          radial-gradient(circle at 90% 18%, rgba(56,189,248,0.18), transparent 30%),
+          radial-gradient(circle at 12% 90%, rgba(215,25,32,0.1), transparent 28%),
+          radial-gradient(circle at 88% 86%, rgba(22,138,58,0.14), transparent 28%),
+          linear-gradient(180deg, #FFF8EE 0%, #F8F4FF 48%, #EEF7FF 100%)
         `,
       }}
     >
       <div
-        className="absolute -bottom-32 right-0 w-[520px] h-[520px] rounded-full pointer-events-none"
+        className="absolute inset-0 pointer-events-none opacity-[0.23]"
         style={{
-          background:
-            "radial-gradient(circle, rgba(22,138,58,0.13), transparent 70%)",
-          filter: "blur(8px)",
+          backgroundImage:
+            "linear-gradient(rgba(75,46,131,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(75,46,131,0.08) 1px, transparent 1px)",
+          backgroundSize: "46px 46px",
         }}
       />
 
       <div
-        className="absolute top-0 left-0 w-[440px] h-[440px] rounded-full pointer-events-none"
+        className="absolute -top-36 -left-28 w-[430px] h-[430px] rounded-full pointer-events-none"
         style={{
           background:
-            "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
+            "radial-gradient(circle, rgba(75,46,131,0.13), transparent 70%)",
+          filter: "blur(7px)",
+        }}
+      />
+
+      <div
+        className="absolute top-24 -right-32 w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(56,189,248,0.15), transparent 70%)",
           filter: "blur(8px)",
         }}
       />
@@ -352,12 +373,12 @@ export function Contact({
         )}
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 26 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          className={`text-center mb-16 relative group ${
+          transition={{ duration: 0.65 }}
+          className={`text-center mb-12 relative group ${
             editMode
-              ? "rounded-[32px] p-6 border-2 border-dashed border-sky-300/70 bg-white/25"
+              ? "rounded-[28px] p-6 border-2 border-dashed border-sky-300/70 bg-white/30"
               : ""
           }`}
         >
@@ -373,22 +394,22 @@ export function Contact({
           )}
 
           <span
-            className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold mb-4"
+            className="inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-black mb-4"
             style={{
               background: "rgba(215,25,32,0.09)",
               color: colors.red,
-              border: "1px solid rgba(215,25,32,0.22)",
-              boxShadow: "0 10px 28px rgba(215,25,32,0.08)",
+              border: "1px solid rgba(215,25,32,0.2)",
+              boxShadow: "0 12px 28px rgba(215,25,32,0.08)",
             }}
           >
             {content.badgeText}
           </span>
 
           <h2
-            className="text-4xl md:text-5xl mb-4"
+            className="text-4xl md:text-5xl leading-tight mb-4"
             style={{
               fontFamily: "var(--font-display)",
-              fontWeight: 700,
+              fontWeight: 800,
               color: colors.dark,
             }}
           >
@@ -398,91 +419,155 @@ export function Contact({
             />
           </h2>
 
-          <p className="max-w-xl mx-auto text-lg" style={{ color: "#64748b" }}>
+          <p
+            className="max-w-2xl mx-auto text-base md:text-lg leading-relaxed"
+            style={{ color: "#64748B" }}
+          >
             {content.subtitle}
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-5 gap-10">
+        <div className="grid lg:grid-cols-12 gap-8 items-stretch">
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
+            initial={{ opacity: 0, x: -34 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7 }}
-            className="lg:col-span-2 space-y-5"
+            transition={{ duration: 0.65 }}
+            className="lg:col-span-5 space-y-5"
           >
-            {content.contactInfo.map((info) => {
-              const Icon = getContactIcon(info.icon);
+            <div
+              className="rounded-[34px] p-5 md:p-6 relative overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.72))",
+                border: "1px solid rgba(255,255,255,0.76)",
+                boxShadow:
+                  "0 24px 70px rgba(11,16,32,0.12), inset 0 1px 0 rgba(255,255,255,0.92)",
+                backdropFilter: "blur(16px)",
+              }}
+            >
+              <div
+                className="absolute -right-20 -top-20 w-56 h-56 rounded-full"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
+                }}
+              />
 
-              return (
+              <div className="relative z-10">
                 <div
-                  key={info.id || info.label}
-                  data-contact-card-id={info.id}
-                  className={`flex gap-4 p-5 rounded-2xl relative group ${
-                    editMode ? "border-2 border-dashed border-sky-300/70" : ""
-                  }`}
-                  style={{
-                    background:
-                      "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.74))",
-                    border: editMode ? undefined : `1px solid ${info.color}22`,
-                    boxShadow:
-                      "0 18px 46px rgba(11,16,32,0.09), 0 0 0 1px rgba(255,255,255,0.55)",
-                    backdropFilter: "blur(16px)",
-                  }}
+                  className="text-xs font-black uppercase tracking-[0.22em] mb-4"
+                  style={{ color: colors.purple }}
                 >
-                  {editMode && (
-                    <div className="absolute right-3 top-3 z-30 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                      <AdminActionButton
-                        label="Edit"
-                        icon={Pencil}
-                        tone="purple"
-                        onClick={() => onEditContactInfo(info.id)}
-                      />
-                      <AdminActionButton
-                        label="Delete"
-                        icon={Trash2}
-                        tone="red"
-                        onClick={() => onDeleteContactInfo(info.id)}
-                      />
-                    </div>
-                  )}
-
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{
-                      background: `${info.color}14`,
-                      border: `1px solid ${info.color}24`,
-                      boxShadow: `0 10px 24px ${info.color}18`,
-                    }}
-                  >
-                    <Icon className="w-5 h-5" style={{ color: info.color }} />
-                  </div>
-
-                  <div className={editMode ? "pr-24 md:pr-0" : ""}>
-                    <div
-                      className="text-xs font-semibold mb-0.5 uppercase tracking-wide"
-                      style={{ color: "#94a3b8" }}
-                    >
-                      {info.label}
-                    </div>
-                    <div
-                      className="text-sm font-medium"
-                      style={{ color: colors.dark }}
-                    >
-                      {info.value}
-                    </div>
-                  </div>
+                  School Contact Details
                 </div>
-              );
-            })}
+
+                <div className="space-y-4">
+                  {content.contactInfo.map((info, index) => {
+                    const Icon = getContactIcon(info.icon);
+
+                    return (
+                      <motion.div
+                        key={info.id || info.label}
+                        data-contact-card-id={info.id}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.42, delay: index * 0.05 }}
+                        whileHover={editMode ? undefined : { y: -4 }}
+                        className={`flex gap-4 p-4 rounded-[24px] relative group overflow-hidden ${
+                          editMode
+                            ? "border-2 border-dashed border-sky-300/70"
+                            : ""
+                        }`}
+                        style={{
+                          background:
+                            "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+                          border: editMode
+                            ? undefined
+                            : `1px solid ${info.color}22`,
+                          boxShadow:
+                            "0 16px 40px rgba(11,16,32,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+                        }}
+                      >
+                        <div
+                          className="absolute left-0 top-0 bottom-0 w-1.5"
+                          style={{ background: info.color }}
+                        />
+
+                        <div
+                          className="absolute -right-12 -top-12 w-32 h-32 rounded-full"
+                          style={{
+                            background: `radial-gradient(circle, ${info.color}18, transparent 70%)`,
+                          }}
+                        />
+
+                        {editMode && (
+                          <div className="absolute right-3 top-3 z-30 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                            <AdminActionButton
+                              label="Edit"
+                              icon={Pencil}
+                              tone="purple"
+                              onClick={() => onEditContactInfo(info.id)}
+                            />
+                            <AdminActionButton
+                              label="Delete"
+                              icon={Trash2}
+                              tone="red"
+                              onClick={() => onDeleteContactInfo(info.id)}
+                            />
+                          </div>
+                        )}
+
+                        <div
+                          className="rounded-2xl flex items-center justify-center flex-shrink-0 relative z-10"
+                          style={{
+                            width: 52,
+                            height: 52,
+                            background: `${info.color}14`,
+                            border: `1px solid ${info.color}24`,
+                            boxShadow: `0 14px 28px ${info.color}18`,
+                          }}
+                        >
+                          <Icon
+                            className="w-6 h-6"
+                            style={{ color: info.color }}
+                          />
+                        </div>
+
+                        <div
+                          className={`relative z-10 min-w-0 ${
+                            editMode ? "pr-24 md:pr-0" : ""
+                          }`}
+                        >
+                          <div
+                            className="text-xs font-black mb-1 uppercase tracking-[0.16em]"
+                            style={{ color: "#94A3B8" }}
+                          >
+                            {info.label}
+                          </div>
+                          <div
+                            className="text-sm md:text-base font-bold leading-relaxed"
+                            style={{ color: colors.dark }}
+                          >
+                            {info.value}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
 
             <div
-              className={`rounded-3xl overflow-hidden h-48 relative flex items-center justify-center group ${
+              className={`rounded-[34px] overflow-hidden min-h-[260px] relative flex items-center justify-center group ${
                 editMode ? "border-2 border-dashed border-sky-300/70" : ""
               }`}
               style={{
                 background:
-                  "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07)), linear-gradient(135deg, #020617, #1E1B4B)",
-                border: editMode ? undefined : "1px solid rgba(255,255,255,0.18)",
+                  "linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05)), linear-gradient(135deg, #020617, #1E1B4B 55%, #4B2E83)",
+                border: editMode
+                  ? undefined
+                  : "1px solid rgba(255,255,255,0.18)",
                 boxShadow:
                   "0 24px 64px rgba(11,16,32,0.28), 0 0 44px rgba(56,189,248,0.12)",
                 backdropFilter: "blur(18px)",
@@ -500,49 +585,49 @@ export function Contact({
               )}
 
               <div
-                className="absolute inset-0 opacity-15"
+                className="absolute inset-0 opacity-16"
                 style={{
                   backgroundImage:
                     "linear-gradient(rgba(255,255,255,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.16) 1px, transparent 1px)",
-                  backgroundSize: "36px 36px",
+                  backgroundSize: "34px 34px",
                 }}
               />
 
               <div
-                className="absolute -top-20 -right-20 w-52 h-52 rounded-full"
+                className="absolute -top-20 -right-20 w-56 h-56 rounded-full"
                 style={{
                   background:
-                    "radial-gradient(circle, rgba(56,189,248,0.32), transparent 70%)",
+                    "radial-gradient(circle, rgba(56,189,248,0.34), transparent 70%)",
                 }}
               />
 
               <div
-                className="absolute -bottom-20 -left-20 w-52 h-52 rounded-full"
+                className="absolute -bottom-20 -left-20 w-56 h-56 rounded-full"
                 style={{
                   background:
-                    "radial-gradient(circle, rgba(250,204,21,0.24), transparent 70%)",
+                    "radial-gradient(circle, rgba(250,204,21,0.25), transparent 70%)",
                 }}
               />
 
               <div className="text-center relative z-10 px-6">
                 <div
-                  className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center mb-3"
+                  className="w-16 h-16 mx-auto rounded-3xl flex items-center justify-center mb-4"
                   style={{
                     background: "rgba(255,255,255,0.12)",
                     border: "1px solid rgba(255,255,255,0.18)",
-                    boxShadow: "0 16px 38px rgba(0,0,0,0.22)",
+                    boxShadow: "0 16px 38px rgba(0,0,0,0.24)",
                   }}
                 >
-                  <MapPin className="w-7 h-7" style={{ color: colors.gold }} />
+                  <MapPin className="w-8 h-8" style={{ color: colors.gold }} />
                 </div>
 
-                <div className="text-white font-bold text-base">
+                <div className="text-white font-black text-lg leading-tight">
                   {content.mapCard.title}
                 </div>
 
                 <div
-                  className="text-xs mt-1 mb-4"
-                  style={{ color: "rgba(255,255,255,0.64)" }}
+                  className="text-sm mt-2 mb-5 leading-relaxed"
+                  style={{ color: "rgba(255,255,255,0.68)" }}
                 >
                   {content.mapCard.address}
                 </div>
@@ -557,7 +642,7 @@ export function Contact({
                       onEditMap();
                     }
                   }}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 hover:scale-105"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-black transition-all duration-300 hover:scale-105"
                   style={{
                     color: "#020617",
                     background:
@@ -573,24 +658,40 @@ export function Contact({
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
+            initial={{ opacity: 0, x: 34 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, delay: 0.15 }}
-            className="lg:col-span-3"
+            transition={{ duration: 0.65, delay: 0.1 }}
+            className="lg:col-span-7"
           >
             <div
-              className={`p-8 md:p-10 rounded-3xl h-full relative group ${
+              className={`p-6 md:p-10 rounded-[36px] h-full relative group overflow-hidden ${
                 editMode ? "border-2 border-dashed border-sky-300/70" : ""
               }`}
               style={{
                 background:
-                  "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.74))",
+                  "linear-gradient(145deg, rgba(255,255,255,0.98), rgba(255,255,255,0.8))",
                 border: editMode ? undefined : "1px solid rgba(75,46,131,0.14)",
                 boxShadow:
-                  "0 24px 70px rgba(11,16,32,0.12), 0 0 0 1px rgba(255,255,255,0.55)",
+                  "0 28px 78px rgba(11,16,32,0.13), inset 0 1px 0 rgba(255,255,255,0.9)",
                 backdropFilter: "blur(16px)",
               }}
             >
+              <div
+                className="absolute -right-24 -top-24 w-72 h-72 rounded-full pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
+                }}
+              />
+
+              <div
+                className="absolute -left-24 bottom-0 w-72 h-72 rounded-full pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(56,189,248,0.12), transparent 70%)",
+                }}
+              />
+
               {editMode && (
                 <div className="absolute right-4 top-4 z-30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                   <AdminActionButton
@@ -603,22 +704,44 @@ export function Contact({
               )}
 
               <form
-                onSubmit={editMode ? (event) => event.preventDefault() : handleSubmit(onSubmit)}
-                className="space-y-5"
+                onSubmit={
+                  editMode
+                    ? (event) => event.preventDefault()
+                    : handleSubmit(onSubmit)
+                }
+                className="space-y-5 relative z-10"
               >
-                <h3
-                  className="text-xl font-semibold mb-6"
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    color: colors.dark,
-                  }}
-                >
-                  {content.form.title}
-                </h3>
+                <div className="mb-7">
+                  <div
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-[0.18em] mb-4"
+                    style={{
+                      background: "rgba(75,46,131,0.08)",
+                      color: colors.purple,
+                      border: "1px solid rgba(75,46,131,0.14)",
+                    }}
+                  >
+                    <Send className="w-4 h-4" />
+                    Contact Form
+                  </div>
+
+                  <h3
+                    className="text-2xl md:text-3xl font-black"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      color: colors.dark,
+                    }}
+                  >
+                    {content.form.title}
+                  </h3>
+
+                  <p className="text-sm mt-2" style={{ color: "#64748B" }}>
+                    Fill out the form and the school team will get back to you.
+                  </p>
+                </div>
 
                 {submitMessage && (
                   <div
-                    className="p-4 rounded-xl text-sm font-medium"
+                    className="p-4 rounded-2xl text-sm font-bold"
                     style={{
                       background: "rgba(22,138,58,0.1)",
                       color: colors.green,
@@ -631,7 +754,7 @@ export function Contact({
 
                 {submitError && (
                   <div
-                    className="p-4 rounded-xl text-sm font-medium"
+                    className="p-4 rounded-2xl text-sm font-bold"
                     style={{
                       background: "rgba(215,25,32,0.1)",
                       color: colors.red,
@@ -645,7 +768,7 @@ export function Contact({
                 <div className="grid md:grid-cols-2 gap-5">
                   <div>
                     <label
-                      className="block text-sm font-medium mb-2"
+                      className="block text-sm font-bold mb-2"
                       style={{ color: "#475569" }}
                     >
                       {content.form.nameLabel}
@@ -656,20 +779,15 @@ export function Contact({
                       })}
                       disabled={editMode}
                       placeholder={content.form.namePlaceholder}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all disabled:opacity-70"
-                      style={{
-                        background: "rgba(255,255,255,0.82)",
-                        border: "1px solid rgba(75,46,131,0.16)",
-                        color: colors.dark,
-                        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
-                      }}
+                      className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all disabled:opacity-70 focus:ring-4 focus:ring-purple-100"
+                      style={inputStyle}
                     />
                     <ErrorText>{errors.name?.message}</ErrorText>
                   </div>
 
                   <div>
                     <label
-                      className="block text-sm font-medium mb-2"
+                      className="block text-sm font-bold mb-2"
                       style={{ color: "#475569" }}
                     >
                       {content.form.emailLabel}
@@ -681,13 +799,8 @@ export function Contact({
                       disabled={editMode}
                       type="email"
                       placeholder={content.form.emailPlaceholder}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all disabled:opacity-70"
-                      style={{
-                        background: "rgba(255,255,255,0.82)",
-                        border: "1px solid rgba(75,46,131,0.16)",
-                        color: colors.dark,
-                        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
-                      }}
+                      className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all disabled:opacity-70 focus:ring-4 focus:ring-purple-100"
+                      style={inputStyle}
                     />
                     <ErrorText>{errors.email?.message}</ErrorText>
                   </div>
@@ -696,7 +809,7 @@ export function Contact({
                 <div className="grid md:grid-cols-2 gap-5">
                   <div>
                     <label
-                      className="block text-sm font-medium mb-2"
+                      className="block text-sm font-bold mb-2"
                       style={{ color: "#475569" }}
                     >
                       {content.form.phoneLabel}
@@ -711,20 +824,15 @@ export function Contact({
                       disabled={editMode}
                       type="tel"
                       placeholder={content.form.phonePlaceholder}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all disabled:opacity-70"
-                      style={{
-                        background: "rgba(255,255,255,0.82)",
-                        border: "1px solid rgba(75,46,131,0.16)",
-                        color: colors.dark,
-                        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
-                      }}
+                      className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all disabled:opacity-70 focus:ring-4 focus:ring-purple-100"
+                      style={inputStyle}
                     />
                     <ErrorText>{errors.phone?.message}</ErrorText>
                   </div>
 
                   <div>
                     <label
-                      className="block text-sm font-medium mb-2"
+                      className="block text-sm font-bold mb-2"
                       style={{ color: "#475569" }}
                     >
                       {content.form.subjectLabel}
@@ -735,13 +843,8 @@ export function Contact({
                       })}
                       disabled={editMode}
                       placeholder={content.form.subjectPlaceholder}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all disabled:opacity-70"
-                      style={{
-                        background: "rgba(255,255,255,0.82)",
-                        border: "1px solid rgba(75,46,131,0.16)",
-                        color: colors.dark,
-                        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
-                      }}
+                      className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all disabled:opacity-70 focus:ring-4 focus:ring-purple-100"
+                      style={inputStyle}
                     />
                     <ErrorText>{errors.subject?.message}</ErrorText>
                   </div>
@@ -749,7 +852,7 @@ export function Contact({
 
                 <div>
                   <label
-                    className="block text-sm font-medium mb-2"
+                    className="block text-sm font-bold mb-2"
                     style={{ color: "#475569" }}
                   >
                     {content.form.messageLabel}
@@ -759,15 +862,10 @@ export function Contact({
                       required: "Message is required.",
                     })}
                     disabled={editMode}
-                    rows={5}
+                    rows={6}
                     placeholder={content.form.messagePlaceholder}
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all resize-none disabled:opacity-70"
-                    style={{
-                      background: "rgba(255,255,255,0.82)",
-                      border: "1px solid rgba(75,46,131,0.16)",
-                      color: colors.dark,
-                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
-                    }}
+                    className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all resize-none disabled:opacity-70 focus:ring-4 focus:ring-purple-100"
+                    style={inputStyle}
                   />
                   <ErrorText>{errors.message?.message}</ErrorText>
                 </div>
@@ -775,7 +873,7 @@ export function Contact({
                 <button
                   type="submit"
                   disabled={isSubmitting || editMode}
-                  className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold transition-all duration-300 hover:scale-[1.01] disabled:opacity-60"
+                  className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black transition-all duration-300 hover:scale-[1.01] disabled:opacity-60"
                   style={{
                     color: "#020617",
                     background:
@@ -784,11 +882,23 @@ export function Contact({
                       "0 22px 52px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
                   }}
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-5 h-5" />
                   {isSubmitting
                     ? content.form.sendingText
                     : content.form.buttonText}
                 </button>
+
+                <div
+                  className="rounded-2xl p-4 text-xs leading-relaxed"
+                  style={{
+                    background: "rgba(75,46,131,0.06)",
+                    border: "1px solid rgba(75,46,131,0.1)",
+                    color: "#64748B",
+                  }}
+                >
+                  Your message will be sent directly to the school office.
+                  Please include your correct phone number or email address.
+                </div>
               </form>
             </div>
           </motion.div>

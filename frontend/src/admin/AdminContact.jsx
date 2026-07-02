@@ -43,6 +43,14 @@ const colors = {
   gold: "#FACC15",
 };
 
+const lightAdminPanelStyle = {
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95))",
+  border: "1px solid rgba(75,46,131,0.12)",
+  boxShadow: "0 18px 44px rgba(15,23,42,0.08)",
+  backdropFilter: "blur(14px)",
+};
+
 function getAdminToken() {
   return (
     localStorage.getItem("adminToken") ||
@@ -138,7 +146,14 @@ function getContactIcon(icon) {
 
 function EditorHint({ icon: Icon, title, text, color }) {
   return (
-    <div className="rounded-2xl p-4 bg-white border border-slate-100">
+    <div
+      className="rounded-2xl p-4"
+      style={{
+        background: "rgba(255,255,255,0.9)",
+        border: "1px solid rgba(75,46,131,0.1)",
+        boxShadow: "0 14px 34px rgba(15,23,42,0.06)",
+      }}
+    >
       <div
         className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
         style={{ background: `${color}12`, color }}
@@ -151,7 +166,16 @@ function EditorHint({ icon: Icon, title, text, color }) {
   );
 }
 
-function ModalShell({ title, subtitle, icon: Icon, onClose, children, onSave, saving, saveLabel = "Save" }) {
+function ModalShell({
+  title,
+  subtitle,
+  icon: Icon,
+  onClose,
+  children,
+  onSave,
+  saving,
+  saveLabel = "Save",
+}) {
   return (
     <motion.div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
@@ -176,7 +200,9 @@ function ModalShell({ title, subtitle, icon: Icon, onClose, children, onSave, sa
       >
         <div
           className="h-1"
-          style={{ background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan}, ${colors.green})` }}
+          style={{
+            background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan}, ${colors.green})`,
+          }}
         />
 
         <div className="p-6 border-b border-slate-100 flex items-start justify-between gap-4">
@@ -184,7 +210,8 @@ function ModalShell({ title, subtitle, icon: Icon, onClose, children, onSave, sa
             <div
               className="w-12 h-12 rounded-2xl flex items-center justify-center"
               style={{
-                background: "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(56,189,248,0.18))",
+                background:
+                  "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(56,189,248,0.18))",
                 color: colors.dark,
               }}
             >
@@ -207,9 +234,7 @@ function ModalShell({ title, subtitle, icon: Icon, onClose, children, onSave, sa
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto">
-          {children}
-        </div>
+        <div className="p-6 overflow-y-auto">{children}</div>
 
         <div className="p-6 border-t border-slate-100 flex gap-3">
           <button
@@ -277,7 +302,9 @@ export default function AdminContact() {
         console.error("Load contact content error:", err);
         if (alive) {
           setForm(defaultContactContent);
-          setError("Could not load saved contact content. Default editor is shown.");
+          setError(
+            "Could not load saved contact content. Default editor is shown."
+          );
         }
       } finally {
         if (alive) setLoading(false);
@@ -295,7 +322,9 @@ export default function AdminContact() {
     if (!addedIdRef.current) return;
 
     const timer = setTimeout(() => {
-      const element = document.querySelector(`[data-contact-card-id="${addedIdRef.current}"]`);
+      const element = document.querySelector(
+        `[data-contact-card-id="${addedIdRef.current}"]`
+      );
       if (element) {
         element.scrollIntoView({ behavior: "smooth", block: "center" });
       }
@@ -376,7 +405,10 @@ export default function AdminContact() {
     };
   };
 
-  async function saveContent(nextContent, successMessage = "Contact page content saved successfully.") {
+  async function saveContent(
+    nextContent,
+    successMessage = "Contact page content saved successfully."
+  ) {
     setSuccess("");
     setError("");
     setSaving(true);
@@ -466,7 +498,10 @@ export default function AdminContact() {
       };
     }
 
-    const saved = await saveContent(nextForm, "Selected contact item saved successfully.");
+    const saved = await saveContent(
+      nextForm,
+      "Selected contact item saved successfully."
+    );
 
     if (saved) {
       closeEditor();
@@ -489,7 +524,10 @@ export default function AdminContact() {
     };
 
     addedIdRef.current = newId;
-    const saved = await saveContent(nextForm, "New contact block added. Edit it and save your changes.");
+    const saved = await saveContent(
+      nextForm,
+      "New contact block added. Edit it and save your changes."
+    );
 
     if (saved) {
       setEditingTarget({ type: "contactInfo", id: newId });
@@ -514,10 +552,15 @@ export default function AdminContact() {
 
     const nextForm = {
       ...mergeContactContent(form),
-      contactInfo: form.contactInfo.filter((item) => item.id !== deleteTarget.id),
+      contactInfo: form.contactInfo.filter(
+        (item) => item.id !== deleteTarget.id
+      ),
     };
 
-    const saved = await saveContent(nextForm, "Contact block deleted successfully.");
+    const saved = await saveContent(
+      nextForm,
+      "Contact block deleted successfully."
+    );
 
     if (saved) {
       setDeleteTarget(null);
@@ -528,7 +571,9 @@ export default function AdminContact() {
     if (!editingTarget) return "";
     if (editingTarget.type === "hero") return "Edit Contact Heading";
     if (editingTarget.type === "contactInfo") {
-      return selectedContactInfo ? `Edit ${selectedContactInfo.label}` : "Edit Contact Block";
+      return selectedContactInfo
+        ? `Edit ${selectedContactInfo.label}`
+        : "Edit Contact Block";
     }
     if (editingTarget.type === "mapCard") return "Edit Map Card";
     if (editingTarget.type === "form") return "Edit Contact Form Text";
@@ -546,8 +591,13 @@ export default function AdminContact() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#FFF8EE" }}>
-        <div className="text-slate-600 font-semibold">Loading contact editor...</div>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "#FFF8EE" }}
+      >
+        <div className="text-slate-600 font-semibold">
+          Loading contact editor...
+        </div>
       </div>
     );
   }
@@ -565,34 +615,183 @@ export default function AdminContact() {
         `,
       }}
     >
+      <style>
+        {`
+          .admin-contact-preview-frame {
+            overflow: hidden !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            position: relative !important;
+            z-index: 0 !important;
+          }
+
+          .admin-contact-preview-frame .bg-slate-950 {
+            background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95)) !important;
+            color: #0F172A !important;
+            border: 1px solid rgba(75,46,131,0.12) !important;
+            box-shadow: 0 18px 44px rgba(15,23,42,0.08) !important;
+          }
+
+          .admin-contact-preview-frame .bg-slate-950 [class*="text-white"] {
+            color: #0F172A !important;
+          }
+
+          .admin-contact-preview-frame .bg-slate-950 [class*="text-white/45"],
+          .admin-contact-preview-frame .bg-slate-950 [class*="text-white/55"],
+          .admin-contact-preview-frame .bg-slate-950 [class*="text-white/70"] {
+            color: #7C5CC4 !important;
+          }
+
+          @media (max-width: 767px) {
+            .admin-contact-preview-frame {
+              overflow-x: hidden !important;
+            }
+
+            .admin-contact-preview-frame * {
+              box-sizing: border-box !important;
+            }
+
+            .admin-contact-preview-frame .group .opacity-0,
+            .admin-contact-preview-frame .group [class*="opacity-0"],
+            .admin-contact-preview-frame .group .md\\:opacity-0,
+            .admin-contact-preview-frame .group [class*="md:opacity-0"],
+            .admin-contact-preview-frame .group [class*="group-hover:opacity"],
+            .admin-contact-preview-frame [class*="group-hover:opacity"] {
+              opacity: 1 !important;
+              visibility: visible !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-contact-preview-frame .group .pointer-events-none,
+            .admin-contact-preview-frame .group [class*="pointer-events-none"] {
+              pointer-events: auto !important;
+            }
+
+            .admin-contact-preview-frame .group button[class*="opacity-0"],
+            .admin-contact-preview-frame button[class*="group-hover:opacity"],
+            .admin-contact-preview-frame button[class*="opacity-0"] {
+              opacity: 1 !important;
+              visibility: visible !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-contact-preview-frame [data-contact-card-id] {
+              position: relative !important;
+              padding-top: 3.2rem !important;
+              padding-right: 1rem !important;
+              overflow: hidden !important;
+            }
+
+            .admin-contact-preview-frame [data-contact-card-id] * {
+              min-width: 0 !important;
+            }
+
+            .admin-contact-preview-frame [data-contact-card-id] p,
+            .admin-contact-preview-frame [data-contact-card-id] span,
+            .admin-contact-preview-frame [data-contact-card-id] div {
+              word-break: normal !important;
+              overflow-wrap: break-word !important;
+              white-space: normal !important;
+              writing-mode: horizontal-tb !important;
+              text-orientation: mixed !important;
+            }
+
+            .admin-contact-preview-frame [data-contact-card-id] [class*="tracking"] {
+              letter-spacing: 0.06em !important;
+              white-space: normal !important;
+              word-break: normal !important;
+              overflow-wrap: normal !important;
+            }
+
+            .admin-contact-preview-frame [data-contact-card-id] [class*="absolute"] {
+              top: 0.75rem !important;
+              right: 0.75rem !important;
+              left: auto !important;
+              display: flex !important;
+              flex-direction: row !important;
+              align-items: center !important;
+              justify-content: flex-end !important;
+              gap: 0.4rem !important;
+              width: auto !important;
+              max-width: calc(100% - 1.5rem) !important;
+              z-index: 35 !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-contact-preview-frame [class*="absolute"] button,
+            .admin-contact-preview-frame button[class*="rounded-full"] {
+              min-width: 2.15rem !important;
+              width: 2.15rem !important;
+              height: 2.15rem !important;
+              padding: 0 !important;
+              border-radius: 9999px !important;
+              font-size: 0 !important;
+              display: inline-flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              gap: 0 !important;
+              white-space: nowrap !important;
+              z-index: 35 !important;
+              pointer-events: auto !important;
+              cursor: pointer !important;
+              flex-shrink: 0 !important;
+            }
+
+            .admin-contact-preview-frame [class*="absolute"] button svg,
+            .admin-contact-preview-frame button[class*="rounded-full"] svg {
+              width: 0.95rem !important;
+              height: 0.95rem !important;
+              margin: 0 !important;
+              flex-shrink: 0 !important;
+              pointer-events: none !important;
+            }
+
+            .admin-contact-preview-frame input,
+            .admin-contact-preview-frame textarea,
+            .admin-contact-preview-frame select {
+              width: 100% !important;
+              max-width: 100% !important;
+            }
+
+            .admin-contact-preview-frame [class*="lg:grid-cols"],
+            .admin-contact-preview-frame [class*="md:grid-cols"] {
+              grid-template-columns: minmax(0, 1fr) !important;
+            }
+          }
+        `}
+      </style>
+
       <header
-        className="sticky top-0 z-40"
-        style={{
-          background:
-            "linear-gradient(145deg, rgba(2,6,23,0.96), rgba(15,23,42,0.88))",
-          borderBottom: "1px solid rgba(255,255,255,0.12)",
-          boxShadow: "0 18px 52px rgba(0,0,0,0.22)",
-          backdropFilter: "blur(22px)",
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+  className="relative z-0"
+  style={{
+    background:
+      "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95))",
+    borderBottom: "1px solid rgba(75,46,131,0.12)",
+    boxShadow: "0 14px 36px rgba(15,23,42,0.08)",
+    backdropFilter: "blur(18px)",
+  }}
+>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <button
             type="button"
             onClick={() => navigate("/admin/dashboard")}
-            className="inline-flex items-center gap-2 text-white font-bold"
+            className="inline-flex items-center gap-2 font-black transition-all hover:-translate-x-1"
+            style={{ color: colors.dark }}
           >
             <ArrowLeft className="w-5 h-5" />
             Back to Dashboard
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => navigate("/admin/contact-messages")}
-              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
+              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-black transition-all hover:scale-105"
               style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.14)",
+                color: colors.dark,
+                background: "rgba(255,255,255,0.72)",
+                border: "1px solid rgba(75,46,131,0.12)",
+                boxShadow: "0 10px 26px rgba(15,23,42,0.06)",
               }}
             >
               <Inbox className="w-4 h-4" />
@@ -603,10 +802,12 @@ export default function AdminContact() {
               href="/contact"
               target="_blank"
               rel="noreferrer"
-              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
+              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-black transition-all hover:scale-105"
               style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.14)",
+                color: colors.dark,
+                background: "rgba(255,255,255,0.72)",
+                border: "1px solid rgba(75,46,131,0.12)",
+                boxShadow: "0 10px 26px rgba(15,23,42,0.06)",
               }}
             >
               <ExternalLink className="w-4 h-4" />
@@ -617,12 +818,12 @@ export default function AdminContact() {
               type="button"
               onClick={() => saveContent(form)}
               disabled={saving}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all hover:scale-105 disabled:opacity-60"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-black transition-all hover:scale-105 disabled:opacity-60"
               style={{
                 color: "#020617",
                 background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
                 boxShadow:
-                  "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
+                  "0 18px 42px rgba(56,189,248,0.24), inset 0 1px 0 rgba(255,255,255,0.45)",
               }}
             >
               <Save className="w-4 h-4" />
@@ -632,18 +833,19 @@ export default function AdminContact() {
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-6 py-10">
+      <main className="max-w-[1600px] mx-auto px-3 sm:px-6 py-6 sm:py-10">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-6 sm:mb-8 rounded-[28px] sm:rounded-[34px] p-5 md:p-8"
+          style={lightAdminPanelStyle}
         >
           <span
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-5"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-black mb-5"
             style={{
-              background: "rgba(215,25,32,0.1)",
+              background: "rgba(215,25,32,0.08)",
               color: colors.red,
-              border: "1px solid rgba(215,25,32,0.2)",
+              border: "1px solid rgba(215,25,32,0.18)",
             }}
           >
             <ContactIcon className="w-4 h-4" />
@@ -663,7 +865,8 @@ export default function AdminContact() {
           </h1>
 
           <p className="text-slate-500 max-w-3xl text-lg">
-            Hover the real Contact page below. Edit heading, contact cards, map card, and form text directly from the visual preview.
+            Hover the real Contact page below. Edit heading, contact cards, map
+            card, and form text directly from the visual preview.
           </p>
         </motion.div>
 
@@ -709,7 +912,7 @@ export default function AdminContact() {
         </div>
 
         <div
-          className="rounded-[34px] overflow-hidden"
+          className="admin-contact-preview-frame rounded-[24px] sm:rounded-[34px] overflow-hidden"
           style={{
             border: "1px solid rgba(15,23,42,0.08)",
             boxShadow: "0 24px 70px rgba(11,16,32,0.12)",
@@ -757,7 +960,9 @@ export default function AdminContact() {
                 <Field
                   label="Purple Italic Highlight Text"
                   value={modalForm.highlightedText}
-                  onChange={(value) => updateModalField("highlightedText", value)}
+                  onChange={(value) =>
+                    updateModalField("highlightedText", value)
+                  }
                   placeholder="Example: Hear From You"
                 />
 
@@ -829,7 +1034,9 @@ export default function AdminContact() {
                     placeholder="Paste full Google Maps link, example: https://maps.app.goo.gl/..."
                   />
                   <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                    Paste the full link with https://. If admin pastes maps.app.goo.gl or google.com/maps without https://, it will be fixed automatically while saving.
+                    Paste the full link with https://. If admin pastes
+                    maps.app.goo.gl or google.com/maps without https://, it will
+                    be fixed automatically while saving.
                   </p>
                 </div>
               </div>
@@ -852,7 +1059,9 @@ export default function AdminContact() {
                   <Field
                     label="Name Placeholder"
                     value={modalForm.namePlaceholder}
-                    onChange={(value) => updateModalField("namePlaceholder", value)}
+                    onChange={(value) =>
+                      updateModalField("namePlaceholder", value)
+                    }
                   />
                   <Field
                     label="Email Label"
@@ -862,7 +1071,9 @@ export default function AdminContact() {
                   <Field
                     label="Email Placeholder"
                     value={modalForm.emailPlaceholder}
-                    onChange={(value) => updateModalField("emailPlaceholder", value)}
+                    onChange={(value) =>
+                      updateModalField("emailPlaceholder", value)
+                    }
                   />
                   <Field
                     label="Phone Label"
@@ -872,22 +1083,30 @@ export default function AdminContact() {
                   <Field
                     label="Phone Placeholder"
                     value={modalForm.phonePlaceholder}
-                    onChange={(value) => updateModalField("phonePlaceholder", value)}
+                    onChange={(value) =>
+                      updateModalField("phonePlaceholder", value)
+                    }
                   />
                   <Field
                     label="Subject Label"
                     value={modalForm.subjectLabel}
-                    onChange={(value) => updateModalField("subjectLabel", value)}
+                    onChange={(value) =>
+                      updateModalField("subjectLabel", value)
+                    }
                   />
                   <Field
                     label="Subject Placeholder"
                     value={modalForm.subjectPlaceholder}
-                    onChange={(value) => updateModalField("subjectPlaceholder", value)}
+                    onChange={(value) =>
+                      updateModalField("subjectPlaceholder", value)
+                    }
                   />
                   <Field
                     label="Message Label"
                     value={modalForm.messageLabel}
-                    onChange={(value) => updateModalField("messageLabel", value)}
+                    onChange={(value) =>
+                      updateModalField("messageLabel", value)
+                    }
                   />
                   <Field
                     label="Button Text"
@@ -897,19 +1116,25 @@ export default function AdminContact() {
                   <Field
                     label="Sending Text"
                     value={modalForm.sendingText}
-                    onChange={(value) => updateModalField("sendingText", value)}
+                    onChange={(value) =>
+                      updateModalField("sendingText", value)
+                    }
                   />
                   <Field
                     label="Success Message"
                     value={modalForm.successMessage}
-                    onChange={(value) => updateModalField("successMessage", value)}
+                    onChange={(value) =>
+                      updateModalField("successMessage", value)
+                    }
                   />
                 </div>
 
                 <TextArea
                   label="Message Placeholder"
                   value={modalForm.messagePlaceholder}
-                  onChange={(value) => updateModalField("messagePlaceholder", value)}
+                  onChange={(value) =>
+                    updateModalField("messagePlaceholder", value)
+                  }
                   rows={4}
                 />
 
@@ -928,7 +1153,10 @@ export default function AdminContact() {
         {deleteTarget && (
           <motion.div
             className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
-            style={{ background: "rgba(2,6,23,0.58)", backdropFilter: "blur(14px)" }}
+            style={{
+              background: "rgba(2,6,23,0.58)",
+              backdropFilter: "blur(14px)",
+            }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -951,7 +1179,8 @@ export default function AdminContact() {
               </h3>
 
               <p className="text-sm text-slate-500 mb-6">
-                This will remove <b>{deleteTarget.label}</b> from the public Contact page after saving.
+                This will remove <b>{deleteTarget.label}</b> from the public
+                Contact page after saving.
               </p>
 
               <div className="flex gap-3">
@@ -969,7 +1198,9 @@ export default function AdminContact() {
                   onClick={confirmDeleteContactInfo}
                   disabled={saving}
                   className="flex-1 py-3 rounded-2xl text-sm font-black text-white disabled:opacity-60"
-                  style={{ background: `linear-gradient(135deg, ${colors.red}, #9B1117)` }}
+                  style={{
+                    background: `linear-gradient(135deg, ${colors.red}, #9B1117)`,
+                  }}
                 >
                   {saving ? "Deleting..." : "Yes, Delete"}
                 </button>

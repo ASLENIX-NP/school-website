@@ -39,6 +39,13 @@ const colors = {
   cyan: "#38BDF8",
   gold: "#FACC15",
 };
+const lightAdminPanelStyle = {
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95))",
+  border: "1px solid rgba(75,46,131,0.12)",
+  boxShadow: "0 18px 44px rgba(15,23,42,0.08)",
+  backdropFilter: "blur(14px)",
+};
 
 function getAdminToken() {
   return (
@@ -813,44 +820,105 @@ export default function AdminFooter() {
         `,
       }}
     >
-      <header
-        className="sticky top-0 z-40"
+      <style>
+  {`
+    .admin-footer-preview-frame {
+      overflow: hidden !important;
+      position: relative !important;
+      z-index: 0 !important;
+    }
+
+    .admin-footer-preview-frame .bg-slate-950 {
+      background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95)) !important;
+      color: #0F172A !important;
+      border: 1px solid rgba(75,46,131,0.12) !important;
+      box-shadow: 0 18px 44px rgba(15,23,42,0.08) !important;
+    }
+
+    .admin-footer-preview-frame .bg-slate-950 [class*="text-white"] {
+      color: #0F172A !important;
+    }
+
+    .admin-footer-preview-frame .bg-slate-950 [class*="text-white/45"],
+    .admin-footer-preview-frame .bg-slate-950 [class*="text-white/55"],
+    .admin-footer-preview-frame .bg-slate-950 [class*="text-white/70"] {
+      color: #64748B !important;
+    }
+
+    @media (max-width: 767px) {
+      .admin-footer-preview-frame .group .md\\:opacity-0,
+      .admin-footer-preview-frame [class*="group-hover:opacity"] {
+        opacity: 1 !important;
+      }
+
+      .admin-footer-preview-frame [class*="z-40"],
+      .admin-footer-preview-frame [class*="z-50"],
+      .admin-footer-preview-frame [class*="z-[40]"],
+      .admin-footer-preview-frame [class*="z-[50]"],
+      .admin-footer-preview-frame [class*="z-[60]"],
+      .admin-footer-preview-frame [class*="z-[70]"],
+      .admin-footer-preview-frame [class*="z-[80]"],
+      .admin-footer-preview-frame [class*="z-[90]"],
+      .admin-footer-preview-frame [class*="z-[999]"] {
+        z-index: 20 !important;
+      }
+
+      .admin-footer-preview-frame [class*="absolute"][class*="right-"],
+      .admin-footer-preview-frame [class*="absolute"][class*="-right"] {
+        right: 0.5rem !important;
+        max-width: calc(100% - 1rem) !important;
+      }
+
+      .admin-footer-preview-frame [class*="absolute"] button {
+        min-width: 2.25rem !important;
+        width: auto !important;
+        min-height: 2.25rem !important;
+        padding: 0.5rem 0.75rem !important;
+        white-space: normal !important;
+      }
+    }
+  `}
+</style>
+     <header
+  className="relative z-0"
+  style={{
+    background:
+      "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95))",
+    borderBottom: "1px solid rgba(75,46,131,0.12)",
+    boxShadow: "0 14px 36px rgba(15,23,42,0.08)",
+    backdropFilter: "blur(18px)",
+  }}
+>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <button
+      type="button"
+      onClick={() => navigate("/admin/dashboard")}
+      className="inline-flex w-fit items-center gap-2 font-black transition-all hover:-translate-x-1"
+      style={{ color: colors.dark }}
+    >
+      <ArrowLeft className="w-5 h-5" />
+      Back to Dashboard
+    </button>
+
+    <div className="flex flex-wrap items-center gap-3">
+      <a
+        href="/"
+        target="_blank"
+        rel="noreferrer"
+        className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-black transition-all hover:scale-105"
         style={{
-          background:
-            "linear-gradient(145deg, rgba(2,6,23,0.96), rgba(15,23,42,0.88))",
-          borderBottom: "1px solid rgba(255,255,255,0.12)",
-          boxShadow: "0 18px 52px rgba(0,0,0,0.22)",
-          backdropFilter: "blur(22px)",
+          color: colors.dark,
+          background: "rgba(255,255,255,0.72)",
+          border: "1px solid rgba(75,46,131,0.12)",
+          boxShadow: "0 10px 26px rgba(15,23,42,0.06)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate("/admin/dashboard")}
-            className="inline-flex items-center gap-2 text-white font-bold"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back to Dashboard
-          </button>
-
-          <div className="flex items-center gap-3">
-            <a
-              href="/"
-              target="_blank"
-              rel="noreferrer"
-              className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
-              style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.14)",
-              }}
-            >
-              <ExternalLink className="w-4 h-4" />
-              View Website
-            </a>
-
-          </div>
-        </div>
-      </header>
+        <ExternalLink className="w-4 h-4" />
+        View Website
+      </a>
+    </div>
+  </div>
+</header>
 
       <main className="max-w-[1600px] mx-auto px-6 py-10">
         <motion.div
@@ -902,15 +970,15 @@ export default function AdminFooter() {
         )}
 
         <div
-          className="rounded-[32px] p-4 md:p-6"
-          style={{
-            background:
-              "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
-            border: "1px solid rgba(11,16,32,0.08)",
-            boxShadow:
-              "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
-          }}
-        >
+  className="admin-footer-preview-frame rounded-[24px] sm:rounded-[32px] p-3 sm:p-4 md:p-6"
+  style={{
+    background:
+      "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+    border: "1px solid rgba(11,16,32,0.08)",
+    boxShadow:
+      "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
+  }}
+>
           <Footer
             editMode
             contentOverride={form}

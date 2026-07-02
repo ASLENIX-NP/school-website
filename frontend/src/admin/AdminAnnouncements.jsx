@@ -29,7 +29,23 @@ const colors = {
   gold: "#FACC15",
 };
 
-function Field({ label, value, onChange, placeholder = "", type = "text", required = false, icon: Icon }) {
+const lightAdminPanelStyle = {
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95))",
+  border: "1px solid rgba(75,46,131,0.12)",
+  boxShadow: "0 18px 44px rgba(15,23,42,0.08)",
+  backdropFilter: "blur(14px)",
+};
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder = "",
+  type = "text",
+  required = false,
+  icon: Icon,
+}) {
   return (
     <div>
       <label className="block text-sm font-bold mb-2 text-slate-700">
@@ -84,31 +100,37 @@ function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
 function EditorCard({ icon: Icon, title, color, children, gradient }) {
   return (
     <div
-      className="rounded-3xl p-6 md:p-8 transition-all duration-300 hover:shadow-xl"
+      className="rounded-3xl p-5 sm:p-6 md:p-8 transition-all duration-300 hover:shadow-xl"
       style={{
-        background: gradient || "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+        background:
+          gradient ||
+          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
         border: "1px solid rgba(11,16,32,0.08)",
         boxShadow:
           "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
       }}
     >
       <div className="flex items-center gap-3 mb-6">
-        <div
-          className="p-2 rounded-xl"
-          style={{ background: `${color}15` }}
-        >
+        <div className="p-2 rounded-xl" style={{ background: `${color}15` }}>
           <Icon className="w-5 h-5" style={{ color }} />
         </div>
-        <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+          {title}
+        </h2>
       </div>
       {children}
     </div>
   );
 }
 
-function AnnouncementCard({ announcement, onDelete, onToggleVisibility, onEdit }) {
+function AnnouncementCard({
+  announcement,
+  onDelete,
+  onToggleVisibility,
+  onEdit,
+}) {
   const hasImage = announcement.image_url && announcement.image_url !== "";
-  
+
   return (
     <div
       className="rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
@@ -126,11 +148,11 @@ function AnnouncementCard({ announcement, onDelete, onToggleVisibility, onEdit }
             alt={announcement.title}
             className="w-full h-full object-cover"
             onError={(e) => {
-              e.target.style.display = 'none';
+              e.target.style.display = "none";
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-          <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2">
+          <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-center gap-2">
             <span
               className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold"
               style={{
@@ -160,7 +182,9 @@ function AnnouncementCard({ announcement, onDelete, onToggleVisibility, onEdit }
       <div className="p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold text-slate-950">{announcement.title || "Untitled"}</h3>
+            <h3 className="text-lg font-bold text-slate-950">
+              {announcement.title || "Untitled"}
+            </h3>
             <p className="text-sm text-slate-500 mt-1 line-clamp-2">
               {announcement.description || "No description"}
             </p>
@@ -173,6 +197,7 @@ function AnnouncementCard({ announcement, onDelete, onToggleVisibility, onEdit }
               </span>
             </div>
           </div>
+
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               type="button"
@@ -186,18 +211,28 @@ function AnnouncementCard({ announcement, onDelete, onToggleVisibility, onEdit }
             >
               <Edit2 className="w-4 h-4" />
             </button>
+
             <button
               type="button"
               onClick={() => onToggleVisibility(announcement)}
               className="p-2 rounded-xl transition-all hover:scale-110"
               style={{
-                background: announcement.visible !== false ? "rgba(22,138,58,0.08)" : "rgba(100,116,139,0.1)",
-                color: announcement.visible !== false ? colors.green : "#64748B",
+                background:
+                  announcement.visible !== false
+                    ? "rgba(22,138,58,0.08)"
+                    : "rgba(100,116,139,0.1)",
+                color:
+                  announcement.visible !== false ? colors.green : "#64748B",
               }}
               title={announcement.visible !== false ? "Visible" : "Hidden"}
             >
-              {announcement.visible !== false ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              {announcement.visible !== false ? (
+                <Eye className="w-4 h-4" />
+              ) : (
+                <EyeOff className="w-4 h-4" />
+              )}
             </button>
+
             <button
               type="button"
               onClick={() => onDelete(announcement.id)}
@@ -221,7 +256,7 @@ function AnnouncementPreview({ announcements }) {
 
   return (
     <div
-      className="min-h-full p-6"
+      className="min-h-full p-5 sm:p-6"
       style={{
         background:
           "radial-gradient(circle at top left, rgba(75,46,131,0.08), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F8FAFC 100%)",
@@ -285,7 +320,7 @@ function AnnouncementPreview({ announcements }) {
                   alt={item.title}
                   className="w-full h-40 object-cover"
                   onError={(e) => {
-                    e.target.style.display = 'none';
+                    e.target.style.display = "none";
                   }}
                 />
               )}
@@ -341,6 +376,7 @@ export default function AdminAnnouncements() {
     try {
       const res = await fetch("http://localhost:5000/api/announcements");
       const data = await res.json();
+
       if (data.success) {
         setAnnouncements(data.data || []);
       } else {
@@ -391,12 +427,17 @@ export default function AdminAnnouncements() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this announcement?")) return;
+    if (!window.confirm("Are you sure you want to delete this announcement?")) {
+      return;
+    }
+
     try {
       const res = await fetch(`http://localhost:5000/api/announcements/${id}`, {
         method: "DELETE",
       });
+
       const data = await res.json();
+
       if (data.success) {
         setSuccess("Announcement deleted successfully.");
         fetchAnnouncements();
@@ -412,13 +453,19 @@ export default function AdminAnnouncements() {
 
   const handleToggleVisibility = async (item) => {
     const newVisibility = item.visible !== false ? false : true;
+
     try {
-      const res = await fetch(`http://localhost:5000/api/announcements/${item.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...item, visible: newVisibility }),
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/announcements/${item.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...item, visible: newVisibility }),
+        }
+      );
+
       const data = await res.json();
+
       if (data.success) {
         fetchAnnouncements();
       }
@@ -438,6 +485,7 @@ export default function AdminAnnouncements() {
       setError("Please upload only PNG, JPG, WebP, or GIF images.");
       return null;
     }
+
     if (file.size > maxSize) {
       setError("Image must be less than 6 MB.");
       return null;
@@ -450,9 +498,13 @@ export default function AdminAnnouncements() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await axios.post("http://localhost:5000/api/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await axios.post(
+        "http://localhost:5000/api/upload",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
       const uploadedUrl =
         res.data?.url ||
@@ -482,7 +534,7 @@ export default function AdminAnnouncements() {
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
     setFormData({ ...formData, image_url: "Uploading..." });
@@ -537,7 +589,11 @@ export default function AdminAnnouncements() {
       const data = await res.json();
 
       if (data.success) {
-        setSuccess(editingId ? "Announcement updated successfully." : "Announcement added successfully.");
+        setSuccess(
+          editingId
+            ? "Announcement updated successfully."
+            : "Announcement added successfully."
+        );
         resetForm();
         fetchAnnouncements();
       } else {
@@ -553,15 +609,20 @@ export default function AdminAnnouncements() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#FFF8EE" }}>
-        <div className="text-slate-600 font-semibold">Loading announcements...</div>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "#FFF8EE" }}
+      >
+        <div className="text-slate-600 font-semibold">
+          Loading announcements...
+        </div>
       </div>
     );
   }
 
   return (
     <section
-      className="min-h-screen relative overflow-hidden"
+      className="admin-announcements-editor min-h-screen relative overflow-hidden"
       style={{
         background: `
           radial-gradient(circle at top right, rgba(56,189,248,0.16), transparent 34%),
@@ -570,31 +631,55 @@ export default function AdminAnnouncements() {
         `,
       }}
     >
-      {/* Decorative floating elements */}
+      <style>
+        {`
+          @media (max-width: 767px) {
+            .admin-announcements-editor [class*="opacity-0"] {
+              opacity: 1 !important;
+            }
+
+            .admin-announcements-editor [class*="group-hover:opacity"] {
+              opacity: 1 !important;
+            }
+
+            .admin-announcements-editor [class*="z-50"],
+            .admin-announcements-editor [class*="z-[50]"],
+            .admin-announcements-editor [class*="z-[60]"],
+            .admin-announcements-editor [class*="z-[70]"],
+            .admin-announcements-editor [class*="z-[80]"],
+            .admin-announcements-editor [class*="z-[90]"],
+            .admin-announcements-editor [class*="z-[999]"] {
+              z-index: 20 !important;
+            }
+          }
+        `}
+      </style>
+
       <div className="absolute top-40 right-20 w-64 h-64 rounded-full bg-red-500/5 blur-3xl pointer-events-none" />
       <div className="absolute bottom-40 left-20 w-72 h-72 rounded-full bg-purple-500/5 blur-3xl pointer-events-none" />
 
       <header
-        className="sticky top-0 z-40"
+        className="relative z-0"
         style={{
           background:
-            "linear-gradient(145deg, rgba(2,6,23,0.96), rgba(15,23,42,0.88))",
-          borderBottom: "1px solid rgba(255,255,255,0.12)",
-          boxShadow: "0 18px 52px rgba(0,0,0,0.22)",
-          backdropFilter: "blur(22px)",
+            "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95))",
+          borderBottom: "1px solid rgba(75,46,131,0.12)",
+          boxShadow: "0 14px 36px rgba(15,23,42,0.08)",
+          backdropFilter: "blur(18px)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => navigate("/admin/dashboard")}
-            className="inline-flex items-center gap-2 text-white font-bold hover:text-red-400 transition-colors"
+            className="inline-flex w-fit items-center gap-2 font-black transition-all hover:-translate-x-1"
+            style={{ color: colors.dark }}
           >
             <ArrowLeft className="w-5 h-5" />
             Back to Dashboard
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={handleSubmit}
@@ -614,7 +699,7 @@ export default function AdminAnnouncements() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-10">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -636,7 +721,7 @@ export default function AdminAnnouncements() {
           </div>
 
           <h1
-            className="text-4xl md:text-6xl mb-4"
+            className="text-3xl md:text-6xl mb-4"
             style={{
               fontFamily: "var(--font-display)",
               fontWeight: 850,
@@ -647,8 +732,9 @@ export default function AdminAnnouncements() {
             Announcement Manager
           </h1>
 
-          <p className="text-slate-500 max-w-3xl text-lg">
-            Add, edit, and manage announcements. These will appear on the homepage as popups.
+          <p className="text-slate-500 max-w-3xl text-base sm:text-lg">
+            Add, edit, and manage announcements. These will appear on the
+            homepage as popups.
           </p>
         </motion.div>
 
@@ -685,9 +771,9 @@ export default function AdminAnnouncements() {
 
         <div className="grid xl:grid-cols-[780px_1fr] gap-8 items-start">
           <div className="space-y-8">
-            <EditorCard 
-              icon={editingId ? Edit2 : Plus} 
-              title={editingId ? "Edit Announcement" : "Add New Announcement"} 
+            <EditorCard
+              icon={editingId ? Edit2 : Plus}
+              title={editingId ? "Edit Announcement" : "Add New Announcement"}
               color={colors.red}
               gradient="linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,245,245,0.92))"
             >
@@ -695,7 +781,9 @@ export default function AdminAnnouncements() {
                 <Field
                   label="Announcement Title"
                   value={formData.title}
-                  onChange={(value) => setFormData({ ...formData, title: value })}
+                  onChange={(value) =>
+                    setFormData({ ...formData, title: value })
+                  }
                   placeholder="e.g., Vacancy Announcement 2026"
                   required
                   icon={Edit2}
@@ -712,7 +800,8 @@ export default function AdminAnnouncements() {
                       border: "2px dashed rgba(75,46,131,0.16)",
                     }}
                   >
-                    {(imagePreview || formData.image_url) && formData.image_url !== "Uploading..." ? (
+                    {(imagePreview || formData.image_url) &&
+                    formData.image_url !== "Uploading..." ? (
                       <div className="space-y-3">
                         <div className="relative rounded-xl overflow-hidden">
                           <img
@@ -720,7 +809,8 @@ export default function AdminAnnouncements() {
                             alt="Announcement"
                             className="w-full h-48 object-cover"
                             onError={(e) => {
-                              e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                              e.target.src =
+                                "https://via.placeholder.com/400x300?text=No+Image";
                             }}
                           />
                           <button
@@ -738,8 +828,14 @@ export default function AdminAnnouncements() {
                       </div>
                     ) : (
                       <label className="flex flex-col items-center justify-center gap-2 cursor-pointer py-6 hover:bg-purple-50/50 rounded-xl transition-colors">
-                        <div className="p-3 rounded-full" style={{ background: "rgba(75,46,131,0.08)" }}>
-                          <UploadCloud className="w-8 h-8" style={{ color: colors.purple }} />
+                        <div
+                          className="p-3 rounded-full"
+                          style={{ background: "rgba(75,46,131,0.08)" }}
+                        >
+                          <UploadCloud
+                            className="w-8 h-8"
+                            style={{ color: colors.purple }}
+                          />
                         </div>
                         <span className="text-sm font-bold text-slate-800">
                           {uploading ? "Uploading..." : "Click to Upload Image"}
@@ -757,6 +853,7 @@ export default function AdminAnnouncements() {
                       </label>
                     )}
                   </div>
+
                   {imageFile && formData.image_url === "Uploading..." && (
                     <div className="mt-2 flex items-center gap-2 text-sm text-green-600">
                       <CheckCircle2 className="w-4 h-4" />
@@ -768,35 +865,57 @@ export default function AdminAnnouncements() {
                 <TextArea
                   label="Description"
                   value={formData.description}
-                  onChange={(value) => setFormData({ ...formData, description: value })}
+                  onChange={(value) =>
+                    setFormData({ ...formData, description: value })
+                  }
                   placeholder="Write the announcement details here..."
                   rows={5}
                 />
 
-                <div className="flex flex-wrap items-center gap-6 p-4 rounded-2xl" style={{ background: "rgba(15,23,42,0.03)" }}>
+                <div
+                  className="flex flex-wrap items-center gap-6 p-4 rounded-2xl"
+                  style={{ background: "rgba(15,23,42,0.03)" }}
+                >
                   <label className="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={formData.active}
-                      onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          active: e.target.checked,
+                        })
+                      }
                       className="w-4 h-4 accent-red-500"
                     />
                     Active
                   </label>
+
                   <label className="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={formData.visible}
-                      onChange={(e) => setFormData({ ...formData, visible: e.target.checked })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          visible: e.target.checked,
+                        })
+                      }
                       className="w-4 h-4 accent-green-500"
                     />
                     Visible on website
                   </label>
+
                   <label className="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={formData.show_on_homepage}
-                      onChange={(e) => setFormData({ ...formData, show_on_homepage: e.target.checked })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          show_on_homepage: e.target.checked,
+                        })
+                      }
                       className="w-4 h-4 accent-yellow-500"
                     />
                     Show on homepage
@@ -818,6 +937,7 @@ export default function AdminAnnouncements() {
                       Cancel
                     </button>
                   )}
+
                   <button
                     type="submit"
                     disabled={saving || uploading}
@@ -829,15 +949,19 @@ export default function AdminAnnouncements() {
                     }}
                   >
                     <Save className="w-4 h-4" />
-                    {saving ? "Saving..." : editingId ? "Update Announcement" : "Add Announcement"}
+                    {saving
+                      ? "Saving..."
+                      : editingId
+                      ? "Update Announcement"
+                      : "Add Announcement"}
                   </button>
                 </div>
               </form>
             </EditorCard>
 
-            <EditorCard 
-              icon={Megaphone} 
-              title="All Announcements" 
+            <EditorCard
+              icon={Megaphone}
+              title="All Announcements"
               color={colors.green}
               gradient="linear-gradient(145deg, rgba(255,255,255,0.96), rgba(245,255,245,0.92))"
             >
@@ -845,8 +969,12 @@ export default function AdminAnnouncements() {
                 {announcements.length === 0 ? (
                   <div className="text-center py-12 text-slate-500">
                     <Megaphone className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-                    <p className="font-semibold text-lg">No announcements added yet</p>
-                    <p className="text-sm">Add your first announcement using the form.</p>
+                    <p className="font-semibold text-lg">
+                      No announcements added yet
+                    </p>
+                    <p className="text-sm">
+                      Add your first announcement using the form.
+                    </p>
                   </div>
                 ) : (
                   announcements.map((item) => (
@@ -865,26 +993,38 @@ export default function AdminAnnouncements() {
 
           <aside
             className="xl:sticky xl:top-28 rounded-3xl overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.94))",
-              border: "1px solid rgba(255,255,255,0.14)",
-              boxShadow: "0 22px 58px rgba(11,16,32,0.25)",
-            }}
+            style={lightAdminPanelStyle}
           >
-            <div className="p-5 border-b border-white/10">
-              <div className="text-white font-bold text-lg flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-white/10">
+            <div
+              className="p-5"
+              style={{
+                borderBottom: "1px solid rgba(75,46,131,0.1)",
+              }}
+            >
+              <div
+                className="font-black text-lg flex items-center gap-2"
+                style={{ color: colors.dark }}
+              >
+                <div
+                  className="p-1.5 rounded-lg"
+                  style={{
+                    background: "rgba(75,46,131,0.1)",
+                    color: colors.purple,
+                  }}
+                >
                   <Eye className="w-5 h-5" />
                 </div>
                 Homepage Preview
               </div>
-              <div className="text-sm text-white/55">
+              <div className="text-sm text-slate-500">
                 Preview how announcements appear on homepage.
               </div>
             </div>
 
-            <div className="bg-white overflow-y-auto" style={{ height: "600px" }}>
+            <div
+              className="bg-white overflow-y-auto"
+              style={{ height: "600px" }}
+            >
               <AnnouncementPreview announcements={announcements} />
             </div>
           </aside>

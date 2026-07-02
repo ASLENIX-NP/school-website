@@ -285,6 +285,10 @@ export default function AdminGalleryImages() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  const goBackToGalleryEditor = () => {
+    navigate("/admin/gallery");
+  };
+
   const [form, setForm] = useState(defaultGalleryContent);
   const [selectedCategory, setSelectedCategory] = useState("Classroom");
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
@@ -861,20 +865,21 @@ export default function AdminGalleryImages() {
       }}
     >
       <header
-        className="sticky top-0 z-40"
+        className="relative z-0"
         style={{
           background:
-            "linear-gradient(145deg, rgba(2,6,23,0.96), rgba(15,23,42,0.88))",
-          borderBottom: "1px solid rgba(255,255,255,0.12)",
-          boxShadow: "0 18px 52px rgba(0,0,0,0.22)",
-          backdropFilter: "blur(22px)",
+            "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95))",
+          borderBottom: "1px solid rgba(75,46,131,0.12)",
+          boxShadow: "0 14px 36px rgba(15,23,42,0.08)",
+          backdropFilter: "blur(18px)",
         }}
       >
-        <div className="max-w-[1600px] mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <button
             type="button"
-            onClick={() => navigate("/admin/gallery")}
-            className="inline-flex items-center gap-2 text-white font-bold"
+            onClick={goBackToGalleryEditor}
+            className="inline-flex w-fit items-center gap-2 font-black transition-all hover:-translate-x-1"
+            style={{ color: colors.dark }}
           >
             <ArrowLeft className="w-5 h-5" />
             Back to Gallery Editor
@@ -898,7 +903,7 @@ export default function AdminGalleryImages() {
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-6 py-10">
+      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 sm:py-10">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}

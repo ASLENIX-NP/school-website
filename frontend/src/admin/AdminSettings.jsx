@@ -273,45 +273,44 @@ export default function AdminSettings() {
     <div className="min-h-screen bg-gradient-to-br from-[#f8f5f5] via-[#f7f7fb] to-[#eef5ff] pb-12">
       
       {/* TOP NAVBAR */}
-      <div className="sticky top-0 z-50 bg-gradient-to-r from-[#050b2a] via-[#1d2544] to-[#263550] shadow-lg">
-        <div className="max-w-7xl mx-auto h-[80px] px-8 flex justify-between items-center">
-          <Link
-            to="/admin/dashboard"
-            className="flex items-center gap-3 !text-white hover:!text-cyan-300 transition-all duration-300"
-          >
-            <ArrowLeft size={22} className="!text-white" />
-            <span className="!text-white font-semibold text-lg">
-              Back to Dashboard
-            </span>
-          </Link>
+<div
+  className="relative z-0"
+  style={{
+    background:
+      "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,244,255,0.95), rgba(238,247,255,0.95))",
+    borderBottom: "1px solid rgba(75,46,131,0.12)",
+    boxShadow: "0 14px 36px rgba(15,23,42,0.08)",
+    backdropFilter: "blur(18px)",
+  }}
+>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <Link
+      to="/admin/dashboard"
+      className="inline-flex w-fit items-center gap-2 font-black transition-all hover:-translate-x-1"
+      style={{ color: "#0B1020" }}
+    >
+      <ArrowLeft size={20} />
+      <span>Back to Dashboard</span>
+    </Link>
 
-          <button
-            onClick={handleSaveChanges}
-            disabled={saving}
-            className="
-              px-7 py-3
-              rounded-2xl
-              bg-gradient-to-r
-              from-yellow-300
-              to-cyan-300
-              text-slate-900
-              font-bold
-              flex
-              items-center
-              gap-2
-              shadow-lg
-              hover:scale-105
-              transition-all
-              disabled:opacity-70
-            "
-          >
-            <Save size={18} />
-            {saving ? "Saving..." : saved ? "Saved ✓" : "Save Changes"}
-          </button>
-        </div>
-      </div>
+    <button
+      onClick={handleSaveChanges}
+      disabled={saving}
+      className="inline-flex w-fit items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-black shadow-lg transition-all hover:scale-105 disabled:opacity-70"
+      style={{
+        color: "#020617",
+        background: "linear-gradient(135deg, #FACC15, #38BDF8)",
+        boxShadow:
+          "0 18px 42px rgba(56,189,248,0.24), inset 0 1px 0 rgba(255,255,255,0.45)",
+      }}
+    >
+      <Save size={16} />
+      <span>{saving ? "Saving..." : saved ? "Saved ✓" : "Save Changes"}</span>
+    </button>
+  </div>
+</div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
         
         {/* SECURITY STATISTICS ROW */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">

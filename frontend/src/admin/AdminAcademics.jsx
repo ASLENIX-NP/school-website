@@ -860,10 +860,64 @@ export default function AdminAcademics() {
 
   return (
     <div className="space-y-6">
+
+      <style>
+        {`
+          @media (max-width: 767px) {
+            .admin-academics-preview-frame .group .opacity-0,
+            .admin-academics-preview-frame .group [class*="opacity-0"],
+            .admin-academics-preview-frame .group [class*="group-hover:opacity"],
+            .admin-academics-preview-frame [class*="group-hover:opacity"] {
+              opacity: 1 !important;
+              visibility: visible !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-academics-preview-frame .group .pointer-events-none,
+            .admin-academics-preview-frame .group [class*="pointer-events-none"] {
+              pointer-events: auto !important;
+            }
+
+            .admin-academics-preview-frame .group button[class*="opacity-0"],
+            .admin-academics-preview-frame button[class*="group-hover:opacity"],
+            .admin-academics-preview-frame button[class*="opacity-0"] {
+              opacity: 1 !important;
+              visibility: visible !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-academics-preview-frame .group .hidden,
+            .admin-academics-preview-frame .group [class*="hidden"] {
+              display: inline-flex !important;
+            }
+
+            .admin-academics-preview-frame [class*="absolute"] button,
+            .admin-academics-preview-frame button[class*="rounded-full"] {
+              min-width: 2.25rem !important;
+              min-height: 2.25rem !important;
+              max-width: calc(100vw - 2rem) !important;
+              white-space: nowrap !important;
+              z-index: 30 !important;
+              pointer-events: auto !important;
+            }
+
+            .admin-academics-preview-frame [class*="absolute"][class*="z-50"],
+            .admin-academics-preview-frame [class*="absolute"][class*="z-[50]"],
+            .admin-academics-preview-frame [class*="absolute"][class*="z-[60]"],
+            .admin-academics-preview-frame [class*="absolute"][class*="z-[70]"],
+            .admin-academics-preview-frame [class*="absolute"][class*="z-[80]"],
+            .admin-academics-preview-frame [class*="absolute"][class*="z-[90]"],
+            .admin-academics-preview-frame [class*="absolute"][class*="z-[999]"] {
+              z-index: 30 !important;
+            }
+          }
+        `}
+      </style>
+
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-[24px] p-5 md:p-6"
+        className="rounded-[24px] p-4 sm:p-5 md:p-6"
         style={{
           background:
             "linear-gradient(135deg, #E8EDF5 0%, #DCE3EF 50%, #E8E0F0 100%)",
@@ -945,14 +999,14 @@ export default function AdminAcademics() {
         )}
 
         <div
-          className="rounded-[2rem] overflow-x-auto"
+          className="admin-academics-preview-frame rounded-[2rem] overflow-x-auto"
           style={{
             background:
               "radial-gradient(circle at top left, rgba(56,189,248,0.14), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
             border: "1px solid rgba(15,23,42,0.08)",
           }}
         >
-          <div className="min-w-[1180px] bg-white">
+          <div className="w-full min-w-0 bg-white">
             <Academics
               editMode
               contentOverride={form}
@@ -967,7 +1021,7 @@ export default function AdminAcademics() {
       <AnimatePresence>
         {editingTarget && (
           <motion.div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5"
             style={{
               background: "rgba(2,6,23,0.55)",
               backdropFilter: "blur(12px)",
@@ -1507,7 +1561,7 @@ export default function AdminAcademics() {
 
         {deleteTarget && (
           <motion.div
-            className="fixed inset-0 z-[10000] flex items-center justify-center p-5"
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-5"
             style={{
               background: "rgba(2,6,23,0.62)",
               backdropFilter: "blur(14px)",
