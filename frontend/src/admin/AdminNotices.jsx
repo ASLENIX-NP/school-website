@@ -592,8 +592,10 @@ export default function AdminNotices() {
             color: #64748B !important;
           }
 
-
+          /* Mobile fix: Only make admin edit buttons visible on mobile */
           @media (max-width: 767px) {
+            .admin-notices-preview-frame .group button[class*="absolute"],
+            .admin-notices-preview-frame .group [class*="absolute"] button,
             .admin-notices-preview-frame .group .opacity-0,
             .admin-notices-preview-frame .group [class*="opacity-0"],
             .admin-notices-preview-frame .group .md\\:opacity-0,
@@ -605,42 +607,9 @@ export default function AdminNotices() {
               pointer-events: auto !important;
             }
 
-            .admin-notices-preview-frame .group .pointer-events-none,
-            .admin-notices-preview-frame .group [class*="pointer-events-none"] {
-              pointer-events: auto !important;
-            }
-
-            .admin-notices-preview-frame .group button[class*="opacity-0"],
-            .admin-notices-preview-frame button[class*="group-hover:opacity"],
-            .admin-notices-preview-frame button[class*="opacity-0"] {
-              opacity: 1 !important;
-              visibility: visible !important;
-              pointer-events: auto !important;
-            }
-
-            .admin-notices-preview-frame .group .hidden,
-            .admin-notices-preview-frame .group [class*="hidden"] {
-              display: inline-flex !important;
-            }
-
-            .admin-notices-preview-frame [class*="absolute"] button,
-            .admin-notices-preview-frame button[class*="rounded-full"] {
-              min-width: 2.25rem !important;
-              min-height: 2.25rem !important;
-              max-width: calc(100vw - 2rem) !important;
-              white-space: nowrap !important;
-              z-index: 30 !important;
-              pointer-events: auto !important;
-            }
-
-            .admin-notices-preview-frame [class*="absolute"][class*="z-50"],
-            .admin-notices-preview-frame [class*="absolute"][class*="z-[50]"],
-            .admin-notices-preview-frame [class*="absolute"][class*="z-[60]"],
-            .admin-notices-preview-frame [class*="absolute"][class*="z-[70]"],
-            .admin-notices-preview-frame [class*="absolute"][class*="z-[80]"],
-            .admin-notices-preview-frame [class*="absolute"][class*="z-[90]"],
-            .admin-notices-preview-frame [class*="absolute"][class*="z-[999]"] {
-              z-index: 30 !important;
+            .admin-notices-preview-frame .group button {
+              min-width: 2rem !important;
+              min-height: 2rem !important;
             }
           }
         `}

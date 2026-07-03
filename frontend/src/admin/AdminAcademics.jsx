@@ -863,7 +863,10 @@ export default function AdminAcademics() {
 
       <style>
         {`
+          /* Mobile fix: Only make admin edit/delete buttons visible on mobile */
           @media (max-width: 767px) {
+            .admin-academics-preview-frame .group button[class*="absolute"],
+            .admin-academics-preview-frame .group [class*="absolute"] button,
             .admin-academics-preview-frame .group .opacity-0,
             .admin-academics-preview-frame .group [class*="opacity-0"],
             .admin-academics-preview-frame .group [class*="group-hover:opacity"],
@@ -873,42 +876,9 @@ export default function AdminAcademics() {
               pointer-events: auto !important;
             }
 
-            .admin-academics-preview-frame .group .pointer-events-none,
-            .admin-academics-preview-frame .group [class*="pointer-events-none"] {
-              pointer-events: auto !important;
-            }
-
-            .admin-academics-preview-frame .group button[class*="opacity-0"],
-            .admin-academics-preview-frame button[class*="group-hover:opacity"],
-            .admin-academics-preview-frame button[class*="opacity-0"] {
-              opacity: 1 !important;
-              visibility: visible !important;
-              pointer-events: auto !important;
-            }
-
-            .admin-academics-preview-frame .group .hidden,
-            .admin-academics-preview-frame .group [class*="hidden"] {
-              display: inline-flex !important;
-            }
-
-            .admin-academics-preview-frame [class*="absolute"] button,
-            .admin-academics-preview-frame button[class*="rounded-full"] {
-              min-width: 2.25rem !important;
-              min-height: 2.25rem !important;
-              max-width: calc(100vw - 2rem) !important;
-              white-space: nowrap !important;
-              z-index: 30 !important;
-              pointer-events: auto !important;
-            }
-
-            .admin-academics-preview-frame [class*="absolute"][class*="z-50"],
-            .admin-academics-preview-frame [class*="absolute"][class*="z-[50]"],
-            .admin-academics-preview-frame [class*="absolute"][class*="z-[60]"],
-            .admin-academics-preview-frame [class*="absolute"][class*="z-[70]"],
-            .admin-academics-preview-frame [class*="absolute"][class*="z-[80]"],
-            .admin-academics-preview-frame [class*="absolute"][class*="z-[90]"],
-            .admin-academics-preview-frame [class*="absolute"][class*="z-[999]"] {
-              z-index: 30 !important;
+            .admin-academics-preview-frame .group button {
+              min-width: 2rem !important;
+              min-height: 2rem !important;
             }
           }
         `}

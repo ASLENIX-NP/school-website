@@ -893,11 +893,9 @@ export default function AdminHome() {
               contentOverride={form.hero}
               onEditTarget={openEditor}
             />
-            <Stats
-              editMode
-              contentOverride={form.statsSection}
-              onEditTarget={openEditor}
-            />
+           <Stats
+  contentOverride={form.statsSection}
+/>
           </div>
         </div>
       </motion.div>
