@@ -170,7 +170,7 @@ export default function AdminSettings() {
       }
     } catch (err) {
       console.error("Error saving settings:", err);
-      alert("An error occurred while saving.");
+      showNotification("An error occurred while saving.", "error");
     } finally {
       setSaving(false);
     }
@@ -252,7 +252,7 @@ export default function AdminSettings() {
   
         setShowPasswordModal(false);
       } else {
-        alert(data.message);
+        showNotification(data.message || "Could not update password.", "error");
       }
     } catch (err) {
       console.error(err);
