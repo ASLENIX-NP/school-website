@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -145,6 +145,489 @@ function getAuthHeaders() {
   };
 }
 
+function clampImageOffset(value) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return 0;
+
+  return Math.min(60, Math.max(-60, numberValue));
+}
+
+function clampImageZoom(value) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return 1;
+
+  return Math.min(3, Math.max(1, numberValue));
+}
+
+function getCropImageStyle(source = {}) {
+  const zoom = clampImageZoom(source.imageZoom);
+  const x = clampImageOffset(source.imageOffsetX);
+  const y = clampImageOffset(source.imageOffsetY);
+  const objectX = Math.min(100, Math.max(0, 50 - x));
+  const objectY = Math.min(100, Math.max(0, 50 - y));
+
+  return {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: `${objectX}% ${objectY}%`,
+    transform: `scale(${zoom})`,
+    transformOrigin: "center center",
+    transition:
+      "transform 160ms ease-out, object-position 160ms ease-out",
+    userSelect: "none",
+    pointerEvents: "none",
+  };
+}
+
+function getActiveImageConfig(editingTarget, modalForm) {
+  const isStoryImage = editingTarget?.type === "storyImage";
+
+  return {
+    imageKey: isStoryImage ? "storyImageUrl" : "image",
+    imageUrl: isStoryImage ? modalForm.storyImageUrl : modalForm.image,
+    title: isStoryImage ? "Story Image Adjustment" : "Leadership Photo Adjustment",
+    label: isStoryImage ? "About Story Image" : "Leadership Photo",
+    shape: isStoryImage ? "landscape" : "portrait",
+  };
+}
+
+function CropSlider({ label, value, min, max, step = 1, suffix = "", onChange }) {
+  const numericValue = Number(value);
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <label className="text-sm font-black text-slate-700">{label}</label>
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
+          {Number.isFinite(numericValue) ? numericValue.toFixed(step < 1 ? 2 : 0) : min}
+          {suffix}
+        </span>
+      </div>
+
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={Number.isFinite(numericValue) ? numericValue : min}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="w-full accent-sky-500"
+      />
+    </div>
+  );
+}
+
+function AboutImageAdjustPage({
+  editingTarget,
+  modalForm,
+  setModalForm,
+  uploadImage,
+  uploadingImage,
+  saving,
+  onClose,
+  onSave,
+}) {
+  const dragRef = useRef(null);
+  const pointersRef = useRef(new Map());
+  const pinchRef = useRef(null);
+  const imageConfig = getActiveImageConfig(editingTarget, modalForm);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+    const previousOverscroll = document.body.style.overscrollBehavior;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    document.body.style.overscrollBehavior = "contain";
+
+    const preventGesture = (event) => event.preventDefault();
+
+    window.addEventListener("gesturestart", preventGesture, { passive: false });
+    window.addEventListener("gesturechange", preventGesture, { passive: false });
+    window.addEventListener("gestureend", preventGesture, { passive: false });
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+      document.body.style.overscrollBehavior = previousOverscroll;
+      window.removeEventListener("gesturestart", preventGesture);
+      window.removeEventListener("gesturechange", preventGesture);
+      window.removeEventListener("gestureend", preventGesture);
+    };
+  }, []);
+
+  const updateCrop = (updates) => {
+    setModalForm((prev) => ({
+      ...prev,
+      ...updates,
+    }));
+  };
+
+  const resetCrop = () => {
+    updateCrop({
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
+    });
+  };
+
+  const getPointerDistance = (points) => {
+    if (points.length < 2) return 0;
+
+    const [first, second] = points;
+
+    return Math.hypot(
+      second.clientX - first.clientX,
+      second.clientY - first.clientY
+    );
+  };
+
+  const startDrag = (event) => {
+    if (!imageConfig.imageUrl) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const box = event.currentTarget.getBoundingClientRect();
+
+    pointersRef.current.set(event.pointerId, {
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
+
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+
+    const points = Array.from(pointersRef.current.values());
+
+    if (points.length >= 2) {
+      pinchRef.current = {
+        startDistance: getPointerDistance(points),
+        startZoom: clampImageZoom(modalForm.imageZoom),
+      };
+      dragRef.current = null;
+      return;
+    }
+
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startOffsetX: clampImageOffset(modalForm.imageOffsetX),
+      startOffsetY: clampImageOffset(modalForm.imageOffsetY),
+      boxWidth: box.width || 1,
+      boxHeight: box.height || 1,
+    };
+  };
+
+  const moveDrag = (event) => {
+    if (!imageConfig.imageUrl) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (pointersRef.current.has(event.pointerId)) {
+      pointersRef.current.set(event.pointerId, {
+        clientX: event.clientX,
+        clientY: event.clientY,
+      });
+    }
+
+    const points = Array.from(pointersRef.current.values());
+
+    if (points.length >= 2 && pinchRef.current) {
+      const currentDistance = getPointerDistance(points);
+      const startDistance = pinchRef.current.startDistance || currentDistance || 1;
+      const nextZoom =
+        pinchRef.current.startZoom * (currentDistance / startDistance);
+
+      updateCrop({
+        imageZoom: clampImageZoom(nextZoom),
+      });
+      return;
+    }
+
+    if (!dragRef.current) return;
+
+    const data = dragRef.current;
+    const moveX = ((event.clientX - data.startClientX) / data.boxWidth) * 100;
+    const moveY = ((event.clientY - data.startClientY) / data.boxHeight) * 100;
+
+    updateCrop({
+      imageOffsetX: clampImageOffset(data.startOffsetX + moveX),
+      imageOffsetY: clampImageOffset(data.startOffsetY + moveY),
+    });
+  };
+
+  const endDrag = (event) => {
+    pointersRef.current.delete(event.pointerId);
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+
+    const points = Array.from(pointersRef.current.values());
+
+    if (points.length < 2) {
+      pinchRef.current = null;
+    }
+
+    if (dragRef.current?.pointerId === event.pointerId) {
+      dragRef.current = null;
+    }
+  };
+
+  const handleWheelZoom = (event) => {
+    if (!imageConfig.imageUrl) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const direction = event.deltaY > 0 ? -0.1 : 0.1;
+    const nextZoom = clampImageZoom(clampImageZoom(modalForm.imageZoom) + direction);
+
+    updateCrop({
+      imageZoom: nextZoom,
+    });
+  };
+
+  const cropBoxClass =
+    imageConfig.shape === "landscape"
+      ? "relative mx-auto h-[52vh] min-h-[320px] max-h-[560px] w-full max-w-[780px] touch-none select-none overflow-hidden rounded-[32px] bg-slate-100 shadow-2xl cursor-grab active:cursor-grabbing"
+      : "relative mx-auto h-[68vh] min-h-[420px] max-h-[680px] w-full max-w-[410px] touch-none select-none overflow-hidden rounded-[32px] bg-slate-100 shadow-2xl cursor-grab active:cursor-grabbing";
+
+  const cropBoxStyle = {
+    border: "3px solid rgba(255,255,255,0.88)",
+    touchAction: "none",
+    overscrollBehavior: "contain",
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[20000] flex flex-col overflow-hidden bg-slate-950 text-white"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onWheelCapture={(event) => {
+        if (event.ctrlKey) event.preventDefault();
+      }}
+    >
+      <header className="shrink-0 border-b border-white/10 bg-slate-950/96 px-4 py-4 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-xs font-black uppercase tracking-[0.18em] text-white/45">
+              {imageConfig.label}
+            </div>
+            <h2 className="mt-1 text-2xl font-black leading-tight">
+              Drag and zoom the image
+            </h2>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving || uploadingImage}
+              className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+            >
+              Back to Details
+            </button>
+
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saving || uploadingImage}
+              className="rounded-2xl px-5 py-3 text-sm font-black text-slate-950 disabled:opacity-50"
+              style={{
+                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+              }}
+            >
+              {saving ? "Saving..." : "Save This Item"}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+        <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[minmax(280px,1fr)_420px] lg:items-start">
+          <section className="rounded-[34px] bg-white/8 p-4 shadow-2xl ring-1 ring-white/10 sm:p-5">
+            <div
+              className={cropBoxClass}
+              style={cropBoxStyle}
+              onPointerDown={startDrag}
+              onPointerMove={moveDrag}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+              onPointerLeave={endDrag}
+              onWheel={handleWheelZoom}
+            >
+              {imageConfig.imageUrl ? (
+                <img
+                  src={imageConfig.imageUrl}
+                  alt="About image crop preview"
+                  draggable={false}
+                  className="absolute inset-0"
+                  style={getCropImageStyle(modalForm)}
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <ImageIcon className="h-16 w-16 text-slate-300" />
+                </div>
+              )}
+
+              <div className="pointer-events-none absolute inset-0">
+                <div className="absolute inset-x-0 top-1/3 h-px bg-white/35" />
+                <div className="absolute inset-x-0 top-2/3 h-px bg-white/35" />
+                <div className="absolute inset-y-0 left-1/3 w-px bg-white/35" />
+                <div className="absolute inset-y-0 left-2/3 w-px bg-white/35" />
+              </div>
+
+              <div className="pointer-events-none absolute left-4 top-4 rounded-full bg-black/60 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-white">
+                Drag / Pinch / Wheel
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-[34px] bg-white p-5 text-slate-950 shadow-2xl sm:p-6">
+            <div className="mb-5">
+              <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+                Controls
+              </div>
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-500">
+                Phone: use two fingers on the image to zoom. Laptop: place the mouse over the image and use mouse wheel or trackpad. Drag the image to position it.
+              </p>
+            </div>
+
+            <label
+              className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black"
+              style={{
+                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                color: colors.dark,
+              }}
+            >
+              <UploadCloud className="w-4 h-4" />
+              {uploadingImage ? "Uploading..." : "Upload New Image"}
+              <input
+                type="file"
+                accept="image/*"
+                disabled={uploadingImage}
+                onChange={(event) => {
+                  uploadImage(event.target.files?.[0]);
+                  event.target.value = "";
+                }}
+                className="hidden"
+              />
+            </label>
+
+            <div className="mt-6 space-y-5">
+              <CropSlider
+                label="Zoom"
+                value={clampImageZoom(modalForm.imageZoom)}
+                min={1}
+                max={3}
+                step={0.05}
+                suffix="x"
+                onChange={(value) => updateCrop({ imageZoom: clampImageZoom(value) })}
+              />
+
+              <CropSlider
+                label="Move Left / Right"
+                value={clampImageOffset(modalForm.imageOffsetX)}
+                min={-60}
+                max={60}
+                step={1}
+                onChange={(value) => updateCrop({ imageOffsetX: clampImageOffset(value) })}
+              />
+
+              <CropSlider
+                label="Move Up / Down"
+                value={clampImageOffset(modalForm.imageOffsetY)}
+                min={-60}
+                max={60}
+                step={1}
+                onChange={(value) => updateCrop({ imageOffsetY: clampImageOffset(value) })}
+              />
+            </div>
+
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({
+                    imageOffsetY: clampImageOffset(clampImageOffset(modalForm.imageOffsetY) - 5),
+                  })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Up
+              </button>
+
+              <button
+                type="button"
+                onClick={resetCrop}
+                disabled={saving || uploadingImage}
+                className="rounded-xl px-3 py-3 text-xs font-black text-slate-950 disabled:opacity-50"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                }}
+              >
+                Reset
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({
+                    imageOffsetY: clampImageOffset(clampImageOffset(modalForm.imageOffsetY) + 5),
+                  })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Down
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({
+                    imageOffsetX: clampImageOffset(clampImageOffset(modalForm.imageOffsetX) - 5),
+                  })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Left
+              </button>
+
+              <div className="rounded-xl bg-slate-50 px-3 py-3 text-center text-[11px] font-black text-slate-400">
+                Move
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({
+                    imageOffsetX: clampImageOffset(clampImageOffset(modalForm.imageOffsetX) + 5),
+                  })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Right
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-xs font-semibold leading-relaxed text-slate-500">
+              Current: Zoom {clampImageZoom(modalForm.imageZoom).toFixed(2)}x, X{" "}
+              {Math.round(clampImageOffset(modalForm.imageOffsetX))}, Y{" "}
+              {Math.round(clampImageOffset(modalForm.imageOffsetY))}
+            </div>
+          </section>
+        </div>
+      </main>
+    </motion.div>
+  );
+}
+
+
 function getDeleteName(target) {
   if (!target) return "this item";
 
@@ -162,6 +645,7 @@ export default function AdminAbout() {
   const [editingTarget, setEditingTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalForm, setModalForm] = useState({});
+  const [imageAdjustOpen, setImageAdjustOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [success, setSuccess] = useState("");
@@ -187,6 +671,7 @@ export default function AdminAbout() {
   const openEditor = (target) => {
     setSuccess("");
     setError("");
+    setImageAdjustOpen(false);
     setEditingTarget(target);
 
     if (target.type === "pageHeader") {
@@ -211,6 +696,9 @@ export default function AdminAbout() {
       setModalForm({
         storyImageUrl: form.storyImageUrl || "",
         storyImageAlt: form.storyImageAlt || "",
+        imageZoom: clampImageZoom(form.storyImageZoom),
+        imageOffsetX: clampImageOffset(form.storyImageOffsetX),
+        imageOffsetY: clampImageOffset(form.storyImageOffsetY),
       });
       return;
     }
@@ -261,6 +749,9 @@ export default function AdminAbout() {
         title: item?.title || "",
         message: item?.message || "",
         image: item?.image || "",
+        imageZoom: clampImageZoom(item?.imageZoom),
+        imageOffsetX: clampImageOffset(item?.imageOffsetX),
+        imageOffsetY: clampImageOffset(item?.imageOffsetY),
         visible: item?.visible !== false,
       });
       return;
@@ -271,6 +762,9 @@ export default function AdminAbout() {
 
       setModalForm({
         image: item?.image || "",
+        imageZoom: clampImageZoom(item?.imageZoom),
+        imageOffsetX: clampImageOffset(item?.imageOffsetX),
+        imageOffsetY: clampImageOffset(item?.imageOffsetY),
       });
       return;
     }
@@ -309,6 +803,7 @@ export default function AdminAbout() {
 
   const closeEditor = () => {
     if (saving || uploadingImage) return;
+    setImageAdjustOpen(false);
     setEditingTarget(null);
     setModalForm({});
   };
@@ -365,13 +860,17 @@ export default function AdminAbout() {
         return;
       }
 
-      if (editingTarget?.type === "storyImage") {
-        updateModalField("storyImageUrl", uploadedUrl);
-      } else {
-        updateModalField("image", uploadedUrl);
-      }
+      const imageKey = editingTarget?.type === "storyImage" ? "storyImageUrl" : "image";
 
-      setSuccess("Image uploaded. Click Save to publish this selected item.");
+      setModalForm((prev) => ({
+        ...prev,
+        [imageKey]: uploadedUrl,
+        imageZoom: clampImageZoom(prev.imageZoom),
+        imageOffsetX: clampImageOffset(prev.imageOffsetX),
+        imageOffsetY: clampImageOffset(prev.imageOffsetY),
+      }));
+
+      setSuccess("Image uploaded. Open image adjustment if needed, then click Save.");
     } catch (err) {
       console.error("About image upload error:", err);
       setError(err.response?.data?.message || "Image upload failed.");
@@ -438,6 +937,9 @@ export default function AdminAbout() {
           ...nextForm,
           storyImageUrl: modalForm.storyImageUrl || "",
           storyImageAlt: modalForm.storyImageAlt || "",
+          storyImageZoom: clampImageZoom(modalForm.imageZoom),
+          storyImageOffsetX: clampImageOffset(modalForm.imageOffsetX),
+          storyImageOffsetY: clampImageOffset(modalForm.imageOffsetY),
         };
       }
 
@@ -495,6 +997,9 @@ export default function AdminAbout() {
                   title: modalForm.title || "",
                   message: modalForm.message || "",
                   image: modalForm.image || "",
+                  imageZoom: clampImageZoom(modalForm.imageZoom),
+                  imageOffsetX: clampImageOffset(modalForm.imageOffsetX),
+                  imageOffsetY: clampImageOffset(modalForm.imageOffsetY),
                   visible: modalForm.visible !== false,
                 }
               : item
@@ -510,6 +1015,9 @@ export default function AdminAbout() {
               ? {
                   ...item,
                   image: modalForm.image || "",
+                  imageZoom: clampImageZoom(modalForm.imageZoom),
+                  imageOffsetX: clampImageOffset(modalForm.imageOffsetX),
+                  imageOffsetY: clampImageOffset(modalForm.imageOffsetY),
                 }
               : item
           ),
@@ -564,6 +1072,7 @@ export default function AdminAbout() {
         "Selected about item saved successfully."
       );
 
+      setImageAdjustOpen(false);
       setEditingTarget(null);
       setModalForm({});
     } catch (err) {
@@ -681,6 +1190,9 @@ export default function AdminAbout() {
               title: "Message Title",
               message: "Write the leadership message here.",
               image: "",
+              imageZoom: 1,
+              imageOffsetX: 0,
+              imageOffsetY: 0,
               visible: true,
             },
           ],
@@ -1006,23 +1518,24 @@ export default function AdminAbout() {
                           border: "1px solid rgba(255,255,255,0.12)",
                         }}
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="w-28 h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center">
+                        <div className="flex items-start gap-4">
+                          <div className="w-32 h-24 rounded-2xl bg-slate-900 overflow-hidden flex items-center justify-center shrink-0">
                             {modalForm.storyImageUrl || modalForm.image ? (
                               <img
                                 src={modalForm.storyImageUrl || modalForm.image}
                                 alt="Preview"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full"
+                                style={getCropImageStyle(modalForm)}
                               />
                             ) : (
                               <ImageIcon className="w-8 h-8 text-slate-300" />
                             )}
                           </div>
 
-                          <div>
+                          <div className="min-w-0">
                             <div className="text-white font-black">Image Preview</div>
                             <div className="text-white/55 text-sm mt-1 leading-relaxed">
-                              Recommended: JPG/PNG/WebP, max 6 MB.
+                              Upload image, then open full-screen adjustment to drag and zoom.
                             </div>
                           </div>
                         </div>
@@ -1047,6 +1560,21 @@ export default function AdminAbout() {
                             className="hidden"
                           />
                         </label>
+
+                        <button
+                          type="button"
+                          onClick={() => setImageAdjustOpen(true)}
+                          disabled={uploadingImage || saving || !(modalForm.storyImageUrl || modalForm.image)}
+                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black disabled:opacity-50"
+                          style={{
+                            background: "rgba(255,255,255,0.10)",
+                            color: "#FFFFFF",
+                            border: "1px solid rgba(255,255,255,0.14)",
+                          }}
+                        >
+                          <Camera className="w-4 h-4" />
+                          Open Image Adjustment
+                        </button>
                       </div>
 
                       {editingTarget.type === "storyImage" ? (
@@ -1386,6 +1914,19 @@ export default function AdminAbout() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+
+        {imageAdjustOpen && editingTarget && needsImageUpload && (
+          <AboutImageAdjustPage
+            editingTarget={editingTarget}
+            modalForm={modalForm}
+            setModalForm={setModalForm}
+            uploadImage={uploadImage}
+            uploadingImage={uploadingImage}
+            saving={saving}
+            onClose={() => setImageAdjustOpen(false)}
+            onSave={saveSelectedPart}
+          />
         )}
 
         {deleteTarget && (

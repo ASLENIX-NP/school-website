@@ -25,6 +25,7 @@ export const defaultHeroData = {
   images: [
     "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1100&h=900&fit=crop&auto=format",
   ],
+  imageAdjustments: {},
 
   primaryButtonText: "Start Admission",
   primaryButtonLink: "/admissions",
@@ -82,10 +83,65 @@ export function mergeHeroData(saved = {}) {
     ? [fallbackImage]
     : [defaultHeroData.image];
 
+  const rawAdjustments =
+    saved?.imageAdjustments && typeof saved.imageAdjustments === "object"
+      ? saved.imageAdjustments
+      : {};
+
+  const imageAdjustments = images.reduce((acc, imageUrl) => {
+    const adjustment = rawAdjustments?.[imageUrl] || {};
+
+    acc[imageUrl] = {
+      imageZoom: clampHeroImageZoom(adjustment.imageZoom),
+      imageOffsetX: clampHeroImageOffset(adjustment.imageOffsetX),
+      imageOffsetY: clampHeroImageOffset(adjustment.imageOffsetY),
+    };
+
+    return acc;
+  }, {});
+
   return {
     ...merged,
     image: images[0] || defaultHeroData.image,
     images,
+    imageAdjustments,
+  };
+}
+
+function clampHeroImageOffset(value) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return 0;
+
+  return Math.min(60, Math.max(-60, numberValue));
+}
+
+function clampHeroImageZoom(value) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return 1;
+
+  return Math.min(3, Math.max(1, numberValue));
+}
+
+function getHeroImageCropStyle(heroData = {}, imageUrl = "") {
+  const adjustment = heroData.imageAdjustments?.[imageUrl] || {};
+  const zoom = clampHeroImageZoom(adjustment.imageZoom);
+  const x = clampHeroImageOffset(adjustment.imageOffsetX);
+  const y = clampHeroImageOffset(adjustment.imageOffsetY);
+
+  const objectX = Math.min(100, Math.max(0, 50 - x));
+  const objectY = Math.min(100, Math.max(0, 50 - y));
+
+  return {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: `${objectX}% ${objectY}%`,
+    transform: `scale(${zoom})`,
+    transformOrigin: "center center",
+    transition:
+      "transform 240ms ease-out, object-position 240ms ease-out, opacity 320ms ease-out",
   };
 }
 
@@ -396,28 +452,15 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
       initial={{ opacity: 0, scale: 0.96, y: 24 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.85, delay: 0.18 }}
-      className="relative min-h-[430px] lg:min-h-[470px] xl:min-h-[560px] flex items-center justify-center"
+      className="relative min-h-[410px] lg:min-h-[445px] xl:min-h-[520px] flex items-center justify-center"
     >
-      <div
-        className="absolute w-[88%] h-[68%] xl:h-[66%] rounded-[3rem]"
-        style={{
-          background:
-            "linear-gradient(145deg, rgba(255,255,255,0.68), rgba(255,255,255,0.34))",
-          border: "1px solid rgba(255,255,255,0.76)",
-          boxShadow:
-            "0 34px 90px rgba(15,23,42,0.14), inset 0 1px 0 rgba(255,255,255,0.65)",
-          backdropFilter: "blur(22px)",
-          transform: "perspective(1200px) rotateY(-3deg) rotateX(2deg)",
-        }}
-      />
-
       <EditableWrap
         editMode={editMode}
         target={{ type: "heroImage" }}
         onEditTarget={onEditTarget}
         icon={Camera}
         label="Change hero images"
-        className="relative z-10 w-[88%]"
+        className="relative z-10 w-full flex justify-center"
       >
         <motion.div
           animate={{
@@ -428,7 +471,7 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
             repeat: editMode ? 0 : Infinity,
             ease: "easeInOut",
           }}
-          className="relative h-[360px] lg:h-[395px] rounded-[2.5rem] overflow-hidden"
+          className="relative w-[94%] h-[360px] lg:h-[395px] rounded-[2.5rem] overflow-hidden bg-slate-900"
           style={{
             boxShadow:
               "0 38px 92px rgba(15,23,42,0.20), 0 0 60px rgba(56,189,248,0.12)",
@@ -437,14 +480,13 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
               : "1px solid rgba(255,255,255,0.76)",
           }}
         >
-          <motion.img
+          <img
             key={activeImage}
             src={activeImage}
             alt="Baljagriti school students"
-            initial={{ opacity: 0.25, scale: 1.02 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.55 }}
-            className="w-full h-full object-cover"
+            draggable={false}
+            className="absolute inset-0"
+            style={getHeroImageCropStyle(heroData, activeImage)}
           />
 
           <div
@@ -484,39 +526,6 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
             </div>
           )}
 
-          <EditableWrap
-            editMode={editMode}
-            target={{ type: "heroImageText" }}
-            onEditTarget={onEditTarget}
-            label="Edit image text"
-            className="absolute bottom-5 left-5 right-5"
-          >
-            <div
-              className="px-5 py-4 rounded-2xl"
-              style={{
-                background: "rgba(255,255,255,0.82)",
-                border: editMode
-                  ? "1px dashed rgba(56,189,248,0.65)"
-                  : "1px solid rgba(255,255,255,0.76)",
-                boxShadow: "0 18px 42px rgba(15,23,42,0.18)",
-                backdropFilter: "blur(16px)",
-              }}
-            >
-              <div
-                className="font-black text-base"
-                style={{ color: palette.navy }}
-              >
-                {heroData.imageBottomTitle}
-              </div>
-
-              <div
-                className="text-sm mt-1 leading-relaxed font-medium"
-                style={{ color: "rgba(15,23,42,0.62)" }}
-              >
-                {heroData.imageBottomDescription}
-              </div>
-            </div>
-          </EditableWrap>
         </motion.div>
       </EditableWrap>
 

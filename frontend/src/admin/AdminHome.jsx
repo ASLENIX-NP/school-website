@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -152,6 +152,438 @@ function normalizeImageList(images = [], fallbackImage = "") {
   return Array.from(new Set(fallback ? [fallback, ...cleanImages] : cleanImages));
 }
 
+function clampImageOffset(value) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return 0;
+
+  return Math.min(60, Math.max(-60, numberValue));
+}
+
+function clampImageZoom(value) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return 1;
+
+  return Math.min(3, Math.max(1, numberValue));
+}
+
+function getCropImageStyle(source = {}) {
+  const zoom = clampImageZoom(source.imageZoom);
+  const x = clampImageOffset(source.imageOffsetX);
+  const y = clampImageOffset(source.imageOffsetY);
+
+  return {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: "center",
+    transform: `translate(${x}%, ${y}%) scale(${zoom})`,
+    transformOrigin: "center center",
+    transition: "transform 120ms ease-out",
+    userSelect: "none",
+    pointerEvents: "none",
+  };
+}
+
+function CropSlider({ label, value, min, max, step = 1, suffix = "", onChange }) {
+  const numericValue = Number(value);
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <label className="text-sm font-black text-slate-700">{label}</label>
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
+          {Number.isFinite(numericValue) ? numericValue.toFixed(step < 1 ? 1 : 0) : min}
+          {suffix}
+        </span>
+      </div>
+
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={Number.isFinite(numericValue) ? numericValue : min}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="w-full accent-sky-500"
+      />
+    </div>
+  );
+}
+
+function ImageAdjustmentPage({
+  title,
+  imageUrl,
+  imageZoom,
+  imageOffsetX,
+  imageOffsetY,
+  onChange,
+  onClose,
+  onSave,
+  saving,
+  uploadingImage,
+}) {
+  const dragRef = useRef(null);
+  const pointersRef = useRef(new Map());
+  const pinchRef = useRef(null);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+    const previousOverscroll = document.body.style.overscrollBehavior;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    document.body.style.overscrollBehavior = "contain";
+
+    const preventGesture = (event) => event.preventDefault();
+
+    window.addEventListener("gesturestart", preventGesture, { passive: false });
+    window.addEventListener("gesturechange", preventGesture, { passive: false });
+    window.addEventListener("gestureend", preventGesture, { passive: false });
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+      document.body.style.overscrollBehavior = previousOverscroll;
+      window.removeEventListener("gesturestart", preventGesture);
+      window.removeEventListener("gesturechange", preventGesture);
+      window.removeEventListener("gestureend", preventGesture);
+    };
+  }, []);
+
+  const currentCrop = { imageZoom, imageOffsetX, imageOffsetY };
+
+  const updateCrop = (updates) => {
+    onChange({
+      imageZoom: clampImageZoom(
+        updates.imageZoom !== undefined ? updates.imageZoom : imageZoom
+      ),
+      imageOffsetX: clampImageOffset(
+        updates.imageOffsetX !== undefined ? updates.imageOffsetX : imageOffsetX
+      ),
+      imageOffsetY: clampImageOffset(
+        updates.imageOffsetY !== undefined ? updates.imageOffsetY : imageOffsetY
+      ),
+    });
+  };
+
+  const resetCrop = () => {
+    onChange({ imageZoom: 1, imageOffsetX: 0, imageOffsetY: 0 });
+  };
+
+  const getPointerDistance = (points) => {
+    if (points.length < 2) return 0;
+
+    const [first, second] = points;
+
+    return Math.hypot(
+      second.clientX - first.clientX,
+      second.clientY - first.clientY
+    );
+  };
+
+  const startDrag = (event) => {
+    if (!imageUrl) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const box = event.currentTarget.getBoundingClientRect();
+
+    pointersRef.current.set(event.pointerId, {
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
+
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+
+    const points = Array.from(pointersRef.current.values());
+
+    if (points.length >= 2) {
+      pinchRef.current = {
+        startDistance: getPointerDistance(points),
+        startZoom: clampImageZoom(imageZoom),
+      };
+      dragRef.current = null;
+      return;
+    }
+
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startOffsetX: clampImageOffset(imageOffsetX),
+      startOffsetY: clampImageOffset(imageOffsetY),
+      boxWidth: box.width || 1,
+      boxHeight: box.height || 1,
+    };
+  };
+
+  const moveDrag = (event) => {
+    if (!imageUrl) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (pointersRef.current.has(event.pointerId)) {
+      pointersRef.current.set(event.pointerId, {
+        clientX: event.clientX,
+        clientY: event.clientY,
+      });
+    }
+
+    const points = Array.from(pointersRef.current.values());
+
+    if (points.length >= 2 && pinchRef.current) {
+      const currentDistance = getPointerDistance(points);
+      const startDistance = pinchRef.current.startDistance || currentDistance || 1;
+      const nextZoom =
+        pinchRef.current.startZoom * (currentDistance / startDistance);
+
+      updateCrop({ imageZoom: clampImageZoom(nextZoom) });
+      return;
+    }
+
+    if (!dragRef.current) return;
+
+    const data = dragRef.current;
+    const moveX = ((event.clientX - data.startClientX) / data.boxWidth) * 100;
+    const moveY = ((event.clientY - data.startClientY) / data.boxHeight) * 100;
+
+    updateCrop({
+      imageOffsetX: clampImageOffset(data.startOffsetX + moveX),
+      imageOffsetY: clampImageOffset(data.startOffsetY + moveY),
+    });
+  };
+
+  const endDrag = (event) => {
+    pointersRef.current.delete(event.pointerId);
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+
+    const points = Array.from(pointersRef.current.values());
+
+    if (points.length < 2) {
+      pinchRef.current = null;
+    }
+
+    if (dragRef.current?.pointerId === event.pointerId) {
+      dragRef.current = null;
+    }
+  };
+
+  const handleWheelZoom = (event) => {
+    if (!imageUrl) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const direction = event.deltaY > 0 ? -0.1 : 0.1;
+    const nextZoom = clampImageZoom(clampImageZoom(imageZoom) + direction);
+
+    updateCrop({ imageZoom: nextZoom });
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[20000] flex flex-col overflow-hidden bg-slate-950 text-white"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onWheelCapture={(event) => {
+        if (event.ctrlKey) event.preventDefault();
+      }}
+    >
+      <header className="shrink-0 border-b border-white/10 bg-slate-950/96 px-4 py-4 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-xs font-black uppercase tracking-[0.18em] text-white/45">
+              Homepage Image Adjustment
+            </div>
+            <h2 className="mt-1 text-2xl font-black leading-tight">{title}</h2>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving || uploadingImage}
+              className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+            >
+              Back to Details
+            </button>
+
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saving || uploadingImage}
+              className="rounded-2xl px-5 py-3 text-sm font-black text-slate-950 disabled:opacity-50"
+              style={{
+                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+              }}
+            >
+              {saving ? "Saving..." : "Save This Item"}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+        <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[minmax(280px,620px)_1fr] lg:items-start">
+          <section className="rounded-[34px] bg-white/8 p-4 shadow-2xl ring-1 ring-white/10 sm:p-5">
+            <div
+              className="relative mx-auto h-[62vh] min-h-[320px] max-h-[620px] w-full touch-none select-none overflow-hidden rounded-[32px] bg-slate-100 shadow-2xl cursor-grab active:cursor-grabbing"
+              style={{
+                border: "3px solid rgba(255,255,255,0.88)",
+                touchAction: "none",
+                overscrollBehavior: "contain",
+              }}
+              onPointerDown={startDrag}
+              onPointerMove={moveDrag}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+              onPointerLeave={endDrag}
+              onWheel={handleWheelZoom}
+            >
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt="Crop preview"
+                  draggable={false}
+                  className="absolute inset-0"
+                  style={getCropImageStyle(currentCrop)}
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <ImageIcon className="h-16 w-16 text-slate-300" />
+                </div>
+              )}
+
+              <div className="pointer-events-none absolute inset-0">
+                <div className="absolute inset-x-0 top-1/3 h-px bg-white/35" />
+                <div className="absolute inset-x-0 top-2/3 h-px bg-white/35" />
+                <div className="absolute inset-y-0 left-1/3 w-px bg-white/35" />
+                <div className="absolute inset-y-0 left-2/3 w-px bg-white/35" />
+              </div>
+
+              <div className="pointer-events-none absolute left-4 top-4 rounded-full bg-black/60 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-white">
+                Drag / Pinch / Wheel
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-[34px] bg-white p-5 text-slate-950 shadow-2xl sm:p-6">
+            <div className="mb-5">
+              <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+                Controls
+              </div>
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-500">
+                Phone: use two fingers on the image to zoom. Laptop: place the mouse over the image and use mouse wheel or trackpad. Drag the image to position it.
+              </p>
+            </div>
+
+            <div className="space-y-5">
+              <CropSlider
+                label="Zoom"
+                value={clampImageZoom(imageZoom)}
+                min={1}
+                max={3}
+                step={0.05}
+                suffix="x"
+                onChange={(value) => updateCrop({ imageZoom: clampImageZoom(value) })}
+              />
+
+              <CropSlider
+                label="Move Left / Right"
+                value={clampImageOffset(imageOffsetX)}
+                min={-60}
+                max={60}
+                step={1}
+                onChange={(value) => updateCrop({ imageOffsetX: clampImageOffset(value) })}
+              />
+
+              <CropSlider
+                label="Move Up / Down"
+                value={clampImageOffset(imageOffsetY)}
+                min={-60}
+                max={60}
+                step={1}
+                onChange={(value) => updateCrop({ imageOffsetY: clampImageOffset(value) })}
+              />
+            </div>
+
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({ imageOffsetY: clampImageOffset(clampImageOffset(imageOffsetY) - 5) })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Up
+              </button>
+
+              <button
+                type="button"
+                onClick={resetCrop}
+                disabled={saving || uploadingImage}
+                className="rounded-xl px-3 py-3 text-xs font-black text-slate-950 disabled:opacity-50"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                }}
+              >
+                Reset
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({ imageOffsetY: clampImageOffset(clampImageOffset(imageOffsetY) + 5) })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Down
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({ imageOffsetX: clampImageOffset(clampImageOffset(imageOffsetX) - 5) })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Left
+              </button>
+
+              <div className="rounded-xl bg-slate-50 px-3 py-3 text-center text-[11px] font-black text-slate-400">
+                Move
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({ imageOffsetX: clampImageOffset(clampImageOffset(imageOffsetX) + 5) })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Right
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-xs font-semibold leading-relaxed text-slate-500">
+              Current: Zoom {clampImageZoom(imageZoom).toFixed(2)}x, X {" "}
+              {Math.round(clampImageOffset(imageOffsetX))}, Y {" "}
+              {Math.round(clampImageOffset(imageOffsetY))}
+            </div>
+          </section>
+        </div>
+      </main>
+    </motion.div>
+  );
+}
+
+
 export default function AdminHome() {
   const [form, setForm] = useState(defaultHomeContent);
   const [loading, setLoading] = useState(true);
@@ -161,6 +593,7 @@ export default function AdminHome() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [imageAdjustTarget, setImageAdjustTarget] = useState(null);
 
   useEffect(() => {
     const loadHomeContent = async () => {
@@ -225,9 +658,22 @@ export default function AdminHome() {
     if (target.type === "heroImage") {
       const heroImages = normalizeImageList(form.hero.images, form.hero.image);
 
+      const imageAdjustments = heroImages.reduce((acc, imageUrl) => {
+        const savedAdjustment = form.hero.imageAdjustments?.[imageUrl] || {};
+
+        acc[imageUrl] = {
+          imageZoom: clampImageZoom(savedAdjustment.imageZoom),
+          imageOffsetX: clampImageOffset(savedAdjustment.imageOffsetX),
+          imageOffsetY: clampImageOffset(savedAdjustment.imageOffsetY),
+        };
+
+        return acc;
+      }, {});
+
       setModalForm({
         image: heroImages[0] || form.hero.image || "",
         images: heroImages,
+        imageAdjustments,
       });
       return;
     }
@@ -290,6 +736,9 @@ export default function AdminHome() {
     if (target.type === "storyImage") {
       setModalForm({
         image: form.statsSection.story.image || "",
+        imageZoom: clampImageZoom(form.statsSection.story.imageZoom),
+        imageOffsetX: clampImageOffset(form.statsSection.story.imageOffsetX),
+        imageOffsetY: clampImageOffset(form.statsSection.story.imageOffsetY),
       });
       return;
     }
@@ -343,6 +792,7 @@ export default function AdminHome() {
 
   const closeEditor = () => {
     if (saving || uploadingImage) return;
+    setImageAdjustTarget(null);
     setEditingTarget(null);
     setModalForm({});
   };
@@ -415,10 +865,23 @@ export default function AdminHome() {
             prev.image
           );
 
+          const nextAdjustments = { ...(prev.imageAdjustments || {}) };
+
+          nextImages.forEach((imageUrl) => {
+            if (!nextAdjustments[imageUrl]) {
+              nextAdjustments[imageUrl] = {
+                imageZoom: 1,
+                imageOffsetX: 0,
+                imageOffsetY: 0,
+              };
+            }
+          });
+
           return {
             ...prev,
             image: nextImages[0] || "",
             images: nextImages,
+            imageAdjustments: nextAdjustments,
           };
         });
 
@@ -431,6 +894,9 @@ export default function AdminHome() {
         setModalForm((prev) => ({
           ...prev,
           image: uploadedUrls[0] || prev.image || "",
+          imageZoom: clampImageZoom(prev.imageZoom),
+          imageOffsetX: clampImageOffset(prev.imageOffsetX),
+          imageOffsetY: clampImageOffset(prev.imageOffsetY),
         }));
 
         setSuccess("Image uploaded. Click Save to publish this selected item.");
@@ -453,10 +919,17 @@ export default function AdminHome() {
         (_, index) => index !== indexToRemove
       );
 
+      const nextAdjustments = Object.fromEntries(
+        Object.entries(prev.imageAdjustments || {}).filter(([imageUrl]) =>
+          nextImages.includes(imageUrl)
+        )
+      );
+
       return {
         ...prev,
         image: nextImages[0] || "",
         images: nextImages,
+        imageAdjustments: nextAdjustments,
       };
     });
   };
@@ -477,6 +950,7 @@ export default function AdminHome() {
         ...prev,
         image: selectedImage,
         images: nextImages,
+        imageAdjustments: prev.imageAdjustments || {},
       };
     });
   };
@@ -486,7 +960,84 @@ export default function AdminHome() {
       ...prev,
       image: "",
       images: [],
+      imageAdjustments: {},
     }));
+  };
+
+  const getHeroImageAdjustmentFromModal = (imageUrl) => {
+    const adjustment = modalForm.imageAdjustments?.[imageUrl] || {};
+
+    return {
+      imageZoom: clampImageZoom(adjustment.imageZoom),
+      imageOffsetX: clampImageOffset(adjustment.imageOffsetX),
+      imageOffsetY: clampImageOffset(adjustment.imageOffsetY),
+    };
+  };
+
+  const updateHeroImageAdjustmentInModal = (imageUrl, updates) => {
+    if (!imageUrl) return;
+
+    setModalForm((prev) => {
+      const existing = prev.imageAdjustments?.[imageUrl] || {};
+
+      return {
+        ...prev,
+        imageAdjustments: {
+          ...(prev.imageAdjustments || {}),
+          [imageUrl]: {
+            imageZoom: clampImageZoom(
+              updates.imageZoom !== undefined ? updates.imageZoom : existing.imageZoom
+            ),
+            imageOffsetX: clampImageOffset(
+              updates.imageOffsetX !== undefined
+                ? updates.imageOffsetX
+                : existing.imageOffsetX
+            ),
+            imageOffsetY: clampImageOffset(
+              updates.imageOffsetY !== undefined
+                ? updates.imageOffsetY
+                : existing.imageOffsetY
+            ),
+          },
+        },
+      };
+    });
+  };
+
+  const getImageAdjustmentPageData = () => {
+    if (!imageAdjustTarget) return null;
+
+    if (imageAdjustTarget.type === "heroImage") {
+      const images = normalizeImageList(modalForm.images, modalForm.image);
+      const imageUrl = images[imageAdjustTarget.index] || imageAdjustTarget.imageUrl || "";
+      const adjustment = getHeroImageAdjustmentFromModal(imageUrl);
+
+      return {
+        title: `Adjust Hero Image ${imageAdjustTarget.index + 1}`,
+        imageUrl,
+        ...adjustment,
+        onChange: (updates) => updateHeroImageAdjustmentInModal(imageUrl, updates),
+      };
+    }
+
+    if (imageAdjustTarget.type === "storyImage") {
+      return {
+        title: "Adjust Story Image",
+        imageUrl: modalForm.image || "",
+        imageZoom: clampImageZoom(modalForm.imageZoom),
+        imageOffsetX: clampImageOffset(modalForm.imageOffsetX),
+        imageOffsetY: clampImageOffset(modalForm.imageOffsetY),
+        onChange: (updates) =>
+          setModalForm((prev) => ({
+            ...prev,
+            imageZoom: clampImageZoom(updates.imageZoom),
+            imageOffsetX: clampImageOffset(updates.imageOffsetX),
+            imageOffsetY: clampImageOffset(updates.imageOffsetY),
+          })),
+      };
+    }
+
+    return null;
   };
 
   const saveSelectedPart = async () => {
@@ -542,10 +1093,23 @@ export default function AdminHome() {
       if (editingTarget.type === "heroImage") {
         const heroImages = normalizeImageList(modalForm.images, modalForm.image);
 
+        const imageAdjustments = heroImages.reduce((acc, imageUrl) => {
+          const adjustment = modalForm.imageAdjustments?.[imageUrl] || {};
+
+          acc[imageUrl] = {
+            imageZoom: clampImageZoom(adjustment.imageZoom),
+            imageOffsetX: clampImageOffset(adjustment.imageOffsetX),
+            imageOffsetY: clampImageOffset(adjustment.imageOffsetY),
+          };
+
+          return acc;
+        }, {});
+
         nextForm.hero = {
           ...nextForm.hero,
           image: heroImages[0] || "",
           images: heroImages,
+          imageAdjustments,
         };
       }
 
@@ -615,6 +1179,9 @@ export default function AdminHome() {
           story: {
             ...nextForm.statsSection.story,
             image: modalForm.image || "",
+            imageZoom: clampImageZoom(modalForm.imageZoom),
+            imageOffsetX: clampImageOffset(modalForm.imageOffsetX),
+            imageOffsetY: clampImageOffset(modalForm.imageOffsetY),
           },
         };
       }
@@ -697,6 +1264,7 @@ export default function AdminHome() {
       );
 
       setForm(cleanContent);
+      setImageAdjustTarget(null);
       setEditingTarget(null);
       setModalForm({});
       setSuccess("Selected homepage item saved successfully.");
@@ -893,9 +1461,11 @@ export default function AdminHome() {
               contentOverride={form.hero}
               onEditTarget={openEditor}
             />
-           <Stats
-  contentOverride={form.statsSection}
-/>
+            <Stats
+              editMode
+              contentOverride={form.statsSection}
+              onEditTarget={openEditor}
+            />
           </div>
         </div>
       </motion.div>
@@ -931,6 +1501,30 @@ export default function AdminHome() {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {imageAdjustTarget &&
+          (() => {
+            const adjustmentPageData = getImageAdjustmentPageData();
+
+            if (!adjustmentPageData) return null;
+
+            return (
+              <ImageAdjustmentPage
+                title={adjustmentPageData.title}
+                imageUrl={adjustmentPageData.imageUrl}
+                imageZoom={adjustmentPageData.imageZoom}
+                imageOffsetX={adjustmentPageData.imageOffsetX}
+                imageOffsetY={adjustmentPageData.imageOffsetY}
+                onChange={adjustmentPageData.onChange}
+                onClose={() => setImageAdjustTarget(null)}
+                onSave={saveSelectedPart}
+                saving={saving}
+                uploadingImage={uploadingImage}
+              />
+            );
+          })()}
+      </AnimatePresence>
 
       <AnimatePresence>
         {editingTarget && (
@@ -1101,7 +1695,11 @@ export default function AdminHome() {
                                   <img
                                     src={imageUrl}
                                     alt={`Hero ${index + 1}`}
+                                    draggable={false}
                                     className="h-full w-full object-cover"
+                                    style={getCropImageStyle(
+                                      getHeroImageAdjustmentFromModal(imageUrl)
+                                    )}
                                   />
                                 </div>
 
@@ -1116,6 +1714,25 @@ export default function AdminHome() {
                               </div>
 
                               <div className="mt-3 flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setImageAdjustTarget({
+                                      type: "heroImage",
+                                      index,
+                                      imageUrl,
+                                    })
+                                  }
+                                  className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black"
+                                  style={{
+                                    background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                                    color: colors.dark,
+                                  }}
+                                >
+                                  <Camera className="w-3.5 h-3.5" />
+                                  Adjust Image
+                                </button>
+
                                 {index !== 0 && (
                                   <button
                                     type="button"
@@ -1172,7 +1789,9 @@ export default function AdminHome() {
                               <img
                                 src={modalForm.image}
                                 alt="Preview"
+                                draggable={false}
                                 className="w-full h-full object-cover"
+                                style={getCropImageStyle(modalForm)}
                               />
                             ) : (
                               <ImageIcon className="w-8 h-8 text-slate-300" />
@@ -1209,6 +1828,22 @@ export default function AdminHome() {
                             className="hidden"
                           />
                         </label>
+
+                        {modalForm.image && (
+                          <button
+                            type="button"
+                            onClick={() => setImageAdjustTarget({ type: "storyImage" })}
+                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black"
+                            style={{
+                              background: "rgba(255,255,255,0.10)",
+                              color: "#FFFFFF",
+                              border: "1px solid rgba(255,255,255,0.14)",
+                            }}
+                          >
+                            <Camera className="w-4 h-4" />
+                            Open Image Adjustment
+                          </button>
+                        )}
                       </div>
 
                       <Field

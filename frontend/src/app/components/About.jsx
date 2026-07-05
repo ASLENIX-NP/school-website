@@ -42,6 +42,9 @@ export const defaultAboutContent = {
   storyImageAlt: "School campus",
   storyImageTitle: "School Campus",
   storyImageSubtitle: "Image can later be managed from admin dashboard",
+  storyImageZoom: 1,
+  storyImageOffsetX: 0,
+  storyImageOffsetY: 0,
 
   pillarBadge: "Our Core Values",
   pillarTitle: "What Makes Us Different",
@@ -85,6 +88,9 @@ export const defaultAboutContent = {
       message:
         "Welcome to Baljagriti Secondary English School. We are committed to nurturing every child into a confident, capable, disciplined, and compassionate individual. Our goal is to provide quality education with strong values, creativity, and academic excellence.",
       image: "",
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
       visible: true,
     },
     {
@@ -95,6 +101,9 @@ export const defaultAboutContent = {
       message:
         "Our team works tirelessly to provide a safe, inspiring, and academically rigorous environment for every student. We believe every child deserves care, guidance, and opportunities to grow academically, socially, and personally.",
       image: "",
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
       visible: true,
     },
   ],
@@ -152,6 +161,30 @@ export const defaultAboutContent = {
   ],
 };
 
+function clampNumber(value, min, max, fallback) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return fallback;
+
+  return Math.min(max, Math.max(min, numberValue));
+}
+
+function getAdjustedImageStyle(source = {}) {
+  const zoom = clampNumber(source.imageZoom, 1, 3, 1);
+  const x = clampNumber(source.imageOffsetX, -60, 60, 0);
+  const y = clampNumber(source.imageOffsetY, -60, 60, 0);
+  const objectX = Math.min(100, Math.max(0, 50 - x));
+  const objectY = Math.min(100, Math.max(0, 50 - y));
+
+  return {
+    objectFit: "cover",
+    objectPosition: `${objectX}% ${objectY}%`,
+    transform: `scale(${zoom})`,
+    transformOrigin: "center center",
+    transition: "transform 240ms ease-out, object-position 240ms ease-out",
+  };
+}
+
 function normalizeArray(savedArray, defaultArray) {
   if (!Array.isArray(savedArray)) return defaultArray;
 
@@ -163,14 +196,27 @@ function normalizeArray(savedArray, defaultArray) {
 }
 
 export function mergeAboutContent(saved = {}) {
+  const messages = normalizeArray(
+    saved.messages,
+    defaultAboutContent.messages
+  ).map((message) => ({
+    ...message,
+    imageZoom: clampNumber(message.imageZoom, 1, 3, 1),
+    imageOffsetX: clampNumber(message.imageOffsetX, -60, 60, 0),
+    imageOffsetY: clampNumber(message.imageOffsetY, -60, 60, 0),
+  }));
+
   return {
     ...defaultAboutContent,
     ...(saved || {}),
     storyParagraphs: Array.isArray(saved.storyParagraphs)
       ? saved.storyParagraphs
       : defaultAboutContent.storyParagraphs,
+    storyImageZoom: clampNumber(saved.storyImageZoom, 1, 3, 1),
+    storyImageOffsetX: clampNumber(saved.storyImageOffsetX, -60, 60, 0),
+    storyImageOffsetY: clampNumber(saved.storyImageOffsetY, -60, 60, 0),
     pillars: normalizeArray(saved.pillars, defaultAboutContent.pillars),
-    messages: normalizeArray(saved.messages, defaultAboutContent.messages),
+    messages,
     missionVision: normalizeArray(
       saved.missionVision,
       defaultAboutContent.missionVision
@@ -286,9 +332,16 @@ function SectionAddButton({ editMode, label, type, onAddTarget }) {
   );
 }
 
-function AboutImage({ src, alt }) {
+function AboutImage({ src, alt, imageData = {} }) {
   if (src) {
-    return <img src={src} alt={alt} className="w-full h-full object-cover" />;
+    return (
+      <img
+        src={src}
+        alt={alt}
+        className="w-full h-full object-cover will-change-transform"
+        style={getAdjustedImageStyle(imageData)}
+      />
+    );
   }
 
   return (
@@ -321,7 +374,8 @@ function LeadershipImagePanel({ person, index, editMode, onEditTarget }) {
             <img
               src={person.image}
               alt={person.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover will-change-transform"
+              style={getAdjustedImageStyle(person)}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-slate-100">
@@ -633,6 +687,11 @@ export function About({
               <AboutImage
                 src={content.storyImageUrl}
                 alt={content.storyImageAlt}
+                imageData={{
+                  imageZoom: content.storyImageZoom,
+                  imageOffsetX: content.storyImageOffsetX,
+                  imageOffsetY: content.storyImageOffsetY,
+                }}
               />
 
               <div

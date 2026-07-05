@@ -61,6 +61,9 @@ export const defaultStatsSectionData = {
     buttonLink: "/about",
     image:
       "https://images.unsplash.com/photo-1588072432836-e10032774350?w=1000&h=800&fit=crop&auto=format",
+    imageZoom: 1,
+    imageOffsetX: 0,
+    imageOffsetY: 0,
     imageTopTitle: "Baljagriti School",
     imageTopSubtitle: "Hetauda-2, Makwanpur",
     imageBottomTitle: "Quality Education Since 2046 BS",
@@ -122,6 +125,9 @@ export function mergeStatsSectionData(saved = {}) {
               savedStats.story.paragraphs[1] || "",
             ]
           : defaultStatsSectionData.story.paragraphs,
+      imageZoom: clampStoryImageZoom(savedStats.story?.imageZoom),
+      imageOffsetX: clampStoryImageOffset(savedStats.story?.imageOffsetX),
+      imageOffsetY: clampStoryImageOffset(savedStats.story?.imageOffsetY),
     },
     excellence: {
       ...defaultStatsSectionData.excellence,
@@ -139,6 +145,38 @@ export function mergeStatsSectionData(saved = {}) {
       ...defaultStatsSectionData.notices,
       ...(savedStats.notices || {}),
     },
+  };
+}
+
+function clampStoryImageOffset(value) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return 0;
+
+  return Math.min(60, Math.max(-60, numberValue));
+}
+
+function clampStoryImageZoom(value) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return 1;
+
+  return Math.min(3, Math.max(1, numberValue));
+}
+
+function getStoryImageCropStyle(story = {}) {
+  const zoom = clampStoryImageZoom(story.imageZoom);
+  const x = clampStoryImageOffset(story.imageOffsetX);
+  const y = clampStoryImageOffset(story.imageOffsetY);
+
+  return {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: "center",
+    transform: `translate(${x}%, ${y}%) scale(${zoom})`,
+    transformOrigin: "center center",
+    opacity: 0.78,
   };
 }
 
@@ -490,7 +528,7 @@ function Stats({
               label="Change story image"
             >
               <div
-                className="relative rounded-[2rem] overflow-hidden min-h-[430px]"
+                className="relative rounded-[2rem] overflow-hidden min-h-[430px] bg-slate-900"
                 style={{
                   background:
                     "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(2,6,23,0.92))",
@@ -504,7 +542,9 @@ function Stats({
                 <img
                   src={statsData.story.image}
                   alt="Baljagriti school"
-                  className="absolute inset-0 w-full h-full object-cover opacity-78"
+                  draggable={false}
+                  className="absolute inset-0"
+                  style={getStoryImageCropStyle(statsData.story)}
                 />
 
                 <div

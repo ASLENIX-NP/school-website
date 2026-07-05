@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -112,6 +112,489 @@ function Toggle({ checked, onChange, label }) {
   );
 }
 
+function clampImageOffset(value) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return 0;
+
+  return Math.min(60, Math.max(-60, numberValue));
+}
+
+function clampImageZoom(value) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return 1;
+
+  return Math.min(3, Math.max(1, numberValue));
+}
+
+function getCropImageStyle(source = {}) {
+  const zoom = clampImageZoom(source.imageZoom);
+  const x = clampImageOffset(source.imageOffsetX);
+  const y = clampImageOffset(source.imageOffsetY);
+
+  return {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: "center",
+    transform: `translate(${x}%, ${y}%) scale(${zoom})`,
+    transformOrigin: "center center",
+    transition: "transform 120ms ease-out",
+    userSelect: "none",
+    pointerEvents: "none",
+  };
+}
+
+function CropSlider({ label, value, min, max, step = 1, suffix = "", onChange }) {
+  const numericValue = Number(value);
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <label className="text-sm font-black text-slate-700">{label}</label>
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
+          {Number.isFinite(numericValue) ? numericValue.toFixed(step < 1 ? 1 : 0) : min}
+          {suffix}
+        </span>
+      </div>
+
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={Number.isFinite(numericValue) ? numericValue : min}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="w-full accent-sky-500"
+      />
+    </div>
+  );
+}
+
+function StaffPhotoPreviewBox({ modalForm }) {
+  return (
+    <div
+      className="h-32 w-24 shrink-0 overflow-hidden rounded-2xl bg-white"
+      style={{ border: "2px solid rgba(255,255,255,0.86)" }}
+    >
+      {modalForm.imageUrl ? (
+        <img
+          src={modalForm.imageUrl}
+          alt="Staff preview"
+          draggable={false}
+          className="h-full w-full object-cover"
+          style={getCropImageStyle(modalForm)}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center">
+          <ImageIcon className="w-8 h-8 text-slate-300" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StaffPhotoAdjustPage({
+  modalForm,
+  setModalForm,
+  uploadImage,
+  uploadingImage,
+  saving,
+  onClose,
+  onSave,
+}) {
+  const dragRef = useRef(null);
+  const pointersRef = useRef(new Map());
+  const pinchRef = useRef(null);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+    const previousOverscroll = document.body.style.overscrollBehavior;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    document.body.style.overscrollBehavior = "contain";
+
+    const preventGesture = (event) => event.preventDefault();
+
+    window.addEventListener("gesturestart", preventGesture, { passive: false });
+    window.addEventListener("gesturechange", preventGesture, { passive: false });
+    window.addEventListener("gestureend", preventGesture, { passive: false });
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+      document.body.style.overscrollBehavior = previousOverscroll;
+      window.removeEventListener("gesturestart", preventGesture);
+      window.removeEventListener("gesturechange", preventGesture);
+      window.removeEventListener("gestureend", preventGesture);
+    };
+  }, []);
+
+  const updateCrop = (updates) => {
+    setModalForm((prev) => ({
+      ...prev,
+      ...updates,
+    }));
+  };
+
+  const resetCrop = () => {
+    updateCrop({
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
+    });
+  };
+
+  const getPointerDistance = (points) => {
+    if (points.length < 2) return 0;
+
+    const [first, second] = points;
+
+    return Math.hypot(
+      second.clientX - first.clientX,
+      second.clientY - first.clientY
+    );
+  };
+
+  const startDrag = (event) => {
+    if (!modalForm.imageUrl) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const box = event.currentTarget.getBoundingClientRect();
+
+    pointersRef.current.set(event.pointerId, {
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
+
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+
+    const points = Array.from(pointersRef.current.values());
+
+    if (points.length >= 2) {
+      pinchRef.current = {
+        startDistance: getPointerDistance(points),
+        startZoom: clampImageZoom(modalForm.imageZoom),
+      };
+      dragRef.current = null;
+      return;
+    }
+
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startOffsetX: clampImageOffset(modalForm.imageOffsetX),
+      startOffsetY: clampImageOffset(modalForm.imageOffsetY),
+      boxWidth: box.width || 1,
+      boxHeight: box.height || 1,
+    };
+  };
+
+  const moveDrag = (event) => {
+    if (!modalForm.imageUrl) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (pointersRef.current.has(event.pointerId)) {
+      pointersRef.current.set(event.pointerId, {
+        clientX: event.clientX,
+        clientY: event.clientY,
+      });
+    }
+
+    const points = Array.from(pointersRef.current.values());
+
+    if (points.length >= 2 && pinchRef.current) {
+      const currentDistance = getPointerDistance(points);
+      const startDistance = pinchRef.current.startDistance || currentDistance || 1;
+      const nextZoom =
+        pinchRef.current.startZoom * (currentDistance / startDistance);
+
+      updateCrop({
+        imageZoom: clampImageZoom(nextZoom),
+      });
+      return;
+    }
+
+    if (!dragRef.current) return;
+
+    const data = dragRef.current;
+    const moveX = ((event.clientX - data.startClientX) / data.boxWidth) * 100;
+    const moveY = ((event.clientY - data.startClientY) / data.boxHeight) * 100;
+
+    updateCrop({
+      imageOffsetX: clampImageOffset(data.startOffsetX + moveX),
+      imageOffsetY: clampImageOffset(data.startOffsetY + moveY),
+    });
+  };
+
+  const endDrag = (event) => {
+    pointersRef.current.delete(event.pointerId);
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+
+    const points = Array.from(pointersRef.current.values());
+
+    if (points.length < 2) {
+      pinchRef.current = null;
+    }
+
+    if (dragRef.current?.pointerId === event.pointerId) {
+      dragRef.current = null;
+    }
+  };
+
+  const handleWheelZoom = (event) => {
+    if (!modalForm.imageUrl) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const direction = event.deltaY > 0 ? -0.1 : 0.1;
+    const nextZoom = clampImageZoom(clampImageZoom(modalForm.imageZoom) + direction);
+
+    updateCrop({
+      imageZoom: nextZoom,
+    });
+  };
+
+  const cropBoxStyle = {
+    border: "3px solid rgba(255,255,255,0.88)",
+    touchAction: "none",
+    overscrollBehavior: "contain",
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[20000] flex flex-col overflow-hidden bg-slate-950 text-white"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onWheelCapture={(event) => {
+        if (event.ctrlKey) event.preventDefault();
+      }}
+    >
+      <header className="shrink-0 border-b border-white/10 bg-slate-950/96 px-4 py-4 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-xs font-black uppercase tracking-[0.18em] text-white/45">
+              Staff Photo Adjustment
+            </div>
+            <h2 className="mt-1 text-2xl font-black leading-tight">
+              Drag and zoom the photo
+            </h2>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving || uploadingImage}
+              className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+            >
+              Back to Details
+            </button>
+
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saving || uploadingImage}
+              className="rounded-2xl px-5 py-3 text-sm font-black text-slate-950 disabled:opacity-50"
+              style={{
+                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+              }}
+            >
+              {saving ? "Saving..." : "Save This Item"}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+        <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[minmax(280px,430px)_1fr] lg:items-start">
+          <section className="rounded-[34px] bg-white/8 p-4 shadow-2xl ring-1 ring-white/10 sm:p-5">
+            <div
+              className="relative mx-auto h-[68vh] min-h-[420px] max-h-[680px] w-full max-w-[410px] touch-none select-none overflow-hidden rounded-[32px] bg-slate-100 shadow-2xl cursor-grab active:cursor-grabbing"
+              style={cropBoxStyle}
+              onPointerDown={startDrag}
+              onPointerMove={moveDrag}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+              onPointerLeave={endDrag}
+              onWheel={handleWheelZoom}
+            >
+              {modalForm.imageUrl ? (
+                <img
+                  src={modalForm.imageUrl}
+                  alt="Staff crop preview"
+                  draggable={false}
+                  className="absolute inset-0"
+                  style={getCropImageStyle(modalForm)}
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <ImageIcon className="h-16 w-16 text-slate-300" />
+                </div>
+              )}
+
+              <div className="pointer-events-none absolute inset-0">
+                <div className="absolute inset-x-0 top-1/3 h-px bg-white/35" />
+                <div className="absolute inset-x-0 top-2/3 h-px bg-white/35" />
+                <div className="absolute inset-y-0 left-1/3 w-px bg-white/35" />
+                <div className="absolute inset-y-0 left-2/3 w-px bg-white/35" />
+              </div>
+
+              <div className="pointer-events-none absolute left-4 top-4 rounded-full bg-black/60 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-white">
+                Drag Photo
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-[34px] bg-white p-5 text-slate-950 shadow-2xl sm:p-6">
+            <div className="mb-5">
+              <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+                Controls
+              </div>
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-500">
+                Phone: use two fingers on the photo to zoom. Laptop: place the mouse over the photo and use mouse wheel or trackpad. Drag the photo to position the face.
+              </p>
+            </div>
+
+            <label
+              className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black"
+              style={{
+                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                color: colors.dark,
+              }}
+            >
+              <UploadCloud className="w-4 h-4" />
+              {uploadingImage ? "Uploading..." : "Upload New Photo"}
+              <input
+                type="file"
+                accept="image/*"
+                disabled={uploadingImage}
+                onChange={(event) => {
+                  uploadImage(event.target.files?.[0]);
+                  event.target.value = "";
+                }}
+                className="hidden"
+              />
+            </label>
+
+            <div className="mt-6 space-y-5">
+              <CropSlider
+                label="Zoom"
+                value={clampImageZoom(modalForm.imageZoom)}
+                min={1}
+                max={3}
+                step={0.05}
+                suffix="x"
+                onChange={(value) => updateCrop({ imageZoom: clampImageZoom(value) })}
+              />
+
+              <CropSlider
+                label="Move Left / Right"
+                value={clampImageOffset(modalForm.imageOffsetX)}
+                min={-60}
+                max={60}
+                step={1}
+                onChange={(value) => updateCrop({ imageOffsetX: clampImageOffset(value) })}
+              />
+
+              <CropSlider
+                label="Move Up / Down"
+                value={clampImageOffset(modalForm.imageOffsetY)}
+                min={-60}
+                max={60}
+                step={1}
+                onChange={(value) => updateCrop({ imageOffsetY: clampImageOffset(value) })}
+              />
+            </div>
+
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({
+                    imageOffsetY: clampImageOffset(clampImageOffset(modalForm.imageOffsetY) - 5),
+                  })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Up
+              </button>
+
+              <button
+                type="button"
+                onClick={resetCrop}
+                disabled={saving || uploadingImage}
+                className="rounded-xl px-3 py-3 text-xs font-black text-slate-950 disabled:opacity-50"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                }}
+              >
+                Reset
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({
+                    imageOffsetY: clampImageOffset(clampImageOffset(modalForm.imageOffsetY) + 5),
+                  })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Down
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({
+                    imageOffsetX: clampImageOffset(clampImageOffset(modalForm.imageOffsetX) - 5),
+                  })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Left
+              </button>
+
+              <div className="rounded-xl bg-slate-50 px-3 py-3 text-center text-[11px] font-black text-slate-400">
+                Move
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({
+                    imageOffsetX: clampImageOffset(clampImageOffset(modalForm.imageOffsetX) + 5),
+                  })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Right
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-xs font-semibold leading-relaxed text-slate-500">
+              Current: Zoom {clampImageZoom(modalForm.imageZoom).toFixed(2)}x, X{" "}
+              {Math.round(clampImageOffset(modalForm.imageOffsetX))}, Y{" "}
+              {Math.round(clampImageOffset(modalForm.imageOffsetY))}
+            </div>
+          </section>
+        </div>
+      </main>
+    </motion.div>
+  );
+}
+
 function getAuthHeaders() {
   const token = localStorage.getItem("adminToken");
 
@@ -150,6 +633,7 @@ export default function AdminStaff() {
   const [editingTarget, setEditingTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalForm, setModalForm] = useState({});
+  const [photoAdjustOpen, setPhotoAdjustOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [success, setSuccess] = useState("");
@@ -211,6 +695,9 @@ export default function AdminStaff() {
         name: member.name || "",
         position: member.position || "",
         imageUrl: member.imageUrl || "",
+        imageZoom: clampImageZoom(member.imageZoom),
+        imageOffsetX: clampImageOffset(member.imageOffsetX),
+        imageOffsetY: clampImageOffset(member.imageOffsetY),
         qualification: member.qualification || "",
         phone: member.phone || "",
         email: member.email || "",
@@ -222,6 +709,7 @@ export default function AdminStaff() {
 
   const closeEditor = () => {
     if (saving || uploadingImage) return;
+    setPhotoAdjustOpen(false);
     setEditingTarget(null);
     setModalForm({});
   };
@@ -290,8 +778,15 @@ export default function AdminStaff() {
         return;
       }
 
-      updateModalField("imageUrl", uploadedUrl);
-      setSuccess("Staff photo uploaded. Click Save This Item to publish it.");
+      setModalForm((prev) => ({
+        ...prev,
+        imageUrl: uploadedUrl,
+        imageZoom: 1,
+        imageOffsetX: 0,
+        imageOffsetY: 0,
+      }));
+      setPhotoAdjustOpen(true);
+      setSuccess("Staff photo uploaded. Adjust it on the photo adjustment page, then save.");
     } catch (err) {
       console.error("Staff photo upload error:", err);
       setError(err.response?.data?.message || "Staff photo upload failed.");
@@ -347,6 +842,9 @@ export default function AdminStaff() {
                   name: modalForm.name || "",
                   position: modalForm.position || "",
                   imageUrl: modalForm.imageUrl || "",
+                  imageZoom: clampImageZoom(modalForm.imageZoom),
+                  imageOffsetX: clampImageOffset(modalForm.imageOffsetX),
+                  imageOffsetY: clampImageOffset(modalForm.imageOffsetY),
                   qualification: modalForm.qualification || "",
                   phone: modalForm.phone || "",
                   email: modalForm.email || "",
@@ -361,6 +859,7 @@ export default function AdminStaff() {
       const cleanContent = mergeStaffContent(nextForm);
       await saveContentToBackend(cleanContent, "Selected staff item saved successfully.");
 
+      setPhotoAdjustOpen(false);
       setEditingTarget(null);
       setModalForm({});
     } catch (err) {
@@ -387,6 +886,9 @@ export default function AdminStaff() {
         name: "New Staff Member",
         position: "Teacher",
         imageUrl: "",
+        imageZoom: 1,
+        imageOffsetX: 0,
+        imageOffsetY: 0,
         qualification: "",
         phone: "",
         email: "",
@@ -691,32 +1193,37 @@ export default function AdminStaff() {
                           border: "1px solid rgba(255,255,255,0.12)",
                         }}
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="w-28 h-28 rounded-2xl bg-white overflow-hidden flex items-center justify-center">
-                            {modalForm.imageUrl ? (
-                              <img
-                                src={modalForm.imageUrl}
-                                alt="Preview"
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <ImageIcon className="w-8 h-8 text-slate-300" />
-                            )}
-                          </div>
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                          <StaffPhotoPreviewBox modalForm={modalForm} />
 
-                          <div>
-                            <div className="text-white font-black">Photo Preview</div>
-                            <div className="text-white/55 text-sm mt-1 leading-relaxed">
-                              Recommended: JPG/PNG/WebP, max 6 MB.
+                          <div className="min-w-0 flex-1">
+                            <div className="text-white font-black">Staff Photo</div>
+                            <div className="mt-1 text-sm leading-relaxed text-white/55">
+                              Open the adjustment page to drag and zoom the image properly.
                             </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setPhotoAdjustOpen(true)}
+                              disabled={!modalForm.imageUrl || saving || uploadingImage}
+                              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black disabled:cursor-not-allowed disabled:opacity-50"
+                              style={{
+                                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                                color: colors.dark,
+                              }}
+                            >
+                              <Camera className="w-4 h-4" />
+                              Open Photo Adjustment
+                            </button>
                           </div>
                         </div>
 
                         <label
-                          className="mt-5 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black cursor-pointer"
+                          className="mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black"
                           style={{
-                            background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                            color: colors.dark,
+                            background: "rgba(255,255,255,0.10)",
+                            color: "#FFFFFF",
+                            border: "1px solid rgba(255,255,255,0.14)",
                           }}
                         >
                           <UploadCloud className="w-4 h-4" />
@@ -902,6 +1409,21 @@ export default function AdminStaff() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+
+        {photoAdjustOpen && needsImageUpload && (
+          <StaffPhotoAdjustPage
+            modalForm={modalForm}
+            setModalForm={setModalForm}
+            uploadImage={uploadImage}
+            uploadingImage={uploadingImage}
+            saving={saving}
+            onClose={() => setPhotoAdjustOpen(false)}
+            onSave={async () => {
+              await saveSelectedPart();
+              setPhotoAdjustOpen(false);
+            }}
+          />
         )}
 
         {deleteTarget && (

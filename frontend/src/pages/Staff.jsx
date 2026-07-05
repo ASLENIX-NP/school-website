@@ -64,6 +64,9 @@ export const defaultStaffContent = {
       name: "Binod Subedi",
       position: "Principal",
       imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
       qualification: "M.Ed",
       phone: "+977-9800000000",
       email: "",
@@ -76,6 +79,9 @@ export const defaultStaffContent = {
       name: "Amul Shrestha",
       position: "Vice Principal",
       imageUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
       qualification: "M.Ed",
       phone: "+977-9800000000",
       email: "",
@@ -88,6 +94,9 @@ export const defaultStaffContent = {
       name: "Prem Hamal",
       position: "Science Teacher",
       imageUrl: "https://images.unsplash.com/photo-1504593811423-6dd665756598",
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
       qualification: "B.Sc, B.Ed",
       phone: "+977-9800000000",
       email: "",
@@ -112,6 +121,14 @@ function normalizeStats(stats) {
   }));
 }
 
+function clampNumber(value, min, max, fallback) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return fallback;
+
+  return Math.min(max, Math.max(min, numberValue));
+}
+
 function normalizeStaff(staff) {
   if (!Array.isArray(staff) || staff.length === 0) {
     return defaultStaffContent.staff;
@@ -124,6 +141,9 @@ function normalizeStaff(staff) {
     name: member.name || "Staff Member",
     position: member.position || "Teacher",
     imageUrl: member.imageUrl || "",
+    imageZoom: clampNumber(member.imageZoom, 1, 3, 1),
+    imageOffsetX: clampNumber(member.imageOffsetX, -60, 60, 0),
+    imageOffsetY: clampNumber(member.imageOffsetY, -60, 60, 0),
     qualification: member.qualification || "",
     phone: member.phone || "",
     email: member.email || "",
@@ -163,13 +183,31 @@ function HighlightedTitle({ title, highlightedWord }) {
   );
 }
 
-function StaffImage({ src, name }) {
+function getStaffImageStyle(staff = {}) {
+  const zoom = clampNumber(staff.imageZoom, 1, 3, 1);
+  const x = clampNumber(staff.imageOffsetX, -60, 60, 0);
+  const y = clampNumber(staff.imageOffsetY, -60, 60, 0);
+
+  return {
+    objectFit: "cover",
+    objectPosition: "center",
+    transform: `translate(${x}%, ${y}%) scale(${zoom})`,
+    transformOrigin: "center center",
+    backgroundColor: "#F8FAFC",
+  };
+}
+
+function StaffImage({ staff }) {
+  const src = staff?.imageUrl || "";
+  const name = staff?.name || "Staff member";
+
   if (src) {
     return (
       <img
         src={src}
         alt={name}
-        className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-105"
+        className="w-full h-80 object-cover transition-transform duration-300 will-change-transform"
+        style={getStaffImageStyle(staff)}
       />
     );
   }
@@ -350,7 +388,8 @@ function StaffPopup({ staff, onClose }) {
                   <img
                     src={staff.imageUrl}
                     alt={staff.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-300 will-change-transform"
+                    style={getStaffImageStyle(staff)}
                   />
                 ) : (
                   <div
@@ -736,7 +775,7 @@ export function Staff({
                   />
 
                   <div className="relative overflow-hidden">
-                    <StaffImage src={staff.imageUrl} name={staff.name} />
+                    <StaffImage staff={staff} />
 
                     <button
                       type="button"
