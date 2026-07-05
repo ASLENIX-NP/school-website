@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
-import { Camera, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Camera, Pencil, Plus, Trash2, X, MapPin, Bus } from "lucide-react";
 
 const colors = {
   red: "#D71920",
@@ -82,6 +82,22 @@ export const defaultFacilitiesContent = {
       imageUrl: "",
       color: "#F59E0B",
       visible: true,
+      busRoutes: [
+        {
+          id: 1,
+          name: "Route 1",
+          from: "Hetauda - New Bus Park",
+          to: "School Campus",
+          stops: ["New Bus Park", "Chandranagar", "Bhanu Chowk", "School Campus"]
+        },
+        {
+          id: 2,
+          name: "Route 2",
+          from: "Hetauda - Old Bus Park",
+          to: "School Campus",
+          stops: ["Old Bus Park", "Milan Chowk", "Bishnupur", "School Campus"]
+        }
+      ]
     },
     {
       id: 5,
@@ -121,6 +137,7 @@ function normalizeFacilities(facilities) {
     id: facility.id || Date.now() + index,
     color: facility.color || facilityColors[index % facilityColors.length],
     visible: facility.visible !== false,
+    busRoutes: facility.busRoutes || [],
   }));
 }
 
@@ -302,6 +319,53 @@ function FacilityVisual({ facility, className = "" }) {
         >
           {facility.title}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function BusRoutesDisplay({ routes }) {
+  if (!routes || routes.length === 0) return null;
+
+  return (
+    <div className="mt-6 space-y-4">
+      <div className="flex items-center gap-2">
+        <Bus className="w-5 h-5" style={{ color: colors.green }} />
+        <h4 className="font-bold text-slate-800">Available Bus Routes</h4>
+        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+          {routes.length} routes
+        </span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {routes.map((route) => (
+          <div
+            key={route.id}
+            className="rounded-2xl p-4 border"
+            style={{
+              background: "rgba(255,255,255,0.8)",
+              borderColor: "rgba(75,46,131,0.12)",
+            }}
+          >
+            <div className="font-bold text-slate-800 text-sm mb-2">{route.name}</div>
+            <div className="flex items-center gap-2 text-xs text-slate-600 mb-2">
+              <MapPin className="w-3 h-3" />
+              <span>{route.from || "Not set"}</span>
+              <span className="text-slate-400">→</span>
+              <MapPin className="w-3 h-3" />
+              <span>{route.to || "Not set"}</span>
+            </div>
+            {route.stops && route.stops.length > 0 && (
+              <div className="space-y-1">
+                {route.stops.map((stop, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs text-slate-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                    {stop}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -541,6 +605,9 @@ export function Facilities({
                     {facility.description}
                   </p>
 
+                  {/* REMOVED: Bus routes are no longer shown on the card */}
+                  {/* Only shown in the popup/modal */}
+
                   <div
                     className="mt-6 inline-flex items-center font-bold transition-all duration-300 group-hover:tracking-wide"
                     style={{ color: facilityColor }}
@@ -649,6 +716,13 @@ export function Facilities({
                 <p className="mt-6 text-base sm:text-lg md:text-xl text-slate-600 leading-relaxed">
                   {selectedFacility.description}
                 </p>
+
+                {/* Bus routes displayed here in the popup */}
+                {selectedFacility.title === "Bus Facility" && selectedFacility.busRoutes && selectedFacility.busRoutes.length > 0 && (
+                  <div className="mt-6">
+                    <BusRoutesDisplay routes={selectedFacility.busRoutes} />
+                  </div>
+                )}
 
                 <div
                   className="mt-8 md:mt-10 p-6 sm:p-8 rounded-3xl"

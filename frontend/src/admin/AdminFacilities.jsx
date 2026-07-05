@@ -14,6 +14,9 @@ import {
   Trash2,
   UploadCloud,
   X,
+  Plus,
+  MapPin,
+  Bus,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -158,6 +161,245 @@ function getDeleteName(target) {
   return "this item";
 }
 
+function BusRouteEditor({ 
+  routes, 
+  onAddRoute, 
+  onEditRoute, 
+  onDeleteRoute,
+  editingRouteId,
+  setEditingRouteId 
+}) {
+  const [routeForm, setRouteForm] = useState({ name: "", from: "", to: "", stops: [] });
+  const [stopInput, setStopInput] = useState("");
+
+  // Find the route being edited
+  const editingRoute = editingRouteId ? routes.find(r => r.id === editingRouteId) : null;
+
+  // When editing route changes, update the form
+  useEffect(() => {
+    if (editingRoute) {
+      setRouteForm({ ...editingRoute });
+    } else {
+      setRouteForm({ name: "", from: "", to: "", stops: [] });
+    }
+  }, [editingRouteId, routes]);
+
+  const handleAddStop = () => {
+    if (stopInput.trim()) {
+      setRouteForm(prev => ({
+        ...prev,
+        stops: [...prev.stops, stopInput.trim()]
+      }));
+      setStopInput("");
+    }
+  };
+
+  const handleRemoveStop = (index) => {
+    setRouteForm(prev => ({
+      ...prev,
+      stops: prev.stops.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleSaveRoute = () => {
+    if (editingRoute) {
+      // Update existing route
+      onEditRoute(editingRoute.id, routeForm);
+      // Keep editing mode active
+      setEditingRouteId(editingRoute.id);
+    } else {
+      // Add new route with the form data
+      const newRoute = {
+        ...routeForm,
+        id: Date.now()
+      };
+      onAddRoute(newRoute);
+      // Enter edit mode for the new route
+      setEditingRouteId(newRoute.id);
+    }
+  };
+
+  const handleEditClick = (route) => {
+    setEditingRouteId(route.id);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRouteId(null);
+    setRouteForm({ name: "", from: "", to: "", stops: [] });
+    setStopInput("");
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="font-bold text-slate-700 flex items-center gap-2">
+          <Bus className="w-4 h-4" />
+          Bus Routes
+        </h4>
+        <span className="text-sm text-slate-500">{routes.length} routes</span>
+      </div>
+
+      {routes.map((route) => (
+        <div
+          key={route.id}
+          className={`rounded-2xl p-4 border transition-all ${
+            editingRouteId === route.id ? 'ring-2 ring-blue-400' : ''
+          }`}
+          style={{
+            background: editingRouteId === route.id ? "rgba(56,189,248,0.05)" : "rgba(255,255,255,0.92)",
+            borderColor: editingRouteId === route.id ? "rgba(56,189,248,0.5)" : "rgba(75,46,131,0.12)",
+          }}
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="font-bold text-slate-800">{route.name}</div>
+              <div className="flex items-center gap-2 text-xs text-slate-600 mt-1">
+                <MapPin className="w-3 h-3" />
+                <span>{route.from || "Not set"}</span>
+                <span className="text-slate-400">→</span>
+                <MapPin className="w-3 h-3" />
+                <span>{route.to || "Not set"}</span>
+              </div>
+              {route.stops && route.stops.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {route.stops.map((stop, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                      {stop}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2 ml-4">
+              <button
+                type="button"
+                onClick={() => handleEditClick(route)}
+                className="p-2 rounded-xl hover:bg-slate-100 transition-colors"
+                style={{ color: colors.purple }}
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onDeleteRoute(route.id);
+                  if (editingRouteId === route.id) setEditingRouteId(null);
+                }}
+                className="p-2 rounded-xl hover:bg-red-50 transition-colors"
+                style={{ color: colors.red }}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      <div className="rounded-2xl p-4 border" style={{ borderColor: "rgba(75,46,131,0.12)" }}>
+        <div className="flex items-center gap-2 mb-3">
+          <Plus className="w-4 h-4" style={{ color: colors.green }} />
+          <span className="font-bold text-sm text-slate-700">
+            {editingRoute ? "Edit Route" : "Add New Route"}
+          </span>
+        </div>
+        <div className="space-y-3">
+          <Field
+            label="Route Name"
+            value={routeForm.name}
+            onChange={(val) => setRouteForm(prev => ({ ...prev, name: val }))}
+            placeholder="e.g., Route 1"
+          />
+          <Field
+            label="Starting Point"
+            value={routeForm.from}
+            onChange={(val) => setRouteForm(prev => ({ ...prev, from: val }))}
+            placeholder="e.g., Hetauda - New Bus Park"
+          />
+          <Field
+            label="Destination"
+            value={routeForm.to}
+            onChange={(val) => setRouteForm(prev => ({ ...prev, to: val }))}
+            placeholder="e.g., School Campus"
+          />
+          <div>
+            <label className="block text-sm font-black mb-2 text-slate-700">Stops</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={stopInput}
+                onChange={(e) => setStopInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddStop()}
+                placeholder="Add a stop"
+                className="flex-1 px-4 py-3 rounded-2xl outline-none text-sm"
+                style={{
+                  background: "rgba(255,255,255,0.92)",
+                  border: "1px solid rgba(75,46,131,0.16)",
+                  color: colors.dark,
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleAddStop}
+                className="px-4 py-3 rounded-2xl font-black text-sm"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                  color: "#020617",
+                }}
+              >
+                Add
+              </button>
+            </div>
+            {routeForm.stops.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {routeForm.stops.map((stop, idx) => (
+                  <div key={idx} className="flex items-center justify-between bg-white/50 rounded-xl px-3 py-2">
+                    <span className="text-sm text-slate-700">{stop}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveStop(idx)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {editingRoute && (
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="flex-1 py-3 rounded-2xl font-black text-sm"
+                style={{
+                  background: "rgba(100,116,139,0.1)",
+                  color: "#475569",
+                  border: "1px solid rgba(100,116,139,0.2)",
+                }}
+              >
+                Cancel
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleSaveRoute}
+              className="flex-1 py-3 rounded-2xl font-black text-sm"
+              style={{
+                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                color: "#020617",
+              }}
+            >
+              {editingRoute ? "Update Route" : "Add Route"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminFacilities() {
   const navigate = useNavigate();
 
@@ -170,6 +412,7 @@ export default function AdminFacilities() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [editingRouteId, setEditingRouteId] = useState(null);
 
   useEffect(() => {
     const loadFacilitiesContent = async () => {
@@ -202,6 +445,7 @@ export default function AdminFacilities() {
     setSuccess("");
     setError("");
     setEditingTarget(target);
+    setEditingRouteId(null);
 
     if (target.type === "pageHeader") {
       setModalForm({
@@ -226,6 +470,7 @@ export default function AdminFacilities() {
         imageUrl: item.imageUrl || "",
         color: item.color || colors.green,
         visible: item.visible !== false,
+        busRoutes: item.busRoutes || [],
       });
     }
   };
@@ -234,6 +479,7 @@ export default function AdminFacilities() {
     if (saving || uploadingImage) return;
     setEditingTarget(null);
     setModalForm({});
+    setEditingRouteId(null);
   };
 
   const saveContentToBackend = async (nextForm, message) => {
@@ -314,6 +560,29 @@ export default function AdminFacilities() {
     }
   };
 
+  // FIXED: Now accepts the route data from the editor instead of creating an empty route
+  const handleAddBusRoute = (newRoute) => {
+    const currentRoutes = modalForm.busRoutes || [];
+    updateModalField("busRoutes", [...currentRoutes, newRoute]);
+  };
+
+  const handleEditBusRoute = (routeId, updatedRoute) => {
+    const currentRoutes = modalForm.busRoutes || [];
+    const updatedRoutes = currentRoutes.map(route =>
+      route.id === routeId ? { ...route, ...updatedRoute } : route
+    );
+    updateModalField("busRoutes", updatedRoutes);
+  };
+
+  const handleDeleteBusRoute = (routeId) => {
+    const currentRoutes = modalForm.busRoutes || [];
+    const updatedRoutes = currentRoutes.filter(route => route.id !== routeId);
+    updateModalField("busRoutes", updatedRoutes);
+    if (editingRouteId === routeId) {
+      setEditingRouteId(null);
+    }
+  };
+
   const saveSelectedPart = async () => {
     if (!editingTarget) return;
 
@@ -353,6 +622,7 @@ export default function AdminFacilities() {
                   imageUrl: modalForm.imageUrl || "",
                   color: modalForm.color || colors.green,
                   visible: modalForm.visible !== false,
+                  busRoutes: modalForm.busRoutes || [],
                 }
               : item
           ),
@@ -367,6 +637,7 @@ export default function AdminFacilities() {
 
       setEditingTarget(null);
       setModalForm({});
+      setEditingRouteId(null);
     } catch (err) {
       console.error("Save selected facilities item error:", err);
 
@@ -398,6 +669,7 @@ export default function AdminFacilities() {
         imageUrl: "",
         color: nextColor,
         visible: true,
+        busRoutes: [],
       };
 
       const nextForm = mergeFacilitiesContent({
@@ -431,6 +703,7 @@ export default function AdminFacilities() {
       setDeleteTarget(null);
       setEditingTarget(null);
       setModalForm({});
+      setEditingRouteId(null);
     } catch (err) {
       console.error("Delete facility error:", err);
       setError(err.response?.data?.message || "Could not delete facility.");
@@ -460,6 +733,12 @@ export default function AdminFacilities() {
     if (editingTarget.type === "facilityCard") return Building2;
     return Pencil;
   }, [editingTarget]);
+
+  const isBusFacility = useMemo(() => {
+    if (!editingTarget) return false;
+    if (editingTarget.type !== "facilityCard") return false;
+    return modalForm.title === "Bus Facility";
+  }, [editingTarget, modalForm.title]);
 
   if (loading) {
     return (
@@ -824,6 +1103,17 @@ export default function AdminFacilities() {
                         rows={5}
                       />
 
+                      {isBusFacility && (
+                        <BusRouteEditor
+                          routes={modalForm.busRoutes || []}
+                          onAddRoute={handleAddBusRoute}
+                          onEditRoute={handleEditBusRoute}
+                          onDeleteRoute={handleDeleteBusRoute}
+                          editingRouteId={editingRouteId}
+                          setEditingRouteId={setEditingRouteId}
+                        />
+                      )}
+
                       <Toggle
                         label="Show this facility on website"
                         checked={modalForm.visible !== false}
@@ -961,4 +1251,3 @@ export default function AdminFacilities() {
     </div>
   );
 }
-
