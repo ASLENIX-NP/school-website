@@ -48,12 +48,14 @@ export const protectAdmin = async (req, res, next) => {
       });
     }
 
+    const now = new Date().toISOString();
+
     const { data: activeSession, error: sessionError } = await supabase
       .from("admin_sessions")
       .select("id, token_id, admin_email, expires_at, revoked_at")
       .eq("token_id", decoded.tokenId)
       .is("revoked_at", null)
-      .gt("expires_at", new Date().toISOString())
+      .gt("expires_at", now)
       .maybeSingle();
 
     if (sessionError || !activeSession) {
@@ -65,7 +67,7 @@ export const protectAdmin = async (req, res, next) => {
 
     await supabase
       .from("admin_sessions")
-      .update({ last_seen_at: new Date().toISOString() })
+      .update({ last_seen_at: now })
       .eq("token_id", decoded.tokenId);
 
     req.admin = {

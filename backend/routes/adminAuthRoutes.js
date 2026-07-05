@@ -9,6 +9,7 @@ const router = express.Router();
 
 const MAX_ACTIVE_ADMIN_SESSIONS = 4;
 const ADMIN_SESSION_DAYS = 7;
+const ADMIN_ACTIVE_STALE_HOURS = 24;
 
 function normalizeRole(role) {
   return String(role || "admin")
@@ -21,6 +22,27 @@ function getSessionExpiryDate() {
   return new Date(Date.now() + ADMIN_SESSION_DAYS * 24 * 60 * 60 * 1000);
 }
 
+function getClientIp(req) {
+  const forwardedFor = String(req.headers["x-forwarded-for"] || "")
+    .split(",")[0]
+    .trim();
+
+  return forwardedFor || req.ip || req.socket?.remoteAddress || "";
+}
+
+function getSessionDeviceKey(session = {}) {
+  return `${session.user_agent || ""}|||${session.ip_address || ""}`;
+}
+
+async function revokeSessionIds(ids = []) {
+  if (!Array.isArray(ids) || ids.length === 0) return;
+
+  await supabase
+    .from("admin_sessions")
+    .update({ revoked_at: new Date().toISOString() })
+    .in("id", ids);
+}
+
 async function cleanupExpiredAdminSessions() {
   const now = new Date().toISOString();
 
@@ -29,6 +51,71 @@ async function cleanupExpiredAdminSessions() {
     .update({ revoked_at: now })
     .is("revoked_at", null)
     .lte("expires_at", now);
+}
+
+async function cleanupStaleAdminSessions() {
+  const now = new Date();
+  const staleCutoff = new Date(
+    now.getTime() - ADMIN_ACTIVE_STALE_HOURS * 60 * 60 * 1000
+  ).toISOString();
+
+  await supabase
+    .from("admin_sessions")
+    .update({ revoked_at: now.toISOString() })
+    .is("revoked_at", null)
+    .is("last_seen_at", null);
+
+  await supabase
+    .from("admin_sessions")
+    .update({ revoked_at: now.toISOString() })
+    .is("revoked_at", null)
+    .lt("last_seen_at", staleCutoff);
+}
+
+async function cleanupDuplicateDeviceSessions(adminEmail) {
+  const now = new Date().toISOString();
+
+  const { data: sessions, error } = await supabase
+    .from("admin_sessions")
+    .select("id, token_id, user_agent, ip_address, expires_at, last_seen_at")
+    .eq("admin_email", adminEmail)
+    .is("revoked_at", null)
+    .gt("expires_at", now);
+
+  if (error || !Array.isArray(sessions)) return [];
+
+  const sortedSessions = [...sessions].sort((a, b) => {
+    const aTime = new Date(a.last_seen_at || a.expires_at || 0).getTime();
+    const bTime = new Date(b.last_seen_at || b.expires_at || 0).getTime();
+
+    return bTime - aTime;
+  });
+
+  const seenDeviceKeys = new Set();
+  const duplicateIds = [];
+  const uniqueSessions = [];
+
+  for (const session of sortedSessions) {
+    const key = getSessionDeviceKey(session);
+
+    if (seenDeviceKeys.has(key)) {
+      duplicateIds.push(session.id);
+      continue;
+    }
+
+    seenDeviceKeys.add(key);
+    uniqueSessions.push(session);
+  }
+
+  await revokeSessionIds(duplicateIds);
+
+  return uniqueSessions;
+}
+
+async function cleanupAdminSessions(adminEmail) {
+  await cleanupExpiredAdminSessions();
+  await cleanupStaleAdminSessions();
+  return cleanupDuplicateDeviceSessions(adminEmail);
 }
 
 router.post("/login", async (req, res) => {
@@ -64,20 +151,23 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    await cleanupExpiredAdminSessions();
+    const userAgent = req.headers["user-agent"] || "";
+    const ipAddress = getClientIp(req);
+    const now = new Date().toISOString();
 
-    const { data: activeSessions, error: activeSessionError } = await supabase
+    await cleanupAdminSessions(admin.admin_email);
+
+    await supabase
       .from("admin_sessions")
-      .select("id")
-      .is("revoked_at", null)
-      .gt("expires_at", new Date().toISOString());
+      .update({ revoked_at: now })
+      .eq("admin_email", admin.admin_email)
+      .eq("user_agent", userAgent)
+      .eq("ip_address", ipAddress)
+      .is("revoked_at", null);
 
-    if (activeSessionError) {
-      return res.status(500).json({
-        success: false,
-        message: "Could not check active admin sessions.",
-      });
-    }
+    const activeSessions = await cleanupDuplicateDeviceSessions(
+      admin.admin_email
+    );
 
     if ((activeSessions || []).length >= MAX_ACTIVE_ADMIN_SESSIONS) {
       return res.status(403).json({
@@ -87,7 +177,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const parser = new UAParser(req.headers["user-agent"]);
+    const parser = new UAParser(userAgent);
     const result = parser.getResult();
 
     const device = result.os.name || "Unknown Device";
@@ -112,13 +202,16 @@ router.post("/login", async (req, res) => {
         {
           admin_email: admin.admin_email,
           token_id: tokenId,
-          user_agent: req.headers["user-agent"] || "",
-          ip_address: req.ip || "",
+          user_agent: userAgent,
+          ip_address: ipAddress,
           expires_at: expiresAt,
+          last_seen_at: now,
         },
       ]);
 
     if (sessionInsertError) {
+      console.error("Admin session insert error:", sessionInsertError);
+
       return res.status(500).json({
         success: false,
         message: "Could not create admin session.",
@@ -146,6 +239,8 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (err) {
+    console.error("Admin login error:", err);
+
     return res.status(500).json({
       success: false,
       message: err.message,
@@ -184,6 +279,28 @@ router.post("/logout", async (req, res) => {
     return res.json({
       success: true,
       message: "Logged out.",
+    });
+  }
+});
+
+router.post("/logout-all", protectAdmin, async (req, res) => {
+  try {
+    await supabase
+      .from("admin_sessions")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("admin_email", req.admin.email)
+      .is("revoked_at", null);
+
+    return res.json({
+      success: true,
+      message: "All admin devices logged out successfully.",
+    });
+  } catch (error) {
+    console.error("Logout all admin sessions error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Could not logout all devices.",
     });
   }
 });
