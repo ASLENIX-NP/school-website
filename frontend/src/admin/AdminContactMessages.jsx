@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowLeft,
   Inbox,
@@ -16,6 +16,7 @@ import {
   RefreshCcw,
   User,
   Clock,
+  AlertTriangle,
 } from "lucide-react";
 
 const colors = {
@@ -294,6 +295,96 @@ function MessageCard({
   );
 }
 
+
+function DeleteConfirmDialog({ message, deleting, onCancel, onConfirm }) {
+  if (!message) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
+        style={{
+          background: "rgba(2,6,23,0.62)",
+          backdropFilter: "blur(14px)",
+        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={deleting ? undefined : onCancel}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.94 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 14, scale: 0.96 }}
+          transition={{ type: "spring", stiffness: 130, damping: 16 }}
+          className="w-full max-w-md rounded-[28px] bg-white overflow-hidden"
+          style={{ boxShadow: "0 42px 110px rgba(0,0,0,0.32)" }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div
+            className="h-1"
+            style={{
+              background: `linear-gradient(90deg, ${colors.red}, ${colors.gold})`,
+            }}
+          />
+
+          <div className="p-7">
+            <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-5">
+              <AlertTriangle className="w-7 h-7" />
+            </div>
+
+            <h3 className="text-2xl font-black text-slate-950 mb-2">
+              Delete message?
+            </h3>
+
+            <p className="text-sm text-slate-500 leading-relaxed">
+              This message will be permanently removed from the admin inbox.
+            </p>
+
+            <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-100 p-4">
+              <div className="font-black text-slate-900">
+                {message.name || "Unknown Sender"}
+              </div>
+              <div className="mt-1 text-sm text-slate-500 line-clamp-2">
+                {message.message || message.subject || "No message text."}
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row gap-3 mt-7">
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={deleting}
+                className="flex-1 py-3 rounded-2xl text-sm font-black disabled:opacity-60"
+                style={{
+                  background: "rgba(15,23,42,0.06)",
+                  color: "rgba(15,23,42,0.65)",
+                  border: "1px solid rgba(15,23,42,0.08)",
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={onConfirm}
+                disabled={deleting}
+                className="flex-1 py-3 rounded-2xl text-sm font-black text-white disabled:opacity-60"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.red}, #9B1117)`,
+                  boxShadow: "0 14px 34px rgba(215,25,32,0.25)",
+                }}
+              >
+                {deleting ? "Deleting..." : "Yes, Delete"}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 export default function AdminContactMessages() {
   const navigate = useNavigate();
 
@@ -301,6 +392,8 @@ export default function AdminContactMessages() {
   const [expandedIds, setExpandedIds] = useState([]);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
@@ -391,24 +484,35 @@ export default function AdminContactMessages() {
     }
   };
 
-  const deleteMessage = async (message) => {
-    const ok = window.confirm("Delete this message?");
-    if (!ok) return;
+  const deleteMessage = (message) => {
+    setDeleteTarget(message);
+  };
 
+  const confirmDeleteMessage = async () => {
+    if (!deleteTarget?.id) return;
+
+    setDeleting(true);
     setSuccess("");
     setError("");
 
     try {
       await axios.delete(
-        `https://school-website-backend-ixx2.onrender.com/api/contact-messages/${message.id}`
+        `https://school-website-backend-ixx2.onrender.com/api/contact-messages/${deleteTarget.id}`
       );
 
-      setMessages((prev) => prev.filter((item) => item.id !== message.id));
-      setExpandedIds((prev) => prev.filter((item) => item !== message.id));
+      setMessages((prev) =>
+        prev.filter((item) => item.id !== deleteTarget.id)
+      );
+      setExpandedIds((prev) =>
+        prev.filter((item) => item !== deleteTarget.id)
+      );
       setSuccess("Message deleted successfully.");
+      setDeleteTarget(null);
     } catch (err) {
       console.error("Delete message error:", err);
       setError(err.response?.data?.message || "Could not delete message.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -615,6 +719,15 @@ export default function AdminContactMessages() {
           </div>
         )}
       </main>
+
+      <DeleteConfirmDialog
+        message={deleteTarget}
+        deleting={deleting}
+        onCancel={() => {
+          if (!deleting) setDeleteTarget(null);
+        }}
+        onConfirm={confirmDeleteMessage}
+      />
     </section>
   );
 }

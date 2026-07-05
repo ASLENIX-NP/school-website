@@ -436,13 +436,13 @@ export default function AdminFooter() {
       return;
     }
 
-    const ok = window.confirm("Delete this footer link?");
-    if (!ok) return;
+    const label = links[index]?.label || "this footer link";
 
-    setModalForm((prev) => ({
-      ...prev,
-      navLinks: (prev.navLinks || []).filter((_, itemIndex) => itemIndex !== index),
-    }));
+    setConfirmTarget({
+      type: "modalNavLink",
+      index,
+      message: `Delete "${label}" from footer links? Click Save Section to publish the deletion.`,
+    });
   };
 
   const addModalSocial = () => {
@@ -469,13 +469,13 @@ export default function AdminFooter() {
       return;
     }
 
-    const ok = window.confirm("Delete this social link?");
-    if (!ok) return;
+    const label = socials[index]?.label || "this social link";
 
-    setModalForm((prev) => ({
-      ...prev,
-      socials: (prev.socials || []).filter((_, itemIndex) => itemIndex !== index),
-    }));
+    setConfirmTarget({
+      type: "modalSocial",
+      index,
+      message: `Delete "${label}" from social links? Click Save Section to publish the deletion.`,
+    });
   };
 
   const uploadLogo = async (file) => {
@@ -602,6 +602,7 @@ export default function AdminFooter() {
         ...prev,
         navLinks: prev.navLinks.filter((link) => link.id !== confirmTarget.id),
       }));
+      setSuccess("Footer link removed. Save this section to publish.");
     }
 
     if (confirmTarget.type === "social") {
@@ -609,10 +610,30 @@ export default function AdminFooter() {
         ...prev,
         socials: prev.socials.filter((social) => social.id !== confirmTarget.id),
       }));
+      setSuccess("Social link removed. Save this section to publish.");
+    }
+
+    if (confirmTarget.type === "modalNavLink") {
+      setModalForm((prev) => ({
+        ...prev,
+        navLinks: (prev.navLinks || []).filter(
+          (_, itemIndex) => itemIndex !== confirmTarget.index
+        ),
+      }));
+      setSuccess("Footer link removed. Click Save Section to publish.");
+    }
+
+    if (confirmTarget.type === "modalSocial") {
+      setModalForm((prev) => ({
+        ...prev,
+        socials: (prev.socials || []).filter(
+          (_, itemIndex) => itemIndex !== confirmTarget.index
+        ),
+      }));
+      setSuccess("Social link removed. Click Save Section to publish.");
     }
 
     setConfirmTarget(null);
-    setSuccess("Item removed. Save this section to publish.");
   };
 
   const buildCleanFooterContent = (sourceForm) => {
@@ -1432,4 +1453,3 @@ export default function AdminFooter() {
     </section>
   );
 }
-

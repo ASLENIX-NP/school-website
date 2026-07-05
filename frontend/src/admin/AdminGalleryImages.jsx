@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowLeft,
   Save,
@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Plus,
   Image as ImageIcon,
+  AlertTriangle,
 } from "lucide-react";
 
 const colors = {
@@ -281,6 +282,91 @@ function TextArea({ label, value, onChange, rows = 4 }) {
   );
 }
 
+function ConfirmDialog({ target, onCancel, onConfirm }) {
+  if (!target) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
+        style={{
+          background: "rgba(2,6,23,0.62)",
+          backdropFilter: "blur(14px)",
+        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onCancel}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.94 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 14, scale: 0.96 }}
+          transition={{ type: "spring", stiffness: 130, damping: 16 }}
+          className="w-full max-w-md rounded-[28px] bg-white overflow-hidden"
+          style={{ boxShadow: "0 42px 110px rgba(0,0,0,0.32)" }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div
+            className="h-1"
+            style={{
+              background: `linear-gradient(90deg, ${colors.red}, ${colors.gold})`,
+            }}
+          />
+
+          <div className="p-7">
+            <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-5">
+              <AlertTriangle className="w-7 h-7" />
+            </div>
+
+            <h3 className="text-2xl font-black text-slate-950 mb-2">
+              {target.title || "Delete item?"}
+            </h3>
+
+            <p className="text-sm text-slate-500 leading-relaxed">
+              {target.message || "This item will be removed. Click Save Changes to publish."}
+            </p>
+
+            {target.name && (
+              <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-100 p-4 text-sm font-black text-slate-900">
+                {target.name}
+              </div>
+            )}
+
+            <div className="flex flex-col-reverse sm:flex-row gap-3 mt-7">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="flex-1 py-3 rounded-2xl text-sm font-black"
+                style={{
+                  background: "rgba(15,23,42,0.06)",
+                  color: "rgba(15,23,42,0.65)",
+                  border: "1px solid rgba(15,23,42,0.08)",
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={onConfirm}
+                className="flex-1 py-3 rounded-2xl text-sm font-black text-white"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.red}, #9B1117)`,
+                  boxShadow: "0 14px 34px rgba(215,25,32,0.25)",
+                }}
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+
 export default function AdminGalleryImages() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -298,6 +384,7 @@ export default function AdminGalleryImages() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [confirmTarget, setConfirmTarget] = useState(null);
 
   const token = localStorage.getItem("adminToken");
 
@@ -545,35 +632,47 @@ export default function AdminGalleryImages() {
   };
 
   const deleteSubcategoryFromSelectedCategory = (subcategory) => {
-    const ok = window.confirm(`Delete subcategory "${subcategory.name}"? Images using it will move to the general ${selectedCategory} album.`);
-    if (!ok) return;
+    setConfirmTarget({
+      title: "Delete subcategory?",
+      name: subcategory.name,
+      message: `Images using this subcategory will move to the general ${selectedCategory} album. Click Save Changes to publish.`,
+      onConfirm: () => {
+        setForm((prev) => {
+          const normalizedSubcategories = normalizeSubcategories(
+            prev.subcategories,
+            prev.categories
+          );
+          const currentList = normalizedSubcategories[selectedCategory] || [];
+          const remaining = currentList.filter(
+            (item) => item.id !== subcategory.id
+          );
 
-    setForm((prev) => {
-      const normalizedSubcategories = normalizeSubcategories(prev.subcategories, prev.categories);
-      const currentList = normalizedSubcategories[selectedCategory] || [];
-      const remaining = currentList.filter((item) => item.id !== subcategory.id);
+          return {
+            ...prev,
+            subcategories: {
+              ...normalizedSubcategories,
+              [selectedCategory]: remaining,
+            },
+            images: prev.images.map((image) =>
+              image.category === selectedCategory &&
+              image.subcategory === subcategory.name
+                ? { ...image, subcategory: "" }
+                : image
+            ),
+          };
+        });
 
-      return {
-        ...prev,
-        subcategories: {
-          ...normalizedSubcategories,
-          [selectedCategory]: remaining,
-        },
-        images: prev.images.map((image) =>
-          image.category === selectedCategory && image.subcategory === subcategory.name
-            ? { ...image, subcategory: "" }
-            : image
-        ),
-      };
+        if (selectedSubcategory === subcategory.name) {
+          const remaining = selectedSubcategoryOptions.filter(
+            (item) => item.id !== subcategory.id
+          );
+          setSelectedSubcategory(remaining[0]?.name || "");
+        }
+
+        setSuccess("Subcategory removed. Click Save Changes to publish.");
+        setError("");
+      },
     });
-
-    if (selectedSubcategory === subcategory.name) {
-      const remaining = selectedSubcategoryOptions.filter((item) => item.id !== subcategory.id);
-      setSelectedSubcategory(remaining[0]?.name || "");
-    }
-
-    setSuccess("Subcategory removed. Click Save Changes to publish.");
-    setError("");
   };
 
   const validateImageFile = (file) => {
@@ -617,35 +716,45 @@ export default function AdminGalleryImages() {
       return;
     }
 
-    const ok = window.confirm(
-      `Delete ${selectedIds.length} selected image${
+    setConfirmTarget({
+      title: "Delete selected images?",
+      name: `${selectedIds.length} selected image${
         selectedIds.length > 1 ? "s" : ""
-      }?`
-    );
+      }`,
+      message:
+        "Selected images will be removed from this gallery. Click Save Changes to publish.",
+      onConfirm: () => {
+        setForm((prev) => ({
+          ...prev,
+          images: prev.images.filter((item) => !selectedIds.includes(item.id)),
+        }));
 
-    if (!ok) return;
-
-    setForm((prev) => ({
-      ...prev,
-      images: prev.images.filter((item) => !selectedIds.includes(item.id)),
-    }));
-
-    setSelectedIds([]);
-    setSuccess("Selected image(s) removed. Click Save Changes to publish.");
-    setError("");
+        setSelectedIds([]);
+        setSuccess("Selected image(s) removed. Click Save Changes to publish.");
+        setError("");
+      },
+    });
   };
 
   const deleteOne = (id) => {
-    const ok = window.confirm("Delete this image?");
-    if (!ok) return;
+    const image = form.images.find((item) => item.id === id);
 
-    setForm((prev) => ({
-      ...prev,
-      images: prev.images.filter((item) => item.id !== id),
-    }));
+    setConfirmTarget({
+      title: "Delete image?",
+      name: image?.title || "This image",
+      message:
+        "This image will be removed from the gallery. Click Save Changes to publish.",
+      onConfirm: () => {
+        setForm((prev) => ({
+          ...prev,
+          images: prev.images.filter((item) => item.id !== id),
+        }));
 
-    setSelectedIds((prev) => prev.filter((item) => item !== id));
-    setSuccess("Image removed. Click Save Changes to publish.");
+        setSelectedIds((prev) => prev.filter((item) => item !== id));
+        setSuccess("Image removed. Click Save Changes to publish.");
+        setError("");
+      },
+    });
   };
 
   const handleUploadImages = async (files) => {
@@ -839,6 +948,16 @@ export default function AdminGalleryImages() {
       setSaving(false);
     }
   }
+
+  const confirmDeleteAction = () => {
+    if (!confirmTarget?.onConfirm) {
+      setConfirmTarget(null);
+      return;
+    }
+
+    confirmTarget.onConfirm();
+    setConfirmTarget(null);
+  };
 
   if (loading) {
     return (
@@ -1461,6 +1580,12 @@ export default function AdminGalleryImages() {
           </div>
         )}
       </main>
+
+      <ConfirmDialog
+        target={confirmTarget}
+        onCancel={() => setConfirmTarget(null)}
+        onConfirm={confirmDeleteAction}
+      />
     </section>
   );
 }
