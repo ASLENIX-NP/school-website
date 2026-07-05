@@ -8,8 +8,43 @@ function getImageUrl(item) {
   return item?.image_url || item?.imageUrl || item?.image || "";
 }
 
+function getTime(item) {
+  const time = new Date(item?.created_at || item?.createdAt || 0).getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
+
+function hasManualOrder(list) {
+  return list.some(
+    (item) => item.popup_order !== null && item.popup_order !== undefined
+  );
+}
+
+function sortPopupAnnouncements(list) {
+  const items = [...list];
+
+  if (hasManualOrder(items)) {
+    return items.sort((a, b) => {
+      const aOrder =
+        a.popup_order === null || a.popup_order === undefined
+          ? Number.MAX_SAFE_INTEGER
+          : Number(a.popup_order);
+
+      const bOrder =
+        b.popup_order === null || b.popup_order === undefined
+          ? Number.MAX_SAFE_INTEGER
+          : Number(b.popup_order);
+
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return getTime(b) - getTime(a);
+    });
+  }
+
+  return items.sort((a, b) => getTime(b) - getTime(a));
+}
+
 export default function HomeAnnouncementPopup() {
-  const [announcement, setAnnouncement] = useState(null);
+  const [announcements, setAnnouncements] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [open, setOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -23,15 +58,18 @@ export default function HomeAnnouncementPopup() {
 
         const list = Array.isArray(data?.data) ? data.data : [];
 
-        const homepageAnnouncement = list.find(
-          (item) =>
-            item.active !== false &&
-            item.visible !== false &&
-            item.show_on_homepage === true
+        const popupList = sortPopupAnnouncements(
+          list.filter(
+            (item) =>
+              item.active !== false &&
+              item.visible !== false &&
+              item.show_on_homepage === true
+          )
         );
 
-        if (homepageAnnouncement) {
-          setAnnouncement(homepageAnnouncement);
+        if (popupList.length > 0) {
+          setAnnouncements(popupList);
+          setCurrentIndex(0);
           setOpen(true);
         }
       })
@@ -55,10 +93,23 @@ export default function HomeAnnouncementPopup() {
     };
   }, [open]);
 
+  const closeCurrentPopup = () => {
+    if (currentIndex < announcements.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+      setImageError(false);
+      return;
+    }
+
+    setOpen(false);
+  };
+
+  const announcement = announcements[currentIndex];
+
   if (!announcement) return null;
 
   const imageUrl = getImageUrl(announcement);
   const hasImage = imageUrl && !imageError;
+  const hasNext = currentIndex < announcements.length - 1;
 
   return (
     <AnimatePresence>
@@ -68,9 +119,10 @@ export default function HomeAnnouncementPopup() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={() => setOpen(false)}
+          onClick={closeCurrentPopup}
         >
           <motion.div
+            key={announcement.id || currentIndex}
             className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-[28px] bg-white shadow-2xl"
             initial={{ opacity: 0, scale: 0.92, y: 24 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -80,12 +132,18 @@ export default function HomeAnnouncementPopup() {
           >
             <button
               type="button"
-              onClick={() => setOpen(false)}
-              aria-label="Close announcement"
+              onClick={closeCurrentPopup}
+              aria-label={hasNext ? "Next announcement" : "Close announcement"}
               className="absolute right-3 top-3 z-30 flex h-11 w-11 items-center justify-center rounded-full bg-black text-white shadow-xl transition-all hover:scale-105"
             >
               <X size={22} />
             </button>
+
+            {announcements.length > 1 && (
+              <div className="absolute left-3 top-3 z-30 rounded-full bg-black/80 px-3 py-1.5 text-xs font-black text-white shadow-lg">
+                {currentIndex + 1} / {announcements.length}
+              </div>
+            )}
 
             <div className="max-h-[90vh] overflow-y-auto">
               {hasImage ? (
@@ -115,19 +173,42 @@ export default function HomeAnnouncementPopup() {
                 </div>
               )}
 
-              {(announcement.title || announcement.description) && hasImage && (
-                <div className="px-5 py-5 sm:px-7 bg-white border-t border-slate-100">
-                  {announcement.title && (
-                    <h2 className="pr-12 text-xl sm:text-2xl font-black text-slate-950 leading-tight">
-                      {announcement.title}
-                    </h2>
-                  )}
+              {(announcement.title || announcement.description || hasNext) &&
+                hasImage && (
+                  <div className="px-5 py-5 sm:px-7 bg-white border-t border-slate-100">
+                    {announcement.title && (
+                      <h2 className="pr-12 text-xl sm:text-2xl font-black text-slate-950 leading-tight">
+                        {announcement.title}
+                      </h2>
+                    )}
 
-                  {announcement.description && (
-                    <p className="mt-2 whitespace-pre-line text-sm sm:text-base leading-relaxed text-slate-600">
-                      {announcement.description}
-                    </p>
-                  )}
+                    {announcement.description && (
+                      <p className="mt-2 whitespace-pre-line text-sm sm:text-base leading-relaxed text-slate-600">
+                        {announcement.description}
+                      </p>
+                    )}
+
+                    {hasNext && (
+                      <button
+                        type="button"
+                        onClick={closeCurrentPopup}
+                        className="mt-4 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white"
+                      >
+                        Next Announcement
+                      </button>
+                    )}
+                  </div>
+                )}
+
+              {!hasImage && hasNext && (
+                <div className="px-6 pb-8 text-center">
+                  <button
+                    type="button"
+                    onClick={closeCurrentPopup}
+                    className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white"
+                  >
+                    Next Announcement
+                  </button>
                 </div>
               )}
             </div>
