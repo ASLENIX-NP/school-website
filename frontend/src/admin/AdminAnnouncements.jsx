@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
@@ -13,12 +13,13 @@ import {
   EyeOff,
   Calendar,
   X,
-  ExternalLink,
   Megaphone,
   Edit2,
   Sparkles,
   Zap,
 } from "lucide-react";
+
+const API_URL = "https://school-website-backend-ixx2.onrender.com";
 
 const colors = {
   red: "#D71920",
@@ -36,6 +37,40 @@ const lightAdminPanelStyle = {
   boxShadow: "0 18px 44px rgba(15,23,42,0.08)",
   backdropFilter: "blur(14px)",
 };
+
+function getTime(item) {
+  const time = new Date(item?.created_at || 0).getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
+
+function hasManualPopupOrder(list) {
+  return list.some(
+    (item) => item.popup_order !== null && item.popup_order !== undefined
+  );
+}
+
+function sortAnnouncements(list) {
+  const items = [...list];
+
+  if (hasManualPopupOrder(items)) {
+    return items.sort((a, b) => {
+      const aOrder =
+        a.popup_order === null || a.popup_order === undefined
+          ? Number.MAX_SAFE_INTEGER
+          : Number(a.popup_order);
+
+      const bOrder =
+        b.popup_order === null || b.popup_order === undefined
+          ? Number.MAX_SAFE_INTEGER
+          : Number(b.popup_order);
+
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return getTime(b) - getTime(a);
+    });
+  }
+
+  return items.sort((a, b) => getTime(b) - getTime(a));
+}
 
 function Field({
   label,
@@ -163,6 +198,7 @@ function AnnouncementCard({
               <Zap className="w-3 h-3" />
               {announcement.active !== false ? "Active" : "Inactive"}
             </span>
+
             {announcement.show_on_homepage && (
               <span
                 className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold"
@@ -172,9 +208,22 @@ function AnnouncementCard({
                 }}
               >
                 <Sparkles className="w-3 h-3" />
-                Homepage
+                Homepage Popup
               </span>
             )}
+
+            {announcement.popup_order !== null &&
+              announcement.popup_order !== undefined && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold"
+                  style={{
+                    background: "rgba(15,23,42,0.9)",
+                    color: "#fff",
+                  }}
+                >
+                  Order #{announcement.popup_order}
+                </span>
+              )}
           </div>
         </div>
       )}
@@ -241,6 +290,7 @@ function AnnouncementCard({
                 background: "rgba(215,25,32,0.08)",
                 color: colors.red,
               }}
+              title="Delete"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -251,8 +301,93 @@ function AnnouncementCard({
   );
 }
 
+function PopupOrderManager({ popupAnnouncements, onMove }) {
+  return (
+    <EditorCard
+      icon={Sparkles}
+      title="Homepage Popup Order"
+      color={colors.gold}
+      gradient="linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,250,230,0.92))"
+    >
+      {popupAnnouncements.length === 0 ? (
+        <div className="rounded-2xl p-6 text-center bg-white/70 border border-slate-100">
+          <Megaphone className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+          <p className="font-bold text-slate-600">
+            No homepage popup announcement.
+          </p>
+          <p className="text-sm text-slate-400 mt-1">
+            Turn on Active, Visible, and Show on homepage.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm text-slate-500 leading-relaxed">
+            First item pops up first. When user closes it, the next popup opens.
+            If you never arrange, latest announcement comes first.
+          </p>
+
+          {popupAnnouncements.map((item, index) => (
+            <div
+              key={item.id}
+              className="rounded-2xl bg-white p-4 border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+            >
+              <div className="min-w-0">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-yellow-600 mb-1">
+                  Popup #{index + 1}
+                </div>
+                <div className="font-black text-slate-950 truncate">
+                  {item.title || "Untitled announcement"}
+                </div>
+                <div className="text-xs text-slate-400 mt-1">
+                  {item.created_at
+                    ? new Date(item.created_at).toLocaleDateString()
+                    : "No date"}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={index === 0}
+                  onClick={() => onMove(item.id, "up")}
+                  className="px-4 py-2 rounded-xl text-sm font-black disabled:opacity-40"
+                  style={{
+                    background: "rgba(15,23,42,0.06)",
+                    color: colors.dark,
+                  }}
+                >
+                  Up
+                </button>
+                <button
+                  type="button"
+                  disabled={index === popupAnnouncements.length - 1}
+                  onClick={() => onMove(item.id, "down")}
+                  className="px-4 py-2 rounded-xl text-sm font-black disabled:opacity-40"
+                  style={{
+                    background: "rgba(15,23,42,0.06)",
+                    color: colors.dark,
+                  }}
+                >
+                  Down
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </EditorCard>
+  );
+}
+
 function AnnouncementPreview({ announcements }) {
-  const visible = announcements.filter((a) => a.visible !== false);
+  const visible = sortAnnouncements(
+    announcements.filter(
+      (a) =>
+        a.visible !== false &&
+        a.active !== false &&
+        a.show_on_homepage === true
+    )
+  );
 
   return (
     <div
@@ -272,7 +407,7 @@ function AnnouncementPreview({ announcements }) {
           }}
         >
           <Megaphone className="w-4 h-4" />
-          Announcements
+          Popup Preview
         </div>
 
         <h3
@@ -283,11 +418,11 @@ function AnnouncementPreview({ announcements }) {
             letterSpacing: "-0.04em",
           }}
         >
-          Latest Announcements
+          Homepage Popup Order
         </h3>
 
         <p className="mt-2 text-slate-500 text-sm">
-          Newest announcement appears first.
+          User will see these one by one.
         </p>
       </div>
 
@@ -300,12 +435,14 @@ function AnnouncementPreview({ announcements }) {
           }}
         >
           <Megaphone className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-          <p className="text-slate-500 font-semibold">No announcements yet</p>
-          <p className="text-sm text-slate-400">Add your first announcement</p>
+          <p className="text-slate-500 font-semibold">No popup selected</p>
+          <p className="text-sm text-slate-400">
+            Active + Visible + Show on homepage is required.
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {visible.slice(0, 3).map((item) => (
+          {visible.map((item, index) => (
             <div
               key={item.id}
               className="bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
@@ -325,24 +462,16 @@ function AnnouncementPreview({ announcements }) {
                 />
               )}
               <div className="p-4">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-red-600 mb-1">
+                  Popup #{index + 1}
+                </div>
                 <div className="font-black text-slate-950">{item.title}</div>
                 <p className="text-slate-500 text-sm mt-1 line-clamp-2">
                   {item.description}
                 </p>
-                <div className="mt-2 text-xs text-slate-400 flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  {item.created_at
-                    ? new Date(item.created_at).toLocaleDateString()
-                    : "No date"}
-                </div>
               </div>
             </div>
           ))}
-          {visible.length > 3 && (
-            <p className="text-center text-sm text-slate-400 font-semibold">
-              +{visible.length - 3} more announcements
-            </p>
-          )}
         </div>
       )}
     </div>
@@ -356,6 +485,7 @@ export default function AdminAnnouncements() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [ordering, setOrdering] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState(null);
@@ -368,17 +498,31 @@ export default function AdminAnnouncements() {
     active: true,
     visible: true,
     show_on_homepage: true,
+    popup_order: null,
   });
 
   const [imageFile, setImageFile] = useState(null);
 
+  const popupAnnouncements = useMemo(
+    () =>
+      sortAnnouncements(
+        announcements.filter(
+          (item) =>
+            item.active !== false &&
+            item.visible !== false &&
+            item.show_on_homepage === true
+        )
+      ),
+    [announcements]
+  );
+
   const fetchAnnouncements = async () => {
     try {
-      const res = await fetch("https://school-website-backend-ixx2.onrender.com/api/announcements");
+      const res = await fetch(`${API_URL}/api/announcements`);
       const data = await res.json();
 
       if (data.success) {
-        setAnnouncements(data.data || []);
+        setAnnouncements(sortAnnouncements(data.data || []));
       } else {
         setAnnouncements([]);
       }
@@ -402,6 +546,7 @@ export default function AdminAnnouncements() {
       active: true,
       visible: true,
       show_on_homepage: true,
+      popup_order: null,
     });
     setImageFile(null);
     setImagePreview(null);
@@ -419,6 +564,10 @@ export default function AdminAnnouncements() {
       active: item.active !== false,
       visible: item.visible !== false,
       show_on_homepage: item.show_on_homepage !== false,
+      popup_order:
+        item.popup_order === null || item.popup_order === undefined
+          ? null
+          : item.popup_order,
     });
     setImageFile(null);
     setImagePreview(item.image_url || null);
@@ -432,7 +581,7 @@ export default function AdminAnnouncements() {
     }
 
     try {
-      const res = await fetch(`https://school-website-backend-ixx2.onrender.com/api/announcements/${id}`, {
+      const res = await fetch(`${API_URL}/api/announcements/${id}`, {
         method: "DELETE",
       });
 
@@ -455,23 +604,68 @@ export default function AdminAnnouncements() {
     const newVisibility = item.visible !== false ? false : true;
 
     try {
-      const res = await fetch(
-        `https://school-website-backend-ixx2.onrender.com/api/announcements/${item.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...item, visible: newVisibility }),
-        }
-      );
+      const res = await fetch(`${API_URL}/api/announcements/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...item, visible: newVisibility }),
+      });
 
       const data = await res.json();
 
       if (data.success) {
         fetchAnnouncements();
+      } else {
+        setError(data.message || "Could not update visibility.");
       }
     } catch (err) {
       console.error("Toggle visibility error:", err);
       setError("Could not update visibility.");
+    }
+  };
+
+  const handleMovePopup = async (id, direction) => {
+    if (ordering) return;
+
+    const currentIndex = popupAnnouncements.findIndex((item) => item.id === id);
+    if (currentIndex === -1) return;
+
+    const nextIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (nextIndex < 0 || nextIndex >= popupAnnouncements.length) return;
+
+    const nextList = [...popupAnnouncements];
+    const temp = nextList[currentIndex];
+    nextList[currentIndex] = nextList[nextIndex];
+    nextList[nextIndex] = temp;
+
+    const orders = nextList.map((item, index) => ({
+      id: item.id,
+      popup_order: index + 1,
+    }));
+
+    setOrdering(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const res = await fetch(`${API_URL}/api/announcements/popup-order`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orders }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setSuccess("Homepage popup order updated.");
+        fetchAnnouncements();
+      } else {
+        setError(data.message || "Could not update popup order.");
+      }
+    } catch (err) {
+      console.error("Popup order update error:", err);
+      setError("Could not update popup order.");
+    } finally {
+      setOrdering(false);
     }
   };
 
@@ -495,16 +689,12 @@ export default function AdminAnnouncements() {
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const imageFormData = new FormData();
+      imageFormData.append("file", file);
 
-      const res = await axios.post(
-        "https://school-website-backend-ixx2.onrender.com/api/upload",
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
+      const res = await axios.post(`${API_URL}/api/upload`, imageFormData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       const uploadedUrl =
         res.data?.url ||
@@ -572,11 +762,17 @@ export default function AdminAnnouncements() {
         active: formData.active,
         visible: formData.visible,
         show_on_homepage: formData.show_on_homepage,
+        popup_order:
+          formData.popup_order === "" ||
+          formData.popup_order === null ||
+          formData.popup_order === undefined
+            ? null
+            : Number(formData.popup_order),
       };
 
       const url = editingId
-        ? `https://school-website-backend-ixx2.onrender.com/api/announcements/${editingId}`
-        : "https://school-website-backend-ixx2.onrender.com/api/announcements";
+        ? `${API_URL}/api/announcements/${editingId}`
+        : `${API_URL}/api/announcements`;
 
       const method = editingId ? "PUT" : "POST";
 
@@ -631,30 +827,6 @@ export default function AdminAnnouncements() {
         `,
       }}
     >
-      <style>
-        {`
-          @media (max-width: 767px) {
-            .admin-announcements-editor [class*="opacity-0"] {
-              opacity: 1 !important;
-            }
-
-            .admin-announcements-editor [class*="group-hover:opacity"] {
-              opacity: 1 !important;
-            }
-
-            .admin-announcements-editor [class*="z-50"],
-            .admin-announcements-editor [class*="z-[50]"],
-            .admin-announcements-editor [class*="z-[60]"],
-            .admin-announcements-editor [class*="z-[70]"],
-            .admin-announcements-editor [class*="z-[80]"],
-            .admin-announcements-editor [class*="z-[90]"],
-            .admin-announcements-editor [class*="z-[999]"] {
-              z-index: 20 !important;
-            }
-          }
-        `}
-      </style>
-
       <div className="absolute top-40 right-20 w-64 h-64 rounded-full bg-red-500/5 blur-3xl pointer-events-none" />
       <div className="absolute bottom-40 left-20 w-72 h-72 rounded-full bg-purple-500/5 blur-3xl pointer-events-none" />
 
@@ -678,24 +850,6 @@ export default function AdminAnnouncements() {
             <ArrowLeft className="w-5 h-5" />
             Back to Dashboard
           </button>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={saving || uploading}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all hover:scale-105 disabled:opacity-60"
-              style={{
-                color: "#020617",
-                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                boxShadow:
-                  "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
-              }}
-            >
-              <Save className="w-4 h-4" />
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
         </div>
       </header>
 
@@ -733,8 +887,8 @@ export default function AdminAnnouncements() {
           </h1>
 
           <p className="text-slate-500 max-w-3xl text-base sm:text-lg">
-            Add, edit, and manage announcements. These will appear on the
-            homepage as popups.
+            Add, edit, and manage homepage popup announcements. Drag-free order
+            control is available using Up and Down buttons.
           </p>
         </motion.div>
 
@@ -841,7 +995,7 @@ export default function AdminAnnouncements() {
                           {uploading ? "Uploading..." : "Click to Upload Image"}
                         </span>
                         <span className="text-xs text-slate-500">
-                          PNG, JPG, WebP, GIF • Max 5MB
+                          PNG, JPG, WebP, GIF • Max 6MB
                         </span>
                         <input
                           type="file"
@@ -918,7 +1072,7 @@ export default function AdminAnnouncements() {
                       }
                       className="w-4 h-4 accent-yellow-500"
                     />
-                    Show on homepage
+                    Show as homepage popup
                   </label>
                 </div>
 
@@ -958,6 +1112,11 @@ export default function AdminAnnouncements() {
                 </div>
               </form>
             </EditorCard>
+
+            <PopupOrderManager
+              popupAnnouncements={popupAnnouncements}
+              onMove={handleMovePopup}
+            />
 
             <EditorCard
               icon={Megaphone}
@@ -1017,7 +1176,7 @@ export default function AdminAnnouncements() {
                 Homepage Preview
               </div>
               <div className="text-sm text-slate-500">
-                Preview how announcements appear on homepage.
+                Preview popup sequence order.
               </div>
             </div>
 
