@@ -7,7 +7,7 @@
     "backend": {
       "root": "backend",
       "framework": "express",
-      "runtime": "nodejs",
+      "runtime": "node",
       "entrypoint": "server.js"
     }
   },
