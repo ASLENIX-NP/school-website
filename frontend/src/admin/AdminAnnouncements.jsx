@@ -17,6 +17,7 @@ import {
   Edit2,
   Sparkles,
   Zap,
+  AlertTriangle,
 } from "lucide-react";
 
 const API_URL = "https://school-website-backend-ixx2.onrender.com";
@@ -284,7 +285,7 @@ function AnnouncementCard({
 
             <button
               type="button"
-              onClick={() => onDelete(announcement.id)}
+              onClick={() => onDelete(announcement)}
               className="p-2 rounded-xl transition-all hover:scale-110"
               style={{
                 background: "rgba(215,25,32,0.08)",
@@ -478,6 +479,67 @@ function AnnouncementPreview({ announcements }) {
   );
 }
 
+
+function DeleteConfirmModal({ item, deleting, onCancel, onConfirm }) {
+  if (!item) return null;
+
+  return (
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+      <div
+        className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"
+        style={{
+          border: "1px solid rgba(215,25,32,0.16)",
+          boxShadow: "0 28px 80px rgba(15,23,42,0.28)",
+        }}
+      >
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+            <AlertTriangle className="h-6 w-6" />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <h3 className="text-xl font-black text-slate-950">
+              Delete announcement?
+            </h3>
+
+            <p className="mt-2 text-sm leading-relaxed text-slate-500">
+              This action cannot be undone. This will permanently delete:
+            </p>
+
+            <p className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800">
+              {item.title || "Untitled announcement"}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={deleting}
+            className="rounded-2xl px-5 py-3 text-sm font-black text-slate-600 transition-all hover:bg-slate-100 disabled:opacity-60"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={deleting}
+            className="rounded-2xl px-5 py-3 text-sm font-black text-white transition-all hover:scale-[1.02] disabled:opacity-60"
+            style={{
+              background: `linear-gradient(135deg, ${colors.red}, #9B1117)`,
+              boxShadow: "0 14px 34px rgba(215,25,32,0.25)",
+            }}
+          >
+            {deleting ? "Deleting..." : "Yes, Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminAnnouncements() {
   const navigate = useNavigate();
 
@@ -486,6 +548,8 @@ export default function AdminAnnouncements() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [ordering, setOrdering] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState(null);
@@ -575,13 +639,19 @@ export default function AdminAnnouncements() {
     setError("");
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this announcement?")) {
-      return;
-    }
+  const handleDelete = (item) => {
+    setDeleteTarget(item);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget?.id) return;
+
+    setDeleting(true);
+    setError("");
+    setSuccess("");
 
     try {
-      const res = await fetch(`${API_URL}/api/announcements/${id}`, {
+      const res = await fetch(`${API_URL}/api/announcements/${deleteTarget.id}`, {
         method: "DELETE",
       });
 
@@ -589,14 +659,17 @@ export default function AdminAnnouncements() {
 
       if (data.success) {
         setSuccess("Announcement deleted successfully.");
+        if (editingId === deleteTarget.id) resetForm();
+        setDeleteTarget(null);
         fetchAnnouncements();
-        if (editingId === id) resetForm();
       } else {
-        setError(data.message || "Could not delete.");
+        setError(data.message || "Could not delete announcement.");
       }
     } catch (err) {
       console.error("Delete error:", err);
       setError("Could not delete announcement.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -1189,6 +1262,13 @@ export default function AdminAnnouncements() {
           </aside>
         </div>
       </main>
+
+      <DeleteConfirmModal
+        item={deleteTarget}
+        deleting={deleting}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
     </section>
   );
 }
