@@ -41,6 +41,9 @@ export const defaultFacilitiesContent = {
       details:
         "Students can access e-books, research journals, academic databases, digital resources, and online learning platforms from school.",
       imageUrl: "",
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
       color: colors.red,
       visible: true,
     },
@@ -54,6 +57,9 @@ export const defaultFacilitiesContent = {
       details:
         "40+ modern computers with internet access, programming tools, office applications, and multimedia software.",
       imageUrl: "",
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
       color: colors.purple,
       visible: true,
     },
@@ -67,6 +73,9 @@ export const defaultFacilitiesContent = {
       details:
         "Fully equipped separate labs for Physics, Chemistry, and Biology, providing hands-on experimental learning and top-tier safety gear.",
       imageUrl: "",
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
       color: colors.green,
       visible: true,
     },
@@ -80,6 +89,9 @@ export const defaultFacilitiesContent = {
       details:
         "Baljagriti provides safe transportation with experienced drivers, route management, student safety monitoring, and comfortable buses for daily travel.",
       imageUrl: "",
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
       color: "#F59E0B",
       visible: true,
       busRoutes: [
@@ -109,6 +121,9 @@ export const defaultFacilitiesContent = {
       details:
         "A state-of-the-art auditorium with advanced audio-visual technology, comfortable seating, and staging for hosting all major school events and presentations.",
       imageUrl: "",
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
       color: colors.red,
       visible: true,
     },
@@ -122,11 +137,39 @@ export const defaultFacilitiesContent = {
       details:
         "Expansive playgrounds and courts facilitating football, basketball, cricket, and various indoor games under expert physical guidance.",
       imageUrl: "",
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
       color: colors.green,
       visible: true,
     },
   ],
 };
+
+
+function clampNumber(value, min, max, fallback) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return fallback;
+
+  return Math.min(max, Math.max(min, numberValue));
+}
+
+function getFacilityImageStyle(facility = {}) {
+  const zoom = clampNumber(facility.imageZoom, 1, 3, 1);
+  const x = clampNumber(facility.imageOffsetX, -60, 60, 0);
+  const y = clampNumber(facility.imageOffsetY, -60, 60, 0);
+  const objectX = Math.min(100, Math.max(0, 50 - x));
+  const objectY = Math.min(100, Math.max(0, 50 - y));
+
+  return {
+    objectFit: "cover",
+    objectPosition: `${objectX}% ${objectY}%`,
+    transform: `scale(${zoom})`,
+    transformOrigin: "center center",
+    backgroundColor: "#0F172A",
+  };
+}
 
 function normalizeFacilities(facilities) {
   if (!Array.isArray(facilities)) return defaultFacilitiesContent.facilities;
@@ -136,6 +179,9 @@ function normalizeFacilities(facilities) {
     ...facility,
     id: facility.id || Date.now() + index,
     color: facility.color || facilityColors[index % facilityColors.length],
+    imageZoom: clampNumber(facility.imageZoom, 1, 3, 1),
+    imageOffsetX: clampNumber(facility.imageOffsetX, -60, 60, 0),
+    imageOffsetY: clampNumber(facility.imageOffsetY, -60, 60, 0),
     visible: facility.visible !== false,
     busRoutes: facility.busRoutes || [],
   }));
@@ -280,7 +326,8 @@ function FacilityVisual({ facility, className = "" }) {
       <img
         src={facility.imageUrl}
         alt={facility.title}
-        className={`w-full h-full object-cover ${className}`}
+        className={`w-full h-full ${className}`}
+        style={getFacilityImageStyle(facility)}
       />
     );
   }
@@ -538,7 +585,7 @@ export function Facilities({
                   label="Edit facility"
                 />
 
-                <div className="h-96 relative overflow-hidden">
+                <div className="h-96 relative overflow-hidden bg-slate-900">
                   <FacilityVisual
                     facility={facility}
                     className="transition-transform duration-500 group-hover:scale-105"
@@ -677,7 +724,7 @@ export function Facilities({
             </button>
 
             <div className="grid grid-cols-1 md:grid-cols-[700px_1fr] relative z-10">
-              <div className="h-[320px] sm:h-[400px] md:h-[900px] relative overflow-hidden">
+              <div className="h-[320px] sm:h-[400px] md:h-[900px] relative overflow-hidden bg-slate-900">
                 <FacilityVisual facility={selectedFacility} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
               </div>

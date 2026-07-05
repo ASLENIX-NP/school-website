@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -128,6 +128,500 @@ function Toggle({ checked, onChange, label }) {
         />
       </span>
     </button>
+  );
+}
+
+
+function clampImageOffset(value) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return 0;
+
+  return Math.min(60, Math.max(-60, numberValue));
+}
+
+function clampImageZoom(value) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) return 1;
+
+  return Math.min(3, Math.max(1, numberValue));
+}
+
+function getCropImageStyle(source = {}) {
+  const zoom = clampImageZoom(source.imageZoom);
+  const x = clampImageOffset(source.imageOffsetX);
+  const y = clampImageOffset(source.imageOffsetY);
+  const objectX = Math.min(100, Math.max(0, 50 - x));
+  const objectY = Math.min(100, Math.max(0, 50 - y));
+
+  return {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: `${objectX}% ${objectY}%`,
+    transform: `scale(${zoom})`,
+    transformOrigin: "center center",
+    transition:
+      "transform 160ms ease-out, object-position 160ms ease-out",
+    userSelect: "none",
+    pointerEvents: "none",
+  };
+}
+
+function CropSlider({ label, value, min, max, step = 1, suffix = "", onChange }) {
+  const numericValue = Number(value);
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <label className="text-sm font-black text-slate-700">{label}</label>
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
+          {Number.isFinite(numericValue) ? numericValue.toFixed(step < 1 ? 1 : 0) : min}
+          {suffix}
+        </span>
+      </div>
+
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={Number.isFinite(numericValue) ? numericValue : min}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="w-full accent-sky-500"
+      />
+    </div>
+  );
+}
+
+function FacilityImagePreviewBox({ modalForm }) {
+  return (
+    <div
+      className="h-28 w-36 shrink-0 overflow-hidden rounded-2xl bg-white"
+      style={{ border: "2px solid rgba(255,255,255,0.86)" }}
+    >
+      {modalForm.imageUrl ? (
+        <img
+          src={modalForm.imageUrl}
+          alt="Facility preview"
+          draggable={false}
+          className="h-full w-full"
+          style={getCropImageStyle(modalForm)}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center">
+          <ImageIcon className="w-8 h-8 text-slate-300" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FacilityImageAdjustPage({
+  modalForm,
+  setModalForm,
+  uploadImage,
+  uploadingImage,
+  saving,
+  onClose,
+  onSave,
+}) {
+  const dragRef = useRef(null);
+  const pointersRef = useRef(new Map());
+  const pinchRef = useRef(null);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+    const previousOverscroll = document.body.style.overscrollBehavior;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    document.body.style.overscrollBehavior = "contain";
+
+    const preventGesture = (event) => event.preventDefault();
+
+    window.addEventListener("gesturestart", preventGesture, { passive: false });
+    window.addEventListener("gesturechange", preventGesture, { passive: false });
+    window.addEventListener("gestureend", preventGesture, { passive: false });
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+      document.body.style.overscrollBehavior = previousOverscroll;
+
+      window.removeEventListener("gesturestart", preventGesture);
+      window.removeEventListener("gesturechange", preventGesture);
+      window.removeEventListener("gestureend", preventGesture);
+    };
+  }, []);
+
+  const updateCrop = (updates) => {
+    setModalForm((prev) => ({
+      ...prev,
+      ...updates,
+    }));
+  };
+
+  const resetCrop = () => {
+    updateCrop({
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
+    });
+  };
+
+  const getPointerDistance = (points) => {
+    if (points.length < 2) return 0;
+
+    const [first, second] = points;
+
+    return Math.hypot(
+      second.clientX - first.clientX,
+      second.clientY - first.clientY
+    );
+  };
+
+  const startDrag = (event) => {
+    if (!modalForm.imageUrl) return;
+
+    event.preventDefault();
+
+    const box = event.currentTarget.getBoundingClientRect();
+
+    pointersRef.current.set(event.pointerId, {
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
+
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+
+    const points = Array.from(pointersRef.current.values());
+
+    if (points.length >= 2) {
+      pinchRef.current = {
+        startDistance: getPointerDistance(points),
+        startZoom: clampImageZoom(modalForm.imageZoom),
+      };
+      dragRef.current = null;
+      return;
+    }
+
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startOffsetX: clampImageOffset(modalForm.imageOffsetX),
+      startOffsetY: clampImageOffset(modalForm.imageOffsetY),
+      boxWidth: box.width || 1,
+      boxHeight: box.height || 1,
+    };
+  };
+
+  const moveDrag = (event) => {
+    if (!modalForm.imageUrl) return;
+
+    event.preventDefault();
+
+    if (pointersRef.current.has(event.pointerId)) {
+      pointersRef.current.set(event.pointerId, {
+        clientX: event.clientX,
+        clientY: event.clientY,
+      });
+    }
+
+    const points = Array.from(pointersRef.current.values());
+
+    if (points.length >= 2 && pinchRef.current) {
+      const currentDistance = getPointerDistance(points);
+      const startDistance = pinchRef.current.startDistance || currentDistance || 1;
+      const nextZoom =
+        pinchRef.current.startZoom * (currentDistance / startDistance);
+
+      updateCrop({
+        imageZoom: clampImageZoom(nextZoom),
+      });
+      return;
+    }
+
+    if (!dragRef.current) return;
+
+    const data = dragRef.current;
+    const moveX = ((event.clientX - data.startClientX) / data.boxWidth) * 100;
+    const moveY = ((event.clientY - data.startClientY) / data.boxHeight) * 100;
+
+    updateCrop({
+      imageOffsetX: clampImageOffset(data.startOffsetX + moveX),
+      imageOffsetY: clampImageOffset(data.startOffsetY + moveY),
+    });
+  };
+
+  const endDrag = (event) => {
+    pointersRef.current.delete(event.pointerId);
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+
+    const points = Array.from(pointersRef.current.values());
+
+    if (points.length < 2) {
+      pinchRef.current = null;
+    }
+
+    if (dragRef.current?.pointerId === event.pointerId) {
+      dragRef.current = null;
+    }
+  };
+
+  const handleWheelZoom = (event) => {
+    if (!modalForm.imageUrl) return;
+
+    event.preventDefault();
+
+    const direction = event.deltaY > 0 ? -0.08 : 0.08;
+    const nextZoom = clampImageZoom(clampImageZoom(modalForm.imageZoom) + direction);
+
+    updateCrop({
+      imageZoom: nextZoom,
+    });
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[12000] flex flex-col overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(circle at top left, rgba(56,189,248,0.18), transparent 34%), linear-gradient(135deg, #F8FAFC 0%, #FFF8EE 48%, #F1ECFF 100%)",
+      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <header
+        className="shrink-0 px-4 sm:px-6 py-4"
+        style={{
+          background: "rgba(255,255,255,0.82)",
+          borderBottom: "1px solid rgba(15,23,42,0.08)",
+          backdropFilter: "blur(18px)",
+        }}
+      >
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-950">
+              Adjust Facility Image
+            </h2>
+            <p className="text-sm font-semibold text-slate-500">
+              Drag to move. Pinch on phone or use mouse wheel/trackpad on laptop to zoom.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving || uploadingImage}
+              className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-slate-600 shadow-sm disabled:opacity-50"
+            >
+              Back
+            </button>
+
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saving || uploadingImage}
+              className="inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-black text-slate-950 shadow-xl disabled:opacity-50"
+              style={{
+                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+              }}
+            >
+              <Save className="w-4 h-4" />
+              {saving ? "Saving..." : "Save This Item"}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[minmax(0,1fr)_390px]">
+          <section
+            className="rounded-[32px] bg-slate-950 p-4 sm:p-6"
+            style={{
+              boxShadow: "0 30px 90px rgba(15,23,42,0.22)",
+            }}
+          >
+            <div
+              className="relative mx-auto aspect-[4/3] max-h-[72vh] w-full max-w-[900px] overflow-hidden rounded-[28px] bg-slate-900 touch-none select-none cursor-grab active:cursor-grabbing"
+              style={{
+                border: "3px solid rgba(255,255,255,0.88)",
+              }}
+              onPointerDown={startDrag}
+              onPointerMove={moveDrag}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+              onPointerLeave={endDrag}
+              onWheel={handleWheelZoom}
+            >
+              {modalForm.imageUrl ? (
+                <img
+                  src={modalForm.imageUrl}
+                  alt="Facility crop preview"
+                  draggable={false}
+                  className="absolute inset-0"
+                  style={getCropImageStyle(modalForm)}
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <ImageIcon className="w-16 h-16 text-slate-500" />
+                </div>
+              )}
+
+              <div className="pointer-events-none absolute inset-0">
+                <div className="absolute inset-x-0 top-1/3 h-px bg-white/25" />
+                <div className="absolute inset-x-0 top-2/3 h-px bg-white/25" />
+                <div className="absolute inset-y-0 left-1/3 w-px bg-white/25" />
+                <div className="absolute inset-y-0 left-2/3 w-px bg-white/25" />
+              </div>
+
+              <div className="pointer-events-none absolute left-4 top-4 rounded-full bg-black/55 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-white">
+                Drag / Pinch / Wheel
+              </div>
+            </div>
+
+            <label
+              className="mt-5 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black cursor-pointer"
+              style={{
+                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                color: colors.dark,
+              }}
+            >
+              <UploadCloud className="w-4 h-4" />
+              {uploadingImage ? "Uploading..." : "Upload New Image"}
+              <input
+                type="file"
+                accept="image/*"
+                disabled={uploadingImage}
+                onChange={(event) => {
+                  uploadImage(event.target.files?.[0]);
+                  event.target.value = "";
+                }}
+                className="hidden"
+              />
+            </label>
+          </section>
+
+          <section className="rounded-[32px] bg-white p-5 shadow-xl">
+            <h3 className="mb-2 text-lg font-black text-slate-950">
+              Photo Controls
+            </h3>
+
+            <p className="mb-5 text-sm font-semibold leading-relaxed text-slate-500">
+              The image stays inside the fixed facility box. Moving changes crop position, so white side gaps should not appear.
+            </p>
+
+            <CropSlider
+              label="Zoom"
+              value={clampImageZoom(modalForm.imageZoom)}
+              min={1}
+              max={3}
+              step={0.05}
+              suffix="x"
+              onChange={(value) => updateCrop({ imageZoom: clampImageZoom(value) })}
+            />
+
+            <div className="mt-4 space-y-4">
+              <CropSlider
+                label="Move Left / Right"
+                value={clampImageOffset(modalForm.imageOffsetX)}
+                min={-60}
+                max={60}
+                step={1}
+                onChange={(value) => updateCrop({ imageOffsetX: clampImageOffset(value) })}
+              />
+
+              <CropSlider
+                label="Move Up / Down"
+                value={clampImageOffset(modalForm.imageOffsetY)}
+                min={-60}
+                max={60}
+                step={1}
+                onChange={(value) => updateCrop({ imageOffsetY: clampImageOffset(value) })}
+              />
+            </div>
+
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({
+                    imageOffsetY: clampImageOffset(clampImageOffset(modalForm.imageOffsetY) - 5),
+                  })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Up
+              </button>
+
+              <button
+                type="button"
+                onClick={resetCrop}
+                disabled={saving || uploadingImage}
+                className="rounded-xl px-3 py-3 text-xs font-black text-slate-950 disabled:opacity-50"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                }}
+              >
+                Reset
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({
+                    imageOffsetY: clampImageOffset(clampImageOffset(modalForm.imageOffsetY) + 5),
+                  })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Down
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({
+                    imageOffsetX: clampImageOffset(clampImageOffset(modalForm.imageOffsetX) - 5),
+                  })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Left
+              </button>
+
+              <div className="rounded-xl bg-slate-50 px-3 py-3 text-center text-[11px] font-black text-slate-400">
+                Move
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateCrop({
+                    imageOffsetX: clampImageOffset(clampImageOffset(modalForm.imageOffsetX) + 5),
+                  })
+                }
+                className="rounded-xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-600"
+              >
+                Right
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-xs font-semibold leading-relaxed text-slate-500">
+              Current: Zoom {clampImageZoom(modalForm.imageZoom).toFixed(2)}x, X{" "}
+              {Math.round(clampImageOffset(modalForm.imageOffsetX))}, Y{" "}
+              {Math.round(clampImageOffset(modalForm.imageOffsetY))}
+            </div>
+          </section>
+        </div>
+      </main>
+    </motion.div>
   );
 }
 
@@ -408,6 +902,7 @@ export default function AdminFacilities() {
   const [editingTarget, setEditingTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalForm, setModalForm] = useState({});
+  const [imageAdjustOpen, setImageAdjustOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [success, setSuccess] = useState("");
@@ -445,6 +940,7 @@ export default function AdminFacilities() {
     setSuccess("");
     setError("");
     setEditingTarget(target);
+    setImageAdjustOpen(false);
     setEditingRouteId(null);
 
     if (target.type === "pageHeader") {
@@ -468,6 +964,9 @@ export default function AdminFacilities() {
         description: item.description || "",
         details: item.details || "",
         imageUrl: item.imageUrl || "",
+        imageZoom: clampImageZoom(item.imageZoom),
+        imageOffsetX: clampImageOffset(item.imageOffsetX),
+        imageOffsetY: clampImageOffset(item.imageOffsetY),
         color: item.color || colors.green,
         visible: item.visible !== false,
         busRoutes: item.busRoutes || [],
@@ -477,6 +976,7 @@ export default function AdminFacilities() {
 
   const closeEditor = () => {
     if (saving || uploadingImage) return;
+    setImageAdjustOpen(false);
     setEditingTarget(null);
     setModalForm({});
     setEditingRouteId(null);
@@ -550,8 +1050,15 @@ export default function AdminFacilities() {
         return;
       }
 
-      updateModalField("imageUrl", uploadedUrl);
-      setSuccess("Image uploaded. Click Save This Item to publish it.");
+      setModalForm((prev) => ({
+        ...prev,
+        imageUrl: uploadedUrl,
+        imageZoom: 1,
+        imageOffsetX: 0,
+        imageOffsetY: 0,
+      }));
+      setImageAdjustOpen(true);
+      setSuccess("Image uploaded. Adjust it on the image adjustment page, then save.");
     } catch (err) {
       console.error("Facility image upload error:", err);
       setError(err.response?.data?.message || "Image upload failed.");
@@ -620,6 +1127,9 @@ export default function AdminFacilities() {
                   description: modalForm.description || "",
                   details: modalForm.details || "",
                   imageUrl: modalForm.imageUrl || "",
+                  imageZoom: clampImageZoom(modalForm.imageZoom),
+                  imageOffsetX: clampImageOffset(modalForm.imageOffsetX),
+                  imageOffsetY: clampImageOffset(modalForm.imageOffsetY),
                   color: modalForm.color || colors.green,
                   visible: modalForm.visible !== false,
                   busRoutes: modalForm.busRoutes || [],
@@ -635,6 +1145,7 @@ export default function AdminFacilities() {
         "Selected facilities item saved successfully."
       );
 
+      setImageAdjustOpen(false);
       setEditingTarget(null);
       setModalForm({});
       setEditingRouteId(null);
@@ -667,6 +1178,9 @@ export default function AdminFacilities() {
         description: "Short facility description.",
         details: "Detailed facility highlights.",
         imageUrl: "",
+        imageZoom: 1,
+        imageOffsetX: 0,
+        imageOffsetY: 0,
         color: nextColor,
         visible: true,
         busRoutes: [],
@@ -700,6 +1214,7 @@ export default function AdminFacilities() {
       });
 
       await saveContentToBackend(nextForm, "Facility deleted successfully.");
+      setImageAdjustOpen(false);
       setDeleteTarget(null);
       setEditingTarget(null);
       setModalForm({});
@@ -898,7 +1413,19 @@ export default function AdminFacilities() {
       </motion.div>
 
       <AnimatePresence>
-        {editingTarget && (
+        {editingTarget && imageAdjustOpen && needsImageUpload && (
+          <FacilityImageAdjustPage
+            modalForm={modalForm}
+            setModalForm={setModalForm}
+            uploadImage={uploadImage}
+            uploadingImage={uploadingImage}
+            saving={saving}
+            onClose={() => setImageAdjustOpen(false)}
+            onSave={saveSelectedPart}
+          />
+        )}
+
+        {editingTarget && !imageAdjustOpen && (
           <motion.div
             className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5"
             style={{
@@ -975,22 +1502,14 @@ export default function AdminFacilities() {
                         }}
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-28 h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center">
-                            {modalForm.imageUrl ? (
-                              <img
-                                src={modalForm.imageUrl}
-                                alt="Preview"
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <ImageIcon className="w-8 h-8 text-slate-300" />
-                            )}
-                          </div>
+                          <FacilityImagePreviewBox modalForm={modalForm} />
 
-                          <div>
-                            <div className="text-white font-black">Image Preview</div>
+                          <div className="min-w-0">
+                            <div className="text-white font-black">
+                              Image Preview
+                            </div>
                             <div className="text-white/55 text-sm mt-1 leading-relaxed">
-                              Recommended: JPG/PNG/WebP, max 6 MB.
+                              Upload an image, then open adjustment page to drag and zoom it properly.
                             </div>
                           </div>
                         </div>
@@ -1015,6 +1534,21 @@ export default function AdminFacilities() {
                             className="hidden"
                           />
                         </label>
+
+                        <button
+                          type="button"
+                          onClick={() => setImageAdjustOpen(true)}
+                          disabled={!modalForm.imageUrl || saving || uploadingImage}
+                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black disabled:cursor-not-allowed disabled:opacity-45"
+                          style={{
+                            background: "rgba(255,255,255,0.10)",
+                            color: "#FFFFFF",
+                            border: "1px solid rgba(255,255,255,0.16)",
+                          }}
+                        >
+                          <Camera className="w-4 h-4" />
+                          Open Image Adjustment
+                        </button>
                       </div>
 
                       <Field

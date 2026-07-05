@@ -446,7 +446,7 @@ function MessageCard({
             {person.title}
           </h2>
 
-          <p className="text-lg md:text-xl leading-relaxed text-slate-500 max-w-5xl">
+          <p className="about-long-text text-base md:text-lg leading-[1.85] text-slate-500 max-w-5xl">
             {person.message}
           </p>
         </div>
@@ -535,6 +535,24 @@ export function About({
         `,
       }}
     >
+
+      <style>{`
+        .about-long-text {
+          text-align: justify;
+          text-justify: inter-word;
+          overflow-wrap: break-word;
+          word-break: normal;
+          hyphens: auto;
+        }
+
+        @media (max-width: 640px) {
+          .about-long-text {
+            text-align: left;
+            hyphens: none;
+          }
+        }
+      `}</style>
+
       <div
         className="absolute top-0 right-0 w-[520px] h-[520px] rounded-full pointer-events-none"
         style={{
@@ -606,7 +624,7 @@ export function About({
               }}
             />
 
-            <p className="max-w-3xl mx-auto text-lg md:text-xl text-slate-500 leading-relaxed">
+            <p className="max-w-3xl mx-auto text-base md:text-lg text-slate-500 leading-[1.8]">
               {content.pageSubtitle}
             </p>
           </motion.div>
@@ -657,7 +675,7 @@ export function About({
 
               <div className="space-y-5">
                 {(content.storyParagraphs || []).map((text, idx) => (
-                  <p key={idx} className="text-lg leading-relaxed text-slate-500">
+                  <p key={idx} className="about-long-text text-base md:text-lg leading-[1.85] text-slate-500">
                     {text}
                   </p>
                 ))}
@@ -851,7 +869,7 @@ export function About({
                       {p.label}
                     </div>
 
-                    <div className="text-base text-slate-500 leading-relaxed">
+                    <div className="about-long-text text-base text-slate-500 leading-[1.8]">
                       {p.desc}
                     </div>
                   </motion.div>
@@ -904,7 +922,7 @@ export function About({
                 {content.leadershipTitle}
               </h2>
 
-              <p className="max-w-3xl mx-auto text-lg text-slate-500">
+              <p className="about-long-text max-w-3xl mx-auto text-base md:text-lg leading-[1.8] text-slate-500 text-left md:text-justify">
                 {content.leadershipDescription}
               </p>
             </motion.div>
@@ -1008,7 +1026,7 @@ export function About({
                     {item.title}
                   </h3>
 
-                  <p className="text-base leading-relaxed text-slate-600">
+                  <p className="about-long-text text-base leading-[1.8] text-slate-600">
                     {item.desc}
                   </p>
                 </motion.div>
@@ -1159,7 +1177,7 @@ export function About({
                           {item.title}
                         </h3>
 
-                        <p className="text-base leading-relaxed text-slate-500">
+                        <p className="about-long-text text-base leading-[1.8] text-slate-500">
                           {item.desc}
                         </p>
                       </div>

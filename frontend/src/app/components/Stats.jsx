@@ -449,7 +449,7 @@ function Stats({
                 </h2>
               </div>
 
-              <p className="max-w-xl text-sm md:text-base leading-relaxed text-slate-600">
+              <p className="home-long-text max-w-xl text-sm md:text-base leading-[1.8] text-slate-600 text-left md:text-justify">
                 {statsData.description}
               </p>
             </motion.div>
@@ -652,7 +652,7 @@ function Stats({
                     {statsData.story.paragraphs.map((text, index) => (
                       <p
                         key={index}
-                        className="text-base md:text-lg leading-relaxed text-slate-500"
+                        className="home-long-text text-base md:text-lg leading-[1.85] text-slate-500 text-left md:text-justify"
                       >
                         {text}
                       </p>
@@ -749,7 +749,7 @@ function Stats({
                   }}
                 />
 
-                <p className="max-w-2xl mx-auto text-base md:text-lg leading-relaxed text-slate-500">
+                <p className="home-long-text max-w-2xl mx-auto text-base md:text-lg leading-[1.85] text-slate-500 text-left md:text-justify">
                   {statsData.excellence.description}
                 </p>
               </motion.div>
@@ -833,7 +833,7 @@ function Stats({
                           {card.title}
                         </h3>
 
-                        <p className="text-sm md:text-base leading-relaxed text-slate-600">
+                        <p className="home-long-text text-sm md:text-base leading-[1.8] text-slate-600 text-left md:text-justify">
                           {card.description}
                         </p>
                       </div>
@@ -873,7 +873,7 @@ function Stats({
                     {statsData.notices.title}
                   </h2>
 
-                  <p className="text-base md:text-lg text-slate-500">
+                  <p className="home-long-text text-base md:text-lg leading-[1.8] text-slate-500 text-left md:text-justify">
                     {statsData.notices.description}
                   </p>
                 </div>
@@ -1045,7 +1045,7 @@ function Stats({
                                 {notice.title || "School Notice"}
                               </h3>
 
-                              <p className="max-w-3xl text-sm md:text-base leading-relaxed text-slate-500 line-clamp-2">
+                              <p className="home-long-text max-w-3xl text-sm md:text-base leading-[1.75] text-slate-500 line-clamp-2 text-left md:text-justify">
                                 {getNoticeExcerpt(notice)}
                               </p>
                             </div>
@@ -1173,7 +1173,7 @@ function Stats({
                           border: "1px solid rgba(15,23,42,0.08)",
                         }}
                       >
-                        <p className="text-base md:text-lg leading-relaxed text-slate-600 whitespace-pre-line">
+                        <p className="home-long-text text-base md:text-lg leading-[1.85] text-slate-600 whitespace-pre-line text-left md:text-justify">
                           {selectedNotice.description ||
                             selectedNotice.content ||
                             "No description added for this notice."}

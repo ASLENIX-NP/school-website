@@ -642,6 +642,21 @@ function Hero({
           0% { transform: translateX(-120%) rotate(18deg); }
           100% { transform: translateX(140%) rotate(18deg); }
         }
+
+        .home-long-text {
+          text-align: justify;
+          text-justify: inter-word;
+          overflow-wrap: break-word;
+          word-break: normal;
+          hyphens: auto;
+        }
+
+        @media (max-width: 640px) {
+          .home-long-text {
+            text-align: left;
+            hyphens: none;
+          }
+        }
       `}</style>
 
       <Premium3DBackground editMode={editMode} />
@@ -748,7 +763,7 @@ function Hero({
               initial={{ opacity: 0, y: 26 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.16 }}
-              className="text-lg md:text-xl max-w-xl leading-relaxed mb-7 rounded-2xl"
+              className="home-long-text text-lg md:text-xl max-w-xl leading-[1.85] mb-7 rounded-2xl"
               style={{
                 color: "rgba(15,23,42,0.68)",
                 outline: editMode ? "1px dashed rgba(56,189,248,0.45)" : "none",
