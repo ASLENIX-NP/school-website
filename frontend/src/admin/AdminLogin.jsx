@@ -17,8 +17,8 @@ export default function AdminLogin() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    email: "admin@baljagriti.com",
-    password: "admin12345",
+    email: "",
+    password: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -50,7 +50,7 @@ export default function AdminLogin() {
       console.error("Admin login error:", err);
 
       if (err.code === "ERR_NETWORK") {
-        setError("Backend is not running. Start backend with npm run dev first.");
+        setError("Could not connect to backend. Please try again.");
       } else {
         setError(
           err.response?.data?.message || "Login failed. Please try again."
@@ -144,7 +144,28 @@ export default function AdminLogin() {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-5">
+        <form
+          onSubmit={handleLogin}
+          className="space-y-5"
+          autoComplete="off"
+        >
+          <input
+            type="text"
+            name="fake-user"
+            autoComplete="username"
+            className="hidden"
+            tabIndex="-1"
+            aria-hidden="true"
+          />
+          <input
+            type="password"
+            name="fake-password"
+            autoComplete="new-password"
+            className="hidden"
+            tabIndex="-1"
+            aria-hidden="true"
+          />
+
           <div>
             <label className="block text-sm font-semibold text-white/80 mb-2">
               Email Address
@@ -158,6 +179,9 @@ export default function AdminLogin() {
                 value={form.email}
                 onChange={handleChange}
                 required
+                autoComplete="off"
+                inputMode="email"
+                spellCheck="false"
                 className="w-full pl-12 pr-4 py-4 rounded-2xl outline-none text-white"
                 style={{
                   background: "rgba(255,255,255,0.08)",
@@ -181,6 +205,8 @@ export default function AdminLogin() {
                 value={form.password}
                 onChange={handleChange}
                 required
+                autoComplete="new-password"
+                spellCheck="false"
                 className="w-full pl-12 pr-4 py-4 rounded-2xl outline-none text-white"
                 style={{
                   background: "rgba(255,255,255,0.08)",
