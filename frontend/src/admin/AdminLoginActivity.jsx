@@ -12,7 +12,7 @@ export default function AdminLoginActivity() {
   const fetchLogs = async () => {
     try {
       const res = await fetch(
-        "http://localhost:5000/api/admin-settings/login-activity"
+        "https://school-website-backend-ixx2.onrender.com/api/admin-settings/login-activity"
       );
 
       const data = await res.json();

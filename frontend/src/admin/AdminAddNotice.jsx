@@ -136,7 +136,7 @@ export default function AdminAddNotice() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("http://localhost:5000/api/upload", {
+      const response = await fetch("https://school-website-backend-ixx2.onrender.com/api/upload", {
         method: "POST",
         headers: getAuthHeaders(false),
         body: formData,
@@ -171,7 +171,7 @@ export default function AdminAddNotice() {
     setSaving(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/notices", {
+      const response = await fetch("https://school-website-backend-ixx2.onrender.com/api/notices", {
         method: "POST",
         headers: getAuthHeaders(true),
         body: JSON.stringify({

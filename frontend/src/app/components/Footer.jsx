@@ -227,7 +227,7 @@ export function Footer({
 
     const loadFooterContent = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/site-content/footer");
+        const res = await axios.get("https://school-website-backend-ixx2.onrender.com/api/site-content/footer");
         const savedContent = res.data?.data?.content || {};
         setContent(mergeFooterContent(savedContent));
       } catch (error) {

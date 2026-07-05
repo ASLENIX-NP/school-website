@@ -913,7 +913,7 @@ export default function AdminFacilities() {
     const loadFacilitiesContent = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/facilities"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/facilities"
         );
 
         const savedContent = res.data?.data?.content || {};
@@ -991,7 +991,7 @@ export default function AdminFacilities() {
     }
 
     await axios.put(
-      "http://localhost:5000/api/site-content/facilities",
+      "https://school-website-backend-ixx2.onrender.com/api/site-content/facilities",
       {
         content: nextForm,
       },
@@ -1036,7 +1036,7 @@ export default function AdminFacilities() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await axios.post("http://localhost:5000/api/upload", formData, {
+      const res = await axios.post("https://school-website-backend-ixx2.onrender.com/api/upload", formData, {
         headers: {
           ...authHeaders,
           "Content-Type": "multipart/form-data",

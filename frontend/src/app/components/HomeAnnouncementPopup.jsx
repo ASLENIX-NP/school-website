@@ -7,7 +7,7 @@ export default function HomeAnnouncementPopup() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/announcements")
+    fetch("https://school-website-backend-ixx2.onrender.com/api/announcements")
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.data.length > 0) {

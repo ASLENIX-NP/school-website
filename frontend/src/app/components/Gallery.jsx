@@ -478,7 +478,7 @@ function Gallery() {
     const loadGalleryContent = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/gallery",
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/gallery",
           {
             timeout: 20000,
           }

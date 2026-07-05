@@ -186,7 +186,7 @@ export default function AdminNotices() {
 
   const fetchNotices = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/notices");
+      const response = await fetch("https://school-website-backend-ixx2.onrender.com/api/notices");
       const result = await response.json();
 
       if (result.success && Array.isArray(result.data)) {
@@ -202,7 +202,7 @@ export default function AdminNotices() {
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/notice-settings");
+      const response = await fetch("https://school-website-backend-ixx2.onrender.com/api/notice-settings");
       const result = await response.json();
 
       if (result.success) {
@@ -290,7 +290,7 @@ export default function AdminNotices() {
   const saveSettingsPatch = async (patch, message) => {
     const nextSettings = { ...settings, ...patch };
 
-    const response = await fetch("http://localhost:5000/api/notice-settings", {
+    const response = await fetch("https://school-website-backend-ixx2.onrender.com/api/notice-settings", {
       method: "PUT",
       headers: getAuthHeaders(true),
       body: JSON.stringify(nextSettings),
@@ -353,7 +353,7 @@ export default function AdminNotices() {
           throw new Error("Notice title is required.");
         }
 
-        const response = await fetch("http://localhost:5000/api/notices", {
+        const response = await fetch("https://school-website-backend-ixx2.onrender.com/api/notices", {
           method: "POST",
           headers: getAuthHeaders(true),
           body: JSON.stringify(noticeToBackendPayload(modalForm)),
@@ -375,7 +375,7 @@ export default function AdminNotices() {
         }
 
         const response = await fetch(
-          `http://localhost:5000/api/notices/${editingTarget.id}`,
+          `https://school-website-backend-ixx2.onrender.com/api/notices/${editingTarget.id}`,
           {
             method: "PUT",
             headers: getAuthHeaders(true),
@@ -430,7 +430,7 @@ export default function AdminNotices() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("http://localhost:5000/api/upload", {
+      const response = await fetch("https://school-website-backend-ixx2.onrender.com/api/upload", {
         method: "POST",
         headers: getAuthHeaders(false),
         body: formData,
@@ -469,7 +469,7 @@ export default function AdminNotices() {
     setError("");
 
     try {
-      const response = await fetch(`http://localhost:5000/api/notices/${target.id}`, {
+      const response = await fetch(`https://school-website-backend-ixx2.onrender.com/api/notices/${target.id}`, {
         method: "DELETE",
         headers: getAuthHeaders(false),
       });
@@ -506,7 +506,7 @@ export default function AdminNotices() {
 
     try {
       for (const id of selectedNoticeIds) {
-        const response = await fetch(`http://localhost:5000/api/notices/${id}`, {
+        const response = await fetch(`https://school-website-backend-ixx2.onrender.com/api/notices/${id}`, {
           method: "DELETE",
           headers: getAuthHeaders(false),
         });

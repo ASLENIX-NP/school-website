@@ -257,7 +257,7 @@ export default function AdminFooter() {
   useEffect(() => {
     const loadFooterContent = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/site-content/footer");
+        const res = await axios.get("https://school-website-backend-ixx2.onrender.com/api/site-content/footer");
         const savedContent = res.data?.data?.content || {};
         setForm(mergeFooterContent(savedContent));
       } catch (err) {
@@ -509,7 +509,7 @@ export default function AdminFooter() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await axios.post("http://localhost:5000/api/upload", formData, {
+      const res = await axios.post("https://school-website-backend-ixx2.onrender.com/api/upload", formData, {
         headers: {
           ...authHeaders,
           "Content-Type": "multipart/form-data",
@@ -769,7 +769,7 @@ export default function AdminFooter() {
       const cleanForm = buildCleanFooterContent(nextForm);
 
       await axios.put(
-        "http://localhost:5000/api/site-content/footer",
+        "https://school-website-backend-ixx2.onrender.com/api/site-content/footer",
         { content: cleanForm },
         { headers: authHeaders }
       );

@@ -374,7 +374,7 @@ export default function AdminAnnouncements() {
 
   const fetchAnnouncements = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/announcements");
+      const res = await fetch("https://school-website-backend-ixx2.onrender.com/api/announcements");
       const data = await res.json();
 
       if (data.success) {
@@ -432,7 +432,7 @@ export default function AdminAnnouncements() {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/api/announcements/${id}`, {
+      const res = await fetch(`https://school-website-backend-ixx2.onrender.com/api/announcements/${id}`, {
         method: "DELETE",
       });
 
@@ -456,7 +456,7 @@ export default function AdminAnnouncements() {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/announcements/${item.id}`,
+        `https://school-website-backend-ixx2.onrender.com/api/announcements/${item.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -499,7 +499,7 @@ export default function AdminAnnouncements() {
       formData.append("file", file);
 
       const res = await axios.post(
-        "http://localhost:5000/api/upload",
+        "https://school-website-backend-ixx2.onrender.com/api/upload",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -575,8 +575,8 @@ export default function AdminAnnouncements() {
       };
 
       const url = editingId
-        ? `http://localhost:5000/api/announcements/${editingId}`
-        : "http://localhost:5000/api/announcements";
+        ? `https://school-website-backend-ixx2.onrender.com/api/announcements/${editingId}`
+        : "https://school-website-backend-ixx2.onrender.com/api/announcements";
 
       const method = editingId ? "PUT" : "POST";
 

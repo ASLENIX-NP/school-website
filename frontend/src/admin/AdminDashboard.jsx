@@ -107,13 +107,13 @@ export default function AdminDashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const msgRes = await axios.get("http://localhost:5000/api/contact-messages");
+        const msgRes = await axios.get("https://school-website-backend-ixx2.onrender.com/api/contact-messages");
         setMessages(Array.isArray(msgRes.data?.data) ? msgRes.data.data : []);
-        const noticeRes = await axios.get("http://localhost:5000/api/notices");
+        const noticeRes = await axios.get("https://school-website-backend-ixx2.onrender.com/api/notices");
         setNotices(Array.isArray(noticeRes.data?.data) ? noticeRes.data.data : []);
-        const annRes = await axios.get("http://localhost:5000/api/announcements");
+        const annRes = await axios.get("https://school-website-backend-ixx2.onrender.com/api/announcements");
         setAnnouncements(Array.isArray(annRes.data?.data) ? annRes.data.data : []);
-        const staffRes = await axios.get("http://localhost:5000/api/site-content/staff");
+        const staffRes = await axios.get("https://school-website-backend-ixx2.onrender.com/api/site-content/staff");
         const staffContent = staffRes.data?.data?.content;
         setStaff(Array.isArray(staffContent?.staff) ? staffContent.staff : []);
       } catch (err) {
@@ -131,7 +131,7 @@ export default function AdminDashboard() {
     try {
       if (token) {
         await axios.post(
-          "http://localhost:5000/api/admin/auth/logout",
+          "https://school-website-backend-ixx2.onrender.com/api/admin/auth/logout",
           {},
           {
             headers: {

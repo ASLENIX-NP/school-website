@@ -585,7 +585,7 @@ export function Staff({
 
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/staff"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/staff"
         );
         const savedContent = res.data?.data?.content || {};
         setContent(mergeStaffContent(savedContent));

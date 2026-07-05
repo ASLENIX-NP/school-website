@@ -250,7 +250,7 @@ export function Contact({
     const loadContactContent = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/contact"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/contact"
         );
 
         const savedContent = res.data?.data?.content || {};
@@ -277,7 +277,7 @@ export function Contact({
     };
 
     try {
-      await axios.post("http://localhost:5000/api/contact", payload);
+      await axios.post("https://school-website-backend-ixx2.onrender.com/api/contact", payload);
 
       setSubmitMessage(content.form.successMessage);
       reset();

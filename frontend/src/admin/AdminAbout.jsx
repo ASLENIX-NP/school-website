@@ -654,7 +654,7 @@ export default function AdminAbout() {
   useEffect(() => {
     const loadAboutContent = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/site-content/about");
+        const res = await axios.get("https://school-website-backend-ixx2.onrender.com/api/site-content/about");
         const savedContent = res.data?.data?.content || {};
         setForm(mergeAboutContent(savedContent));
       } catch (err) {
@@ -846,7 +846,7 @@ export default function AdminAbout() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await axios.post("http://localhost:5000/api/upload", formData, {
+      const res = await axios.post("https://school-website-backend-ixx2.onrender.com/api/upload", formData, {
         headers: {
           ...authHeaders,
           "Content-Type": "multipart/form-data",
@@ -888,7 +888,7 @@ export default function AdminAbout() {
     }
 
     await axios.put(
-      "http://localhost:5000/api/site-content/about",
+      "https://school-website-backend-ixx2.onrender.com/api/site-content/about",
       {
         content: nextForm,
       },

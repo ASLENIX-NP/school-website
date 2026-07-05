@@ -290,7 +290,7 @@ export default function AdminContact() {
     const loadContactContent = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/contact",
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/contact",
           { timeout: 20000 }
         );
 
@@ -423,7 +423,7 @@ export default function AdminContact() {
       }
 
       await axios.put(
-        "http://localhost:5000/api/site-content/contact",
+        "https://school-website-backend-ixx2.onrender.com/api/site-content/contact",
         { content: cleanContent },
         {
           headers: authHeaders,

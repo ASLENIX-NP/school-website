@@ -251,7 +251,7 @@ export default function AdminAdmissions() {
     const loadAdmissionsContent = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/admissions",
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/admissions",
           { timeout: 20000 }
         );
 
@@ -469,7 +469,7 @@ export default function AdminAdmissions() {
       });
 
       await axios.put(
-        "http://localhost:5000/api/site-content/admissions",
+        "https://school-website-backend-ixx2.onrender.com/api/site-content/admissions",
         { content: cleanedForm },
         {
           headers: getAuthHeaders(),

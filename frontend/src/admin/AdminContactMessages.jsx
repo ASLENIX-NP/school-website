@@ -308,7 +308,7 @@ export default function AdminContactMessages() {
     setError("");
 
     try {
-      const res = await axios.get("http://localhost:5000/api/contact-messages");
+      const res = await axios.get("https://school-website-backend-ixx2.onrender.com/api/contact-messages");
       setMessages(Array.isArray(res.data?.data) ? res.data.data : []);
     } catch (err) {
       console.error("Load contact messages error:", err);
@@ -367,7 +367,7 @@ export default function AdminContactMessages() {
       const nextReadStatus = !message.is_read;
 
       await axios.patch(
-        `http://localhost:5000/api/contact-messages/${message.id}/read`,
+        `https://school-website-backend-ixx2.onrender.com/api/contact-messages/${message.id}/read`,
         {
           is_read: nextReadStatus,
         }
@@ -400,7 +400,7 @@ export default function AdminContactMessages() {
 
     try {
       await axios.delete(
-        `http://localhost:5000/api/contact-messages/${message.id}`
+        `https://school-website-backend-ixx2.onrender.com/api/contact-messages/${message.id}`
       );
 
       setMessages((prev) => prev.filter((item) => item.id !== message.id));

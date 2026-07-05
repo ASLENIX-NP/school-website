@@ -336,7 +336,7 @@ function Stats({
 
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/home"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/home"
         );
 
         const savedStats = res.data?.data?.content?.statsSection;
@@ -355,7 +355,7 @@ function Stats({
   useEffect(() => {
     if (editMode) return;
 
-    fetch("http://localhost:5000/api/notices")
+    fetch("https://school-website-backend-ixx2.onrender.com/api/notices")
       .then((res) => res.json())
       .then((data) => {
         const noticeList = Array.isArray(data) ? data : data?.data || [];

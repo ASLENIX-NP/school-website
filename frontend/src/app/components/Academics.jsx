@@ -920,7 +920,7 @@ export function Academics({
     const loadAcademicsContent = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/academics"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/academics"
         );
 
         const savedContent = res.data?.data?.content || {};

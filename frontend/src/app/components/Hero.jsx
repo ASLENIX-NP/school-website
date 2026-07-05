@@ -599,7 +599,7 @@ function Hero({
 
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/home"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/home"
         );
 
         const savedHero = res.data?.data?.content?.hero;

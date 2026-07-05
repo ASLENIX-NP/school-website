@@ -24,7 +24,7 @@ export default function NoticeDetail() {
   useEffect(() => {
     async function loadNotice() {
       try {
-        const res = await fetch(`http://localhost:5000/api/notices/${id}`);
+        const res = await fetch(`https://school-website-backend-ixx2.onrender.com/api/notices/${id}`);
         const result = await res.json();
 
         setNotice(result.data || result);

@@ -598,7 +598,7 @@ export default function AdminHome() {
   useEffect(() => {
     const loadHomeContent = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/site-content/home");
+        const res = await axios.get("https://school-website-backend-ixx2.onrender.com/api/site-content/home");
         const savedContent = res.data?.data?.content || {};
         setForm(mergeHomeContent(savedContent));
       } catch (err) {
@@ -842,7 +842,7 @@ export default function AdminHome() {
         const formData = new FormData();
         formData.append("file", file);
 
-        const res = await axios.post("http://localhost:5000/api/upload", formData, {
+        const res = await axios.post("https://school-website-backend-ixx2.onrender.com/api/upload", formData, {
           headers: {
             ...authHeaders,
             "Content-Type": "multipart/form-data",
@@ -1254,7 +1254,7 @@ export default function AdminHome() {
       const cleanContent = mergeHomeContent(nextForm);
 
       await axios.put(
-        "http://localhost:5000/api/site-content/home",
+        "https://school-website-backend-ixx2.onrender.com/api/site-content/home",
         {
           content: cleanContent,
         },

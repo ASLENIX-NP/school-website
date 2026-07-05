@@ -47,12 +47,12 @@ export default function AdminSettings() {
   
   const fetchSettings = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/admin-settings");
+      const res = await fetch("https://school-website-backend-ixx2.onrender.com/api/admin-settings");
       const result = await res.json();
 
       setSettings(result.data);
       const loginRes = await fetch(
-        "http://localhost:5000/api/admin-settings/login-activity"
+        "https://school-website-backend-ixx2.onrender.com/api/admin-settings/login-activity"
       );
       
       const loginData = await loginRes.json();
@@ -110,7 +110,7 @@ export default function AdminSettings() {
       console.log("SENDING REQUEST...");
   
       const res = await fetch(
-        "http://localhost:5000/api/admin-settings/upload-photo",
+        "https://school-website-backend-ixx2.onrender.com/api/admin-settings/upload-photo",
         {
           method: "POST",
           body: formData,
@@ -145,7 +145,7 @@ export default function AdminSettings() {
     try {
       setSaving(true);
 
-      const res = await fetch("http://localhost:5000/api/admin-settings", {
+      const res = await fetch("https://school-website-backend-ixx2.onrender.com/api/admin-settings", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -179,7 +179,7 @@ export default function AdminSettings() {
   const handleUpdateEmail = async () => {
     try {
       const res = await fetch(
-        "http://localhost:5000/api/admin-settings/email",
+        "https://school-website-backend-ixx2.onrender.com/api/admin-settings/email",
         {
           method: "PUT",
           headers: {
@@ -226,7 +226,7 @@ export default function AdminSettings() {
   
     try {
       const res = await fetch(
-        "http://localhost:5000/api/admin-settings/change-password",
+        "https://school-website-backend-ixx2.onrender.com/api/admin-settings/change-password",
         {
           method: "PUT",
           headers: {

@@ -86,7 +86,7 @@ export function Navbar({
     const loadNavbarContent = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/navbar"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/navbar"
         );
 
         const savedContent = res.data?.data?.content || {};

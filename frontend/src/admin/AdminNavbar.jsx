@@ -135,7 +135,7 @@ function getAuthHeaders() {
     const loadNavbarContent = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/navbar"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/navbar"
         );
 
         const savedContent = res.data?.data?.content || {};
@@ -246,7 +246,7 @@ if (!authHeaders) {
   return;
 }
 
-const res = await axios.post("http://localhost:5000/api/upload", formData, {
+const res = await axios.post("https://school-website-backend-ixx2.onrender.com/api/upload", formData, {
   headers: {
     ...authHeaders,
     "Content-Type": "multipart/form-data",
@@ -337,7 +337,7 @@ if (!authHeaders) {
 }
 
 await axios.put(
-  "http://localhost:5000/api/site-content/navbar",
+  "https://school-website-backend-ixx2.onrender.com/api/site-content/navbar",
   {
     content: cleanContent,
   },

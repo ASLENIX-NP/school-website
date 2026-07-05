@@ -439,7 +439,7 @@ export function Facilities({
     const loadFacilitiesContent = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/facilities"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/facilities"
         );
 
         const savedContent = res.data?.data?.content || {};

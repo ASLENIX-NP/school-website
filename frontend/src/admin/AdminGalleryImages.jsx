@@ -213,7 +213,7 @@ async function uploadGalleryImage(file) {
 
   const token = localStorage.getItem("adminToken");
 
-  const res = await axios.post("http://localhost:5000/api/upload", formData, {
+  const res = await axios.post("https://school-website-backend-ixx2.onrender.com/api/upload", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -309,7 +309,7 @@ export default function AdminGalleryImages() {
 
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/gallery",
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/gallery",
           {
             timeout: 5000,
           }
@@ -815,7 +815,7 @@ export default function AdminGalleryImages() {
       };
 
       await axios.put(
-        "http://localhost:5000/api/site-content/gallery",
+        "https://school-website-backend-ixx2.onrender.com/api/site-content/gallery",
         { content: cleanedForm },
         {
           headers: {

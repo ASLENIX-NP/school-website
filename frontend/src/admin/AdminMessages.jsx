@@ -431,7 +431,7 @@ export default function AdminMessages() {
     const loadMessagesContent = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/messages"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/messages"
         );
 
         const savedContent = res.data?.data?.content || {};
@@ -592,7 +592,7 @@ export default function AdminMessages() {
 
     try {
       await axios.put(
-        "http://localhost:5000/api/site-content/messages",
+        "https://school-website-backend-ixx2.onrender.com/api/site-content/messages",
         {
           content: form,
         },

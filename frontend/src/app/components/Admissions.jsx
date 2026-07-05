@@ -245,7 +245,7 @@ function Admissions({
     const loadAdmissionsContent = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/site-content/admissions"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/admissions"
         );
 
         const savedContent = res.data?.data?.content || {};
@@ -275,7 +275,7 @@ function Admissions({
       : `Admission inquiry for ${grade}.`;
 
     try {
-      await axios.post("http://localhost:5000/api/contact", {
+      await axios.post("https://school-website-backend-ixx2.onrender.com/api/contact", {
         source: "admission",
         name: data.name,
         email: data.email,
