@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
@@ -641,7 +642,7 @@ function getDeleteName(target) {
 
 export default function AdminAbout() {
   const [form, setForm] = useState(defaultAboutContent);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [editingTarget, setEditingTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalForm, setModalForm] = useState({});
@@ -654,7 +655,9 @@ export default function AdminAbout() {
   useEffect(() => {
     const loadAboutContent = async () => {
       try {
-        const res = await axios.get("https://school-website-backend-ixx2.onrender.com/api/site-content/about");
+        const res = await axios.get("https://school-website-backend-ixx2.onrender.com/api/site-content/about", {
+          timeout: 12000,
+        });
         const savedContent = res.data?.data?.content || {};
         setForm(mergeAboutContent(savedContent));
       } catch (err) {
@@ -1306,17 +1309,6 @@ export default function AdminAbout() {
       "leadershipMessage",
     ].includes(editingTarget.type);
   }, [editingTarget]);
-
-  if (loading) {
-    return (
-      <div className="py-16 flex items-center justify-center">
-        <div className="text-slate-600 font-semibold">
-          Loading visual about editor...
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
 
@@ -2005,3 +1997,5 @@ export default function AdminAbout() {
     </div>
   );
 }
+
+

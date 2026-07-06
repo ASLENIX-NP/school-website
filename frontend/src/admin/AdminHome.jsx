@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
@@ -586,7 +587,7 @@ function ImageAdjustmentPage({
 
 export default function AdminHome() {
   const [form, setForm] = useState(defaultHomeContent);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [editingTarget, setEditingTarget] = useState(null);
   const [modalForm, setModalForm] = useState({});
   const [saving, setSaving] = useState(false);
@@ -598,7 +599,9 @@ export default function AdminHome() {
   useEffect(() => {
     const loadHomeContent = async () => {
       try {
-        const res = await axios.get("https://school-website-backend-ixx2.onrender.com/api/site-content/home");
+        const res = await axios.get("https://school-website-backend-ixx2.onrender.com/api/site-content/home", {
+          timeout: 12000,
+        });
         const savedContent = res.data?.data?.content || {};
         setForm(mergeHomeContent(savedContent));
       } catch (err) {
@@ -1333,17 +1336,6 @@ export default function AdminHome() {
 
     return "Save This Item";
   }, [editingTarget]);
-
-  if (loading) {
-    return (
-      <div className="py-16 flex items-center justify-center">
-        <div className="text-slate-600 font-semibold">
-          Loading visual home editor...
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
 
@@ -2219,3 +2211,5 @@ export default function AdminHome() {
     </div>
   );
 }
+
+

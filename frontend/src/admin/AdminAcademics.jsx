@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
@@ -168,7 +169,7 @@ export default function AdminAcademics() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState(defaultAcademicsContent);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [editingTarget, setEditingTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalForm, setModalForm] = useState({});
@@ -180,7 +181,10 @@ export default function AdminAcademics() {
     const loadAcademicsContent = async () => {
       try {
         const res = await axios.get(
-          "https://school-website-backend-ixx2.onrender.com/api/site-content/academics"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/academics",
+          {
+            timeout: 12000,
+          }
         );
 
         const savedContent = res.data?.data?.content || {};
@@ -847,17 +851,6 @@ export default function AdminAcademics() {
     if (!editingTarget) return false;
     return ["program", "feature", "stat", "timeline"].includes(editingTarget.type);
   }, [editingTarget]);
-
-  if (loading) {
-    return (
-      <div className="py-16 flex items-center justify-center">
-        <div className="text-slate-600 font-semibold">
-          Loading visual academics editor...
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
 
