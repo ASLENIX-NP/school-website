@@ -97,7 +97,7 @@ export default function AdminDashboard() {
   const [notices, setNotices] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [staff, setStaff] = useState([]);
-  const [messagesLoading, setMessagesLoading] = useState(true);
+  const [messagesLoading, setMessagesLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [currentTime] = useState(getCurrentTime());
   const [activeEditor, setActiveEditor] = useState(null);
@@ -105,24 +105,53 @@ export default function AdminDashboard() {
   const adminUser = JSON.parse(localStorage.getItem("adminUser") || "{}");
 
   useEffect(() => {
+    let alive = true;
+
     const loadData = async () => {
+      const requestOptions = { timeout: 12000 };
+
       try {
-        const msgRes = await axios.get("https://school-website-backend-ixx2.onrender.com/api/contact-messages");
-        setMessages(Array.isArray(msgRes.data?.data) ? msgRes.data.data : []);
-        const noticeRes = await axios.get("https://school-website-backend-ixx2.onrender.com/api/notices");
-        setNotices(Array.isArray(noticeRes.data?.data) ? noticeRes.data.data : []);
-        const annRes = await axios.get("https://school-website-backend-ixx2.onrender.com/api/announcements");
-        setAnnouncements(Array.isArray(annRes.data?.data) ? annRes.data.data : []);
-        const staffRes = await axios.get("https://school-website-backend-ixx2.onrender.com/api/site-content/staff");
-        const staffContent = staffRes.data?.data?.content;
-        setStaff(Array.isArray(staffContent?.staff) ? staffContent.staff : []);
-      } catch (err) {
-        console.error("Dashboard data load error:", err);
+        const [msgRes, noticeRes, annRes, staffRes] = await Promise.allSettled([
+          axios.get("https://school-website-backend-ixx2.onrender.com/api/contact-messages", requestOptions),
+          axios.get("https://school-website-backend-ixx2.onrender.com/api/notices", requestOptions),
+          axios.get("https://school-website-backend-ixx2.onrender.com/api/announcements", requestOptions),
+          axios.get("https://school-website-backend-ixx2.onrender.com/api/site-content/staff", requestOptions),
+        ]);
+
+        if (!alive) return;
+
+        if (msgRes.status === "fulfilled") {
+          setMessages(Array.isArray(msgRes.value.data?.data) ? msgRes.value.data.data : []);
+        }
+
+        if (noticeRes.status === "fulfilled") {
+          setNotices(Array.isArray(noticeRes.value.data?.data) ? noticeRes.value.data.data : []);
+        }
+
+        if (annRes.status === "fulfilled") {
+          setAnnouncements(Array.isArray(annRes.value.data?.data) ? annRes.value.data.data : []);
+        }
+
+        if (staffRes.status === "fulfilled") {
+          const staffContent = staffRes.value.data?.data?.content;
+          setStaff(Array.isArray(staffContent?.staff) ? staffContent.staff : []);
+        }
+
+        [msgRes, noticeRes, annRes, staffRes].forEach((result) => {
+          if (result.status === "rejected") {
+            console.error("Dashboard data load error:", result.reason);
+          }
+        });
       } finally {
-        setMessagesLoading(false);
+        if (alive) setMessagesLoading(false);
       }
     };
+
     loadData();
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const logout = async () => {

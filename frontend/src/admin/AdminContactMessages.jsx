@@ -391,17 +391,21 @@ export default function AdminContactMessages() {
   const [messages, setMessages] = useState([]);
   const [expandedIds, setExpandedIds] = useState([]);
   const [filter, setFilter] = useState("all");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  const loadMessages = async () => {
+  const loadMessages = async (showInlineLoading = false) => {
+    if (showInlineLoading) setLoading(true);
     setError("");
 
     try {
-      const res = await axios.get("https://school-website-backend-ixx2.onrender.com/api/contact-messages");
+      const res = await axios.get(
+        "https://school-website-backend-ixx2.onrender.com/api/contact-messages",
+        { timeout: 12000 }
+      );
       setMessages(Array.isArray(res.data?.data) ? res.data.data : []);
     } catch (err) {
       console.error("Load contact messages error:", err);
@@ -463,7 +467,8 @@ export default function AdminContactMessages() {
         `https://school-website-backend-ixx2.onrender.com/api/contact-messages/${message.id}/read`,
         {
           is_read: nextReadStatus,
-        }
+        },
+        { timeout: 12000 }
       );
 
       setMessages((prev) =>
@@ -497,7 +502,8 @@ export default function AdminContactMessages() {
 
     try {
       await axios.delete(
-        `https://school-website-backend-ixx2.onrender.com/api/contact-messages/${deleteTarget.id}`
+        `https://school-website-backend-ixx2.onrender.com/api/contact-messages/${deleteTarget.id}`,
+        { timeout: 12000 }
       );
 
       setMessages((prev) =>
@@ -557,7 +563,7 @@ export default function AdminContactMessages() {
 
           <button
             type="button"
-            onClick={loadMessages}
+            onClick={() => loadMessages(true)}
             className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
             style={{
               background: "rgba(255,255,255,0.08)",
