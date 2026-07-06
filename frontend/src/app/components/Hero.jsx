@@ -34,7 +34,7 @@ export const defaultHeroData = {
   badge: "Admissions Open for New Academic Session",
   titleLine1: "Baljagriti Secondary",
   titleLine2: "English School",
-  titleLine3: "Hetauda-2, Makwanpur",
+  titleLine3: "Basudev Marga, Hetauda-2",
   description:
     "Baljagriti Secondary English School blends academic discipline, digital learning, creativity, sports, and values for students from Play Group to Grade 10.",
   image: "",
