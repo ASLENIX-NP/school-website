@@ -22,6 +22,29 @@ const colors = {
   orange: "#F97316",
 };
 
+const API_URL = "https://school-website-backend-ixx2.onrender.com";
+const REQUEST_TIMEOUT_MS = 12000;
+
+async function fetchJsonWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    return await response.json();
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
 export const defaultNoticeSettings = {
   page_badge: "School Updates",
   page_title: "School Notices",
@@ -734,7 +757,7 @@ export default function Notices({
   const [notices, setNotices] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [settings, setSettings] = useState(defaultNoticeSettings);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(loadingOverride));
   const [selectedNotice, setSelectedNotice] = useState(null);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
 
@@ -751,26 +774,26 @@ export default function Notices({
       return;
     }
 
-    const loadData = async () => {
-      await Promise.all([fetchNotices(), fetchAnnouncements(), fetchSettings()]);
-      setLoading(false);
-    };
-
-    loadData();
+    setLoading(false);
+    fetchSettings();
+    fetchNotices();
+    fetchAnnouncements();
   }, [editMode, noticesOverride, announcementsOverride, settingsOverride, loadingOverride]);
 
   const fetchNotices = async () => {
     try {
-      const response = await fetch("https://school-website-backend-ixx2.onrender.com/api/notices");
-      const result = await response.json();
+      const result = await fetchJsonWithTimeout(`${API_URL}/api/notices`);
 
-      if (result.success) {
-        const noticeList = Array.isArray(result.data)
-          ? result.data.map(normalizeNotice)
-          : [];
+      if (result?.success === false) return;
 
-        setNotices(sortNoticesNewestFirst(noticeList));
-      }
+      const rawNotices = Array.isArray(result)
+        ? result
+        : Array.isArray(result?.data)
+        ? result.data
+        : [];
+
+      const noticeList = rawNotices.map(normalizeNotice);
+      setNotices(sortNoticesNewestFirst(noticeList));
     } catch (error) {
       console.error("Fetch notices error:", error);
     }
@@ -778,15 +801,21 @@ export default function Notices({
 
   const fetchAnnouncements = async () => {
     try {
-      const response = await fetch("https://school-website-backend-ixx2.onrender.com/api/announcements");
-      const result = await response.json();
+      const result = await fetchJsonWithTimeout(`${API_URL}/api/announcements`);
 
-      if (result.success) {
-        const visibleAnnouncements = (result.data || []).filter(
-          (a) => a.visible !== false && a.active !== false
-        );
-        setAnnouncements(visibleAnnouncements);
-      }
+      if (result?.success === false) return;
+
+      const rawAnnouncements = Array.isArray(result)
+        ? result
+        : Array.isArray(result?.data)
+        ? result.data
+        : [];
+
+      const visibleAnnouncements = rawAnnouncements.filter(
+        (a) => a.visible !== false && a.active !== false
+      );
+
+      setAnnouncements(visibleAnnouncements);
     } catch (error) {
       console.error("Fetch announcements error:", error);
     }
@@ -794,15 +823,14 @@ export default function Notices({
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch("https://school-website-backend-ixx2.onrender.com/api/notice-settings");
-      const result = await response.json();
+      const result = await fetchJsonWithTimeout(`${API_URL}/api/notice-settings`);
 
-      if (result.success) {
-        setSettings({
-          ...defaultNoticeSettings,
-          ...(result.data || {}),
-        });
-      }
+      if (result?.success === false) return;
+
+      setSettings({
+        ...defaultNoticeSettings,
+        ...(result?.data || result || {}),
+      });
     } catch (error) {
       console.error("Fetch notice settings error:", error);
     }
@@ -1025,7 +1053,7 @@ export default function Notices({
                     border: "1px solid rgba(15,23,42,0.08)",
                   }}
                 >
-                  Loading...
+                  Loading notice editor...
                 </div>
               ) : !hasContent ? (
                 <EmptyNotice editMode={editMode} onAddNotice={onAddNotice} />
