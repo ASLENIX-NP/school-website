@@ -898,7 +898,7 @@ export default function AdminFacilities() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState(defaultFacilitiesContent);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [editingTarget, setEditingTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalForm, setModalForm] = useState({});
@@ -910,23 +910,34 @@ export default function AdminFacilities() {
   const [editingRouteId, setEditingRouteId] = useState(null);
 
   useEffect(() => {
+    let alive = true;
+
     const loadFacilitiesContent = async () => {
       try {
         const res = await axios.get(
-          "https://school-website-backend-ixx2.onrender.com/api/site-content/facilities"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/facilities",
+          { timeout: 20000 }
         );
+
+        if (!alive) return;
 
         const savedContent = res.data?.data?.content || {};
         setForm(mergeFacilitiesContent(savedContent));
       } catch (err) {
         console.error("Load facilities content error:", err);
-        setError("Could not load saved facilities content. Default content shown.");
+        if (alive) {
+          setError("Could not load saved facilities content. Default content shown.");
+        }
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
     };
 
     loadFacilitiesContent();
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const updateModalField = (name, value) => {

@@ -237,7 +237,7 @@ export default function AdminAdmissions() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState(defaultAdmissionsContent);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -261,7 +261,9 @@ export default function AdminAdmissions() {
         setForm(mergeAdmissionsContent(savedContent));
       } catch (err) {
         console.error("Load admissions content error:", err);
-        setError("Could not load saved admissions content. Default content is shown.");
+        if (alive) {
+          setError("Could not load saved admissions content. Default content is shown.");
+        }
       } finally {
         if (alive) setLoading(false);
       }

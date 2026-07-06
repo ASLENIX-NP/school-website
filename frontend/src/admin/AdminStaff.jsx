@@ -629,7 +629,7 @@ export default function AdminStaff() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState(defaultStaffContent);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [editingTarget, setEditingTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalForm, setModalForm] = useState({});
@@ -640,20 +640,34 @@ export default function AdminStaff() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let alive = true;
+
     const loadStaffContent = async () => {
       try {
-        const res = await axios.get("https://school-website-backend-ixx2.onrender.com/api/site-content/staff");
+        const res = await axios.get(
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/staff",
+          { timeout: 20000 }
+        );
+
+        if (!alive) return;
+
         const savedContent = res.data?.data?.content || {};
         setForm(mergeStaffContent(savedContent));
       } catch (err) {
         console.error("Load staff content error:", err);
-        setError("Could not load saved staff content. Default content shown.");
+        if (alive) {
+          setError("Could not load saved staff content. Default content shown.");
+        }
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
     };
 
     loadStaffContent();
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const updateModalField = (name, value) => {
@@ -1502,4 +1516,3 @@ export default function AdminStaff() {
     </div>
   );
 }
-
