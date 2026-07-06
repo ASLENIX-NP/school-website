@@ -473,7 +473,7 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
       initial={{ opacity: 0, scale: 0.96, y: 24 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.85, delay: 0.18 }}
-      className="relative min-h-[410px] lg:min-h-[445px] xl:min-h-[520px] flex items-center justify-center"
+      className="relative min-h-[410px] lg:min-h-[445px] xl:min-h-[520px] flex items-center justify-center lg:-translate-y-8 xl:-translate-y-12"
     >
       <EditableWrap
         editMode={editMode}

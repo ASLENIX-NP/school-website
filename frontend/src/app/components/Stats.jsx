@@ -33,9 +33,7 @@ function isHardcodedHomeStoryImageUrl(value = "") {
 export const defaultStatsSectionData = {
   eyebrow: "School Highlights",
   title: "Numbers that reflect our journey.",
-  description:
-    "These highlights can later be updated directly from the admin dashboard without changing frontend code.",
-
+ 
   stats: [
     {
       value: "3800",
