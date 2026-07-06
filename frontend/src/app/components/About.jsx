@@ -26,6 +26,9 @@ const colors = {
   orange: "#F97316",
 };
 
+const oldHardcodedStoryImageUrl =
+  "https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&h=700&fit=crop&auto=format";
+
 export const defaultAboutContent = {
   pageTitle: "About Us",
   pageSubtitle:
@@ -37,8 +40,7 @@ export const defaultAboutContent = {
     "Baljagriti Secondary English School, located in the heart of Makwanpur, Nepal, has been a beacon of quality education for many years. What began as a small school with a strong vision has grown into a thriving institution serving students from Play Group to Grade 10.",
     "We take pride in our dedicated team of experienced educators who work tirelessly to ensure every child receives the attention, guidance, and learning environment they need to grow academically and personally.",
   ],
-  storyImageUrl:
-    "https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&h=700&fit=crop&auto=format",
+  storyImageUrl: "",
   storyImageAlt: "School campus",
   storyImageTitle: "School Campus",
   storyImageSubtitle: "Image can later be managed from admin dashboard",
@@ -195,6 +197,21 @@ function normalizeArray(savedArray, defaultArray) {
   }));
 }
 
+function sanitizeStoryImageUrl(value = "") {
+  const cleanValue = String(value || "").trim();
+
+  if (!cleanValue) return "";
+
+  if (
+    cleanValue === oldHardcodedStoryImageUrl ||
+    cleanValue.includes("images.unsplash.com/photo-1588072432836-e10032774350")
+  ) {
+    return "";
+  }
+
+  return cleanValue;
+}
+
 export function mergeAboutContent(saved = {}) {
   const messages = normalizeArray(
     saved.messages,
@@ -209,6 +226,7 @@ export function mergeAboutContent(saved = {}) {
   return {
     ...defaultAboutContent,
     ...(saved || {}),
+    storyImageUrl: sanitizeStoryImageUrl(saved.storyImageUrl),
     storyParagraphs: Array.isArray(saved.storyParagraphs)
       ? saved.storyParagraphs
       : defaultAboutContent.storyParagraphs,
