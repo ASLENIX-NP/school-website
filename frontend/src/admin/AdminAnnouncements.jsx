@@ -544,7 +544,7 @@ export default function AdminAnnouncements() {
   const navigate = useNavigate();
 
   const [announcements, setAnnouncements] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [ordering, setOrdering] = useState(false);
@@ -581,8 +581,13 @@ export default function AdminAnnouncements() {
   );
 
   const fetchAnnouncements = async () => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 8000);
+
     try {
-      const res = await fetch(`${API_URL}/api/announcements`);
+      const res = await fetch(`${API_URL}/api/announcements`, {
+        signal: controller.signal,
+      });
       const data = await res.json();
 
       if (data.success) {
@@ -591,9 +596,12 @@ export default function AdminAnnouncements() {
         setAnnouncements([]);
       }
     } catch (err) {
-      console.error("Fetch announcements error:", err);
-      setError("Could not load announcements.");
+      if (err?.name !== "AbortError") {
+        console.error("Fetch announcements error:", err);
+      }
+      setError("Could not load announcements. Default empty editor is shown.");
     } finally {
+      window.clearTimeout(timer);
       setLoading(false);
     }
   };

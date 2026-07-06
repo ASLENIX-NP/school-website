@@ -411,7 +411,7 @@ export default function AdminMessages() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState(defaultMessagesContent);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState({});
   const [success, setSuccess] = useState("");
@@ -431,7 +431,8 @@ export default function AdminMessages() {
     const loadMessagesContent = async () => {
       try {
         const res = await axios.get(
-          "https://school-website-backend-ixx2.onrender.com/api/site-content/messages"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/messages",
+          { timeout: 8000 }
         );
 
         const savedContent = res.data?.data?.content || {};
@@ -445,6 +446,7 @@ export default function AdminMessages() {
         setExpandedPeople(initialExpanded);
       } catch (err) {
         console.error("Load messages content error:", err);
+        setError("Could not load saved leadership messages. Default editor is shown.");
       } finally {
         setLoading(false);
       }

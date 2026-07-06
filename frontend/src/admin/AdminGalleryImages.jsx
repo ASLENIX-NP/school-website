@@ -379,7 +379,7 @@ export default function AdminGalleryImages() {
   const [selectedCategory, setSelectedCategory] = useState("Classroom");
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
@@ -392,13 +392,11 @@ export default function AdminGalleryImages() {
     let alive = true;
 
     const loadGalleryContent = async () => {
-      setLoading(true);
-
       try {
         const res = await axios.get(
           "https://school-website-backend-ixx2.onrender.com/api/site-content/gallery",
           {
-            timeout: 5000,
+            timeout: 8000,
           }
         );
 
