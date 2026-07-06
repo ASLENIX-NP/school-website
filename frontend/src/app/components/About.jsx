@@ -462,53 +462,44 @@ export function About({
   onDeleteTarget = () => {},
   onAddTarget = () => {},
 }) {
-  const [content, setContent] = useState(
-    contentOverride ? mergeAboutContent(contentOverride) : null
+  const [content, setContent] = useState(() =>
+    mergeAboutContent(contentOverride || defaultAboutContent)
   );
-  const [loading, setLoading] = useState(!contentOverride);
 
   useEffect(() => {
     if (contentOverride) {
       setContent(mergeAboutContent(contentOverride));
-      setLoading(false);
-      return;
+      return undefined;
     }
 
-    const loadAboutContent = async () => {
-      setLoading(true);
+    let alive = true;
 
+    const loadAboutContent = async () => {
       try {
         const res = await axios.get(
-          "https://school-website-backend-ixx2.onrender.com/api/site-content/about"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/about",
+          { timeout: 8000 }
         );
+
+        if (!alive) return;
+
         const savedContent = res.data?.data?.content || {};
         setContent(mergeAboutContent(savedContent));
       } catch (error) {
         console.error("About content load error:", error);
-        setContent(defaultAboutContent);
-      } finally {
-        setLoading(false);
+
+        if (alive) {
+          setContent(mergeAboutContent(defaultAboutContent));
+        }
       }
     };
 
     loadAboutContent();
-  }, [contentOverride]);
 
-  if (!content || loading) {
-    return (
-      <section
-        id="about"
-        className="pt-28 pb-28 relative overflow-hidden min-h-screen"
-        style={{
-          background: `
-          radial-gradient(circle at top right, rgba(124,92,196,0.18), transparent 34%),
-          radial-gradient(circle at bottom left, rgba(22,138,58,0.14), transparent 32%),
-          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
-        `,
-        }}
-      />
-    );
-  }
+    return () => {
+      alive = false;
+    };
+  }, [contentOverride]);
 
   const visiblePillars = (content.pillars || []).filter(
     (item) => item.visible !== false

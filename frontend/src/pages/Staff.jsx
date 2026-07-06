@@ -567,37 +567,45 @@ export function Staff({
   onDeleteTarget = () => {},
   onAddTarget = () => {},
 }) {
-  const [content, setContent] = useState(
-    contentOverride ? mergeStaffContent(contentOverride) : null
+  const [content, setContent] = useState(() =>
+    mergeStaffContent(contentOverride || defaultStaffContent)
   );
-  const [loading, setLoading] = useState(!contentOverride);
+  const [loading] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
 
   useEffect(() => {
     if (contentOverride) {
       setContent(mergeStaffContent(contentOverride));
-      setLoading(false);
-      return;
+      return undefined;
     }
 
-    const loadStaffContent = async () => {
-      setLoading(true);
+    let alive = true;
 
+    const loadStaffContent = async () => {
       try {
         const res = await axios.get(
-          "https://school-website-backend-ixx2.onrender.com/api/site-content/staff"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/staff",
+          { timeout: 8000 }
         );
+
+        if (!alive) return;
+
         const savedContent = res.data?.data?.content || {};
         setContent(mergeStaffContent(savedContent));
       } catch (error) {
         console.error("Staff content load error:", error);
-        setContent(defaultStaffContent);
-      } finally {
-        setLoading(false);
+
+        if (alive) {
+          setContent(mergeStaffContent(defaultStaffContent));
+        }
       }
     };
 
     loadStaffContent();
+
+    return () => {
+      alive = false;
+    };
   }, [contentOverride]);
 
   useEffect(() => {
@@ -613,22 +621,6 @@ export function Staff({
       document.body.style.overflow = "auto";
     };
   }, [selectedStaff, editMode]);
-
-  if (!content || loading) {
-    return (
-      <section
-        className="min-h-screen pt-32 pb-24 relative overflow-hidden"
-        style={{
-          background: `
-          radial-gradient(circle at top left, rgba(75,46,131,0.12), transparent 34%),
-          radial-gradient(circle at top right, rgba(22,138,58,0.10), transparent 36%),
-          radial-gradient(circle at bottom right, rgba(250,204,21,0.10), transparent 34%),
-          linear-gradient(180deg, #FFF8EE 0%, #F8FAFC 100%)
-        `,
-        }}
-      />
-    );
-  }
 
   const visibleStaff = content.staff.filter((staff) => staff.visible !== false);
 

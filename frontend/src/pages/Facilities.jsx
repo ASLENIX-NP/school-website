@@ -433,24 +433,36 @@ export function Facilities({
   useEffect(() => {
     if (contentOverride) {
       setContent(mergeFacilitiesContent(contentOverride));
-      return;
+      return undefined;
     }
+
+    let alive = true;
 
     const loadFacilitiesContent = async () => {
       try {
         const res = await axios.get(
-          "https://school-website-backend-ixx2.onrender.com/api/site-content/facilities"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/facilities",
+          { timeout: 8000 }
         );
+
+        if (!alive) return;
 
         const savedContent = res.data?.data?.content || {};
         setContent(mergeFacilitiesContent(savedContent));
       } catch (error) {
         console.error("Facilities content load error:", error);
-        setContent(defaultFacilitiesContent);
+
+        if (alive) {
+          setContent(mergeFacilitiesContent(defaultFacilitiesContent));
+        }
       }
     };
 
     loadFacilitiesContent();
+
+    return () => {
+      alive = false;
+    };
   }, [contentOverride]);
 
   useEffect(() => {
