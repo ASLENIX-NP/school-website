@@ -231,11 +231,15 @@ export function Contact({
   onEditMap = () => {},
   onEditForm = () => {},
 } = {}) {
-  const [loadedContent, setLoadedContent] = useState(defaultContactContent);
+  const [loadedContent, setLoadedContent] = useState(
+    mergeContactContent(contentOverride || defaultContactContent)
+  );
   const [submitMessage, setSubmitMessage] = useState("");
   const [submitError, setSubmitError] = useState("");
 
-  const content = contentOverride || loadedContent;
+  const content = contentOverride
+    ? mergeContactContent(contentOverride)
+    : loadedContent;
 
   const {
     register,
@@ -250,7 +254,10 @@ export function Contact({
     const loadContactContent = async () => {
       try {
         const res = await axios.get(
-          "https://school-website-backend-ixx2.onrender.com/api/site-content/contact"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/contact",
+          {
+            timeout: 12000,
+          }
         );
 
         const savedContent = res.data?.data?.content || {};
@@ -277,7 +284,13 @@ export function Contact({
     };
 
     try {
-      await axios.post("https://school-website-backend-ixx2.onrender.com/api/contact", payload);
+      await axios.post(
+        "https://school-website-backend-ixx2.onrender.com/api/contact",
+        payload,
+        {
+          timeout: 15000,
+        }
+      );
 
       setSubmitMessage(content.form.successMessage);
       reset();
@@ -909,3 +922,5 @@ export function Contact({
 }
 
 export default Contact;
+
+

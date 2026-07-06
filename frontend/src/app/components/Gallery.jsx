@@ -480,7 +480,7 @@ function Gallery() {
         const res = await axios.get(
           "https://school-website-backend-ixx2.onrender.com/api/site-content/gallery",
           {
-            timeout: 20000,
+            timeout: 12000,
           }
         );
 
@@ -1066,3 +1066,5 @@ function Gallery() {
 
 export { Gallery };
 export default Gallery;
+
+

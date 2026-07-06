@@ -920,7 +920,10 @@ export function Academics({
     const loadAcademicsContent = async () => {
       try {
         const res = await axios.get(
-          "https://school-website-backend-ixx2.onrender.com/api/site-content/academics"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/academics",
+          {
+            timeout: 12000,
+          }
         );
 
         const savedContent = res.data?.data?.content || {};
@@ -1722,3 +1725,5 @@ export function Academics({
 }
 
 export default Academics;
+
+

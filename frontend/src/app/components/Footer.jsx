@@ -1,167 +1,206 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 import {
-  Facebook,
-  Youtube,
-  Globe,
-  Mail,
-  Phone,
   MapPin,
-  School,
+  Phone,
+  Mail,
+  Clock,
+  Send,
   Pencil,
-  UploadCloud,
+  Trash2,
+  Plus,
 } from "lucide-react";
+import { useForm } from "react-hook-form";
 
-const palette = {
+export const colors = {
+  red: "#D71920",
+  green: "#168A3A",
+  purple: "#4B2E83",
+  softPurple: "#7C5CC4",
+  dark: "#0B1020",
+  cream: "#FFF8EE",
+  lightPurple: "#F1ECFF",
   cyan: "#38BDF8",
   gold: "#FACC15",
-  green: "#22C55E",
-  red: "#D71920",
-  purple: "#4B2E83",
-  dark: "#020617",
 };
 
-export const defaultFooterContent = {
-  logoUrl: "",
-  schoolName: "Baljagriti",
-  schoolSubtitle: "Secondary English Boarding School",
-  admissionBadgeText: "Admissions Open 2026",
-  showAdmissionBadge: true,
-
-  navLinks: [
-    { id: 1, label: "About", href: "/about", visible: true },
-    { id: 2, label: "Academics", href: "/academics", visible: true },
-    { id: 3, label: "Facilities", href: "/facilities", visible: true },
-    { id: 4, label: "Gallery", href: "/gallery", visible: true },
-    { id: 5, label: "Contact", href: "/contact", visible: true },
-  ],
-
-  socials: [
+export const defaultContactContent = {
+  badgeText: "Get In Touch",
+  title: "We'd Love to Hear From You",
+  highlightedText: "Hear From You",
+  subtitle:
+    "Questions about admissions, curriculum, or school life? Our team is here to help.",
+  contactInfo: [
     {
-      id: 1,
-      type: "facebook",
-      href: "https://www.facebook.com/baljagritiesschool",
-      label: "Facebook",
-      visible: true,
+      id: "address",
+      icon: "map",
+      label: "Address",
+      value: "Basudev Marga, Hetauda Sub-Metropolitan City, Ward No. 2",
+      color: "#D71920",
     },
     {
-      id: 2,
-      type: "website",
-      href: "https://baljagriti.edu.np/",
-      label: "Website",
-      visible: true,
+      id: "phone",
+      icon: "phone",
+      label: "Phone",
+      value: "057-590144, 057-590145, 057-590146",
+      color: "#168A3A",
     },
     {
-      id: 3,
-      type: "youtube",
-      href: "https://www.youtube.com/@BaljagritiEngSecondarySchool",
-      label: "YouTube",
-      visible: true,
+      id: "email",
+      icon: "mail",
+      label: "Email",
+      value: "infobjess2046@gmail.com",
+      color: "#4B2E83",
+    },
+    {
+      id: "school",
+      icon: "clock",
+      label: "School",
+      value: "Baljagriti Secondary English Boarding School",
+      color: "#7C5CC4",
     },
   ],
-
-  contact: {
+  mapCard: {
+    title: "Baljagriti Secondary English Boarding School",
     address: "Basudev Marga, Hetauda-2, Makawanpur, Nepal",
+    buttonText: "Open in Maps",
     mapUrl:
-      "https://www.google.com/maps/search/?api=1&query=Baljagriti+English+Secondary+School+Hetauda",
-    phones: ["057-590144", "057-590145", "057-590146"],
-    email: "infobjess2046@gmail.com",
+      "https://www.google.com/maps/place/Bal+Jagriti+Boarding+School/@27.4312792,85.0379093,19z/data=!4m6!3m5!1s0x39eb4991159e4289:0x8707a51c9add8d8e!8m2!3d27.4312792!4d85.0379093!16s%2Fg%2F11bw3f8rbl",
   },
-
-  modalTitle: "Contact Baljagriti School",
-  modalHint: "Click any number to copy it.",
-  copiedText: "Copied",
-  closeButtonText: "Close",
-
-  copyrightText:
-    "© 2026 Baljagriti Secondary English Boarding School. All rights reserved.",
+  form: {
+    title: "Send a Message",
+    nameLabel: "Your Name",
+    namePlaceholder: "Your full name",
+    emailLabel: "Email Address",
+    emailPlaceholder: "your@email.com",
+    phoneLabel: "Phone Number",
+    phonePlaceholder: "98XXXXXXXX or +97798XXXXXXXX",
+    subjectLabel: "Subject",
+    subjectPlaceholder: "Admissions inquiry",
+    messageLabel: "Message",
+    messagePlaceholder: "Tell us how we can help you...",
+    buttonText: "Send Message",
+    sendingText: "Sending...",
+    successMessage: "Message sent successfully!",
+    errorMessage: "Message could not be sent. Please try again.",
+  },
 };
 
-export function mergeFooterContent(saved = {}) {
+export function mergeContactContent(saved = {}) {
   return {
-    ...defaultFooterContent,
+    ...defaultContactContent,
     ...saved,
-    navLinks: Array.isArray(saved.navLinks)
-      ? saved.navLinks
-      : defaultFooterContent.navLinks,
-    socials: Array.isArray(saved.socials)
-      ? saved.socials
-      : defaultFooterContent.socials,
-    contact: {
-      ...defaultFooterContent.contact,
-      ...(saved.contact || {}),
-      phones: Array.isArray(saved.contact?.phones)
-        ? saved.contact.phones
-        : defaultFooterContent.contact.phones,
+    contactInfo:
+      Array.isArray(saved.contactInfo) && saved.contactInfo.length
+        ? saved.contactInfo.map((item, index) => ({
+            id: item.id || `contact-${index}-${Date.now()}`,
+            icon: item.icon || "map",
+            label: item.label || "Contact",
+            value: item.value || "",
+            color: item.color || colors.purple,
+          }))
+        : defaultContactContent.contactInfo,
+    mapCard: {
+      ...defaultContactContent.mapCard,
+      ...(saved.mapCard || {}),
+    },
+    form: {
+      ...defaultContactContent.form,
+      ...(saved.form || {}),
     },
   };
 }
 
-export function normalizeExternalUrl(value = "") {
-  const cleanValue = String(value || "").trim();
+export function normalizeExternalUrl(url = "") {
+  const cleanUrl = String(url || "").trim();
 
-  if (!cleanValue) return "#";
-  if (cleanValue.startsWith("mailto:") || cleanValue.startsWith("tel:")) return cleanValue;
-  if (cleanValue.startsWith("http://") || cleanValue.startsWith("https://")) return cleanValue;
-  if (cleanValue.startsWith("/")) return cleanValue;
-  if (cleanValue.startsWith("#")) return cleanValue;
+  if (!cleanUrl) return "#";
 
-  return `https://${cleanValue}`;
-}
-
-export function normalizeMapUrl(value = "", fallbackAddress = "") {
-  const cleanValue = String(value || "").trim();
-  const cleanAddress = String(fallbackAddress || "").trim();
-
-  if (!cleanValue && cleanAddress) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanAddress)}`;
+  if (/^(https?:|mailto:|tel:|sms:)/i.test(cleanUrl)) {
+    return cleanUrl;
   }
 
-  if (!cleanValue) return "#";
-  if (cleanValue.startsWith("http://") || cleanValue.startsWith("https://")) return cleanValue;
-
-  if (
-    cleanValue.startsWith("www.") ||
-    cleanValue.startsWith("maps.app.goo.gl") ||
-    cleanValue.startsWith("goo.gl") ||
-    cleanValue.startsWith("google.com")
-  ) {
-    return `https://${cleanValue}`;
+  if (cleanUrl.startsWith("//")) {
+    return `https:${cleanUrl}`;
   }
 
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanValue)}`;
+  if (/^[\w.-]+\.[a-z]{2,}([/:?#].*)?$/i.test(cleanUrl)) {
+    return `https://${cleanUrl}`;
+  }
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    cleanUrl
+  )}`;
 }
 
-function getSocialIcon(type) {
-  if (type === "facebook") return Facebook;
-  if (type === "youtube") return Youtube;
-  return Globe;
+function getContactIcon(icon) {
+  if (icon === "phone") return Phone;
+  if (icon === "mail") return Mail;
+  if (icon === "clock") return Clock;
+  return MapPin;
 }
 
-function stopEditNavigation(event, editMode) {
-  if (!editMode) return;
-  event.preventDefault();
-  event.stopPropagation();
+function normalizePhone(phone = "") {
+  return String(phone).replace(/[^\d+]/g, "").trim();
 }
 
-function AdminPillButton({ icon: Icon, label, onClick, tone = "edit" }) {
+function isValidPhone(phone = "") {
+  const cleaned = normalizePhone(phone);
+  const digitsOnly = cleaned.replace(/\D/g, "");
+
+  return digitsOnly.length >= 10 && digitsOnly.length <= 15;
+}
+
+function HighlightedTitle({ title, highlightedText }) {
+  if (!highlightedText || !title.includes(highlightedText)) {
+    return <>{title}</>;
+  }
+
+  const [before, after] = title.split(highlightedText);
+
+  return (
+    <>
+      {before}
+      <span className="relative inline-block italic" style={{ color: colors.purple }}>
+        {highlightedText}
+        <span
+          className="absolute left-0 right-0 -bottom-1 h-2 rounded-full -z-10"
+          style={{ background: "rgba(250,204,21,0.58)" }}
+        />
+      </span>
+      {after}
+    </>
+  );
+}
+
+function ErrorText({ children }) {
+  if (!children) return null;
+
+  return (
+    <p className="text-xs font-semibold mt-2" style={{ color: colors.red }}>
+      {children}
+    </p>
+  );
+}
+
+function AdminActionButton({ label, icon: Icon, onClick, tone = "purple" }) {
   const toneStyles = {
-    edit: {
-      background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
-      color: palette.dark,
-    },
-    add: {
-      background: `linear-gradient(135deg, ${palette.green}, ${palette.cyan})`,
-      color: palette.dark,
-    },
-    delete: {
-      background: "rgba(215,25,32,0.96)",
+    purple: {
+      background: "linear-gradient(135deg, #4B2E83, #7C5CC4)",
       color: "#FFFFFF",
     },
-    dark: {
-      background: "rgba(2,6,23,0.94)",
+    green: {
+      background: "linear-gradient(135deg, #168A3A, #22C55E)",
       color: "#FFFFFF",
+    },
+    red: {
+      background: "linear-gradient(135deg, #D71920, #9B1117)",
+      color: "#FFFFFF",
+    },
+    gold: {
+      background: "linear-gradient(135deg, #FACC15, #38BDF8)",
+      color: "#020617",
     },
   };
 
@@ -173,505 +212,715 @@ function AdminPillButton({ icon: Icon, label, onClick, tone = "edit" }) {
         event.stopPropagation();
         onClick?.();
       }}
-      className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-black shadow-2xl transition-all hover:-translate-y-0.5 hover:scale-105"
-      style={{
-        ...(toneStyles[tone] || toneStyles.edit),
-        border: "1px solid rgba(255,255,255,0.35)",
-      }}
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black shadow-xl transition-all hover:-translate-y-0.5 hover:scale-105"
+      style={toneStyles[tone] || toneStyles.purple}
     >
-      <Icon className="w-3.5 h-3.5" />
+      <Icon className="w-4 h-4" />
       {label}
     </button>
   );
 }
 
-function EditToolbar({ children, position = "top-right" }) {
-  const positionClass =
-    position === "top-left"
-      ? "left-0 top-0 -translate-y-1/2"
-      : position === "bottom-right"
-      ? "right-0 bottom-0 translate-y-1/2"
-      : "right-0 top-0 -translate-y-1/2";
-
-  return (
-    <div
-      className={`absolute ${positionClass} z-[80] opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-200 flex flex-wrap gap-2`}
-    >
-      {children}
-    </div>
-  );
-}
-
-export function Footer({
+export function Contact({
   editMode = false,
   contentOverride = null,
-  onEditTarget = () => {},
-  onAddTarget = () => {},
-  onDeleteTarget = () => {},
-}) {
-  const [content, setContent] = useState(
-    mergeFooterContent(contentOverride || defaultFooterContent)
+  onEditHero = () => {},
+  onEditContactInfo = () => {},
+  onDeleteContactInfo = () => {},
+  onAddContactInfo = () => {},
+  onEditMap = () => {},
+  onEditForm = () => {},
+} = {}) {
+  const [loadedContent, setLoadedContent] = useState(
+    mergeContactContent(contentOverride || defaultContactContent)
   );
-  const [showContactModal, setShowContactModal] = useState(false);
-  const [copied, setCopied] = useState("");
+  const [submitMessage, setSubmitMessage] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
-  const isMobile =
-    typeof navigator !== "undefined" &&
-    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const content = contentOverride
+    ? mergeContactContent(contentOverride)
+    : loadedContent;
+
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting, errors },
+    reset,
+  } = useForm();
 
   useEffect(() => {
-    if (contentOverride) {
-      setContent(mergeFooterContent(contentOverride));
-      return;
-    }
+    if (contentOverride) return;
 
-    const loadFooterContent = async () => {
+    const loadContactContent = async () => {
       try {
-        const res = await axios.get("https://school-website-backend-ixx2.onrender.com/api/site-content/footer");
+        const res = await axios.get(
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/contact",
+          {
+            timeout: 12000,
+          }
+        );
+
         const savedContent = res.data?.data?.content || {};
-        setContent(mergeFooterContent(savedContent));
+        setLoadedContent(mergeContactContent(savedContent));
       } catch (error) {
-        console.error("Footer content load error:", error);
-        setContent(defaultFooterContent);
+        console.error("Contact content load error:", error);
+        setLoadedContent(defaultContactContent);
       }
     };
 
-    loadFooterContent();
+    loadContactContent();
   }, [contentOverride]);
 
-  const copyPhone = async (phone) => {
-    try {
-      await navigator.clipboard.writeText(phone);
-      setCopied(phone);
+  const onSubmit = async (data) => {
+    if (editMode) return;
 
-      setTimeout(() => {
-        setCopied("");
-      }, 2000);
+    setSubmitMessage("");
+    setSubmitError("");
+
+    const payload = {
+      ...data,
+      phone: normalizePhone(data.phone),
+      source: "contact",
+    };
+
+    try {
+      await axios.post(
+        "https://school-website-backend-ixx2.onrender.com/api/contact",
+        payload,
+        {
+          timeout: 15000,
+        }
+      );
+
+      setSubmitMessage(content.form.successMessage);
+      reset();
     } catch (error) {
-      console.error("Phone copy failed:", error);
+      console.error("Contact form error:", error);
+      setSubmitError(
+        error.response?.data?.message || content.form.errorMessage
+      );
     }
   };
 
-  const visibleLinks = content.navLinks.filter((link) => link.visible !== false);
-  const visibleSocials = content.socials.filter(
-    (social) => social.visible !== false
-  );
-
-  const mapHref = normalizeMapUrl(content.contact.mapUrl, content.contact.address);
+  const inputStyle = {
+    background: "rgba(255,255,255,0.92)",
+    border: "1px solid rgba(75,46,131,0.14)",
+    color: colors.dark,
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.95)",
+  };
 
   return (
-    <footer
-      className={`relative overflow-hidden ${editMode ? "rounded-[32px]" : ""}`}
+    <section
+      id="contact"
+      className="pt-32 pb-24 relative overflow-hidden min-h-screen"
       style={{
-        background:
-          "linear-gradient(135deg, #020617 0%, #07111F 55%, #0F172A 100%)",
-        borderTop: editMode
-          ? "2px solid rgba(56,189,248,0.48)"
-          : "1px solid rgba(255,255,255,0.1)",
+        background: `
+          radial-gradient(circle at 8% 10%, rgba(250,204,21,0.2), transparent 26%),
+          radial-gradient(circle at 90% 18%, rgba(56,189,248,0.18), transparent 30%),
+          radial-gradient(circle at 12% 90%, rgba(215,25,32,0.1), transparent 28%),
+          radial-gradient(circle at 88% 86%, rgba(22,138,58,0.14), transparent 28%),
+          linear-gradient(180deg, #FFF8EE 0%, #F8F4FF 48%, #EEF7FF 100%)
+        `,
       }}
     >
-      {editMode && (
-        <div
-          className="relative z-[90] mx-auto max-w-[1450px] px-6 pt-5"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <div
-            className="rounded-2xl px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(2,6,23,0.96), rgba(15,23,42,0.88))",
-              border: "1px solid rgba(56,189,248,0.28)",
-              boxShadow: "0 18px 52px rgba(0,0,0,0.22)",
-            }}
-          >
-            <div>
-              <div className="text-white font-black">Admin Footer Editor Active</div>
-              <div className="text-xs text-white/55 mt-1">
-                Hover footer areas to open the correct editor for logo, links, socials, contact details, and copyright.
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <AdminPillButton
-                icon={Pencil}
-                label="School Info"
-                onClick={() => onEditTarget({ type: "identity" })}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="absolute inset-0 pointer-events-none">
-        <div
-          className="absolute left-1/2 top-0 -translate-x-1/2 w-[900px] h-[300px]"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(56,189,248,0.15), transparent 70%)",
-            filter: "blur(100px)",
-          }}
-        />
-
-        <div
-          className="absolute -left-24 -top-24 w-72 h-72 rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(56,189,248,0.18), transparent 70%)",
-          }}
-        />
-
-        <div
-          className="absolute -right-24 -bottom-24 w-72 h-72 rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(250,204,21,0.14), transparent 70%)",
-          }}
-        />
-      </div>
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.23]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(75,46,131,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(75,46,131,0.08) 1px, transparent 1px)",
+          backgroundSize: "46px 46px",
+        }}
+      />
 
       <div
-        className="relative z-10 max-w-[1450px] mx-auto px-6 py-8 rounded-[40px] border border-white/10 backdrop-blur-3xl"
+        className="absolute -top-36 -left-28 w-[430px] h-[430px] rounded-full pointer-events-none"
         style={{
           background:
-            "linear-gradient(145deg, rgba(4,12,30,0.92), rgba(9,20,45,0.95))",
-          boxShadow:
-            "0 40px 100px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)",
+            "radial-gradient(circle, rgba(75,46,131,0.13), transparent 70%)",
+          filter: "blur(7px)",
         }}
-      >
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
-          <div
-            className={`flex items-center gap-3 ${
-              editMode ? "relative group rounded-3xl p-2 -m-2 ring-2 ring-cyan-300/35" : ""
-            }`}
-          >
-            {editMode && (
-              <EditToolbar position="top-left">
-                <AdminPillButton
-                  icon={UploadCloud}
-                  label="Logo/Text"
-                  onClick={() => onEditTarget({ type: "identity" })}
-                />
-              </EditToolbar>
-            )}
+      />
 
-            <div
-              className="w-12 h-12 rounded-2xl bg-white overflow-hidden flex items-center justify-center"
-              style={{
-                boxShadow:
-                  "0 0 0 3px rgba(34,197,94,0.2), 0 14px 34px rgba(34,197,94,0.22)",
-              }}
-            >
-              {content.logoUrl ? (
-                <img
-                  src={content.logoUrl}
-                  alt={content.schoolName}
-                  className="w-full h-full object-contain p-1"
-                />
-              ) : (
-                <School className="w-7 h-7 text-slate-900" />
-              )}
-            </div>
+      <div
+        className="absolute top-24 -right-32 w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(56,189,248,0.15), transparent 70%)",
+          filter: "blur(8px)",
+        }}
+      />
 
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        {editMode && (
+          <div className="mb-8 rounded-[28px] p-5 bg-slate-950 text-white border border-white/10 shadow-2xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <div
-                className="text-white text-lg font-bold leading-tight"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {content.schoolName}
+              <div className="text-xs uppercase tracking-[0.22em] text-white/45 font-black">
+                Admin Contact Editor Active
               </div>
-
-              <div className="text-xs" style={{ color: palette.green }}>
-                {content.schoolSubtitle}
+              <div className="text-lg font-black mt-1">
+                Hover each block and click edit/delete. Public page stays normal.
               </div>
+            </div>
 
-              {content.showAdmissionBadge && content.admissionBadgeText && (
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                  <span className="text-[11px] text-green-400">
-                    {content.admissionBadgeText}
-                  </span>
-                </div>
-              )}
+            <div className="flex flex-wrap gap-3">
+              <AdminActionButton
+                label="Edit Heading"
+                icon={Pencil}
+                tone="gold"
+                onClick={onEditHero}
+              />
+              <AdminActionButton
+                label="Add Contact Block"
+                icon={Plus}
+                tone="green"
+                onClick={onAddContactInfo}
+              />
+              <AdminActionButton
+                label="Edit Form"
+                icon={Pencil}
+                tone="purple"
+                onClick={onEditForm}
+              />
             </div>
           </div>
+        )}
 
-          <div
-            className={`flex flex-wrap gap-3 ${
-              editMode ? "relative group rounded-3xl p-2 -m-2 ring-2 ring-yellow-300/30" : ""
-            }`}
-          >
-            {editMode && (
-              <EditToolbar>
-                <AdminPillButton
-                  icon={Pencil}
-                  label="Edit Links"
-                  onClick={() => onEditTarget({ type: "navLinks" })}
-                />
-              </EditToolbar>
-            )}
-
-            {visibleLinks.map((link) => (
-              <Link
-                key={link.id}
-                to={link.href || "/"}
-                onClick={(event) => stopEditNavigation(event, editMode)}
-                className={`group/link relative overflow-hidden text-sm px-4 py-2 rounded-xl transition-all duration-500 hover:-translate-y-1 hover:scale-105 ${
-                  editMode ? "ring-1 ring-white/15" : ""
-                }`}
-                style={{ color: "rgba(226,232,240,0.72)" }}
-              >
-                <div
-                  className="absolute inset-0 opacity-0 group-hover/link:opacity-100 transition-all duration-500"
-                  style={{
-                    background:
-                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)",
-                  }}
-                />
-
-                <span className="relative z-10">{link.label}</span>
-              </Link>
-            ))}
-          </div>
-
-          <div
-            className={`flex gap-2 ${
-              editMode ? "relative group rounded-3xl p-2 -m-2 ring-2 ring-purple-300/30" : ""
-            }`}
-          >
-            {editMode && (
-              <EditToolbar>
-                <AdminPillButton
-                  icon={Pencil}
-                  label="Edit Social"
-                  onClick={() => onEditTarget({ type: "socials" })}
-                />
-              </EditToolbar>
-            )}
-
-            {visibleSocials.map((social) => {
-              const Icon = getSocialIcon(social.type);
-
-              return (
-                <a
-                  key={social.id}
-                  href={normalizeExternalUrl(social.href)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={social.label}
-                  onClick={(event) => stopEditNavigation(event, editMode)}
-                  className="group/social relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 hover:scale-110 hover:-translate-y-2 hover:rotate-6"
-                  style={{
-                    background:
-                      "linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                  }}
-                >
-                  <Icon
-                    className="w-4 h-4"
-                    style={{ color: "rgba(255,255,255,0.75)" }}
-                  />
-                </a>
-              );
-            })}
-          </div>
-        </div>
-
-        <div
-          className={`mt-7 pt-6 border-t grid lg:grid-cols-3 gap-4 text-sm ${
-            editMode ? "relative group rounded-3xl p-4 -mx-4 ring-2 ring-green-300/25" : ""
+        <motion.div
+          initial={{ opacity: 0, y: 26 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65 }}
+          className={`text-center mb-12 relative group ${
+            editMode
+              ? "rounded-[28px] p-6 border-2 border-dashed border-sky-300/70 bg-white/30"
+              : ""
           }`}
-          style={{
-            borderColor: "rgba(255,255,255,0.09)",
-            color: "rgba(226,232,240,0.58)",
-          }}
         >
           {editMode && (
-            <EditToolbar>
-              <AdminPillButton
+            <div className="absolute right-4 top-4 z-30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+              <AdminActionButton
+                label="Edit"
                 icon={Pencil}
-                label="Contact"
-                onClick={() => onEditTarget({ type: "contact" })}
+                tone="gold"
+                onClick={onEditHero}
               />
-              <AdminPillButton
-                icon={Pencil}
-                label="Popup"
-                tone="dark"
-                onClick={() => onEditTarget({ type: "phonePopup" })}
-              />
-            </EditToolbar>
+            </div>
           )}
 
-          <a
-            href={mapHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(event) => stopEditNavigation(event, editMode)}
-            className="flex items-start gap-2 transition-all duration-300 hover:text-cyan-300 hover:translate-x-1 group/address"
-          >
-            <MapPin
-              className="w-4 h-4 mt-0.5 flex-shrink-0 transition-all duration-300 group-hover/address:scale-110"
-              style={{ color: palette.cyan }}
-            />
-
-            <span>{content.contact.address}</span>
-          </a>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <Phone
-              className="w-4 h-4 flex-shrink-0"
-              style={{ color: palette.green }}
-            />
-
-            {isMobile && !editMode ? (
-              <>
-                {content.contact.phones.map((phone, index) => (
-                  <span key={`${phone}-${index}`} className="inline-flex items-center gap-1">
-                    <a
-                      href={`tel:${phone.replace(/[^0-9+]/g, "")}`}
-                      className="hover:text-green-400"
-                    >
-                      {phone}
-                    </a>
-                    {index < content.contact.phones.length - 1 && <span>,</span>}
-                  </span>
-                ))}
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowContactModal(true)}
-                className="hover:text-green-400 transition-colors text-left"
-              >
-                {content.contact.phones.join(", ")}
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Mail
-              className="w-4 h-4 flex-shrink-0"
-              style={{ color: palette.gold }}
-            />
-
-            <a
-              href={`mailto:${content.contact.email}`}
-              onClick={(event) => stopEditNavigation(event, editMode)}
-              className="break-all hover:text-yellow-300 transition-colors"
-            >
-              {content.contact.email}
-            </a>
-          </div>
-        </div>
-
-        <div
-          className={`mt-6 text-xs text-center ${
-            editMode ? "relative group rounded-2xl px-4 py-3 ring-2 ring-cyan-300/20" : ""
-          }`}
-          style={{ color: "rgba(226,232,240,0.38)" }}
-        >
-          {editMode && (
-            <EditToolbar>
-              <AdminPillButton
-                icon={Pencil}
-                label="Copyright"
-                onClick={() => onEditTarget({ type: "copyright" })}
-              />
-            </EditToolbar>
-          )}
-          {content.copyrightText}
-        </div>
-      </div>
-
-      {showContactModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
-          <div
-            className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-white/10 backdrop-blur-3xl shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
+          <span
+            className="inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-black mb-4"
             style={{
-              background:
-                "linear-gradient(145deg, rgba(8,15,35,0.95), rgba(12,25,55,0.92))",
+              background: "rgba(215,25,32,0.09)",
+              color: colors.red,
+              border: "1px solid rgba(215,25,32,0.2)",
+              boxShadow: "0 12px 28px rgba(215,25,32,0.08)",
             }}
           >
+            {content.badgeText}
+          </span>
+
+          <h2
+            className="text-4xl md:text-5xl leading-tight mb-4"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 800,
+              color: colors.dark,
+            }}
+          >
+            <HighlightedTitle
+              title={content.title}
+              highlightedText={content.highlightedText}
+            />
+          </h2>
+
+          <p
+            className="max-w-2xl mx-auto text-base md:text-lg leading-relaxed"
+            style={{ color: "#64748B" }}
+          >
+            {content.subtitle}
+          </p>
+        </motion.div>
+
+        <div className="grid lg:grid-cols-12 gap-8 items-stretch">
+          <motion.div
+            initial={{ opacity: 0, x: -34 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.65 }}
+            className="lg:col-span-5 space-y-5"
+          >
             <div
-              className="absolute -top-20 -right-20 w-52 h-52 rounded-full"
+              className="rounded-[34px] p-5 md:p-6 relative overflow-hidden"
               style={{
                 background:
-                  "radial-gradient(circle, rgba(34,197,94,0.35), transparent 70%)",
-                filter: "blur(60px)",
+                  "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.72))",
+                border: "1px solid rgba(255,255,255,0.76)",
+                boxShadow:
+                  "0 24px 70px rgba(11,16,32,0.12), inset 0 1px 0 rgba(255,255,255,0.92)",
+                backdropFilter: "blur(16px)",
               }}
-            />
-
-            <div
-              className="absolute -bottom-24 -left-20 w-52 h-52 rounded-full"
-              style={{
-                background:
-                  "radial-gradient(circle, rgba(56,189,248,0.25), transparent 70%)",
-                filter: "blur(60px)",
-              }}
-            />
-
-            {copied && (
+            >
               <div
-                className="absolute top-5 right-5 z-50 px-4 py-2 rounded-xl text-white font-bold animate-bounce"
+                className="absolute -right-20 -top-20 w-56 h-56 rounded-full"
                 style={{
-                  background: "linear-gradient(135deg,#22C55E,#38BDF8)",
-                  boxShadow: "0 15px 40px rgba(34,197,94,0.4)",
+                  background:
+                    "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
                 }}
-              >
-                ✓ {content.copiedText}
+              />
+
+              <div className="relative z-10">
+                <div
+                  className="text-xs font-black uppercase tracking-[0.22em] mb-4"
+                  style={{ color: colors.purple }}
+                >
+                  School Contact Details
+                </div>
+
+                <div className="space-y-4">
+                  {content.contactInfo.map((info, index) => {
+                    const Icon = getContactIcon(info.icon);
+
+                    return (
+                      <motion.div
+                        key={info.id || info.label}
+                        data-contact-card-id={info.id}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.42, delay: index * 0.05 }}
+                        whileHover={editMode ? undefined : { y: -4 }}
+                        className={`flex gap-4 p-4 rounded-[24px] relative group overflow-hidden ${
+                          editMode
+                            ? "border-2 border-dashed border-sky-300/70"
+                            : ""
+                        }`}
+                        style={{
+                          background:
+                            "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+                          border: editMode
+                            ? undefined
+                            : `1px solid ${info.color}22`,
+                          boxShadow:
+                            "0 16px 40px rgba(11,16,32,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+                        }}
+                      >
+                        <div
+                          className="absolute left-0 top-0 bottom-0 w-1.5"
+                          style={{ background: info.color }}
+                        />
+
+                        <div
+                          className="absolute -right-12 -top-12 w-32 h-32 rounded-full"
+                          style={{
+                            background: `radial-gradient(circle, ${info.color}18, transparent 70%)`,
+                          }}
+                        />
+
+                        {editMode && (
+                          <div className="absolute right-3 top-3 z-30 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                            <AdminActionButton
+                              label="Edit"
+                              icon={Pencil}
+                              tone="purple"
+                              onClick={() => onEditContactInfo(info.id)}
+                            />
+                            <AdminActionButton
+                              label="Delete"
+                              icon={Trash2}
+                              tone="red"
+                              onClick={() => onDeleteContactInfo(info.id)}
+                            />
+                          </div>
+                        )}
+
+                        <div
+                          className="rounded-2xl flex items-center justify-center flex-shrink-0 relative z-10"
+                          style={{
+                            width: 52,
+                            height: 52,
+                            background: `${info.color}14`,
+                            border: `1px solid ${info.color}24`,
+                            boxShadow: `0 14px 28px ${info.color}18`,
+                          }}
+                        >
+                          <Icon
+                            className="w-6 h-6"
+                            style={{ color: info.color }}
+                          />
+                        </div>
+
+                        <div
+                          className={`relative z-10 min-w-0 ${
+                            editMode ? "pr-24 md:pr-0" : ""
+                          }`}
+                        >
+                          <div
+                            className="text-xs font-black mb-1 uppercase tracking-[0.16em]"
+                            style={{ color: "#94A3B8" }}
+                          >
+                            {info.label}
+                          </div>
+                          <div
+                            className="text-sm md:text-base font-bold leading-relaxed"
+                            style={{ color: colors.dark }}
+                          >
+                            {info.value}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
               </div>
-            )}
-
-            <div className="relative z-10 p-6">
-              <div className="flex items-center gap-4 pb-4">
-                <Phone className="w-5 h-5 text-green-400" />
-
-                <h3 className="text-xl font-bold text-white">
-                  {content.modalTitle}
-                </h3>
-              </div>
-
-              <div className="space-y-3">
-                {content.contact.phones.map((phone, index) => (
-                  <button
-                    key={`${phone}-${index}`}
-                    type="button"
-                    onClick={() => copyPhone(phone)}
-                    className="group relative overflow-hidden w-full text-left p-4 rounded-2xl bg-white/5 border border-white/10 transition-all duration-500 hover:scale-[1.03] hover:bg-white/10"
-                  >
-                    <div
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
-                      style={{
-                        background:
-                          "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)",
-                      }}
-                    />
-
-                    <span className="relative z-10 text-white text-lg">
-                      📞 {phone}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <p className="text-xs text-slate-400 mt-4">{content.modalHint}</p>
-
-              <button
-                type="button"
-                onClick={() => setShowContactModal(false)}
-                className="mt-6 w-full py-4 rounded-2xl text-white font-bold transition-all duration-500 hover:scale-[1.03]"
-                style={{
-                  background: "linear-gradient(135deg,#22C55E,#38BDF8)",
-                  boxShadow: "0 20px 40px rgba(34,197,94,0.35)",
-                }}
-              >
-                {content.closeButtonText}
-              </button>
             </div>
-          </div>
+
+            <div
+              className={`rounded-[34px] overflow-hidden min-h-[260px] relative flex items-center justify-center group ${
+                editMode ? "border-2 border-dashed border-sky-300/70" : ""
+              }`}
+              style={{
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05)), linear-gradient(135deg, #020617, #1E1B4B 55%, #4B2E83)",
+                border: editMode
+                  ? undefined
+                  : "1px solid rgba(255,255,255,0.18)",
+                boxShadow:
+                  "0 24px 64px rgba(11,16,32,0.28), 0 0 44px rgba(56,189,248,0.12)",
+                backdropFilter: "blur(18px)",
+              }}
+            >
+              {editMode && (
+                <div className="absolute right-4 top-4 z-30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <AdminActionButton
+                    label="Edit Map"
+                    icon={Pencil}
+                    tone="gold"
+                    onClick={onEditMap}
+                  />
+                </div>
+              )}
+
+              <div
+                className="absolute inset-0 opacity-16"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(rgba(255,255,255,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.16) 1px, transparent 1px)",
+                  backgroundSize: "34px 34px",
+                }}
+              />
+
+              <div
+                className="absolute -top-20 -right-20 w-56 h-56 rounded-full"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(56,189,248,0.34), transparent 70%)",
+                }}
+              />
+
+              <div
+                className="absolute -bottom-20 -left-20 w-56 h-56 rounded-full"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(250,204,21,0.25), transparent 70%)",
+                }}
+              />
+
+              <div className="text-center relative z-10 px-6">
+                <div
+                  className="w-16 h-16 mx-auto rounded-3xl flex items-center justify-center mb-4"
+                  style={{
+                    background: "rgba(255,255,255,0.12)",
+                    border: "1px solid rgba(255,255,255,0.18)",
+                    boxShadow: "0 16px 38px rgba(0,0,0,0.24)",
+                  }}
+                >
+                  <MapPin className="w-8 h-8" style={{ color: colors.gold }} />
+                </div>
+
+                <div className="text-white font-black text-lg leading-tight">
+                  {content.mapCard.title}
+                </div>
+
+                <div
+                  className="text-sm mt-2 mb-5 leading-relaxed"
+                  style={{ color: "rgba(255,255,255,0.68)" }}
+                >
+                  {content.mapCard.address}
+                </div>
+
+                <a
+                  href={normalizeExternalUrl(content.mapCard.mapUrl)}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(event) => {
+                    if (editMode) {
+                      event.preventDefault();
+                      onEditMap();
+                    }
+                  }}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-black transition-all duration-300 hover:scale-105"
+                  style={{
+                    color: "#020617",
+                    background:
+                      "linear-gradient(135deg, #FACC15 0%, #38BDF8 100%)",
+                    boxShadow:
+                      "0 16px 38px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
+                  }}
+                >
+                  {content.mapCard.buttonText}
+                </a>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 34 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.65, delay: 0.1 }}
+            className="lg:col-span-7"
+          >
+            <div
+              className={`p-6 md:p-10 rounded-[36px] h-full relative group overflow-hidden ${
+                editMode ? "border-2 border-dashed border-sky-300/70" : ""
+              }`}
+              style={{
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.98), rgba(255,255,255,0.8))",
+                border: editMode ? undefined : "1px solid rgba(75,46,131,0.14)",
+                boxShadow:
+                  "0 28px 78px rgba(11,16,32,0.13), inset 0 1px 0 rgba(255,255,255,0.9)",
+                backdropFilter: "blur(16px)",
+              }}
+            >
+              <div
+                className="absolute -right-24 -top-24 w-72 h-72 rounded-full pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
+                }}
+              />
+
+              <div
+                className="absolute -left-24 bottom-0 w-72 h-72 rounded-full pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(56,189,248,0.12), transparent 70%)",
+                }}
+              />
+
+              {editMode && (
+                <div className="absolute right-4 top-4 z-30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <AdminActionButton
+                    label="Edit Form"
+                    icon={Pencil}
+                    tone="purple"
+                    onClick={onEditForm}
+                  />
+                </div>
+              )}
+
+              <form
+                onSubmit={
+                  editMode
+                    ? (event) => event.preventDefault()
+                    : handleSubmit(onSubmit)
+                }
+                className="space-y-5 relative z-10"
+              >
+                <div className="mb-7">
+                  <div
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-[0.18em] mb-4"
+                    style={{
+                      background: "rgba(75,46,131,0.08)",
+                      color: colors.purple,
+                      border: "1px solid rgba(75,46,131,0.14)",
+                    }}
+                  >
+                    <Send className="w-4 h-4" />
+                    Contact Form
+                  </div>
+
+                  <h3
+                    className="text-2xl md:text-3xl font-black"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      color: colors.dark,
+                    }}
+                  >
+                    {content.form.title}
+                  </h3>
+
+                  <p className="text-sm mt-2" style={{ color: "#64748B" }}>
+                    Fill out the form and the school team will get back to you.
+                  </p>
+                </div>
+
+                {submitMessage && (
+                  <div
+                    className="p-4 rounded-2xl text-sm font-bold"
+                    style={{
+                      background: "rgba(22,138,58,0.1)",
+                      color: colors.green,
+                      border: "1px solid rgba(22,138,58,0.24)",
+                    }}
+                  >
+                    {submitMessage}
+                  </div>
+                )}
+
+                {submitError && (
+                  <div
+                    className="p-4 rounded-2xl text-sm font-bold"
+                    style={{
+                      background: "rgba(215,25,32,0.1)",
+                      color: colors.red,
+                      border: "1px solid rgba(215,25,32,0.24)",
+                    }}
+                  >
+                    {submitError}
+                  </div>
+                )}
+
+                <div className="grid md:grid-cols-2 gap-5">
+                  <div>
+                    <label
+                      className="block text-sm font-bold mb-2"
+                      style={{ color: "#475569" }}
+                    >
+                      {content.form.nameLabel}
+                    </label>
+                    <input
+                      {...register("name", {
+                        required: "Name is required.",
+                      })}
+                      disabled={editMode}
+                      placeholder={content.form.namePlaceholder}
+                      className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all disabled:opacity-70 focus:ring-4 focus:ring-purple-100"
+                      style={inputStyle}
+                    />
+                    <ErrorText>{errors.name?.message}</ErrorText>
+                  </div>
+
+                  <div>
+                    <label
+                      className="block text-sm font-bold mb-2"
+                      style={{ color: "#475569" }}
+                    >
+                      {content.form.emailLabel}
+                    </label>
+                    <input
+                      {...register("email", {
+                        required: "Email is required.",
+                      })}
+                      disabled={editMode}
+                      type="email"
+                      placeholder={content.form.emailPlaceholder}
+                      className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all disabled:opacity-70 focus:ring-4 focus:ring-purple-100"
+                      style={inputStyle}
+                    />
+                    <ErrorText>{errors.email?.message}</ErrorText>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-5">
+                  <div>
+                    <label
+                      className="block text-sm font-bold mb-2"
+                      style={{ color: "#475569" }}
+                    >
+                      {content.form.phoneLabel}
+                    </label>
+                    <input
+                      {...register("phone", {
+                        required: "Phone number is required.",
+                        validate: (value) =>
+                          isValidPhone(value) ||
+                          "Please enter a valid phone number.",
+                      })}
+                      disabled={editMode}
+                      type="tel"
+                      placeholder={content.form.phonePlaceholder}
+                      className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all disabled:opacity-70 focus:ring-4 focus:ring-purple-100"
+                      style={inputStyle}
+                    />
+                    <ErrorText>{errors.phone?.message}</ErrorText>
+                  </div>
+
+                  <div>
+                    <label
+                      className="block text-sm font-bold mb-2"
+                      style={{ color: "#475569" }}
+                    >
+                      {content.form.subjectLabel}
+                    </label>
+                    <input
+                      {...register("subject", {
+                        required: "Subject is required.",
+                      })}
+                      disabled={editMode}
+                      placeholder={content.form.subjectPlaceholder}
+                      className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all disabled:opacity-70 focus:ring-4 focus:ring-purple-100"
+                      style={inputStyle}
+                    />
+                    <ErrorText>{errors.subject?.message}</ErrorText>
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    className="block text-sm font-bold mb-2"
+                    style={{ color: "#475569" }}
+                  >
+                    {content.form.messageLabel}
+                  </label>
+                  <textarea
+                    {...register("message", {
+                      required: "Message is required.",
+                    })}
+                    disabled={editMode}
+                    rows={6}
+                    placeholder={content.form.messagePlaceholder}
+                    className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all resize-none disabled:opacity-70 focus:ring-4 focus:ring-purple-100"
+                    style={inputStyle}
+                  />
+                  <ErrorText>{errors.message?.message}</ErrorText>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting || editMode}
+                  className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black transition-all duration-300 hover:scale-[1.01] disabled:opacity-60"
+                  style={{
+                    color: "#020617",
+                    background:
+                      "linear-gradient(135deg, #FACC15 0%, #38BDF8 100%)",
+                    boxShadow:
+                      "0 22px 52px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
+                  }}
+                >
+                  <Send className="w-5 h-5" />
+                  {isSubmitting
+                    ? content.form.sendingText
+                    : content.form.buttonText}
+                </button>
+
+                <div
+                  className="rounded-2xl p-4 text-xs leading-relaxed"
+                  style={{
+                    background: "rgba(75,46,131,0.06)",
+                    border: "1px solid rgba(75,46,131,0.1)",
+                    color: "#64748B",
+                  }}
+                >
+                  Your message will be sent directly to the school office.
+                  Please include your correct phone number or email address.
+                </div>
+              </form>
+            </div>
+          </motion.div>
         </div>
-      )}
-    </footer>
+      </div>
+    </section>
   );
 }
 
-export default Footer;
+export default Contact;
+
+

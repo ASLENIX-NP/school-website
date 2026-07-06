@@ -225,12 +225,16 @@ function Admissions({
   onDeleteStep = () => {},
   onEditForm = () => {},
 } = {}) {
-  const [loadedContent, setLoadedContent] = useState(defaultAdmissionsContent);
+  const [loadedContent, setLoadedContent] = useState(
+    mergeAdmissionsContent(contentOverride || defaultAdmissionsContent)
+  );
   const [submitMessage, setSubmitMessage] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  const content = contentOverride || loadedContent;
+  const content = contentOverride
+    ? mergeAdmissionsContent(contentOverride)
+    : loadedContent;
 
   const {
     register,
@@ -245,7 +249,10 @@ function Admissions({
     const loadAdmissionsContent = async () => {
       try {
         const res = await axios.get(
-          "https://school-website-backend-ixx2.onrender.com/api/site-content/admissions"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/admissions",
+          {
+            timeout: 12000,
+          }
         );
 
         const savedContent = res.data?.data?.content || {};
@@ -275,14 +282,20 @@ function Admissions({
       : `Admission inquiry for ${grade}.`;
 
     try {
-      await axios.post("https://school-website-backend-ixx2.onrender.com/api/contact", {
-        source: "admission",
-        name: data.name,
-        email: data.email,
-        phone: cleanPhone,
-        subject: `Admission Inquiry - ${grade}`,
-        message: finalMessage,
-      });
+      await axios.post(
+        "https://school-website-backend-ixx2.onrender.com/api/contact",
+        {
+          source: "admission",
+          name: data.name,
+          email: data.email,
+          phone: cleanPhone,
+          subject: `Admission Inquiry - ${grade}`,
+          message: finalMessage,
+        },
+        {
+          timeout: 15000,
+        }
+      );
 
       setSubmitMessage(content.successMessage);
       setSubmitted(true);
@@ -752,3 +765,5 @@ function Admissions({
 
 export { Admissions };
 export default Admissions;
+
+
