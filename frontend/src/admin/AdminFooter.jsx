@@ -245,7 +245,7 @@ export default function AdminFooter() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState(defaultFooterContent);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [editingTarget, setEditingTarget] = useState(null);
   const [modalForm, setModalForm] = useState({});
   const [confirmTarget, setConfirmTarget] = useState(null);
@@ -1453,3 +1453,4 @@ export default function AdminFooter() {
     </section>
   );
 }
+
