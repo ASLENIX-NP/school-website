@@ -778,7 +778,14 @@ function Hero({
                 {heroData.titleLine2}
               </span>
               <br />
-              <span>{heroData.titleLine3}</span>
+              {String(heroData.titleLine3 || "")
+                .split(",")
+                .map((part, index, array) => (
+                  <span key={`${part}-${index}`}>
+                    {part.trim()}
+                    {index < array.length - 1 && <br />}
+                  </span>
+                ))}
             </motion.h1>
           </EditableWrap>
 
