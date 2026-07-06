@@ -13,6 +13,8 @@ const palette = {
   violet: "#8B5CF6",
 };
 
+const API_URL = "https://school-website-backend-ixx2.onrender.com";
+
 export const defaultStatsSectionData = {
   eyebrow: "School Highlights",
   title: "Numbers that reflect our journey.",
@@ -317,64 +319,65 @@ function Stats({
   contentOverride = null,
   onEditTarget = () => {},
 }) {
-  const [statsData, setStatsData] = useState(
-    contentOverride ? mergeStatsSectionData(contentOverride) : null
+  const [statsData, setStatsData] = useState(() =>
+    mergeStatsSectionData(contentOverride || defaultStatsSectionData)
   );
-  const [loading, setLoading] = useState(!contentOverride);
   const [notices, setNotices] = useState([]);
   const [selectedNotice, setSelectedNotice] = useState(null);
 
   useEffect(() => {
     if (contentOverride) {
       setStatsData(mergeStatsSectionData(contentOverride));
-      setLoading(false);
       return;
     }
 
-    const loadStatsContent = async () => {
-      setLoading(true);
+    let alive = true;
 
+    const loadStatsContent = async () => {
       try {
-        const res = await axios.get(
-          "https://school-website-backend-ixx2.onrender.com/api/site-content/home"
-        );
+        const res = await axios.get(`${API_URL}/api/site-content/home`, {
+          timeout: 10000,
+        });
+
+        if (!alive) return;
 
         const savedStats = res.data?.data?.content?.statsSection;
-        setStatsData(mergeStatsSectionData(savedStats || {}));
+        setStatsData(mergeStatsSectionData(savedStats || defaultStatsSectionData));
       } catch (error) {
         console.error("Stats content load error:", error);
-        setStatsData(defaultStatsSectionData);
-      } finally {
-        setLoading(false);
+
+        if (alive) {
+          setStatsData(mergeStatsSectionData(defaultStatsSectionData));
+        }
       }
     };
 
     loadStatsContent();
+
+    return () => {
+      alive = false;
+    };
   }, [contentOverride]);
 
   useEffect(() => {
-    if (editMode) return;
+    if (editMode) return undefined;
 
-    fetch("https://school-website-backend-ixx2.onrender.com/api/notices")
+    let alive = true;
+
+    fetch(`${API_URL}/api/notices`)
       .then((res) => res.json())
       .then((data) => {
+        if (!alive) return;
+
         const noticeList = Array.isArray(data) ? data : data?.data || [];
         setNotices(noticeList.slice(0, 3));
       })
       .catch((err) => console.log(err));
-  }, [editMode]);
 
-  if (!statsData || loading) {
-    return (
-      <section
-        className="relative overflow-hidden py-16 min-h-[620px]"
-        style={{
-          background:
-            "linear-gradient(180deg, #FFF8EE 0%, #F8FAFC 45%, #F7F4EF 100%)",
-        }}
-      />
-    );
-  }
+    return () => {
+      alive = false;
+    };
+  }, [editMode]);
 
   return (
     <>
