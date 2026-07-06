@@ -1105,7 +1105,7 @@ export default function AdminGallery() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState(defaultGalleryContent);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -1121,8 +1121,6 @@ export default function AdminGallery() {
     let alive = true;
 
     const loadGalleryContent = async () => {
-      setLoading(true);
-
       try {
         const res = await axios.get(
           "https://school-website-backend-ixx2.onrender.com/api/site-content/gallery",

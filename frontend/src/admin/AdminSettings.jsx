@@ -12,8 +12,14 @@ import {
 import { Link } from "react-router-dom";
 
 export default function AdminSettings() {
-  const [settings, setSettings] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState({
+    admin_name: "Admin",
+    admin_email: "",
+    username: "admin",
+    role: "Administrator",
+    profile_photo: "",
+  });
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   
@@ -50,7 +56,9 @@ export default function AdminSettings() {
       const res = await fetch("https://school-website-backend-ixx2.onrender.com/api/admin-settings");
       const result = await res.json();
 
-      setSettings(result.data);
+      if (result.data) {
+        setSettings((prev) => ({ ...prev, ...result.data }));
+      }
       const loginRes = await fetch(
         "https://school-website-backend-ixx2.onrender.com/api/admin-settings/login-activity"
       );

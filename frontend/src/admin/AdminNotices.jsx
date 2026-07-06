@@ -162,7 +162,7 @@ function getDeleteLabel(target) {
 export default function AdminNotices() {
   const [notices, setNotices] = useState([]);
   const [settings, setSettings] = useState(defaultNoticeSettings);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -176,12 +176,21 @@ export default function AdminNotices() {
   const [selectedNoticeIds, setSelectedNoticeIds] = useState([]);
 
   useEffect(() => {
+    let alive = true;
+
     const loadData = async () => {
-      await Promise.all([fetchNotices(), fetchSettings()]);
-      setLoading(false);
+      try {
+        await Promise.all([fetchNotices(), fetchSettings()]);
+      } finally {
+        if (alive) setLoading(false);
+      }
     };
 
     loadData();
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const fetchNotices = async () => {
