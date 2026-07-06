@@ -610,28 +610,6 @@ function Stats({
                       {statsData.story.imageTopSubtitle}
                     </div>
                   </div>
-
-                  <div
-                    className="absolute bottom-6 left-6 right-6 rounded-3xl p-5"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07))",
-                      border: "1px solid rgba(255,255,255,0.18)",
-                      backdropFilter: "blur(20px)",
-                      boxShadow: "0 22px 60px rgba(0,0,0,0.3)",
-                    }}
-                  >
-                    <div className="text-white text-lg font-bold mb-1">
-                      {statsData.story.imageBottomTitle}
-                    </div>
-
-                    <div
-                      className="text-sm"
-                      style={{ color: "rgba(255,255,255,0.68)" }}
-                    >
-                      {statsData.story.imageBottomDescription}
-                    </div>
-                  </div>
                 </EditableWrap>
               </div>
             </EditableWrap>
