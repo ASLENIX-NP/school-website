@@ -275,7 +275,7 @@ export default function AdminContact() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState(defaultContactContent);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -1212,3 +1212,5 @@ export default function AdminContact() {
     </section>
   );
 }
+
+

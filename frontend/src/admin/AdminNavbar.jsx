@@ -102,7 +102,7 @@ function getUploadUrl(payload) {
 
 export default function AdminNavbar() {
   const [form, setForm] = useState(defaultNavbarContent);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [editingTarget, setEditingTarget] = useState(null);
   const [modalForm, setModalForm] = useState({});
   const [saving, setSaving] = useState(false);
@@ -132,23 +132,35 @@ function getAuthHeaders() {
 }
 
   useEffect(() => {
+    let alive = true;
+
     const loadNavbarContent = async () => {
       try {
         const res = await axios.get(
-          "https://school-website-backend-ixx2.onrender.com/api/site-content/navbar"
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/navbar",
+          { timeout: 20000 }
         );
+
+        if (!alive) return;
 
         const savedContent = res.data?.data?.content || {};
         setForm(mergeNavbarContent(savedContent));
       } catch (err) {
         console.error("Load navbar content error:", err);
-        setError("Could not load saved navbar content. Default content shown.");
+
+        if (alive) {
+          setError("Could not load saved navbar content. Default content shown.");
+        }
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
     };
 
     loadNavbarContent();
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const selectedLink = useMemo(() => {
