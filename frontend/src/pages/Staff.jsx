@@ -29,6 +29,17 @@ const colors = {
 
 const statColors = [colors.green, colors.purple, colors.red, colors.cyan];
 
+const HARDCODED_STAFF_IMAGE_URLS = [
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
+  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
+  "https://images.unsplash.com/photo-1504593811423-6dd665756598",
+];
+
+function isHardcodedStaffImageUrl(value = "") {
+  const clean = String(value || "").trim();
+  return HARDCODED_STAFF_IMAGE_URLS.some((url) => clean.startsWith(url));
+}
+
 export const defaultStaffContent = {
   badgeText: "Our Faculty Team",
   title: "Our Staff & Members",
@@ -63,7 +74,7 @@ export const defaultStaffContent = {
       id: 1,
       name: "Binod Subedi",
       position: "Principal",
-      imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
+      imageUrl: "",
       imageZoom: 1,
       imageOffsetX: 0,
       imageOffsetY: 0,
@@ -78,7 +89,7 @@ export const defaultStaffContent = {
       id: 2,
       name: "Amul Shrestha",
       position: "Vice Principal",
-      imageUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
+      imageUrl: "",
       imageZoom: 1,
       imageOffsetX: 0,
       imageOffsetY: 0,
@@ -93,7 +104,7 @@ export const defaultStaffContent = {
       id: 3,
       name: "Prem Hamal",
       position: "Science Teacher",
-      imageUrl: "https://images.unsplash.com/photo-1504593811423-6dd665756598",
+      imageUrl: "",
       imageZoom: 1,
       imageOffsetX: 0,
       imageOffsetY: 0,
@@ -134,22 +145,29 @@ function normalizeStaff(staff) {
     return defaultStaffContent.staff;
   }
 
-  return staff.map((member, index) => ({
-    ...(defaultStaffContent.staff[index] || {}),
-    ...member,
-    id: member.id || Date.now() + index,
-    name: member.name || "Staff Member",
-    position: member.position || "Teacher",
-    imageUrl: member.imageUrl || "",
-    imageZoom: clampNumber(member.imageZoom, 1, 3, 1),
-    imageOffsetX: clampNumber(member.imageOffsetX, -60, 60, 0),
-    imageOffsetY: clampNumber(member.imageOffsetY, -60, 60, 0),
-    qualification: member.qualification || "",
-    phone: member.phone || "",
-    email: member.email || "",
-    description: member.description || "",
-    visible: member.visible !== false,
-  }));
+  return staff.map((member, index) => {
+    const savedImageUrl = String(member.imageUrl || "").trim();
+    const cleanImageUrl = isHardcodedStaffImageUrl(savedImageUrl)
+      ? ""
+      : savedImageUrl;
+
+    return {
+      ...(defaultStaffContent.staff[index] || {}),
+      ...member,
+      id: member.id || Date.now() + index,
+      name: member.name || "Staff Member",
+      position: member.position || "Teacher",
+      imageUrl: cleanImageUrl,
+      imageZoom: clampNumber(member.imageZoom, 1, 3, 1),
+      imageOffsetX: clampNumber(member.imageOffsetX, -60, 60, 0),
+      imageOffsetY: clampNumber(member.imageOffsetY, -60, 60, 0),
+      qualification: member.qualification || "",
+      phone: member.phone || "",
+      email: member.email || "",
+      description: member.description || "",
+      visible: member.visible !== false,
+    };
+  });
 }
 
 export function mergeStaffContent(saved = {}) {
@@ -841,3 +859,5 @@ export function Staff({
 }
 
 export default Staff;
+
+

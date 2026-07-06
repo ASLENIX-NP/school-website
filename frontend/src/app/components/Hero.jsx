@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Camera, Pencil, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Camera,
+  Image as ImageIcon,
+  Pencil,
+  Sparkles,
+} from "lucide-react";
 
 const palette = {
   cyan: "#38BDF8",
@@ -15,6 +21,15 @@ const palette = {
 
 const API_URL = "https://school-website-backend-ixx2.onrender.com";
 
+const HARDCODED_HERO_IMAGE_URLS = [
+  "https://images.unsplash.com/photo-1509062522246-3755977927d7",
+];
+
+function isHardcodedHeroImageUrl(value = "") {
+  const clean = String(value || "").trim();
+  return HARDCODED_HERO_IMAGE_URLS.some((url) => clean.startsWith(url));
+}
+
 export const defaultHeroData = {
   badge: "Admissions Open for New Academic Session",
   titleLine1: "Baljagriti Secondary",
@@ -22,11 +37,8 @@ export const defaultHeroData = {
   titleLine3: "Hetauda-2, Makwanpur",
   description:
     "Baljagriti Secondary English School blends academic discipline, digital learning, creativity, sports, and values for students from Play Group to Grade 10.",
-  image:
-    "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1100&h=900&fit=crop&auto=format",
-  images: [
-    "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1100&h=900&fit=crop&auto=format",
-  ],
+  image: "",
+  images: [],
   imageAdjustments: {},
 
   primaryButtonText: "Start Admission",
@@ -72,18 +84,25 @@ export function mergeHeroData(saved = {}) {
     new Set(
       savedImages
         .map((item) => String(item || "").trim())
-        .filter(Boolean)
+        .filter((item) => item && !isHardcodedHeroImageUrl(item))
     )
   );
 
-  const fallbackImage =
-    String(saved?.image || merged.image || defaultHeroData.image || "").trim();
+  const fallbackImage = String(
+    saved?.image || merged.image || defaultHeroData.image || ""
+  ).trim();
 
-  const images = cleanImages.length > 0
-    ? cleanImages
-    : fallbackImage
-    ? [fallbackImage]
-    : [defaultHeroData.image];
+  const cleanFallbackImage =
+    fallbackImage && !isHardcodedHeroImageUrl(fallbackImage)
+      ? fallbackImage
+      : "";
+
+  const images =
+    cleanImages.length > 0
+      ? cleanImages
+      : cleanFallbackImage
+      ? [cleanFallbackImage]
+      : [];
 
   const rawAdjustments =
     saved?.imageAdjustments && typeof saved.imageAdjustments === "object"
@@ -104,7 +123,7 @@ export function mergeHeroData(saved = {}) {
 
   return {
     ...merged,
-    image: images[0] || defaultHeroData.image,
+    image: images[0] || "",
     images,
     imageAdjustments,
   };
@@ -426,10 +445,10 @@ function Premium3DBackground({ editMode = false }) {
 function HeroImageStage({ heroData, editMode, onEditTarget }) {
   const heroImages =
     Array.isArray(heroData.images) && heroData.images.filter(Boolean).length > 0
-      ? heroData.images.filter(Boolean)
-      : heroData.image
+      ? heroData.images.filter(Boolean).filter((image) => !isHardcodedHeroImageUrl(image))
+      : heroData.image && !isHardcodedHeroImageUrl(heroData.image)
       ? [heroData.image]
-      : [defaultHeroData.image];
+      : [];
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
@@ -447,7 +466,7 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
     return () => window.clearInterval(timer);
   }, [editMode, heroImages.length]);
 
-  const activeImage = heroImages[activeImageIndex] || heroImages[0] || heroData.image;
+  const activeImage = heroImages[activeImageIndex] || heroImages[0] || "";
 
   return (
     <motion.div
@@ -482,20 +501,30 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
               : "1px solid rgba(255,255,255,0.76)",
           }}
         >
-          <img
-            key={activeImage}
-            src={activeImage}
-            alt="Baljagriti school students"
-            draggable={false}
-            className="absolute inset-0"
-            style={getHeroImageCropStyle(heroData, activeImage)}
-          />
+          {activeImage ? (
+            <img
+              key={activeImage}
+              src={activeImage}
+              alt="Baljagriti school students"
+              draggable={false}
+              className="absolute inset-0"
+              style={getHeroImageCropStyle(heroData, activeImage)}
+            />
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-100 text-slate-400">
+              <ImageIcon className="w-16 h-16 mb-3" />
+              <div className="text-sm font-black uppercase tracking-[0.16em]">
+                Add Hero Image
+              </div>
+            </div>
+          )}
 
           <div
             className="absolute inset-0"
             style={{
-              background:
-                "linear-gradient(to top, rgba(15,23,42,0.58) 0%, rgba(15,23,42,0.10) 52%, transparent 100%)",
+              background: activeImage
+                ? "linear-gradient(to top, rgba(15,23,42,0.58) 0%, rgba(15,23,42,0.10) 52%, transparent 100%)"
+                : "linear-gradient(to top, rgba(15,23,42,0.18) 0%, rgba(15,23,42,0.04) 52%, transparent 100%)",
             }}
           />
 
@@ -895,4 +924,6 @@ function Hero({
 
 export { Hero };
 export default Hero;
+
+
 
