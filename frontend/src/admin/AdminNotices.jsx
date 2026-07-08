@@ -245,15 +245,6 @@ export default function AdminNotices() {
       return;
     }
 
-    if (target.type === "calendar") {
-      setModalForm({
-        calendar_title: settings.calendar_title || "",
-        calendar_subtitle: settings.calendar_subtitle || "",
-        calendar_embed_url: settings.calendar_embed_url || "",
-      });
-      return;
-    }
-
     if (target.type === "sidebar") {
       setModalForm({
         sidebar_title: settings.sidebar_title || "",
@@ -331,17 +322,6 @@ export default function AdminNotices() {
             page_description: modalForm.page_description || "",
           },
           "Notice page heading saved successfully."
-        );
-      }
-
-      if (editingTarget.type === "calendar") {
-        await saveSettingsPatch(
-          {
-            calendar_title: modalForm.calendar_title || "",
-            calendar_subtitle: modalForm.calendar_subtitle || "",
-            calendar_embed_url: modalForm.calendar_embed_url || "",
-          },
-          "Calendar settings saved successfully."
         );
       }
 
@@ -559,7 +539,6 @@ export default function AdminNotices() {
 
     const titles = {
       pageHeader: "Edit Notice Page Heading",
-      calendar: "Edit Calendar Card",
       sidebar: "Edit Sidebar Help Card",
       newNotice: "Add New Notice",
       notice: "Edit Notice",
@@ -647,7 +626,7 @@ export default function AdminNotices() {
             </h2>
 
             <p className="text-sm text-slate-500 mt-1">
-              Hover page heading, notice cards, calendar, and sidebar. Add Notice is inside the notice board. Only two notices are shown here; use View All for bulk delete.
+              Hover page heading and notice cards. Add Notice is inside the notice board. Only two notices are shown here; use View All for bulk delete.
             </p>
           </div>
 
@@ -811,26 +790,6 @@ export default function AdminNotices() {
                         value={modalForm.page_description}
                         onChange={(value) => updateModalField("page_description", value)}
                         rows={4}
-                      />
-                    </>
-                  )}
-
-                  {editingTarget.type === "calendar" && (
-                    <>
-                      <Field
-                        label="Calendar Title"
-                        value={modalForm.calendar_title}
-                        onChange={(value) => updateModalField("calendar_title", value)}
-                      />
-                      <Field
-                        label="Calendar Subtitle"
-                        value={modalForm.calendar_subtitle}
-                        onChange={(value) => updateModalField("calendar_subtitle", value)}
-                      />
-                      <Field
-                        label="Calendar Embed URL"
-                        value={modalForm.calendar_embed_url}
-                        onChange={(value) => updateModalField("calendar_embed_url", value)}
                       />
                     </>
                   )}

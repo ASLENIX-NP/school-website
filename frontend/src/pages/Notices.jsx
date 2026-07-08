@@ -50,9 +50,6 @@ export const defaultNoticeSettings = {
   page_title: "School Notices",
   page_description:
     "Stay informed with examination schedules, admissions, holidays, events and important announcements.",
-  calendar_title: "Nepali Calendar",
-  calendar_subtitle: "Nepali date reference",
-  calendar_embed_url: "https://www.hamropatro.com/widgets/calender-small.php",
   sidebar_title: "Need Assistance?",
   sidebar_description:
     "For questions about notices, admissions, examinations, or official documents, please contact the school office.",
@@ -111,6 +108,7 @@ export function sortNoticesNewestFirst(notices = []) {
     return dateB - dateA;
   });
 }
+
 
 function ActionButtons({
   editMode,
@@ -1007,7 +1005,7 @@ export default function Notices({
             </div>
           </motion.div>
 
-          <div className="grid lg:grid-cols-[1fr_330px] gap-8 items-start">
+          <div className="grid gap-8 items-start">
             <div className="space-y-5">
               <div
                 className="rounded-[28px] px-6 py-5"
@@ -1143,81 +1141,6 @@ export default function Notices({
                 </>
               )}
             </div>
-
-            <motion.aside
-              initial={{ opacity: 0, x: 24 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="lg:sticky lg:top-28 space-y-6"
-            >
-              <EditableWrap
-                editMode={editMode}
-                target={{ type: "calendar" }}
-                onEditTarget={onEditTarget}
-              >
-                <div
-                  className="rounded-[28px] overflow-hidden"
-                  style={{
-                    background:
-                      "linear-gradient(145deg, rgba(255,255,255,0.94), rgba(255,255,255,0.76))",
-                    border: "1px solid rgba(15,23,42,0.08)",
-                    boxShadow:
-                      "0 18px 46px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
-                    backdropFilter: "blur(16px)",
-                  }}
-                >
-                  <div className="p-5">
-                    <div
-                      className="w-16 h-1.5 rounded-full mb-4"
-                      style={{
-                        background: `linear-gradient(90deg, ${colors.red}, ${colors.green})`,
-                      }}
-                    />
-
-                    <h3
-                      className="text-2xl text-slate-950"
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        fontWeight: 850,
-                        letterSpacing: "-0.035em",
-                      }}
-                    >
-                      {settings.calendar_title}
-                    </h3>
-
-                    <p className="text-sm text-slate-500 mt-1">
-                      {settings.calendar_subtitle}
-                    </p>
-
-                    <div
-                      className="rounded-2xl overflow-hidden flex justify-center items-start mt-5"
-                      style={{
-                        background: "#FFFFFF",
-                        border: "1px solid rgba(15,23,42,0.08)",
-                        height: "345px",
-                        paddingTop: "10px",
-                      }}
-                    >
-                      <iframe
-                        title="Nepali Calendar"
-                        src={settings.calendar_embed_url}
-                        style={{
-                          width: "245px",
-                          height: "330px",
-                          border: "0",
-                          transform: "scale(1.03)",
-                          transformOrigin: "top center",
-                          background: "#FFFFFF",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </EditableWrap>
-
-              
-            </motion.aside>
           </div>
         </div>
       </section>

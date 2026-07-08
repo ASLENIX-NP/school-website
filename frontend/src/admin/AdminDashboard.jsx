@@ -17,6 +17,7 @@ import AdminAbout from "./AdminAbout";
 import AdminAcademics from "./AdminAcademics";
 import AdminAdmissions from "./AdminAdmissions";
 import AdminNotices from "./AdminNotices";
+import AdminCalendar from "./AdminCalendar";
 import AdminAnnouncements from "./AdminAnnouncements";
 import AdminStaff from "./AdminStaff";
 import AdminFacilities from "./AdminFacilities";
@@ -37,6 +38,7 @@ const adminSections = [
   { title: "Manage Academics", icon: GraduationCap, color: colors.red, editorKey: "academics" },
   { title: "Manage Admissions", icon: School, color: colors.cyan, editorKey: "admissions" },
   { title: "Manage Notices", icon: Bell, color: colors.red, editorKey: "notices" },
+  { title: "Manage Calendar", icon: Clock, color: colors.blue, editorKey: "calendar" },
   { title: "Manage Announcements", icon: Newspaper, color: colors.orange, editorKey: "announcements" },
   { title: "Manage Staff", icon: Users, color: colors.green, editorKey: "staff" },
   { title: "Manage Facilities", icon: School, color: colors.purple, editorKey: "facilities" },
@@ -55,6 +57,7 @@ const navigationItems = [
   { title: "Manage Academics", icon: GraduationCap, editorKey: "academics" },
   { title: "Manage Admissions", icon: School, editorKey: "admissions" },
   { title: "Manage Notices", icon: Bell, editorKey: "notices" },
+  { title: "Manage Calendar", icon: Clock, editorKey: "calendar" },
   { title: "Manage Announcements", icon: Newspaper, editorKey: "announcements" },
   { title: "Manage Staff", icon: Users, editorKey: "staff" },
   { title: "Manage Facilities", icon: School, editorKey: "facilities" },
@@ -554,6 +557,7 @@ export default function AdminDashboard() {
                 {activeEditor === "academics" && <AdminAcademics />}
                 {activeEditor === "admissions" && <AdminAdmissions />}
                 {activeEditor === "notices" && <AdminNotices />}
+                {activeEditor === "calendar" && <AdminCalendar />}
                 {activeEditor === "announcements" && <AdminAnnouncements />}
                 {activeEditor === "staff" && <AdminStaff />}
                 {activeEditor === "facilities" && <AdminFacilities />}
