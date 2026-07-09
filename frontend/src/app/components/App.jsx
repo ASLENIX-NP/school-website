@@ -31,6 +31,8 @@ const Facilities = lazy(() => import("../../pages/Facilities"));
 
 const AdminAbout = lazy(() => import("../../admin/AdminAbout"));
 const AdminLogin = lazy(() => import("../../admin/AdminLogin"));
+const AdminForgotPassword = lazy(() => import("../../admin/AdminForgotPassword"));
+const AdminResetPassword = lazy(() => import("../../admin/AdminResetPassword"));
 const AdminDashboard = lazy(() => import("../../admin/AdminDashboard"));
 const AdminHome = lazy(() => import("../../admin/AdminHome"));
 const AdminNotices = lazy(() => import("../../admin/AdminNotices"));
@@ -155,6 +157,8 @@ function SchoolApp() {
             />
 
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
+            <Route path="/admin/reset-password" element={<AdminResetPassword />} />
 
             <Route
               path="/admin/dashboard"
@@ -353,5 +357,3 @@ function SchoolApp() {
 }
 
 export default SchoolApp;
-
-

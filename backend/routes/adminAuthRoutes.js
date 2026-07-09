@@ -1,6 +1,7 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 import { UAParser } from "ua-parser-js";
 import { supabase } from "../config/supabase.js";
 import { protectAdmin } from "../middleware/adminAuthMiddleware.js";
@@ -10,6 +11,7 @@ const router = express.Router();
 const MAX_ACTIVE_ADMIN_SESSIONS = 4;
 const ADMIN_SESSION_DAYS = 7;
 const ADMIN_ACTIVE_STALE_HOURS = 24;
+const PASSWORD_RESET_TOKEN_MINUTES = 30;
 
 function normalizeRole(role) {
   return String(role || "admin")
@@ -28,6 +30,82 @@ function getClientIp(req) {
     .trim();
 
   return forwardedFor || req.ip || req.socket?.remoteAddress || "";
+}
+
+
+function getFrontendUrl() {
+  return String(
+    process.env.FRONTEND_URL || "https://baljagriti.aslenix.tech"
+  ).replace(/\/+$/, "");
+}
+
+function hashResetToken(token) {
+  return crypto.createHash("sha256").update(String(token || "")).digest("hex");
+}
+
+function getPasswordResetExpiryDate() {
+  return new Date(Date.now() + PASSWORD_RESET_TOKEN_MINUTES * 60 * 1000);
+}
+
+async function sendPasswordResetEmail({ to, resetUrl }) {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY is missing in backend environment.");
+  }
+
+  const from =
+    process.env.RESET_EMAIL_FROM ||
+    "Baljagriti School <reset@noreply.aslenix.tech>";
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to,
+      subject: "Reset your Baljagriti admin password",
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #0f172a;">
+          <h2 style="margin-bottom: 10px;">Baljagriti Admin Password Reset</h2>
+          <p>A password reset was requested for the Baljagriti School admin panel.</p>
+          <p>This link will expire in ${PASSWORD_RESET_TOKEN_MINUTES} minutes.</p>
+          <p>
+            <a href="${resetUrl}" style="display: inline-block; padding: 12px 18px; background: #168A3A; color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 700;">
+              Reset Password
+            </a>
+          </p>
+          <p>If the button does not work, copy and paste this link into your browser:</p>
+          <p style="word-break: break-all; color: #334155;">${resetUrl}</p>
+          <p>If you did not request this, you can ignore this email.</p>
+        </div>
+      `,
+    }),
+  });
+
+  const responseText = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`Resend email failed: ${responseText}`);
+  }
+}
+
+async function isPasswordMatch(plainPassword, storedPassword) {
+  const cleanPlainPassword = String(plainPassword || "");
+  const cleanStoredPassword = String(storedPassword || "");
+
+  if (!cleanStoredPassword) return false;
+
+  if (
+    cleanStoredPassword.startsWith("$2a$") ||
+    cleanStoredPassword.startsWith("$2b$") ||
+    cleanStoredPassword.startsWith("$2y$")
+  ) {
+    return bcrypt.compare(cleanPlainPassword, cleanStoredPassword);
+  }
+
+  return cleanStoredPassword === cleanPlainPassword;
 }
 
 function getSessionDeviceKey(session = {}) {
@@ -118,6 +196,187 @@ async function cleanupAdminSessions(adminEmail) {
   return cleanupDuplicateDeviceSessions(adminEmail);
 }
 
+
+router.post("/forgot-password", async (req, res) => {
+  const genericMessage =
+    "If this admin email exists, a password reset link has been sent.";
+
+  try {
+    const cleanEmail = String(req.body?.email || "").trim();
+
+    if (!cleanEmail) {
+      return res.status(400).json({
+        success: false,
+        message: "Admin email is required.",
+      });
+    }
+
+    const { data: admin, error } = await supabase
+      .from("admin_settings")
+      .select("admin_email")
+      .eq("admin_email", cleanEmail)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Forgot password admin lookup error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Could not check admin account.",
+      });
+    }
+
+    if (!admin) {
+      return res.json({
+        success: true,
+        message: genericMessage,
+      });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenHash = hashResetToken(resetToken);
+    const expiresAt = getPasswordResetExpiryDate().toISOString();
+
+    const { error: updateError } = await supabase
+      .from("admin_settings")
+      .update({
+        reset_token_hash: resetTokenHash,
+        reset_token_expires_at: expiresAt,
+        reset_token_used_at: null,
+      })
+      .eq("admin_email", cleanEmail);
+
+    if (updateError) {
+      console.error("Forgot password token save error:", updateError);
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Could not create reset token. Please make sure reset columns are added in Supabase.",
+      });
+    }
+
+    const resetUrl = `${getFrontendUrl()}/admin/reset-password?email=${encodeURIComponent(
+      cleanEmail
+    )}&token=${resetToken}`;
+
+    await sendPasswordResetEmail({
+      to: cleanEmail,
+      resetUrl,
+    });
+
+    return res.json({
+      success: true,
+      message: genericMessage,
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error.message || "Could not send reset email. Please try again later.",
+    });
+  }
+});
+
+router.post("/reset-password", async (req, res) => {
+  try {
+    const cleanEmail = String(req.body?.email || "").trim();
+    const token = String(req.body?.token || "").trim();
+    const password = String(req.body?.password || "").trim();
+
+    if (!cleanEmail || !token || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email, reset token, and new password are required.",
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters long.",
+      });
+    }
+
+    const { data: admin, error } = await supabase
+      .from("admin_settings")
+      .select(
+        "admin_email, reset_token_hash, reset_token_expires_at, reset_token_used_at"
+      )
+      .eq("admin_email", cleanEmail)
+      .maybeSingle();
+
+    if (error || !admin) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired reset link.",
+      });
+    }
+
+    const tokenHash = hashResetToken(token);
+    const savedTokenHash = String(admin.reset_token_hash || "");
+    const expiresAt = admin.reset_token_expires_at
+      ? new Date(admin.reset_token_expires_at).getTime()
+      : 0;
+
+    if (
+      !savedTokenHash ||
+      savedTokenHash !== tokenHash ||
+      admin.reset_token_used_at ||
+      !expiresAt ||
+      Date.now() > expiresAt
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired reset link.",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const now = new Date().toISOString();
+
+    const { error: updateError } = await supabase
+      .from("admin_settings")
+      .update({
+        password: hashedPassword,
+        reset_token_hash: null,
+        reset_token_expires_at: null,
+        reset_token_used_at: now,
+      })
+      .eq("admin_email", cleanEmail);
+
+    if (updateError) {
+      console.error("Reset password update error:", updateError);
+
+      return res.status(500).json({
+        success: false,
+        message: "Could not update password.",
+      });
+    }
+
+    await supabase
+      .from("admin_sessions")
+      .update({ revoked_at: now })
+      .eq("admin_email", cleanEmail)
+      .is("revoked_at", null);
+
+    return res.json({
+      success: true,
+      message: "Password reset successfully. Please login again.",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Could not reset password.",
+    });
+  }
+});
+
+
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -144,7 +403,9 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    if (admin.password !== password) {
+    const passwordMatches = await isPasswordMatch(password, admin.password);
+
+    if (!passwordMatches) {
       return res.status(401).json({
         success: false,
         message: "Invalid password",

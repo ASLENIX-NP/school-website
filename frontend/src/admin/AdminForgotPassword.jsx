@@ -1,8 +1,10 @@
 import { useState } from "react";
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { Lock, Mail, ShieldCheck, ArrowRight } from "lucide-react";
+import { ArrowLeft, Mail, Send, ShieldCheck } from "lucide-react";
+
+const API_URL = "https://school-website-backend-ixx2.onrender.com";
 
 const colors = {
   red: "#D71920",
@@ -13,49 +15,37 @@ const colors = {
   gold: "#FACC15",
 };
 
-export default function AdminLogin() {
-  const navigate = useNavigate();
-
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-
+export default function AdminForgotPassword() {
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const handleChange = (e) => {
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
     setError("");
     setLoading(true);
 
     try {
       const res = await axios.post(
-        "https://school-website-backend-ixx2.onrender.com/api/admin/auth/login",
-        form
+        `${API_URL}/api/admin/auth/forgot-password`,
+        {
+          email,
+        }
       );
 
-      localStorage.setItem("adminToken", res.data.token);
-      localStorage.setItem("adminUser", JSON.stringify(res.data.admin));
-
-      navigate("/admin/dashboard");
+      setMessage(
+        res.data?.message ||
+          "If this admin email exists, a password reset link has been sent."
+      );
     } catch (err) {
-      console.error("Admin login error:", err);
+      console.error("Forgot password error:", err);
 
-      if (err.code === "ERR_NETWORK") {
-        setError("Could not connect to backend. Please try again.");
-      } else {
-        setError(
-          err.response?.data?.message || "Login failed. Please try again."
-        );
-      }
+      setError(
+        err.response?.data?.message ||
+          "Could not send reset email. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -104,6 +94,15 @@ export default function AdminLogin() {
           backdropFilter: "blur(24px)",
         }}
       >
+        <Link
+          to="/admin/login"
+          className="inline-flex items-center gap-2 text-sm font-bold mb-6 transition-colors hover:text-white"
+          style={{ color: "rgba(255,255,255,0.72)" }}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Login
+        </Link>
+
         <div className="text-center mb-8">
           <div
             className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-5"
@@ -123,13 +122,27 @@ export default function AdminLogin() {
               letterSpacing: "-0.04em",
             }}
           >
-            Admin Login
+            Forgot Password
           </h1>
 
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.62)" }}>
-            Manage notices, gallery, messages, and school content.
+            Enter the admin email. A secure reset link will be sent if the
+            account exists.
           </p>
         </div>
+
+        {message && (
+          <div
+            className="mb-5 rounded-2xl px-4 py-3 text-sm font-medium"
+            style={{
+              background: "rgba(22,138,58,0.16)",
+              border: "1px solid rgba(22,138,58,0.28)",
+              color: "#BBF7D0",
+            }}
+          >
+            {message}
+          </div>
+        )}
 
         {error && (
           <div
@@ -144,31 +157,10 @@ export default function AdminLogin() {
           </div>
         )}
 
-        <form
-          onSubmit={handleLogin}
-          className="space-y-5"
-          autoComplete="off"
-        >
-          <input
-            type="text"
-            name="fake-user"
-            autoComplete="username"
-            className="hidden"
-            tabIndex="-1"
-            aria-hidden="true"
-          />
-          <input
-            type="password"
-            name="fake-password"
-            autoComplete="new-password"
-            className="hidden"
-            tabIndex="-1"
-            aria-hidden="true"
-          />
-
+        <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
           <div>
             <label className="block text-sm font-semibold text-white/80 mb-2">
-              Email Address
+              Admin Email Address
             </label>
 
             <div className="relative">
@@ -176,8 +168,8 @@ export default function AdminLogin() {
               <input
                 name="email"
                 type="email"
-                value={form.email}
-                onChange={handleChange}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="off"
                 inputMode="email"
@@ -192,41 +184,6 @@ export default function AdminLogin() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-white/80 mb-2">
-              Password
-            </label>
-
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/42" />
-              <input
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                required
-                autoComplete="new-password"
-                spellCheck="false"
-                className="w-full pl-12 pr-4 py-4 rounded-2xl outline-none text-white"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end -mt-2">
-            <Link
-              to="/admin/forgot-password"
-              className="text-sm font-bold transition-colors hover:text-white"
-              style={{ color: "rgba(255,255,255,0.72)" }}
-            >
-              Forgot password?
-            </Link>
-          </div>
-
           <button
             type="submit"
             disabled={loading}
@@ -238,8 +195,8 @@ export default function AdminLogin() {
                 "0 22px 52px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.45)",
             }}
           >
-            {loading ? "Signing in..." : "Login to Dashboard"}
-            <ArrowRight className="w-5 h-5" />
+            {loading ? "Sending reset link..." : "Send Reset Link"}
+            <Send className="w-5 h-5" />
           </button>
         </form>
       </motion.div>
