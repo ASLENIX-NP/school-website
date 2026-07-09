@@ -26,9 +26,6 @@ const colors = {
   orange: "#F97316",
 };
 
-const oldHardcodedStoryImageUrl =
-  "https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&h=700&fit=crop&auto=format";
-
 export const defaultAboutContent = {
   pageTitle: "About Us",
   pageSubtitle:
@@ -40,7 +37,8 @@ export const defaultAboutContent = {
     "Baljagriti Secondary English School, located in the heart of Makwanpur, Nepal, has been a beacon of quality education for many years. What began as a small school with a strong vision has grown into a thriving institution serving students from Play Group to Grade 10.",
     "We take pride in our dedicated team of experienced educators who work tirelessly to ensure every child receives the attention, guidance, and learning environment they need to grow academically and personally.",
   ],
-  storyImageUrl: "",
+  storyImageUrl:
+    "https://images.unsplash.com/photo-1588072432836-e10032774350?w=900&h=700&fit=crop&auto=format",
   storyImageAlt: "School campus",
   storyImageTitle: "School Campus",
   storyImageSubtitle: "Image can later be managed from admin dashboard",
@@ -197,21 +195,6 @@ function normalizeArray(savedArray, defaultArray) {
   }));
 }
 
-function sanitizeStoryImageUrl(value = "") {
-  const cleanValue = String(value || "").trim();
-
-  if (!cleanValue) return "";
-
-  if (
-    cleanValue === oldHardcodedStoryImageUrl ||
-    cleanValue.includes("images.unsplash.com/photo-1588072432836-e10032774350")
-  ) {
-    return "";
-  }
-
-  return cleanValue;
-}
-
 export function mergeAboutContent(saved = {}) {
   const messages = normalizeArray(
     saved.messages,
@@ -226,7 +209,6 @@ export function mergeAboutContent(saved = {}) {
   return {
     ...defaultAboutContent,
     ...(saved || {}),
-    storyImageUrl: sanitizeStoryImageUrl(saved.storyImageUrl),
     storyParagraphs: Array.isArray(saved.storyParagraphs)
       ? saved.storyParagraphs
       : defaultAboutContent.storyParagraphs,
@@ -407,7 +389,7 @@ function LeadershipImagePanel({ person, index, editMode, onEditTarget }) {
 }
 
 function shouldShowReadMore(message = "") {
-  return String(message || "").trim().length > 190;
+  return String(message || "").trim().length > 170;
 }
 
 function getLeadershipMessageUrl(person = {}, index = 0) {
@@ -415,24 +397,21 @@ function getLeadershipMessageUrl(person = {}, index = 0) {
   return `/about?message=${id}`;
 }
 
-function LeadershipSignature({ person }) {
+function LeadershipSignature({ person, editMode = false }) {
   const name = String(person?.name || "").trim();
   const role = String(person?.role || "").trim();
 
-  if (!name && !role) return null;
+  if (!name && !role && !editMode) return null;
 
   return (
-    <div className="text-right">
-      {name && (
-        <div className="text-base md:text-lg font-black text-slate-950">
-          - {name}
-        </div>
-      )}
-      {role && (
-        <div className="mt-1 text-xs md:text-sm font-black uppercase tracking-[0.16em] text-slate-400">
-          {role}
-        </div>
-      )}
+    <div className="mt-1 text-right">
+      <div className="text-base md:text-lg font-black text-slate-950">
+        - {name || "Name not set"}
+      </div>
+
+      <div className="mt-1 text-xs md:text-sm font-black uppercase tracking-[0.16em] text-slate-400">
+        {role || "Post not set"}
+      </div>
     </div>
   );
 }
@@ -452,12 +431,13 @@ function LeadershipMessageDetailPage({ person }) {
       <div
         className="absolute top-0 right-0 w-[520px] h-[520px] rounded-full pointer-events-none"
         style={{
-          background: "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
+          background:
+            "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
           filter: "blur(8px)",
         }}
       />
 
-      <div className="max-w-6xl mx-auto px-6 relative z-10">
+      <div className="max-w-5xl mx-auto px-6 relative z-10">
         <a
           href="/about"
           className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-black mb-8 transition-all hover:-translate-y-0.5"
@@ -475,77 +455,85 @@ function LeadershipMessageDetailPage({ person }) {
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="rounded-[34px] overflow-hidden grid lg:grid-cols-[360px_1fr]"
+          className="rounded-[34px] overflow-hidden"
           style={{
             background:
-              "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.82))",
+              "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.84))",
             border: "1px solid rgba(11,16,32,0.08)",
             boxShadow:
               "0 28px 80px rgba(11,16,32,0.10), inset 0 1px 0 rgba(255,255,255,0.85)",
             backdropFilter: "blur(18px)",
           }}
         >
-          <div
-            className="min-h-[380px] lg:min-h-[620px]"
-            style={{
-              background:
-                "linear-gradient(145deg, rgba(255,248,238,0.96), rgba(241,236,255,0.82))",
-              borderRight: "1px solid rgba(11,16,32,0.08)",
-            }}
-          >
-            {person.image ? (
-              <img
-                src={person.image}
-                alt={person.name || person.title}
-                className="h-full w-full object-cover will-change-transform"
-                style={getAdjustedImageStyle(person)}
-              />
-            ) : (
-              <div className="h-full min-h-[380px] flex items-center justify-center bg-slate-100">
-                <UserRound className="w-20 h-20 text-slate-300" />
-              </div>
-            )}
-          </div>
-
-          <div className="relative p-7 md:p-10 lg:p-12">
+          <div className="relative p-6 md:p-8 lg:p-10">
             <Quote
               className="absolute right-8 top-8 w-16 h-16 opacity-10"
               style={{ color: colors.purple }}
             />
 
-            {person.role && (
-              <div
-                className="inline-flex items-center rounded-full px-4 py-1.5 text-xs font-black uppercase tracking-[0.16em] mb-5"
-                style={{
-                  background: "rgba(215,25,32,0.08)",
-                  color: colors.red,
-                  border: "1px solid rgba(215,25,32,0.16)",
-                }}
-              >
-                {person.role}
+            <div className="flex flex-col gap-7 md:flex-row md:items-start">
+              <div className="shrink-0">
+                <div
+                  className="h-[220px] w-[220px] overflow-hidden rounded-[28px] md:h-[250px] md:w-[250px]"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, rgba(255,248,238,0.96), rgba(241,236,255,0.82))",
+                    border: "1px solid rgba(11,16,32,0.08)",
+                    boxShadow: "0 18px 42px rgba(11,16,32,0.10)",
+                  }}
+                >
+                  {person.image ? (
+                    <img
+                      src={person.image}
+                      alt={person.name || person.title || "Leadership"}
+                      className="h-full w-full object-cover will-change-transform"
+                      style={getAdjustedImageStyle(person)}
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center bg-slate-100">
+                      <UserRound className="w-16 h-16 text-slate-300" />
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
 
-            <h1
-              className="text-4xl md:text-5xl mb-5"
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 850,
-                color: colors.dark,
-                letterSpacing: "-0.045em",
-                lineHeight: 1.05,
-              }}
-            >
-              {person.title}
-            </h1>
+              <div className="min-w-0 flex-1 pt-1 md:pt-4">
+                {person.role && (
+                  <div
+                    className="inline-flex items-center rounded-full px-4 py-1.5 text-xs font-black uppercase tracking-[0.16em] mb-5"
+                    style={{
+                      background: "rgba(215,25,32,0.08)",
+                      color: colors.red,
+                      border: "1px solid rgba(215,25,32,0.16)",
+                    }}
+                  >
+                    {person.role}
+                  </div>
+                )}
 
-            <div className="mb-8">
-              <LeadershipSignature person={person} />
+                <h1
+                  className="text-4xl md:text-5xl mb-6"
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 850,
+                    color: colors.dark,
+                    letterSpacing: "-0.045em",
+                    lineHeight: 1.05,
+                  }}
+                >
+                  {person.title || "Leadership Message"}
+                </h1>
+
+                <LeadershipSignature person={person} />
+              </div>
             </div>
 
             <div
-              className="about-long-text whitespace-pre-line text-base md:text-lg leading-[1.9] text-slate-600"
-              style={{ maxWidth: "820px" }}
+              className="about-long-text whitespace-pre-line mt-8 rounded-[28px] p-5 text-base leading-[1.9] text-slate-600 md:p-7 md:text-lg"
+              style={{
+                background: "rgba(248,250,252,0.78)",
+                border: "1px solid rgba(15,23,42,0.06)",
+              }}
             >
               {person.message}
             </div>
@@ -563,7 +551,8 @@ function MessageCard({
   onEditTarget,
   onDeleteTarget,
 }) {
-  const isLongMessage = shouldShowReadMore(person.message);
+  const messageText = String(person.message || "").trim();
+  const isLongMessage = shouldShowReadMore(messageText);
 
   return (
     <EditableWrap
@@ -613,11 +602,23 @@ function MessageCard({
               letterSpacing: "-0.035em",
             }}
           >
-            {person.title}
+            {person.title || (editMode ? "Message title is empty" : "")}
           </h2>
 
-          <p className="about-message-preview about-long-text text-base md:text-lg leading-[1.85] text-slate-500 max-w-5xl">
-            {person.message}
+          <p
+            className="about-long-text text-base md:text-lg leading-[1.85] text-slate-500 max-w-5xl"
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              maxHeight: "5.55em",
+            }}
+          >
+            {messageText ||
+              (editMode
+                ? "Message text is empty. Click edit to add message."
+                : "")}
           </p>
 
           <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -637,7 +638,7 @@ function MessageCard({
               )}
             </div>
 
-            <LeadershipSignature person={person} />
+            <LeadershipSignature person={person} editMode={editMode} />
           </div>
         </div>
       </motion.div>
@@ -709,11 +710,13 @@ export function About({
       ? new URLSearchParams(window.location.search).get("message")
       : "";
 
-  const selectedMessage = !editMode && selectedMessageId
-    ? visibleMessages.find(
-        (person, index) => String(person.id || index) === String(selectedMessageId)
-      )
-    : null;
+  const selectedMessage =
+    !editMode && selectedMessageId
+      ? visibleMessages.find(
+          (person, index) =>
+            String(person.id || index) === String(selectedMessageId)
+        )
+      : null;
 
   if (selectedMessage) {
     return <LeadershipMessageDetailPage person={selectedMessage} />;
@@ -739,13 +742,6 @@ export function About({
           overflow-wrap: break-word;
           word-break: normal;
           hyphens: auto;
-        }
-
-        .about-message-preview {
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
         }
 
         @media (max-width: 640px) {
