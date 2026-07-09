@@ -246,6 +246,89 @@ function collectAlbumPhotos(items, fallbackCategory, fallbackTitle) {
   return photos;
 }
 
+function SmoothLoadedImage({
+  src,
+  alt,
+  className = "",
+  style = {},
+  fallback = null,
+  ...props
+}) {
+  const cleanSrc = String(src || "").trim();
+  const [displaySrc, setDisplaySrc] = useState(cleanSrc);
+  const [waitingForSrc, setWaitingForSrc] = useState("");
+
+  useEffect(() => {
+    if (!cleanSrc) {
+      setDisplaySrc("");
+      setWaitingForSrc("");
+      return undefined;
+    }
+
+    if (cleanSrc === displaySrc) {
+      setWaitingForSrc("");
+      return undefined;
+    }
+
+    let alive = true;
+    const image = new Image();
+
+    setWaitingForSrc(cleanSrc);
+
+    image.onload = () => {
+      if (!alive) return;
+
+      setDisplaySrc(cleanSrc);
+      setWaitingForSrc("");
+    };
+
+    image.onerror = () => {
+      if (!alive) return;
+
+      setWaitingForSrc("");
+    };
+
+    image.src = cleanSrc;
+
+    if (image.complete) {
+      setDisplaySrc(cleanSrc);
+      setWaitingForSrc("");
+    }
+
+    return () => {
+      alive = false;
+    };
+  }, [cleanSrc, displaySrc]);
+
+  if (!displaySrc) return fallback;
+
+  return (
+    <img
+      {...props}
+      src={displaySrc}
+      alt={alt}
+      className={className}
+      style={{
+        ...style,
+        opacity: waitingForSrc ? 0.96 : 1,
+        transition:
+          style?.transition ||
+          "opacity 220ms ease-out, transform 700ms ease-out",
+      }}
+    />
+  );
+}
+
+function preloadImage(url = "") {
+  const cleanUrl = String(url || "").trim();
+
+  if (!cleanUrl) return;
+
+  const image = new Image();
+  image.src = cleanUrl;
+}
+
+
 function buildSingleCategoryAlbum(content, category) {
   const visibleImages = (content.images || []).filter(
     (item) => item.visible !== false
@@ -375,19 +458,38 @@ function buildCategoryAlbums(content, activeCategory) {
 function GalleryCategoryCard({ album, index, onClick }) {
   const [currentImage, setCurrentImage] = useState(0);
 
-  useEffect(() => {
-    if (!album.photos || album.photos.length <= 1) return;
+  const photoUrls = useMemo(
+    () =>
+      Array.isArray(album.photos)
+        ? album.photos.map((photo) => photo?.url).filter(Boolean)
+        : [],
+    [album.photos]
+  );
 
-    const interval = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % album.photos.length);
+  const currentImageUrl =
+    photoUrls.length > 0 ? photoUrls[currentImage] || album.cover : album.cover;
+
+  useEffect(() => {
+    setCurrentImage(0);
+
+    const firstFewImages = photoUrls.slice(0, 3);
+
+    firstFewImages.forEach((url) => preloadImage(url));
+  }, [album.cover, photoUrls.join("|")]);
+
+  useEffect(() => {
+    if (photoUrls.length <= 1) return undefined;
+
+    const interval = window.setInterval(() => {
+      setCurrentImage((prev) => {
+        const next = (prev + 1) % photoUrls.length;
+        preloadImage(photoUrls[next]);
+        return next;
+      });
     }, 3500);
 
-    return () => clearInterval(interval);
-  }, [album.photos]);
-
-  const currentImageUrl = album.photos && album.photos.length > 0
-    ? album.photos[currentImage]?.url || album.cover
-    : album.cover;
+    return () => window.clearInterval(interval);
+  }, [photoUrls.join("|")]);
 
   return (
     <motion.div
@@ -401,14 +503,15 @@ function GalleryCategoryCard({ album, index, onClick }) {
     >
       <div className="overflow-hidden rounded-[32px] shadow-2xl bg-white">
         {currentImageUrl ? (
-          <motion.img
-            key={currentImage}
+          <SmoothLoadedImage
             src={currentImageUrl}
             alt={album.title}
-            className="w-full h-[450px] object-cover hover:scale-105 transition duration-700"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.7 }}
+            className="w-full h-[450px] object-cover hover:scale-105"
+            fallback={
+              <div className="w-full h-[450px] bg-slate-100 flex items-center justify-center">
+                <ImageIcon className="w-16 h-16 text-slate-300" />
+              </div>
+            }
           />
         ) : (
           <div className="w-full h-[450px] bg-slate-100 flex items-center justify-center">
@@ -813,12 +916,16 @@ function Gallery() {
                       title="Click to view this image"
                       className="w-full flex items-center justify-center cursor-zoom-in"
                     >
-                      <img
+                      <SmoothLoadedImage
                         src={currentPhoto.url}
                         alt={currentPhoto.title || selectedAlbum.title}
-                        loading="lazy"
                         decoding="async"
                         className="w-full max-h-[220px] sm:max-h-[420px] lg:max-h-[560px] object-contain rounded-2xl"
+                        fallback={
+                          <div className="w-full min-h-[220px] sm:min-h-[320px] flex items-center justify-center">
+                            <ImageIcon className="w-12 h-12 text-slate-500" />
+                          </div>
+                        }
                       />
                     </button>
                   ) : (
@@ -1042,20 +1149,28 @@ function Gallery() {
             )}
 
             <AnimatePresence mode="wait">
-              <motion.img
+              <motion.div
                 key={currentPhoto.url}
-                initial={{ opacity: 0, scale: 0.86, x: 30 }}
+                initial={{ opacity: 0, scale: 0.96, x: 18 }}
                 animate={{ opacity: 1, scale: zoomScale, x: 0 }}
-                exit={{ opacity: 0, scale: 0.86, x: -30 }}
-                transition={{ duration: 0.22 }}
+                exit={{ opacity: 0, scale: 0.96, x: -18 }}
+                transition={{ duration: 0.18 }}
                 onClick={(e) => e.stopPropagation()}
-                src={currentPhoto.url}
-                alt={currentPhoto.title || selectedAlbum.title}
-                className="max-w-[92vw] max-h-[82vh] rounded-3xl shadow-2xl object-contain"
                 style={{
                   cursor: zoomScale > 1 ? "grab" : "default",
                 }}
-              />
+              >
+                <SmoothLoadedImage
+                  src={currentPhoto.url}
+                  alt={currentPhoto.title || selectedAlbum.title}
+                  className="max-w-[92vw] max-h-[82vh] rounded-3xl shadow-2xl object-contain"
+                  fallback={
+                    <div className="w-[70vw] h-[60vh] rounded-3xl bg-slate-900 flex items-center justify-center">
+                      <ImageIcon className="w-16 h-16 text-slate-500" />
+                    </div>
+                  }
+                />
+              </motion.div>
             </AnimatePresence>
           </motion.div>
         )}
