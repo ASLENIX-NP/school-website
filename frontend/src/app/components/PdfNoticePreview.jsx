@@ -134,7 +134,7 @@ export default function PdfNoticePreview({ fileUrl, title = "Notice PDF" }) {
             </div>
 
             <div className="text-sm text-slate-500">
-              Please use Open PDF to view the full notice.
+              PDF preview could not be opened inside the page.
             </div>
           </div>
         </div>
@@ -150,3 +150,5 @@ export default function PdfNoticePreview({ fileUrl, title = "Notice PDF" }) {
     </div>
   );
 }
+
+

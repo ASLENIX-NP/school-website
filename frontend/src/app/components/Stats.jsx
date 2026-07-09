@@ -2,13 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import {
-  ArrowRight,
-  Camera,
-  Image as ImageIcon,
-  Pencil,
-  X,
-} from "lucide-react";
+import { ArrowRight, Camera, Pencil, X } from "lucide-react";
 import PdfNoticePreview from "./PdfNoticePreview";
 import HomeAnnouncementPopup from "./HomeAnnouncementPopup";
 
@@ -21,19 +15,12 @@ const palette = {
 
 const API_URL = "https://school-website-backend-ixx2.onrender.com";
 
-const HARDCODED_HOME_STORY_IMAGE_URLS = [
-  "https://images.unsplash.com/photo-1588072432836-e10032774350",
-];
-
-function isHardcodedHomeStoryImageUrl(value = "") {
-  const clean = String(value || "").trim();
-  return HARDCODED_HOME_STORY_IMAGE_URLS.some((url) => clean.startsWith(url));
-}
-
 export const defaultStatsSectionData = {
   eyebrow: "School Highlights",
   title: "Numbers that reflect our journey.",
- 
+  description:
+    "These highlights can later be updated directly from the admin dashboard without changing frontend code.",
+
   stats: [
     {
       value: "3800",
@@ -74,7 +61,8 @@ export const defaultStatsSectionData = {
     ],
     buttonText: "Read Our Story",
     buttonLink: "/about",
-    image: "",
+    image:
+      "https://images.unsplash.com/photo-1588072432836-e10032774350?w=1000&h=800&fit=crop&auto=format",
     imageZoom: 1,
     imageOffsetX: 0,
     imageOffsetY: 0,
@@ -139,9 +127,6 @@ export function mergeStatsSectionData(saved = {}) {
               savedStats.story.paragraphs[1] || "",
             ]
           : defaultStatsSectionData.story.paragraphs,
-      image: isHardcodedHomeStoryImageUrl(savedStats.story?.image)
-        ? ""
-        : String(savedStats.story?.image || defaultStatsSectionData.story.image || "").trim(),
       imageZoom: clampStoryImageZoom(savedStats.story?.imageZoom),
       imageOffsetX: clampStoryImageOffset(savedStats.story?.imageOffsetX),
       imageOffsetY: clampStoryImageOffset(savedStats.story?.imageOffsetY),
@@ -557,22 +542,13 @@ function Stats({
                     "0 28px 80px rgba(15,23,42,0.22), inset 0 1px 0 rgba(255,255,255,0.1)",
                 }}
               >
-                {statsData.story.image ? (
-                  <img
-                    src={statsData.story.image}
-                    alt="Baljagriti school"
-                    draggable={false}
-                    className="absolute inset-0"
-                    style={getStoryImageCropStyle(statsData.story)}
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-100 text-slate-400">
-                    <ImageIcon className="w-16 h-16 mb-3" />
-                    <div className="text-sm font-black uppercase tracking-[0.16em]">
-                      Add Story Image
-                    </div>
-                  </div>
-                )}
+                <img
+                  src={statsData.story.image}
+                  alt="Baljagriti school"
+                  draggable={false}
+                  className="absolute inset-0"
+                  style={getStoryImageCropStyle(statsData.story)}
+                />
 
                 <div
                   className="absolute inset-0"
@@ -606,6 +582,28 @@ function Stats({
                       style={{ color: "rgba(255,255,255,0.68)" }}
                     >
                       {statsData.story.imageTopSubtitle}
+                    </div>
+                  </div>
+
+                  <div
+                    className="absolute bottom-6 left-6 right-6 rounded-3xl p-5"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07))",
+                      border: "1px solid rgba(255,255,255,0.18)",
+                      backdropFilter: "blur(20px)",
+                      boxShadow: "0 22px 60px rgba(0,0,0,0.3)",
+                    }}
+                  >
+                    <div className="text-white text-lg font-bold mb-1">
+                      {statsData.story.imageBottomTitle}
+                    </div>
+
+                    <div
+                      className="text-sm"
+                      style={{ color: "rgba(255,255,255,0.68)" }}
+                    >
+                      {statsData.story.imageBottomDescription}
                     </div>
                   </div>
                 </EditableWrap>
@@ -1064,7 +1062,7 @@ function Stats({
                                   boxShadow: `0 14px 32px ${accent.glow}`,
                                 }}
                               >
-                                {hasPdf ? "Open PDF" : "Read Notice"}
+                                Read Notice
                                 <ArrowRight className="w-4 h-4" />
                               </span>
                             </div>

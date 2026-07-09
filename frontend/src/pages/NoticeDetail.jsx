@@ -274,33 +274,6 @@ export default function NoticeDetail() {
                     />
                   </div>
                 )}
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <a
-                    href={fileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-2xl px-5 py-3 text-sm font-black"
-                    style={{
-                      background: "rgba(75,46,131,0.08)",
-                      color: "#4B2E83",
-                      border: "1px solid rgba(75,46,131,0.18)",
-                    }}
-                  >
-                    {isImageFile ? "Open Image" : "Open PDF"}
-                  </a>
-
-                  <a
-                    href={fileUrl}
-                    download
-                    className="rounded-2xl px-5 py-3 text-sm font-black text-white"
-                    style={{
-                      background: "#0B1020",
-                    }}
-                  >
-                    {isImageFile ? "Download Image" : "Download PDF"}
-                  </a>
-                </div>
               </>
             ) : (
               <div
@@ -321,3 +294,5 @@ export default function NoticeDetail() {
     </section>
   );
 }
+
+

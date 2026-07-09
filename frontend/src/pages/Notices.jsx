@@ -389,7 +389,7 @@ function NoticeCard({
           }}
         />
 
-        <div className="grid gap-4 p-6 pl-8 md:grid-cols-[145px_1fr_170px] md:items-center">
+        <div className="grid gap-4 p-6 pl-8 md:grid-cols-[145px_1fr] md:items-center">
           <div>
             <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
               Date
@@ -463,25 +463,6 @@ function NoticeCard({
                   </div>
                 )}
               </div>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-3 md:items-end">
-           
-
-            {fileUrl && !editMode && (
-              <button
-                onClick={handleDownload}
-                className="rounded-2xl px-5 py-3 text-sm font-black text-center transition-all duration-300 hover:-translate-y-0.5"
-                style={{
-                  background: colors.dark,
-                  color: "#FFFFFF",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                Download
-              </button>
             )}
           </div>
         </div>
@@ -1212,31 +1193,6 @@ export default function Notices({
                       </div>
 
                       <div className="flex items-center gap-3 flex-shrink-0">
-                        {hasPdf && (
-                          <>
-                            <a
-                              href={pdfSrc}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="rounded-full px-5 py-2.5 text-sm font-black whitespace-nowrap transition-all duration-300 hover:-translate-y-0.5"
-                              style={{
-                                background: "rgba(75,46,131,0.08)",
-                                color: colors.purple,
-                                border: "1px solid rgba(75,46,131,0.18)",
-                              }}
-                            >
-                              View PDF
-                            </a>
-
-                            <button
-                              onClick={() => handleModalDownload(pdfSrc)}
-                              className="rounded-full px-5 py-2.5 text-sm font-black text-white whitespace-nowrap transition-all duration-300 hover:-translate-y-0.5"
-                              style={{ background: colors.dark }}
-                            >
-                              Download PDF
-                            </button>
-                          </>
-                        )}
 
                         <button
                           onClick={() => setSelectedNotice(null)}
@@ -1261,38 +1217,6 @@ export default function Notices({
                               fileUrl={pdfSrc}
                               title={selectedNotice.title || "Notice PDF"}
                             />
-                          </div>
-
-                          <div
-                            className="mt-5 rounded-2xl px-5 py-5"
-                            style={{
-                              background: "rgba(15,23,42,0.035)",
-                              border: "1px solid rgba(15,23,42,0.06)",
-                            }}
-                          >
-                            <div className="flex flex-wrap justify-center gap-3">
-                              <a
-                                href={pdfSrc}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="rounded-full px-5 py-3 text-sm font-black whitespace-nowrap"
-                                style={{
-                                  background: "rgba(75,46,131,0.08)",
-                                  color: colors.purple,
-                                  border: "1px solid rgba(75,46,131,0.18)",
-                                }}
-                              >
-                                View PDF
-                              </a>
-
-                              <button
-                                onClick={() => handleModalDownload(pdfSrc)}
-                                className="rounded-full px-5 py-3 text-sm font-black text-white whitespace-nowrap"
-                                style={{ background: colors.dark }}
-                              >
-                                Download PDF
-                              </button>
-                            </div>
                           </div>
                         </>
                       ) : (
@@ -1329,3 +1253,5 @@ export default function Notices({
     </>
   );
 }
+
+
