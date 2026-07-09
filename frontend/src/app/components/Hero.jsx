@@ -778,14 +778,23 @@ function Hero({
                 {heroData.titleLine2}
               </span>
               <br />
-              {String(heroData.titleLine3 || "")
-                .split(",")
-                .map((part, index, array) => (
-                  <span key={`${part}-${index}`}>
-                    {part.trim()}
-                    {index < array.length - 1 && <br />}
-                  </span>
-                ))}
+              <span
+                style={{
+                  display: "inline-block",
+                  fontSize: "0.72em",
+                  lineHeight: 1.04,
+                  letterSpacing: "-0.055em",
+                  marginTop: "0.08em",
+                }}
+              >
+                {String(heroData.titleLine3 || "")
+                  .split(",")
+                  .map((part, index) => (
+                    <span key={`${part}-${index}`} style={{ display: "block" }}>
+                      {part.trim()}
+                    </span>
+                  ))}
+              </span>
             </motion.h1>
           </EditableWrap>
 
@@ -931,6 +940,3 @@ function Hero({
 
 export { Hero };
 export default Hero;
-
-
-
