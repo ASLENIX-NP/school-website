@@ -324,6 +324,7 @@ function Stats({
   );
   const [notices, setNotices] = useState([]);
   const [selectedNotice, setSelectedNotice] = useState(null);
+  const storyImageUrl = String(statsData.story?.image || "").trim();
 
   useEffect(() => {
     if (contentOverride) {
@@ -384,7 +385,7 @@ function Stats({
       {!editMode && <HomeAnnouncementPopup />}
 
       <section
-        className="relative overflow-hidden py-16"
+        className="relative overflow-hidden py-10 sm:py-16"
         style={{
           background:
             "linear-gradient(180deg, #FFF8EE 0%, #F8FAFC 45%, #F7F4EF 100%)",
@@ -408,7 +409,7 @@ function Stats({
           />
         </div>
 
-        <div className="relative z-10 max-w-[1450px] mx-auto px-6">
+        <div className="relative z-10 max-w-[1450px] mx-auto px-5 sm:px-6">
           <EditableWrap
             editMode={editMode}
             target={{ type: "statsHeader" }}
@@ -458,7 +459,7 @@ function Stats({
             </motion.div>
           </EditableWrap>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-20">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-12 sm:mb-20">
             {statsData.stats.map((stat, i) => (
               <EditableWrap
                 key={`${stat.label}-${i}`}
@@ -521,7 +522,7 @@ function Stats({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.3 }}
             transition={{ duration: 0.6 }}
-            className="grid lg:grid-cols-2 gap-10 items-center mb-24"
+            className="grid lg:grid-cols-2 gap-7 sm:gap-10 items-center mb-16 sm:mb-24"
           >
             <EditableWrap
               editMode={editMode}
@@ -531,7 +532,7 @@ function Stats({
               label="Change story image"
             >
               <div
-                className="relative rounded-[2rem] overflow-hidden min-h-[430px] bg-slate-900"
+                className="relative rounded-[2rem] overflow-hidden min-h-[260px] sm:min-h-[340px] lg:min-h-[430px] bg-slate-900"
                 style={{
                   background:
                     "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(2,6,23,0.92))",
@@ -542,19 +543,30 @@ function Stats({
                     "0 28px 80px rgba(15,23,42,0.22), inset 0 1px 0 rgba(255,255,255,0.1)",
                 }}
               >
-                <img
-                  src={statsData.story.image}
-                  alt="Baljagriti school"
-                  draggable={false}
-                  className="absolute inset-0"
-                  style={getStoryImageCropStyle(statsData.story)}
-                />
+                {storyImageUrl ? (
+                  <img
+                    key={storyImageUrl}
+                    src={storyImageUrl}
+                    alt="Baljagriti school"
+                    draggable={false}
+                    className="absolute inset-0"
+                    style={getStoryImageCropStyle(statsData.story)}
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-100 text-slate-400">
+                    <Camera className="w-14 h-14 mb-3" />
+                    <div className="text-xs font-black uppercase tracking-[0.16em]">
+                      Add Story Image
+                    </div>
+                  </div>
+                )}
 
                 <div
                   className="absolute inset-0"
                   style={{
-                    background:
-                      "linear-gradient(135deg, rgba(2,6,23,0.72), rgba(2,6,23,0.16) 45%, rgba(15,23,42,0.86))",
+                    background: storyImageUrl
+                      ? "linear-gradient(135deg, rgba(2,6,23,0.72), rgba(2,6,23,0.16) 45%, rgba(15,23,42,0.86))"
+                      : "linear-gradient(135deg, rgba(2,6,23,0.18), rgba(2,6,23,0.04) 45%, rgba(15,23,42,0.22))",
                   }}
                 />
 

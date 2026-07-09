@@ -247,7 +247,7 @@ function GlassStat({
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay, duration: 0.55 }}
-        className="group min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl px-3 py-4 sm:p-5 cursor-pointer transition-all duration-300 hover:-translate-y-2"
+        className="group min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl px-4 py-4 sm:p-5 cursor-pointer transition-all duration-300 hover:-translate-y-2"
         style={{
           background:
             "linear-gradient(145deg, rgba(255,255,255,0.82), rgba(255,255,255,0.50))",
@@ -473,7 +473,7 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
       initial={{ opacity: 0, scale: 0.96, y: 24 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.85, delay: 0.18 }}
-      className="relative min-h-[410px] lg:min-h-[445px] xl:min-h-[520px] flex items-center justify-center lg:-translate-y-8 xl:-translate-y-12"
+      className="relative mt-6 min-h-[270px] sm:min-h-[330px] lg:mt-0 lg:min-h-[445px] xl:min-h-[520px] flex items-center justify-center lg:-translate-y-8 xl:-translate-y-12"
     >
       <EditableWrap
         editMode={editMode}
@@ -492,7 +492,7 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
             repeat: editMode ? 0 : Infinity,
             ease: "easeInOut",
           }}
-          className="relative w-[94%] h-[360px] lg:h-[395px] rounded-[2.5rem] overflow-hidden bg-slate-900"
+          className="relative w-full sm:w-[94%] h-[255px] sm:h-[330px] lg:h-[395px] rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-slate-900"
           style={{
             boxShadow:
               "0 38px 92px rgba(15,23,42,0.20), 0 0 60px rgba(56,189,248,0.12)",
@@ -660,7 +660,7 @@ function Hero({
   return (
     <section
       id="home"
-      className="relative overflow-hidden pt-20 pb-20 lg:pb-14"
+      className="relative overflow-hidden pt-20 pb-8 sm:pb-14 lg:pb-14"
       style={{
         background:
           "radial-gradient(circle at 9% 18%, rgba(56,189,248,0.30), transparent 32%), radial-gradient(circle at 86% 14%, rgba(250,204,21,0.28), transparent 31%), radial-gradient(circle at 58% 78%, rgba(139,92,246,0.16), transparent 38%), linear-gradient(135deg, #F8FCFF 0%, #FFF8EE 45%, #F1F7FF 100%)",
@@ -710,7 +710,7 @@ function Hero({
         />
       </div>
 
-      <div className="max-w-[1450px] mx-auto px-8 py-8 lg:py-6 grid lg:grid-cols-[0.95fr_1.05fr] gap-8 items-center relative z-10">
+      <div className="max-w-[1450px] mx-auto px-5 sm:px-8 py-6 sm:py-8 lg:py-6 grid lg:grid-cols-[0.95fr_1.05fr] gap-6 lg:gap-8 items-center relative z-10">
         <div>
           <EditableWrap
             editMode={editMode}
@@ -887,7 +887,7 @@ function Hero({
             </motion.div>
           </EditableWrap>
 
-          <div className="grid grid-cols-3 gap-3 max-w-xl">
+          <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-3 max-w-xl">
             <GlassStat
               value={heroData.stat1Value}
               label={heroData.stat1Label}

@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
@@ -1363,11 +1362,6 @@ export default function AdminHome() {
               visibility: visible !important;
             }
 
-            .admin-home-preview-frame .group .hidden,
-            .admin-home-preview-frame .group [class*="hidden"] {
-              display: inline-flex !important;
-            }
-
             .admin-home-preview-frame [class*="absolute"] button,
             .admin-home-preview-frame button[class*="rounded-full"] {
               min-width: 2.25rem !important;
@@ -1440,7 +1434,7 @@ export default function AdminHome() {
         )}
 
         <div
-          className="admin-home-preview-frame rounded-[2rem] overflow-x-auto"
+          className="admin-home-preview-frame rounded-[2rem] overflow-hidden"
           style={{
             background:
               "radial-gradient(circle at top left, rgba(56,189,248,0.14), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
@@ -2211,5 +2205,3 @@ export default function AdminHome() {
     </div>
   );
 }
-
-

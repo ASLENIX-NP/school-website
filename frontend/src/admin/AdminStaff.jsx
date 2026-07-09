@@ -1013,9 +1013,11 @@ export default function AdminStaff() {
               pointer-events: auto !important;
             }
 
-            .admin-staff-preview-frame .group .hidden,
-            .admin-staff-preview-frame .group [class*="hidden"] {
-              display: inline-flex !important;
+            .admin-staff-preview-frame img[class*="object-cover"],
+            .admin-staff-preview-frame img[class*="object-contain"] {
+              width: 100% !important;
+              height: 100% !important;
+              display: block !important;
             }
 
             .admin-staff-preview-frame [class*="absolute"] button,
