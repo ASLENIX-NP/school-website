@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Pencil,
   Sparkles,
   X,
 } from "lucide-react";
@@ -56,11 +57,7 @@ export const defaultCalendarContent = {
 
 export const calendarTypeOptions = [
   { value: "holiday", label: "Holiday", labelNp: "बिदा" },
-  { value: "exam", label: "Exam", labelNp: "परीक्षा" },
   { value: "event", label: "School Event", labelNp: "कार्यक्रम" },
-  { value: "admission", label: "Admission", labelNp: "भर्ना" },
-  { value: "result", label: "Result", labelNp: "नतिजा" },
-  { value: "notice", label: "Notice", labelNp: "सूचना" },
   { value: "workingDay", label: "Working Day", labelNp: "कार्य दिन" },
 ];
 
@@ -110,9 +107,9 @@ export const calendarTypeStyles = {
   workingDay: {
     label: "Working Day",
     labelNp: "कार्य दिन",
-    color: colors.blue,
-    background: "rgba(24,119,242,0.08)",
-    border: "rgba(24,119,242,0.18)",
+    color: colors.dark,
+    background: "rgba(15,23,42,0.04)",
+    border: "rgba(15,23,42,0.08)",
   },
 };
 
@@ -372,7 +369,7 @@ function getAdDateRangeKeys(startDate, endDate) {
 function inferCalendarEventType({ title = "", category = "", type = "" } = {}) {
   const explicitType = String(type || "").trim();
 
-  if (calendarTypeOptions.some((option) => option.value === explicitType)) {
+  if (["holiday", "event", "workingDay"].includes(explicitType)) {
     return explicitType;
   }
 
@@ -382,32 +379,11 @@ function inferCalendarEventType({ title = "", category = "", type = "" } = {}) {
     return "holiday";
   }
 
-  if (text.includes("exam") || text.includes("test") || text.includes("terminal") || text.includes("परीक्षा")) {
-    return "exam";
+  if (text.includes("working") || text.includes("open saturday") || text.includes("कार्य दिन")) {
+    return "workingDay";
   }
 
-  if (text.includes("result") || text.includes("report card") || text.includes("नतिजा")) {
-    return "result";
-  }
-
-  if (text.includes("admission") || text.includes("enrollment") || text.includes("भर्ना")) {
-    return "admission";
-  }
-
-  if (
-    text.includes("event") ||
-    text.includes("sports") ||
-    text.includes("picnic") ||
-    text.includes("program") ||
-    text.includes("competition") ||
-    text.includes("कार्यक्रम") ||
-    text.includes("खेल") ||
-    text.includes("पिकनिक")
-  ) {
-    return "event";
-  }
-
-  return "notice";
+  return "event";
 }
 
 export function normalizeCalendarEvent(event = {}, index = 0) {
@@ -472,11 +448,7 @@ function getCalendarEventsFromNotices(notices = []) {
       return dateKeys.map((dateKey) => ({
         id: `notice-${notice.id || index}-${dateKey}`,
         title: notice.title || "School notice",
-        type: inferCalendarEventType({
-          title: notice.title,
-          category: notice.category,
-          type: notice.calendar_type || notice.calendarType,
-        }),
+        type: "event",
         dateKey,
         description: notice.description || "",
         source: "notice",
@@ -501,6 +473,7 @@ function getBsMonthCells(bsYear, bsMonthIndex) {
       bsYear,
       bsMonthIndex,
       bsDay: day,
+      bsKey: `${bsYear}-${String(bsMonthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
       adDate,
       adKey: formatDateKey(adDate),
     });
@@ -556,7 +529,7 @@ function LegendItem({ type }) {
   );
 }
 
-function CalendarCell({ cell, todayKey, selectedDateKey, eventMap, saturdayHoliday, onSelect }) {
+function CalendarCell({ cell, todayKey, selectedDateKey, eventMap, saturdayHoliday, editMode = false, onSelect, onAdminDateClick = () => {} }) {
   if (!cell) return <div className="h-12 rounded-2xl md:h-14" />;
 
   const dayEvents = eventMap[cell.adKey] || [];
@@ -564,27 +537,35 @@ function CalendarCell({ cell, todayKey, selectedDateKey, eventMap, saturdayHolid
   const isSaturdayHoliday = saturdayHoliday && cell.adDate.getDay() === 6 && !hasWorkingDay;
   const isToday = cell.adKey === todayKey;
   const isSelected = cell.adKey === selectedDateKey;
-  const topEvents = dayEvents.filter((event) => event.type !== "workingDay").slice(0, 4);
+  const visibleEvents = dayEvents.filter((event) => event.type !== "workingDay");
+  const topEvents = visibleEvents.slice(0, 4);
+  const hasHoliday = visibleEvents.some((event) => event.type === "holiday");
 
   return (
     <button
       type="button"
-      onClick={() => onSelect(cell.adKey)}
+      onClick={() => {
+        onSelect(cell.adKey);
+        if (editMode) onAdminDateClick(cell);
+      }}
       className="relative h-12 rounded-2xl p-1 text-center transition-all hover:-translate-y-0.5 md:h-14"
       style={{
         background: isSelected
           ? colors.dark
-          : isSaturdayHoliday
+          : isSaturdayHoliday || hasHoliday
           ? "rgba(215,25,32,0.08)"
           : topEvents.length > 0
           ? "rgba(56,189,248,0.08)"
           : "rgba(15,23,42,0.035)",
-        color: isSelected ? "#FFFFFF" : isSaturdayHoliday ? colors.red : colors.dark,
+        color: isSelected ? "#FFFFFF" : isSaturdayHoliday || hasHoliday ? colors.red : colors.dark,
         border: isToday
           ? `2px solid ${colors.green}`
           : isSelected
           ? `2px solid ${colors.dark}`
+          : editMode
+          ? "1px dashed rgba(56,189,248,0.35)"
           : "1px solid rgba(15,23,42,0.06)",
+        cursor: editMode ? "copy" : "pointer",
       }}
     >
       <span className="block text-base font-black leading-tight md:text-lg">
@@ -595,7 +576,7 @@ function CalendarCell({ cell, todayKey, selectedDateKey, eventMap, saturdayHolid
       </span>
 
       <div className="absolute bottom-0.5 left-1/2 flex -translate-x-1/2 gap-0.5">
-        {isSaturdayHoliday && (
+        {(isSaturdayHoliday || hasHoliday) && (
           <span className="h-1.5 w-1.5 rounded-full" style={{ background: isSelected ? "#FFFFFF" : colors.red }} />
         )}
         {topEvents.map((event) => (
@@ -603,7 +584,7 @@ function CalendarCell({ cell, todayKey, selectedDateKey, eventMap, saturdayHolid
             key={event.id}
             className="h-1.5 w-1.5 rounded-full"
             style={{
-              background: isSelected ? "#FFFFFF" : calendarTypeStyles[event.type]?.color || colors.cyan,
+              background: isSelected ? "#FFFFFF" : event.type === "holiday" ? colors.red : colors.blue,
             }}
           />
         ))}
@@ -637,7 +618,7 @@ function EventPill({ event }) {
   );
 }
 
-export function Calendar({ contentOverride = null, noticesOverride = null }) {
+export function Calendar({ contentOverride = null, noticesOverride = null, editMode = false, onEditTarget = () => {}, onDateSelectForAdmin = () => {} }) {
   const [content, setContent] = useState(() => mergeCalendarContent(contentOverride || defaultCalendarContent));
   const [notices, setNotices] = useState(Array.isArray(noticesOverride) ? noticesOverride.map(normalizeNotice) : []);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -701,7 +682,7 @@ export function Calendar({ contentOverride = null, noticesOverride = null }) {
     return () => {
       alive = false;
     };
-  }, [contentOverride]);
+  }, [contentOverride, noticesOverride]);
 
   const manualEvents = useMemo(() => normalizeCalendarEvents(content.events, "manual"), [content.events]);
   const noticeEvents = useMemo(
@@ -778,7 +759,7 @@ export function Calendar({ contentOverride = null, noticesOverride = null }) {
             initial={{ opacity: 0, y: 26 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55 }}
-            className="mb-6"
+            className={editMode ? "mb-6 relative group rounded-[28px] border border-dashed border-sky-300/70 p-4 -m-4" : "mb-6"}
           >
             <span
               className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-black uppercase tracking-[0.14em] mb-4"
@@ -831,7 +812,33 @@ export function Calendar({ contentOverride = null, noticesOverride = null }) {
                 </div>
               </div>
             </div>
+
+            {editMode && (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onEditTarget({ type: "pageHeader" });
+                }}
+                className="absolute -top-4 -right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full shadow-xl transition-all group-hover:scale-105"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                  color: colors.dark,
+                  border: "1px solid rgba(255,255,255,0.85)",
+                }}
+                title="Edit calendar heading"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            )}
           </motion.div>
+
+          {editMode && (
+            <div className="mb-4 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm font-bold text-sky-700">
+              Admin tip: click any calendar date to add a holiday, school event, or working day for that BS date.
+            </div>
+          )}
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] items-start">
             <motion.div
@@ -906,7 +913,9 @@ export function Calendar({ contentOverride = null, noticesOverride = null }) {
                       selectedDateKey={selectedDateKey}
                       eventMap={eventMap}
                       saturdayHoliday={content.saturday_holiday !== false}
+                      editMode={editMode}
                       onSelect={setSelectedDateKey}
+                      onAdminDateClick={onDateSelectForAdmin}
                     />
                   ))}
                 </div>
