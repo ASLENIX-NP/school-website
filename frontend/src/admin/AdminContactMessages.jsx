@@ -63,7 +63,7 @@ function buildEmailLink(message) {
     `Re: ${message.subject || getSourceLabel(message.source) + " Message"}`
   );
   const body = encodeURIComponent(
-    `Hello ${message.name || ""},\n\nThank you for contacting Baljagriti Secondary English School.\n\n`
+    `Hello ${message.name || ""},\n\nThank you for contacting Baljagriti English Secondary School.\n\n`
   );
 
   return `mailto:${email}?subject=${subject}&body=${body}`;
@@ -72,7 +72,7 @@ function buildEmailLink(message) {
 function buildWhatsAppLink(message) {
   const phone = whatsappPhone(message.phone);
   const text = encodeURIComponent(
-    `Hello ${message.name || ""}, thank you for contacting Baljagriti Secondary English School.`
+    `Hello ${message.name || ""}, thank you for contacting Baljagriti English Secondary School.`
   );
 
   return `https://wa.me/${phone}?text=${text}`;

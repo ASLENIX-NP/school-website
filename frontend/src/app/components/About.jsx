@@ -29,12 +29,12 @@ const colors = {
 export const defaultAboutContent = {
   pageTitle: "About Us",
   pageSubtitle:
-    "Learn about Baljagriti Secondary English School, our values, and our commitment to quality education.",
+    "Learn about Baljagriti English Secondary School, our values, and our commitment to quality education.",
 
   storyBadge: "Our Story",
   storyTitle: "Building Tomorrow's Leaders Today",
   storyParagraphs: [
-    "Baljagriti Secondary English School, located in the heart of Makwanpur, Nepal, has been a beacon of quality education for many years. What began as a small school with a strong vision has grown into a thriving institution serving students from Play Group to Grade 10.",
+    "Baljagriti English Secondary School, located in the heart of Makwanpur, Nepal, has been a beacon of quality education for many years. What began as a small school with a strong vision has grown into a thriving institution serving students from Play Group to Grade 10.",
     "We take pride in our dedicated team of experienced educators who work tirelessly to ensure every child receives the attention, guidance, and learning environment they need to grow academically and personally.",
   ],
   storyImageUrl:
@@ -86,7 +86,7 @@ export const defaultAboutContent = {
       role: "Principal",
       title: "Principal's Message",
       message:
-        "Welcome to Baljagriti Secondary English School. We are committed to nurturing every child into a confident, capable, disciplined, and compassionate individual. Our goal is to provide quality education with strong values, creativity, and academic excellence.",
+        "Welcome to Baljagriti English Secondary School. We are committed to nurturing every child into a confident, capable, disciplined, and compassionate individual. Our goal is to provide quality education with strong values, creativity, and academic excellence.",
       image: "",
       imageZoom: 1,
       imageOffsetX: 0,
@@ -134,7 +134,7 @@ export const defaultAboutContent = {
       id: 1,
       year: "2046 BS",
       title: "School Founded",
-      desc: "Baljagriti Secondary English School was established in Makwanpur with a vision to provide quality English-medium education.",
+      desc: "Baljagriti English Secondary School was established in Makwanpur with a vision to provide quality English-medium education.",
       visible: true,
     },
     {

@@ -36,7 +36,7 @@ export const defaultHeroData = {
   titleLine2: "English School",
   titleLine3: "Basudev Marga,Hetauda-2",
   description:
-    "Baljagriti Secondary English School blends academic discipline, digital learning, creativity, sports, and values for students from Play Group to Grade 10.",
+    "Baljagriti English Secondary School blends academic discipline, digital learning, creativity, sports, and values for students from Play Group to Grade 10.",
   image: "",
   images: [],
   imageAdjustments: {},

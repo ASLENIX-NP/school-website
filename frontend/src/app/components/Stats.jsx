@@ -1053,19 +1053,7 @@ function Stats({
                               </p>
                             </div>
 
-                            <div className="flex md:justify-end">
-                              <span
-                                className="inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-black transition-all duration-300 group-hover:gap-3 group-hover:-translate-y-0.5"
-                                style={{
-                                  color: "#FFFFFF",
-                                  background: `linear-gradient(135deg, ${accent.color}, #0B1020)`,
-                                  boxShadow: `0 14px 32px ${accent.glow}`,
-                                }}
-                              >
-                                Read Notice
-                                <ArrowRight className="w-4 h-4" />
-                              </span>
-                            </div>
+                            <div className="hidden md:block" />
                           </div>
                         </button>
                       </motion.div>
@@ -1195,4 +1183,3 @@ function Stats({
 
 export { Stats };
 export default Stats;
-

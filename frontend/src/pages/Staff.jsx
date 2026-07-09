@@ -82,7 +82,7 @@ export const defaultStaffContent = {
       phone: "+977-9800000000",
       email: "",
       description:
-        "Mr. Binod Subedi has been leading Baljagriti Secondary English School with vision and dedication for over a decade. His commitment to academic excellence and student welfare has transformed the school into a centre of quality education in the region.",
+        "Mr. Binod Subedi has been leading Baljagriti English Secondary School with vision and dedication for over a decade. His commitment to academic excellence and student welfare has transformed the school into a centre of quality education in the region.",
       visible: true,
     },
     {
