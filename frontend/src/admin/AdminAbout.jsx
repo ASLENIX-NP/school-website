@@ -811,6 +811,21 @@ export default function AdminAbout() {
     setModalForm({});
   };
 
+  const preventUnsafeBackspaceNavigation = (event) => {
+    if (event.key !== "Backspace") return;
+
+    const target = event.target;
+    const tagName = String(target?.tagName || "").toLowerCase();
+    const isEditableField =
+      tagName === "input" ||
+      tagName === "textarea" ||
+      target?.isContentEditable;
+
+    if (!isEditableField) {
+      event.preventDefault();
+    }
+  };
+
   const updateModalField = (name, value) => {
     setModalForm((prev) => ({
       ...prev,
@@ -1188,8 +1203,8 @@ export default function AdminAbout() {
             ...nextForm.messages,
             {
               id: Date.now(),
-              name: "New Leader",
-              role: "Role",
+              name: "Leader Name",
+              role: "Post / Designation",
               title: "Message Title",
               message: "Write the leadership message here.",
               image: "",
@@ -1444,7 +1459,6 @@ export default function AdminAbout() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={closeEditor}
           >
             <motion.div
               initial={{ opacity: 0, y: 24, scale: 0.94 }}
@@ -1458,6 +1472,9 @@ export default function AdminAbout() {
                 boxShadow: "0 42px 110px rgba(0,0,0,0.28)",
               }}
               onClick={(event) => event.stopPropagation()}
+              onMouseDown={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+              onKeyDownCapture={preventUnsafeBackspaceNavigation}
             >
               <div
                 className="h-1"
@@ -1744,16 +1761,22 @@ export default function AdminAbout() {
                   {editingTarget.type === "leadershipMessage" && (
                     <>
                       <Field
-                        label="Name"
+                        label="Person Name"
                         value={modalForm.name}
                         onChange={(value) => updateModalField("name", value)}
+                        placeholder="Example: Principal name"
                       />
 
                       <Field
-                        label="Role"
+                        label="Post / Designation"
                         value={modalForm.role}
                         onChange={(value) => updateModalField("role", value)}
+                        placeholder="Example: Principal"
                       />
+
+                      <div className="rounded-2xl bg-sky-50 px-4 py-3 text-xs font-semibold leading-relaxed text-sky-700 border border-sky-100">
+                        Name and post will appear on the lower-right side of the message card and on the full message page.
+                      </div>
 
                       <Field
                         label="Message Title"
