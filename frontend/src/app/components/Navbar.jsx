@@ -18,6 +18,7 @@ export const defaultNavbarContent = {
     { id: "academics", label: "Academics", href: "/academics", visible: true },
     { id: "notices", label: "Notices", href: "/notices", visible: true },
     { id: "calendar", label: "Calendar", href: "/calendar", visible: true },
+    { id: "blogs", label: "Blog", href: "/blogs", visible: true },
     { id: "facilities", label: "Facilities", href: "/facilities", visible: true },
     { id: "staff", label: "Staff", href: "/staff", visible: true },
     { id: "gallery", label: "Gallery", href: "/gallery", visible: true },
@@ -464,3 +465,5 @@ export function Navbar({
 }
 
 export default Navbar;
+
+

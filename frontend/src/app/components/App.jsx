@@ -23,6 +23,8 @@ const Footer = lazyNamed(() => import("./Footer"), "Footer");
 
 const Notices = lazy(() => import("../../pages/Notices"));
 const Calendar = lazy(() => import("../../pages/Calendar"));
+const Blogs = lazy(() => import("../../pages/Blogs"));
+const BlogDetail = lazy(() => import("../../pages/BlogDetail"));
 const NoticeDetail = lazy(() => import("../../pages/NoticeDetail"));
 const Staff = lazy(() => import("../../pages/Staff"));
 const Facilities = lazy(() => import("../../pages/Facilities"));
@@ -46,6 +48,7 @@ const AdminContactMessages = lazy(() => import("../../admin/AdminContactMessages
 const AdminAddNotice = lazy(() => import("../../admin/AdminAddNotice"));
 const AdminAnnouncements = lazy(() => import("../../admin/AdminAnnouncements"));
 const AdminCalendar = lazy(() => import("../../admin/AdminCalendar"));
+const AdminBlog = lazy(() => import("../../admin/AdminBlog"));
 
 function PageLoader() {
   return (
@@ -104,6 +107,10 @@ function CalendarPage() {
   return <Calendar />;
 }
 
+function BlogsPage() {
+  return <Blogs />;
+}
+
 function ProtectedPage({ children }) {
   return <ProtectedAdminRoute>{children}</ProtectedAdminRoute>;
 }
@@ -133,6 +140,8 @@ function SchoolApp() {
             <Route path="/admissions" element={<AdmissionsPage />} />
             <Route path="/notices" element={<Notices />} />
             <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/blogs" element={<BlogsPage />} />
+            <Route path="/blogs/:slug" element={<BlogDetail />} />
             <Route path="/notices/:id" element={<NoticeDetail />} />
             <Route path="/staff" element={<Staff />} />
             <Route path="/events" element={<EventsPage />} />
@@ -216,6 +225,15 @@ function SchoolApp() {
               element={
                 <ProtectedPage>
                   <AdminCalendar />
+                </ProtectedPage>
+              }
+            />
+
+            <Route
+              path="/admin/blogs"
+              element={
+                <ProtectedPage>
+                  <AdminBlog />
                 </ProtectedPage>
               }
             />
@@ -335,3 +353,5 @@ function SchoolApp() {
 }
 
 export default SchoolApp;
+
+
