@@ -27,6 +27,7 @@ const HARDCODED_HERO_IMAGE_URLS = [
 
 function isHardcodedHeroImageUrl(value = "") {
   const clean = String(value || "").trim();
+
   return HARDCODED_HERO_IMAGE_URLS.some((url) => clean.startsWith(url));
 }
 
@@ -58,6 +59,8 @@ export const defaultHeroData = {
   imageBottomDescription:
     "A learning environment built for academics, values, creativity, and student growth.",
 
+  motto: "Our motto is to provide quality education.",
+
   floating1Title: "Quality Education",
   floating1Subtitle: "Academics + Values",
   floating2Title: "Computer Lab",
@@ -77,8 +80,8 @@ export function mergeHeroData(saved = {}) {
   const savedImages = Array.isArray(saved?.images)
     ? saved.images
     : Array.isArray(merged.images)
-    ? merged.images
-    : [];
+      ? merged.images
+      : [];
 
   const cleanImages = Array.from(
     new Set(
@@ -101,8 +104,8 @@ export function mergeHeroData(saved = {}) {
     cleanImages.length > 0
       ? cleanImages
       : cleanFallbackImage
-      ? [cleanFallbackImage]
-      : [];
+        ? [cleanFallbackImage]
+        : [];
 
   const rawAdjustments =
     saved?.imageAdjustments && typeof saved.imageAdjustments === "object"
@@ -168,6 +171,7 @@ function getHeroImageCropStyle(heroData = {}, imageUrl = "") {
 
 function safeLink(link, fallback) {
   const clean = String(link || "").trim();
+
   return clean.startsWith("/") ? clean : fallback;
 }
 
@@ -184,9 +188,9 @@ function EditIconButton({
   return (
     <button
       type="button"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
         onEditTarget(target);
       }}
       className={`absolute -top-3 -right-3 z-[80] opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 rounded-full w-9 h-9 flex items-center justify-center shadow-xl ${className}`}
@@ -216,6 +220,7 @@ function EditableWrap({
   return (
     <div className={`relative group ${className}`}>
       {children}
+
       <EditIconButton
         editMode={editMode}
         target={target}
@@ -300,8 +305,8 @@ function FloatingTextTag({
   const adminPositions = [
     "absolute left-[9%] top-20 z-20 hidden xl:block",
     "absolute right-[9%] top-24 z-20 hidden xl:block",
-    "absolute left-[13%] bottom-12 z-20 hidden xl:block",
-    "absolute right-[13%] bottom-14 z-20 hidden xl:block",
+    "absolute left-[13%] bottom-28 z-20 hidden xl:block",
+    "absolute right-[13%] bottom-24 z-20 hidden xl:block",
   ];
 
   const positionClass = editMode
@@ -444,11 +449,14 @@ function Premium3DBackground({ editMode = false }) {
 
 function HeroImageStage({ heroData, editMode, onEditTarget }) {
   const heroImages =
-    Array.isArray(heroData.images) && heroData.images.filter(Boolean).length > 0
-      ? heroData.images.filter(Boolean).filter((image) => !isHardcodedHeroImageUrl(image))
+    Array.isArray(heroData.images) &&
+    heroData.images.filter(Boolean).length > 0
+      ? heroData.images
+          .filter(Boolean)
+          .filter((image) => !isHardcodedHeroImageUrl(image))
       : heroData.image && !isHardcodedHeroImageUrl(heroData.image)
-      ? [heroData.image]
-      : [];
+        ? [heroData.image]
+        : [];
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
@@ -460,20 +468,23 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
     if (editMode || heroImages.length <= 1) return undefined;
 
     const timer = window.setInterval(() => {
-      setActiveImageIndex((current) => (current + 1) % heroImages.length);
+      setActiveImageIndex(
+        (current) => (current + 1) % heroImages.length
+      );
     }, 4500);
 
     return () => window.clearInterval(timer);
   }, [editMode, heroImages.length]);
 
-  const activeImage = heroImages[activeImageIndex] || heroImages[0] || "";
+  const activeImage =
+    heroImages[activeImageIndex] || heroImages[0] || "";
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96, y: 24 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.85, delay: 0.18 }}
-      className="relative mt-6 min-h-[270px] sm:min-h-[330px] lg:mt-0 lg:min-h-[445px] xl:min-h-[520px] flex items-center justify-center lg:-translate-y-8 xl:-translate-y-12"
+      className="relative mt-8 min-h-[350px] sm:min-h-[430px] lg:mt-0 lg:min-h-[535px] xl:min-h-[585px] flex flex-col items-center justify-center lg:translate-y-3 xl:translate-y-5"
     >
       <EditableWrap
         editMode={editMode}
@@ -513,6 +524,7 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-100 text-slate-400">
               <ImageIcon className="w-16 h-16 mb-3" />
+
               <div className="text-sm font-black uppercase tracking-[0.16em]">
                 Add Hero Image
               </div>
@@ -546,9 +558,12 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
                     }}
                     className="h-2.5 rounded-full transition-all"
                     style={{
-                      width: activeImageIndex === index ? "18px" : "10px",
+                      width:
+                        activeImageIndex === index ? "18px" : "10px",
                       background:
-                        activeImageIndex === index ? palette.cyan : "rgba(15,23,42,0.28)",
+                        activeImageIndex === index
+                          ? palette.cyan
+                          : "rgba(15,23,42,0.28)",
                     }}
                     aria-label={`Show hero image ${index + 1}`}
                   />
@@ -556,7 +571,42 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
               </div>
             </div>
           )}
+        </motion.div>
+      </EditableWrap>
 
+      <EditableWrap
+        editMode={editMode}
+        target={{ type: "heroMotto" }}
+        onEditTarget={onEditTarget}
+        label="Edit school motto"
+        className="relative z-30 mt-5 w-full sm:w-[88%]"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 56 }}
+animate={{ opacity: 1, y: 56 }}
+          transition={{ duration: 0.65, delay: 0.34 }}
+          className="flex items-center justify-center gap-3 rounded-2xl px-5 py-4 text-center"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(250,204,21,0.16), rgba(56,189,248,0.16), rgba(34,197,94,0.12))",
+            border: editMode
+              ? "1px dashed rgba(56,189,248,0.72)"
+              : "1px solid rgba(15,23,42,0.09)",
+            boxShadow:
+              "0 18px 46px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.80)",
+            backdropFilter: "blur(18px)",
+          }}
+        >
+          <p
+  className="text-sm sm:text-base font-black leading-relaxed"
+  style={{
+    color: palette.navy,
+    fontFamily: "var(--font-display)",
+    letterSpacing: "-0.015em",
+  }}
+>
+  “{heroData.motto}”
+</p>
         </motion.div>
       </EditableWrap>
 
@@ -583,7 +633,7 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
       />
 
       <FloatingTextTag
-        className="absolute left-[12%] bottom-2 z-20 hidden xl:block"
+        className="absolute left-[12%] bottom-28 z-20 hidden xl:block"
         title={heroData.floating3Title}
         subtitle={heroData.floating3Subtitle}
         color={palette.purple}
@@ -594,7 +644,7 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
       />
 
       <FloatingTextTag
-        className="absolute right-[12%] bottom-7 z-20 hidden xl:block"
+        className="absolute right-[12%] bottom-24 z-20 hidden xl:block"
         title={heroData.floating4Title}
         subtitle={heroData.floating4Subtitle}
         color={palette.green}
@@ -606,7 +656,6 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
     </motion.div>
   );
 }
-
 
 function Hero({
   editMode = false,
@@ -633,9 +682,12 @@ function Hero({
 
     const loadHeroContent = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/site-content/home`, {
-          timeout: 10000,
-        });
+        const res = await axios.get(
+          `${API_URL}/api/site-content/home`,
+          {
+            timeout: 10000,
+          }
+        );
 
         if (!alive) return;
 
@@ -737,7 +789,10 @@ function Hero({
               }}
             >
               <Sparkles className="w-4 h-4" color={palette.gold} />
-              <span className="text-sm font-black">{heroData.badge}</span>
+
+              <span className="text-sm font-black">
+                {heroData.badge}
+              </span>
             </motion.div>
           </EditableWrap>
 
@@ -758,13 +813,16 @@ function Hero({
                 fontWeight: 900,
                 letterSpacing: "-0.06em",
                 textShadow: "0 14px 38px rgba(255,255,255,0.65)",
-                outline: editMode ? "1px dashed rgba(56,189,248,0.45)" : "none",
+                outline: editMode
+                  ? "1px dashed rgba(56,189,248,0.45)"
+                  : "none",
                 outlineOffset: editMode ? "8px" : "0",
                 borderRadius: editMode ? "18px" : "0",
               }}
             >
               <span>{heroData.titleLine1}</span>
               <br />
+
               <span
                 style={{
                   display: "inline-block",
@@ -778,6 +836,7 @@ function Hero({
                 {heroData.titleLine2}
               </span>
               <br />
+
               <span
                 style={{
                   display: "inline-block",
@@ -790,7 +849,10 @@ function Hero({
                 {String(heroData.titleLine3 || "")
                   .split(",")
                   .map((part, index) => (
-                    <span key={`${part}-${index}`} style={{ display: "block" }}>
+                    <span
+                      key={`${part}-${index}`}
+                      style={{ display: "block" }}
+                    >
                       {part.trim()}
                     </span>
                   ))}
@@ -811,7 +873,9 @@ function Hero({
               className="home-long-text text-lg md:text-xl max-w-xl leading-[1.85] mb-7 rounded-2xl"
               style={{
                 color: "rgba(15,23,42,0.68)",
-                outline: editMode ? "1px dashed rgba(56,189,248,0.45)" : "none",
+                outline: editMode
+                  ? "1px dashed rgba(56,189,248,0.45)"
+                  : "none",
                 outlineOffset: editMode ? "6px" : "0",
               }}
             >
@@ -831,14 +895,19 @@ function Hero({
               transition={{ duration: 0.65, delay: 0.24 }}
               className="flex flex-wrap gap-4 mb-8 rounded-2xl"
               style={{
-                outline: editMode ? "1px dashed rgba(56,189,248,0.45)" : "none",
+                outline: editMode
+                  ? "1px dashed rgba(56,189,248,0.45)"
+                  : "none",
                 outlineOffset: editMode ? "8px" : "0",
               }}
             >
               <Link
-                to={safeLink(heroData.primaryButtonLink, "/admissions")}
-                onClick={(e) => {
-                  if (editMode) e.preventDefault();
+                to={safeLink(
+                  heroData.primaryButtonLink,
+                  "/admissions"
+                )}
+                onClick={(event) => {
+                  if (editMode) event.preventDefault();
                 }}
                 className="relative overflow-hidden px-8 py-4 rounded-2xl font-black text-slate-950 transition-all duration-300 hover:scale-105"
                 style={{
@@ -849,7 +918,7 @@ function Hero({
                 }}
               >
                 <span className="relative z-10 flex items-center gap-2">
-                  {heroData.primaryButtonText}{" "}
+                  {heroData.primaryButtonText}
                   <ArrowRight className="w-4 h-4" />
                 </span>
 
@@ -867,9 +936,12 @@ function Hero({
               </Link>
 
               <Link
-                to={safeLink(heroData.secondaryButtonLink, "/facilities")}
-                onClick={(e) => {
-                  if (editMode) e.preventDefault();
+                to={safeLink(
+                  heroData.secondaryButtonLink,
+                  "/facilities"
+                )}
+                onClick={(event) => {
+                  if (editMode) event.preventDefault();
                 }}
                 className="px-8 py-4 rounded-2xl font-black flex items-center gap-2 transition-all duration-300 hover:scale-105"
                 style={{
@@ -877,11 +949,12 @@ function Hero({
                   background:
                     "linear-gradient(145deg, rgba(255,255,255,0.86), rgba(255,255,255,0.55))",
                   border: "1px solid rgba(15,23,42,0.10)",
-                  boxShadow: "0 18px 42px rgba(15,23,42,0.08)",
+                  boxShadow:
+                    "0 18px 42px rgba(15,23,42,0.08)",
                   backdropFilter: "blur(18px)",
                 }}
               >
-                {heroData.secondaryButtonText}{" "}
+                {heroData.secondaryButtonText}
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </motion.div>

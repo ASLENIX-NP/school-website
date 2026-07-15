@@ -1,10 +1,8 @@
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import {
   AlertCircle,
-  BookOpen,
   Camera,
   CheckCircle2,
   Eye,
@@ -88,40 +86,6 @@ function Field({
   );
 }
 
-function Toggle({ checked, onChange, label }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      className="w-full flex items-center justify-between gap-4 rounded-2xl px-4 py-3 text-left"
-      style={{
-        background: checked
-          ? "rgba(22,138,58,0.08)"
-          : "rgba(100,116,139,0.08)",
-        border: checked
-          ? "1px solid rgba(22,138,58,0.18)"
-          : "1px solid rgba(100,116,139,0.18)",
-      }}
-    >
-      <span className="text-sm font-black text-slate-700">{label}</span>
-
-      <span
-        className="relative w-12 h-7 rounded-full transition-all"
-        style={{
-          background: checked ? colors.green : "#CBD5E1",
-        }}
-      >
-        <span
-          className="absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow"
-          style={{
-            left: checked ? "24px" : "4px",
-          }}
-        />
-      </span>
-    </button>
-  );
-}
-
 function getUploadUrl(payload) {
   return (
     payload?.url ||
@@ -144,6 +108,10 @@ function getAuthHeaders() {
   return {
     Authorization: `Bearer ${token}`,
   };
+}
+
+function cleanRequiredText(value) {
+  return String(value ?? "").trim();
 }
 
 function clampImageOffset(value) {
@@ -651,6 +619,7 @@ export default function AdminAbout() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [modalError, setModalError] = useState("");
 
   useEffect(() => {
     const loadAboutContent = async () => {
@@ -674,6 +643,7 @@ export default function AdminAbout() {
   const openEditor = (target) => {
     setSuccess("");
     setError("");
+    setModalError("");
     setImageAdjustOpen(false);
     setEditingTarget(target);
 
@@ -729,7 +699,6 @@ export default function AdminAbout() {
         label: item?.label || "",
         desc: item?.desc || "",
         color: item?.color || colors.green,
-        visible: item?.visible !== false,
       });
       return;
     }
@@ -755,7 +724,6 @@ export default function AdminAbout() {
         imageZoom: clampImageZoom(item?.imageZoom),
         imageOffsetX: clampImageOffset(item?.imageOffsetX),
         imageOffsetY: clampImageOffset(item?.imageOffsetY),
-        visible: item?.visible !== false,
       });
       return;
     }
@@ -779,7 +747,6 @@ export default function AdminAbout() {
         title: item?.title || "",
         desc: item?.desc || "",
         color: item?.color || colors.purple,
-        visible: item?.visible !== false,
       });
       return;
     }
@@ -799,7 +766,6 @@ export default function AdminAbout() {
         year: item?.year || "",
         title: item?.title || "",
         desc: item?.desc || "",
-        visible: item?.visible !== false,
       });
     }
   };
@@ -809,6 +775,7 @@ export default function AdminAbout() {
     setImageAdjustOpen(false);
     setEditingTarget(null);
     setModalForm({});
+    setModalError("");
   };
 
   const preventUnsafeBackspaceNavigation = (event) => {
@@ -831,6 +798,7 @@ export default function AdminAbout() {
       ...prev,
       [name]: value,
     }));
+    setModalError("");
   };
 
   const uploadImage = async (file) => {
@@ -920,12 +888,133 @@ export default function AdminAbout() {
     return true;
   };
 
+  const validateSelectedPart = () => {
+    if (!editingTarget) return "No About page item is selected.";
+
+    const requireFields = (fields) => {
+      const missingField = fields.find(
+        ({ value }) => !cleanRequiredText(value)
+      );
+
+      return missingField
+        ? `Please fill ${missingField.label} before saving.`
+        : "";
+    };
+
+    if (editingTarget.type === "pageHeader") {
+      return requireFields([
+        { label: "the page title", value: modalForm.pageTitle },
+        { label: "the page subtitle", value: modalForm.pageSubtitle },
+      ]);
+    }
+
+    if (editingTarget.type === "storyText") {
+      return requireFields([
+        { label: "the story badge", value: modalForm.storyBadge },
+        { label: "the story title", value: modalForm.storyTitle },
+        { label: "story paragraph 1", value: modalForm.paragraph1 },
+        { label: "story paragraph 2", value: modalForm.paragraph2 },
+      ]);
+    }
+
+    if (editingTarget.type === "storyImage") {
+      return requireFields([
+        { label: "the story image", value: modalForm.storyImageUrl },
+        { label: "the story image alt text", value: modalForm.storyImageAlt },
+      ]);
+    }
+
+    if (editingTarget.type === "storyImageText") {
+      return requireFields([
+        { label: "the image caption title", value: modalForm.storyImageTitle },
+        {
+          label: "the image caption subtitle",
+          value: modalForm.storyImageSubtitle,
+        },
+      ]);
+    }
+
+    if (editingTarget.type === "pillarHeader") {
+      return requireFields([
+        { label: "the core values badge", value: modalForm.pillarBadge },
+        { label: "the core values title", value: modalForm.pillarTitle },
+      ]);
+    }
+
+    if (editingTarget.type === "pillarCard") {
+      return requireFields([
+        { label: "the core value title", value: modalForm.label },
+        { label: "the core value description", value: modalForm.desc },
+        { label: "the core value accent color", value: modalForm.color },
+      ]);
+    }
+
+    if (editingTarget.type === "leadershipHeader") {
+      return requireFields([
+        { label: "the leadership badge", value: modalForm.leadershipBadge },
+        { label: "the leadership title", value: modalForm.leadershipTitle },
+        {
+          label: "the leadership description",
+          value: modalForm.leadershipDescription,
+        },
+      ]);
+    }
+
+    if (editingTarget.type === "leadershipMessage") {
+      return requireFields([
+        { label: "the person name", value: modalForm.name },
+        { label: "the post or designation", value: modalForm.role },
+        { label: "the message title", value: modalForm.title },
+        { label: "the leadership message", value: modalForm.message },
+      ]);
+    }
+
+    if (editingTarget.type === "leadershipPhoto") {
+      return requireFields([
+        { label: "the leadership photo", value: modalForm.image },
+      ]);
+    }
+
+    if (editingTarget.type === "missionVision") {
+      return requireFields([
+        { label: "the mission or vision title", value: modalForm.title },
+        { label: "the mission or vision description", value: modalForm.desc },
+        { label: "the mission or vision accent color", value: modalForm.color },
+      ]);
+    }
+
+    if (editingTarget.type === "journeyHeader") {
+      return requireFields([
+        { label: "the timeline badge", value: modalForm.timelineBadge },
+        { label: "the journey title", value: modalForm.journeyTitle },
+      ]);
+    }
+
+    if (editingTarget.type === "journeyItem") {
+      return requireFields([
+        { label: "the year or label", value: modalForm.year },
+        { label: "the journey item title", value: modalForm.title },
+        { label: "the journey item description", value: modalForm.desc },
+      ]);
+    }
+
+    return "";
+  };
+
   const saveSelectedPart = async () => {
     if (!editingTarget) return;
+
+    const validationError = validateSelectedPart();
+
+    if (validationError) {
+      setModalError(validationError);
+      return;
+    }
 
     setSaving(true);
     setSuccess("");
     setError("");
+    setModalError("");
 
     try {
       let nextForm = mergeAboutContent(form);
@@ -933,19 +1022,19 @@ export default function AdminAbout() {
       if (editingTarget.type === "pageHeader") {
         nextForm = {
           ...nextForm,
-          pageTitle: modalForm.pageTitle || "",
-          pageSubtitle: modalForm.pageSubtitle || "",
+          pageTitle: cleanRequiredText(modalForm.pageTitle),
+          pageSubtitle: cleanRequiredText(modalForm.pageSubtitle),
         };
       }
 
       if (editingTarget.type === "storyText") {
         nextForm = {
           ...nextForm,
-          storyBadge: modalForm.storyBadge || "",
-          storyTitle: modalForm.storyTitle || "",
+          storyBadge: cleanRequiredText(modalForm.storyBadge),
+          storyTitle: cleanRequiredText(modalForm.storyTitle),
           storyParagraphs: [
-            modalForm.paragraph1 || "",
-            modalForm.paragraph2 || "",
+            cleanRequiredText(modalForm.paragraph1),
+            cleanRequiredText(modalForm.paragraph2),
           ],
         };
       }
@@ -953,8 +1042,8 @@ export default function AdminAbout() {
       if (editingTarget.type === "storyImage") {
         nextForm = {
           ...nextForm,
-          storyImageUrl: modalForm.storyImageUrl || "",
-          storyImageAlt: modalForm.storyImageAlt || "",
+          storyImageUrl: cleanRequiredText(modalForm.storyImageUrl),
+          storyImageAlt: cleanRequiredText(modalForm.storyImageAlt),
           storyImageZoom: clampImageZoom(modalForm.imageZoom),
           storyImageOffsetX: clampImageOffset(modalForm.imageOffsetX),
           storyImageOffsetY: clampImageOffset(modalForm.imageOffsetY),
@@ -964,16 +1053,16 @@ export default function AdminAbout() {
       if (editingTarget.type === "storyImageText") {
         nextForm = {
           ...nextForm,
-          storyImageTitle: modalForm.storyImageTitle || "",
-          storyImageSubtitle: modalForm.storyImageSubtitle || "",
+          storyImageTitle: cleanRequiredText(modalForm.storyImageTitle),
+          storyImageSubtitle: cleanRequiredText(modalForm.storyImageSubtitle),
         };
       }
 
       if (editingTarget.type === "pillarHeader") {
         nextForm = {
           ...nextForm,
-          pillarBadge: modalForm.pillarBadge || "",
-          pillarTitle: modalForm.pillarTitle || "",
+          pillarBadge: cleanRequiredText(modalForm.pillarBadge),
+          pillarTitle: cleanRequiredText(modalForm.pillarTitle),
         };
       }
 
@@ -984,10 +1073,9 @@ export default function AdminAbout() {
             index === editingTarget.index
               ? {
                   ...item,
-                  label: modalForm.label || "",
-                  desc: modalForm.desc || "",
-                  color: modalForm.color || colors.green,
-                  visible: modalForm.visible !== false,
+                  label: cleanRequiredText(modalForm.label),
+                  desc: cleanRequiredText(modalForm.desc),
+                  color: cleanRequiredText(modalForm.color),
                 }
               : item
           ),
@@ -997,9 +1085,9 @@ export default function AdminAbout() {
       if (editingTarget.type === "leadershipHeader") {
         nextForm = {
           ...nextForm,
-          leadershipBadge: modalForm.leadershipBadge || "",
-          leadershipTitle: modalForm.leadershipTitle || "",
-          leadershipDescription: modalForm.leadershipDescription || "",
+          leadershipBadge: cleanRequiredText(modalForm.leadershipBadge),
+          leadershipTitle: cleanRequiredText(modalForm.leadershipTitle),
+          leadershipDescription: cleanRequiredText(modalForm.leadershipDescription),
         };
       }
 
@@ -1010,15 +1098,14 @@ export default function AdminAbout() {
             index === editingTarget.index
               ? {
                   ...item,
-                  name: modalForm.name || "",
-                  role: modalForm.role || "",
-                  title: modalForm.title || "",
-                  message: modalForm.message || "",
-                  image: modalForm.image || "",
+                  name: cleanRequiredText(modalForm.name),
+                  role: cleanRequiredText(modalForm.role),
+                  title: cleanRequiredText(modalForm.title),
+                  message: cleanRequiredText(modalForm.message),
+                  image: cleanRequiredText(modalForm.image),
                   imageZoom: clampImageZoom(modalForm.imageZoom),
                   imageOffsetX: clampImageOffset(modalForm.imageOffsetX),
                   imageOffsetY: clampImageOffset(modalForm.imageOffsetY),
-                  visible: modalForm.visible !== false,
                 }
               : item
           ),
@@ -1032,7 +1119,7 @@ export default function AdminAbout() {
             index === editingTarget.index
               ? {
                   ...item,
-                  image: modalForm.image || "",
+                  image: cleanRequiredText(modalForm.image),
                   imageZoom: clampImageZoom(modalForm.imageZoom),
                   imageOffsetX: clampImageOffset(modalForm.imageOffsetX),
                   imageOffsetY: clampImageOffset(modalForm.imageOffsetY),
@@ -1049,10 +1136,9 @@ export default function AdminAbout() {
             index === editingTarget.index
               ? {
                   ...item,
-                  title: modalForm.title || "",
-                  desc: modalForm.desc || "",
-                  color: modalForm.color || colors.purple,
-                  visible: modalForm.visible !== false,
+                  title: cleanRequiredText(modalForm.title),
+                  desc: cleanRequiredText(modalForm.desc),
+                  color: cleanRequiredText(modalForm.color),
                 }
               : item
           ),
@@ -1062,8 +1148,8 @@ export default function AdminAbout() {
       if (editingTarget.type === "journeyHeader") {
         nextForm = {
           ...nextForm,
-          timelineBadge: modalForm.timelineBadge || "",
-          journeyTitle: modalForm.journeyTitle || "",
+          timelineBadge: cleanRequiredText(modalForm.timelineBadge),
+          journeyTitle: cleanRequiredText(modalForm.journeyTitle),
         };
       }
 
@@ -1074,10 +1160,9 @@ export default function AdminAbout() {
             index === editingTarget.index
               ? {
                   ...item,
-                  year: modalForm.year || "",
-                  title: modalForm.title || "",
-                  desc: modalForm.desc || "",
-                  visible: modalForm.visible !== false,
+                  year: cleanRequiredText(modalForm.year),
+                  title: cleanRequiredText(modalForm.title),
+                  desc: cleanRequiredText(modalForm.desc),
                 }
               : item
           ),
@@ -1093,13 +1178,14 @@ export default function AdminAbout() {
       setImageAdjustOpen(false);
       setEditingTarget(null);
       setModalForm({});
+      setModalError("");
     } catch (err) {
       console.error("Save selected about item error:", err);
 
       if (err.response?.status === 401) {
-        setError("Admin login expired or token is invalid. Please login again.");
+        setModalError("Admin login expired or token is invalid. Please login again.");
       } else {
-        setError(err.response?.data?.message || "Could not save selected item.");
+        setModalError(err.response?.data?.message || "Could not save selected item.");
       }
     } finally {
       setSaving(false);
@@ -1190,7 +1276,6 @@ export default function AdminAbout() {
               label: "New Core Value",
               desc: "Write a short description for this core value.",
               color: nextColor,
-              visible: true,
             },
           ],
         };
@@ -1211,7 +1296,6 @@ export default function AdminAbout() {
               imageZoom: 1,
               imageOffsetX: 0,
               imageOffsetY: 0,
-              visible: true,
             },
           ],
         };
@@ -1231,7 +1315,6 @@ export default function AdminAbout() {
               title: "New Section",
               desc: "Write the section description here.",
               color: nextColor,
-              visible: true,
             },
           ],
         };
@@ -1247,7 +1330,6 @@ export default function AdminAbout() {
               year: "Year",
               title: "Journey Title",
               desc: "Write journey description here.",
-              visible: true,
             },
           ],
         };
@@ -1516,6 +1598,15 @@ export default function AdminAbout() {
                   </button>
                 </div>
 
+                {modalError && (
+                  <div className="mb-5 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-700">
+                    <div className="flex items-start gap-2 font-semibold">
+                      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                      <span>{modalError}</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-5">
                   {needsImageUpload && (
                     <>
@@ -1720,12 +1811,6 @@ export default function AdminAbout() {
                         onChange={(value) => updateModalField("color", value)}
                         type="color"
                       />
-
-                      <Toggle
-                        label="Show this card on website"
-                        checked={modalForm.visible !== false}
-                        onChange={(value) => updateModalField("visible", value)}
-                      />
                     </>
                   )}
 
@@ -1790,12 +1875,6 @@ export default function AdminAbout() {
                         onChange={(value) => updateModalField("message", value)}
                         textarea
                       />
-
-                      <Toggle
-                        label="Show this message on website"
-                        checked={modalForm.visible !== false}
-                        onChange={(value) => updateModalField("visible", value)}
-                      />
                     </>
                   )}
 
@@ -1819,12 +1898,6 @@ export default function AdminAbout() {
                         value={modalForm.color}
                         onChange={(value) => updateModalField("color", value)}
                         type="color"
-                      />
-
-                      <Toggle
-                        label="Show this card on website"
-                        checked={modalForm.visible !== false}
-                        onChange={(value) => updateModalField("visible", value)}
                       />
                     </>
                   )}
@@ -1868,12 +1941,6 @@ export default function AdminAbout() {
                         value={modalForm.desc}
                         onChange={(value) => updateModalField("desc", value)}
                         textarea
-                      />
-
-                      <Toggle
-                        label="Show this timeline item on website"
-                        checked={modalForm.visible !== false}
-                        onChange={(value) => updateModalField("visible", value)}
                       />
                     </>
                   )}
@@ -2020,5 +2087,3 @@ export default function AdminAbout() {
     </div>
   );
 }
-
-

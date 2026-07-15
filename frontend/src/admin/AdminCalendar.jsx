@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
+import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
+
 import {
   AlertCircle,
   ArrowLeft,
@@ -308,6 +310,7 @@ export default function AdminCalendar() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [validationMessage, setValidationMessage] = useState("");
 
   const [editorType, setEditorType] = useState(null);
   const [editingIndex, setEditingIndex] = useState(null);
@@ -418,17 +421,29 @@ export default function AdminCalendar() {
   };
 
   const saveSettings = async () => {
-    setSaving(true);
     setSuccess("");
     setError("");
+
+    const validationError = getFirstEmptyField([
+      ["Page badge", modalForm.page_badge],
+      ["Page title", modalForm.page_title],
+      ["Page description", modalForm.page_description],
+    ]);
+
+    if (validationError) {
+      setValidationMessage(validationError);
+      return;
+    }
+
+    setSaving(true);
 
     try {
       await saveCalendarContent(
         {
           ...form,
-          page_badge: modalForm.page_badge || "",
-          page_title: modalForm.page_title || "",
-          page_description: modalForm.page_description || "",
+          page_badge: modalForm.page_badge.trim(),
+          page_title: modalForm.page_title.trim(),
+          page_description: modalForm.page_description.trim(),
           saturday_holiday: modalForm.saturday_holiday !== false,
           show_notice_dates: modalForm.show_notice_dates !== false,
         },
@@ -445,13 +460,32 @@ export default function AdminCalendar() {
   };
 
   const saveEvent = async () => {
-    if (!String(modalForm.title || "").trim()) {
-      setError("Event title is required.");
+    const validationError = getFirstEmptyField([
+      ["Event title", modalForm.title],
+      ["Start BS date", modalForm.start_bs],
+    ]);
+
+    if (validationError) {
+      setValidationMessage(validationError);
       return;
     }
 
-    if (!String(modalForm.start_bs || "").trim()) {
-      setError("Start BS date is required. Example: 2083-03-24");
+    const bsDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+    const startDate = String(modalForm.start_bs || "").trim();
+    const endDate = String(modalForm.end_bs || "").trim();
+
+    if (!bsDatePattern.test(startDate)) {
+      setValidationMessage("Start BS date must use YYYY-MM-DD format, for example 2083-03-24.");
+      return;
+    }
+
+    if (endDate && !bsDatePattern.test(endDate)) {
+      setValidationMessage("End BS date must use YYYY-MM-DD format, for example 2083-03-24.");
+      return;
+    }
+
+    if (endDate && endDate < startDate) {
+      setValidationMessage("End BS date cannot be earlier than the start BS date.");
       return;
     }
 
@@ -469,8 +503,11 @@ export default function AdminCalendar() {
       const cleanEvent = {
         ...modalForm,
         id: modalForm.id || Date.now(),
+        title: modalForm.title.trim(),
+        start_bs: startDate,
         type: cleanType,
-        end_bs: modalForm.end_bs || modalForm.start_bs,
+        end_bs: endDate || startDate,
+        description: String(modalForm.description || "").trim(),
         visible: modalForm.visible !== false,
       };
 
@@ -564,6 +601,10 @@ export default function AdminCalendar() {
 
   return (
     <div className="space-y-6">
+      <AdminValidationPopup
+        message={validationMessage}
+        onClose={() => setValidationMessage("")}
+      />
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1083,3 +1124,6 @@ export default function AdminCalendar() {
     </div>
   );
 }
+
+
+

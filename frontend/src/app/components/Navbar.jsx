@@ -1,8 +1,8 @@
 import defaultSchoolLogo from "../../assets/school-logo.jpeg";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useLocation } from "react-router-dom";
-import { Camera, Menu, Pencil, X } from "lucide-react";
+import { Menu, Pencil, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 export const defaultNavbarContent = {
@@ -33,36 +33,90 @@ const palette = {
   green: "#22C55E",
 };
 
+function makeSafeId(value, fallback, usedIds) {
+  const raw =
+    String(value || fallback || "menu-item")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "menu-item";
+
+  let nextId = raw;
+  let counter = 2;
+
+  while (usedIds.has(nextId)) {
+    nextId = `${raw}-${counter}`;
+    counter += 1;
+  }
+
+  usedIds.add(nextId);
+  return nextId;
+}
+
 export function mergeNavbarContent(saved = {}) {
-  const savedLinks = Array.isArray(saved.links) ? saved.links : [];
+  const hasSavedLinks = Array.isArray(saved.links);
+  const sourceLinks = hasSavedLinks
+    ? saved.links
+    : defaultNavbarContent.links;
+
+  const usedIds = new Set();
+
+  const links = sourceLinks
+    .filter((link) => link && typeof link === "object")
+    .map((link, index) => {
+      const matchingDefault = defaultNavbarContent.links.find(
+        (defaultLink) => defaultLink.id === link.id
+      );
+
+      return {
+        ...(matchingDefault || {}),
+        ...link,
+        id: makeSafeId(
+          link.id,
+          matchingDefault?.id || `menu-${index + 1}`,
+          usedIds
+        ),
+        label: String(link.label ?? matchingDefault?.label ?? "").trim(),
+        href: String(link.href ?? matchingDefault?.href ?? "/").trim() || "/",
+        visible: link.visible !== false,
+      };
+    });
 
   return {
     ...defaultNavbarContent,
     ...saved,
-    links: defaultNavbarContent.links.map((defaultLink) => {
-      const savedLink = savedLinks.find((link) => link.id === defaultLink.id);
-
-      return {
-        ...defaultLink,
-        ...(savedLink || {}),
-        visible: savedLink?.visible !== false,
-      };
-    }),
+    logoUrl: String(saved.logoUrl ?? defaultNavbarContent.logoUrl).trim(),
+    schoolName: String(
+      saved.schoolName ?? defaultNavbarContent.schoolName
+    ).trim(),
+    schoolSubtitle: String(
+      saved.schoolSubtitle ?? defaultNavbarContent.schoolSubtitle
+    ).trim(),
+    admissionButtonText: String(
+      saved.admissionButtonText ?? defaultNavbarContent.admissionButtonText
+    ).trim(),
+    admissionButtonLink:
+      String(
+        saved.admissionButtonLink ??
+          defaultNavbarContent.admissionButtonLink
+      ).trim() || "/admissions",
+    showAdmissionButton: saved.showAdmissionButton !== false,
+    links,
   };
 }
 
-function HoverEditIcon({ icon: Icon = Pencil, label = "Edit" }) {
+function HoverEditIcon({ label = "Edit" }) {
   return (
     <span
-      className="pointer-events-none absolute -top-3 -right-3 z-[90] opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 rounded-full w-8 h-8 flex items-center justify-center shadow-xl"
+      className="admin-navbar-edit-indicator pointer-events-none absolute -top-3 -right-3 z-[90] opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 rounded-full w-8 h-8 flex items-center justify-center shadow-xl"
       style={{
         background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
-        color: "#020617",
+        color: palette.navy,
         border: "1px solid rgba(255,255,255,0.8)",
       }}
       title={label}
     >
-      <Icon className="w-4 h-4" />
+      <Pencil className="w-4 h-4" />
     </span>
   );
 }
@@ -131,7 +185,9 @@ export function Navbar({
     onEditTarget(target);
   };
 
-  const visibleLinks = navbarContent.links.filter((link) => link.visible);
+  const visibleLinks = navbarContent.links.filter(
+    (link) => link.visible !== false
+  );
   const logoSrc = navbarContent.logoUrl || defaultSchoolLogo;
 
   const quickLinks = ["home", "academics", "notices"]
@@ -168,9 +224,9 @@ export function Navbar({
         >
           <Link
             to="/"
-            onClick={(e) => {
+            onClick={(event) => {
               if (editMode) {
-                e.preventDefault();
+                selectEditTarget(event, { type: "branding" });
                 return;
               }
 
@@ -179,164 +235,166 @@ export function Navbar({
                 behavior: "smooth",
               });
             }}
-            className="flex items-center gap-3 group flex-shrink-0"
+            className={
+              editMode
+                ? "relative group flex items-center gap-3 flex-shrink-0 rounded-2xl cursor-pointer"
+                : "flex items-center gap-3 flex-shrink-0"
+            }
+            title={editMode ? "Edit school logo and name" : ""}
           >
             <div
-              onClick={(e) => selectEditTarget(e, { type: "logo" })}
-              className={
-                editMode
-                  ? "relative group cursor-pointer rounded-2xl"
-                  : "relative rounded-2xl"
-              }
-              title={editMode ? "Change logo image" : ""}
+              className="rounded-2xl overflow-hidden bg-white flex items-center justify-center transition-all duration-300 group-hover:scale-105"
+              style={{
+                width: "46px",
+                height: "46px",
+                border: "1px solid rgba(255,255,255,0.7)",
+                boxShadow:
+                  "0 0 0 3px rgba(34,197,94,0.2), 0 14px 34px rgba(34,197,94,0.22)",
+              }}
             >
-              <div
-                className="rounded-2xl overflow-hidden bg-white flex items-center justify-center transition-all duration-300 group-hover:scale-105"
-                style={{
-                  width: "46px",
-                  height: "46px",
-                  border: "1px solid rgba(255,255,255,0.7)",
-                  boxShadow:
-                    "0 0 0 3px rgba(34,197,94,0.2), 0 14px 34px rgba(34,197,94,0.22)",
-                }}
-              >
-                <img
-                  src={logoSrc}
-                  alt={`${navbarContent.schoolName} Logo`}
-                  className="w-full h-full object-contain p-1"
-                />
-              </div>
-
-              {editMode && <HoverEditIcon icon={Camera} label="Change Logo" />}
+              <img
+                src={logoSrc}
+                alt={`${navbarContent.schoolName || "School"} Logo`}
+                className="w-full h-full object-contain p-1"
+              />
             </div>
 
             <div className="hidden sm:block">
               <div
-                onClick={(e) => selectEditTarget(e, { type: "schoolName" })}
-                className={
-                  editMode
-                    ? "relative group cursor-pointer rounded-lg px-1"
-                    : "relative"
-                }
-                title={editMode ? "Edit school name" : ""}
+                className="font-bold text-lg leading-tight"
+                style={{
+                  color: "#FFFFFF",
+                  fontFamily: "var(--font-display)",
+                  letterSpacing: "-0.02em",
+                }}
               >
-                <div
-                  className="font-bold text-lg leading-tight"
-                  style={{
-                    color: "#FFFFFF",
-                    fontFamily: "var(--font-display)",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  {navbarContent.schoolName}
-                </div>
-
-                {editMode && <HoverEditIcon icon={Pencil} label="Edit Name" />}
+                {navbarContent.schoolName || "School Name"}
               </div>
 
               <div
-                onClick={(e) => selectEditTarget(e, { type: "schoolSubtitle" })}
-                className={
-                  editMode
-                    ? "relative group cursor-pointer rounded-lg px-1"
-                    : "relative"
-                }
-                title={editMode ? "Edit school subtitle" : ""}
+                className="text-xs leading-tight"
+                style={{ color: palette.green }}
               >
-                <div
-                  className="text-xs leading-tight"
-                  style={{ color: palette.green }}
-                >
-                  {navbarContent.schoolSubtitle}
-                </div>
-
-                {editMode && (
-                  <HoverEditIcon icon={Pencil} label="Edit Subtitle" />
-                )}
+                {navbarContent.schoolSubtitle || "School Subtitle"}
               </div>
             </div>
+
+            {editMode && <HoverEditIcon label="Edit School Branding" />}
           </Link>
 
           <div
-            className="hidden xl:flex items-center gap-1 px-2 py-2 rounded-2xl"
+            onClick={(event) => {
+              if (editMode) {
+                selectEditTarget(event, { type: "menu" });
+              }
+            }}
+            className={
+              editMode
+                ? "relative group hidden xl:flex items-center gap-1 px-2 py-2 rounded-2xl cursor-pointer min-h-[52px]"
+                : "hidden xl:flex items-center gap-1 px-2 py-2 rounded-2xl"
+            }
+            title={editMode ? "Edit all menu items" : ""}
             style={{
               background: "rgba(255,255,255,0.055)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              border: editMode
+                ? "1px dashed rgba(56,189,248,0.42)"
+                : "1px solid rgba(255,255,255,0.1)",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
             }}
           >
-            {visibleLinks.map((link) => {
-              const active = isActive(link.href);
+            {visibleLinks.length > 0 ? (
+              visibleLinks.map((link) => {
+                const active = isActive(link.href);
 
-              return (
+                return (
+                  <Link
+                    key={link.id}
+                    to={link.href || "/"}
+                    onClick={(event) => {
+                      if (editMode) {
+                        selectEditTarget(event, { type: "menu" });
+                      }
+                    }}
+                    className="relative px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
+                    style={{
+                      color: active ? palette.navy : "rgba(255,255,255,0.84)",
+                      background: active
+                        ? `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`
+                        : "transparent",
+                      boxShadow: active
+                        ? "0 12px 28px rgba(56,189,248,0.22)"
+                        : "none",
+                    }}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })
+            ) : editMode ? (
+              <span className="px-5 py-2 text-sm font-bold text-white/70">
+                No visible menu items — click to manage
+              </span>
+            ) : null}
+
+            {editMode && <HoverEditIcon label="Manage All Menu Items" />}
+          </div>
+
+          {(navbarContent.showAdmissionButton || editMode) && (
+            <div className="hidden xl:flex items-center gap-3 flex-shrink-0">
+              {navbarContent.showAdmissionButton ? (
                 <Link
-                  key={link.id}
-                  to={link.href || "/"}
-                  onClick={(e) => {
+                  to={navbarContent.admissionButtonLink || "/admissions"}
+                  onClick={(event) => {
                     if (editMode) {
-                      selectEditTarget(e, { type: "link", id: link.id });
+                      selectEditTarget(event, { type: "admission" });
                     }
                   }}
                   className={
                     editMode
-                      ? "relative group px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 cursor-pointer"
-                      : "relative px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
+                      ? "relative group overflow-visible px-6 py-3 rounded-2xl text-sm font-bold text-slate-950 transition-all duration-300 hover:scale-105 cursor-pointer"
+                      : "relative overflow-hidden px-6 py-3 rounded-2xl text-sm font-bold text-slate-950 transition-all duration-300 hover:scale-105"
                   }
-                  title={editMode ? `Edit ${link.label}` : ""}
+                  title={editMode ? "Edit admission button" : ""}
                   style={{
-                    color: active ? "#020617" : "rgba(255,255,255,0.84)",
-                    background: active
-                      ? `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`
-                      : "transparent",
-                    boxShadow: active
-                      ? "0 12px 28px rgba(56,189,248,0.22)"
-                      : "none",
+                    background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
+                    boxShadow:
+                      "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.42)",
                   }}
                 >
-                  {link.label}
-                  {editMode && <HoverEditIcon icon={Pencil} label="Edit Link" />}
+                  <span className="relative z-10">
+                    {navbarContent.admissionButtonText || "Admission Open"} →
+                  </span>
+
+                  {editMode && <HoverEditIcon label="Edit Admission Button" />}
+
+                  {!editMode && (
+                    <span
+                      className="absolute top-0 bottom-0 w-16 opacity-40"
+                      style={{
+                        left: 0,
+                        background:
+                          "linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent)",
+                        animation: "navShine 2.8s ease-in-out infinite",
+                      }}
+                    />
+                  )}
                 </Link>
-              );
-            })}
-          </div>
-
-          {navbarContent.showAdmissionButton && (
-            <div className="hidden xl:flex items-center gap-3 flex-shrink-0">
-              <Link
-                to={navbarContent.admissionButtonLink || "/admissions"}
-                onClick={(e) => {
-                  if (editMode) {
-                    selectEditTarget(e, { type: "admission" });
+              ) : (
+                <button
+                  type="button"
+                  onClick={(event) =>
+                    selectEditTarget(event, { type: "admission" })
                   }
-                }}
-                className={
-                  editMode
-                    ? "relative group overflow-hidden px-6 py-3 rounded-2xl text-sm font-bold text-slate-950 transition-all duration-300 hover:scale-105 cursor-pointer"
-                    : "relative overflow-hidden px-6 py-3 rounded-2xl text-sm font-bold text-slate-950 transition-all duration-300 hover:scale-105"
-                }
-                title={editMode ? "Edit admission button" : ""}
-                style={{
-                  background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
-                  boxShadow:
-                    "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.42)",
-                }}
-              >
-                <span className="relative z-10">
-                  {navbarContent.admissionButtonText} →
-                </span>
-
-                {editMode && <HoverEditIcon icon={Pencil} label="Edit Button" />}
-
-                <span
-                  className="absolute top-0 bottom-0 w-16 opacity-40"
+                  className="relative group px-5 py-3 rounded-2xl text-sm font-black text-white/80 cursor-pointer"
                   style={{
-                    left: 0,
-                    background:
-                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent)",
-                    animation: "navShine 2.8s ease-in-out infinite",
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px dashed rgba(250,204,21,0.55)",
                   }}
-                />
-              </Link>
+                >
+                  Admission button hidden — Edit
+                  <HoverEditIcon label="Restore Admission Button" />
+                </button>
+              )}
             </div>
           )}
 
@@ -345,16 +403,18 @@ export function Navbar({
               <Link
                 key={link.id}
                 to={link.href || "/"}
-                onClick={(e) => {
+                onClick={(event) => {
                   if (editMode) {
-                    selectEditTarget(e, { type: "link", id: link.id });
+                    selectEditTarget(event, { type: "menu" });
                   } else {
                     setOpen(false);
                   }
                 }}
                 className="px-2.5 py-2 rounded-xl text-[11px] font-black leading-none transition-all"
                 style={{
-                  color: isActive(link.href) ? "#020617" : "rgba(255,255,255,0.9)",
+                  color: isActive(link.href)
+                    ? palette.navy
+                    : "rgba(255,255,255,0.9)",
                   background: isActive(link.href)
                     ? `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`
                     : "rgba(255,255,255,0.08)",
@@ -364,11 +424,29 @@ export function Navbar({
                 {link.label}
               </Link>
             ))}
+
+            {editMode && (
+              <button
+                type="button"
+                onClick={(event) =>
+                  selectEditTarget(event, { type: "menu" })
+                }
+                className="p-2 rounded-xl"
+                style={{
+                  color: palette.navy,
+                  background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
+                }}
+                aria-label="Edit all menu items"
+                title="Edit all menu items"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
           <button
             type="button"
-            onClick={() => setOpen((v) => !v)}
+            onClick={() => setOpen((value) => !value)}
             className="xl:hidden p-2 rounded-xl transition-colors"
             style={{
               color: "#FFFFFF",
@@ -410,39 +488,71 @@ export function Navbar({
             }}
           >
             <div className="p-4 grid gap-1">
-              {visibleLinks.map((link) => {
-                const active = isActive(link.href);
+              {visibleLinks.length > 0 ? (
+                visibleLinks.map((link) => {
+                  const active = isActive(link.href);
 
-                return (
-                  <Link
-                    key={link.id}
-                    to={link.href || "/"}
-                    onClick={(e) => {
-                      if (editMode) {
-                        selectEditTarget(e, { type: "link", id: link.id });
-                      } else {
-                        setOpen(false);
-                      }
-                    }}
-                    className="px-4 py-3 rounded-xl text-sm font-medium transition-all"
-                    style={{
-                      color: active ? "#020617" : "rgba(255,255,255,0.86)",
-                      background: active
-                        ? `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`
-                        : "transparent",
-                    }}
-                  >
-                    {link.label}
-                  </Link>
-                );
-              })}
+                  return (
+                    <Link
+                      key={link.id}
+                      to={link.href || "/"}
+                      onClick={(event) => {
+                        if (editMode) {
+                          selectEditTarget(event, { type: "menu" });
+                        } else {
+                          setOpen(false);
+                        }
+                      }}
+                      className="px-4 py-3 rounded-xl text-sm font-medium transition-all"
+                      style={{
+                        color: active
+                          ? palette.navy
+                          : "rgba(255,255,255,0.86)",
+                        background: active
+                          ? `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`
+                          : "transparent",
+                      }}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })
+              ) : editMode ? (
+                <button
+                  type="button"
+                  onClick={(event) =>
+                    selectEditTarget(event, { type: "menu" })
+                  }
+                  className="px-4 py-4 rounded-xl text-sm font-black text-white/80 text-left"
+                  style={{
+                    border: "1px dashed rgba(56,189,248,0.5)",
+                  }}
+                >
+                  No visible menu items — click to manage
+                </button>
+              ) : null}
 
-              {navbarContent.showAdmissionButton && (
+              {editMode && (
+                <button
+                  type="button"
+                  onClick={(event) =>
+                    selectEditTarget(event, { type: "menu" })
+                  }
+                  className="mt-2 px-4 py-3 rounded-xl text-sm font-black text-slate-950"
+                  style={{
+                    background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
+                  }}
+                >
+                  Manage All Menu Items
+                </button>
+              )}
+
+              {navbarContent.showAdmissionButton ? (
                 <Link
                   to={navbarContent.admissionButtonLink || "/admissions"}
-                  onClick={(e) => {
+                  onClick={(event) => {
                     if (editMode) {
-                      selectEditTarget(e, { type: "admission" });
+                      selectEditTarget(event, { type: "admission" });
                     } else {
                       setOpen(false);
                     }
@@ -453,9 +563,23 @@ export function Navbar({
                     boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
                   }}
                 >
-                  {navbarContent.admissionButtonText} →
+                  {navbarContent.admissionButtonText || "Admission Open"} →
                 </Link>
-              )}
+              ) : editMode ? (
+                <button
+                  type="button"
+                  onClick={(event) =>
+                    selectEditTarget(event, { type: "admission" })
+                  }
+                  className="mt-3 px-5 py-3 rounded-xl text-sm font-bold text-center text-white/80"
+                  style={{
+                    border: "1px dashed rgba(250,204,21,0.55)",
+                    background: "rgba(255,255,255,0.05)",
+                  }}
+                >
+                  Admission button hidden — Edit
+                </button>
+              ) : null}
             </div>
           </motion.div>
         )}
@@ -465,5 +589,3 @@ export function Navbar({
 }
 
 export default Navbar;
-
-

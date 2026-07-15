@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
+import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
+
 import {
   AlertCircle,
   ArrowLeft,
@@ -649,6 +651,44 @@ function getUploadUrl(payload) {
   );
 }
 
+function findFacilitiesContentError(content = {}) {
+  const headingError = getFirstEmptyField([
+    ["Facilities badge text", content.badgeText],
+    ["Facilities page title", content.title],
+    ["Highlighted text", content.highlightedText],
+    ["Facilities subtitle", content.subtitle],
+    ["Learn more text", content.learnMoreText],
+    ["Highlights title", content.highlightsTitle],
+  ]);
+
+  if (headingError) return headingError;
+
+  for (let index = 0; index < (content.facilities || []).length; index += 1) {
+    const facility = content.facilities[index] || {};
+    const facilityError = getFirstEmptyField([
+      [`Facility ${index + 1} title`, facility.title],
+      [`Facility ${index + 1} category`, facility.category],
+      [`Facility ${index + 1} description`, facility.description],
+      [`Facility ${index + 1} details`, facility.details],
+    ]);
+
+    if (facilityError) return facilityError;
+
+    for (let routeIndex = 0; routeIndex < (facility.busRoutes || []).length; routeIndex += 1) {
+      const route = facility.busRoutes[routeIndex] || {};
+      const routeError = getFirstEmptyField([
+        [`${facility.title || `Facility ${index + 1}`} route ${routeIndex + 1} name`, route.name],
+        [`${facility.title || `Facility ${index + 1}`} route ${routeIndex + 1} starting point`, route.from],
+        [`${facility.title || `Facility ${index + 1}`} route ${routeIndex + 1} destination`, route.to],
+      ]);
+
+      if (routeError) return routeError;
+    }
+  }
+
+  return "";
+}
+
 function getDeleteName(target) {
   if (!target) return "this item";
   if (target.type === "facilityCard") return "this facility";
@@ -661,7 +701,8 @@ function BusRouteEditor({
   onEditRoute, 
   onDeleteRoute,
   editingRouteId,
-  setEditingRouteId 
+  setEditingRouteId,
+  onValidationError,
 }) {
   const [routeForm, setRouteForm] = useState({ name: "", from: "", to: "", stops: [] });
   const [stopInput, setStopInput] = useState("");
@@ -696,16 +737,35 @@ function BusRouteEditor({
   };
 
   const handleSaveRoute = () => {
+    const validationError = getFirstEmptyField([
+      ["Route name", routeForm.name],
+      ["Starting point", routeForm.from],
+      ["Destination", routeForm.to],
+    ]);
+
+    if (validationError) {
+      onValidationError?.(validationError);
+      return;
+    }
+
+    const cleanRoute = {
+      ...routeForm,
+      name: routeForm.name.trim(),
+      from: routeForm.from.trim(),
+      to: routeForm.to.trim(),
+      stops: (routeForm.stops || []).map((stop) => String(stop || "").trim()).filter(Boolean),
+    };
+
     if (editingRoute) {
       // Update existing route
-      onEditRoute(editingRoute.id, routeForm);
+      onEditRoute(editingRoute.id, cleanRoute);
       // Keep editing mode active
       setEditingRouteId(editingRoute.id);
     } else {
       // Add new route with the form data
       const newRoute = {
-        ...routeForm,
-        id: Date.now()
+        ...cleanRoute,
+        id: Date.now(),
       };
       onAddRoute(newRoute);
       // Enter edit mode for the new route
@@ -907,6 +967,7 @@ export default function AdminFacilities() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [validationMessage, setValidationMessage] = useState("");
   const [editingRouteId, setEditingRouteId] = useState(null);
 
   useEffect(() => {
@@ -994,6 +1055,13 @@ export default function AdminFacilities() {
   };
 
   const saveContentToBackend = async (nextForm, message) => {
+    const validationError = findFacilitiesContentError(nextForm);
+
+    if (validationError) {
+      setValidationMessage(validationError);
+      return false;
+    }
+
     const authHeaders = getAuthHeaders();
 
     if (!authHeaders) {
@@ -1114,12 +1182,12 @@ export default function AdminFacilities() {
       if (editingTarget.type === "pageHeader") {
         nextForm = {
           ...nextForm,
-          badgeText: modalForm.badgeText || "",
-          title: modalForm.title || "",
-          highlightedText: modalForm.highlightedText || "",
-          subtitle: modalForm.subtitle || "",
-          learnMoreText: modalForm.learnMoreText || "",
-          highlightsTitle: modalForm.highlightsTitle || "",
+          badgeText: String(modalForm.badgeText ?? "").trim(),
+          title: String(modalForm.title ?? "").trim(),
+          highlightedText: String(modalForm.highlightedText ?? "").trim(),
+          subtitle: String(modalForm.subtitle ?? "").trim(),
+          learnMoreText: String(modalForm.learnMoreText ?? "").trim(),
+          highlightsTitle: String(modalForm.highlightsTitle ?? "").trim(),
         };
       }
 
@@ -1133,10 +1201,10 @@ export default function AdminFacilities() {
             index === editingTarget.index
               ? {
                   ...item,
-                  title: modalForm.title || "",
-                  category: modalForm.category || "",
-                  description: modalForm.description || "",
-                  details: modalForm.details || "",
+                  title: String(modalForm.title ?? "").trim(),
+                  category: String(modalForm.category ?? "").trim(),
+                  description: String(modalForm.description ?? "").trim(),
+                  details: String(modalForm.details ?? "").trim(),
                   imageUrl: modalForm.imageUrl || "",
                   imageZoom: clampImageZoom(modalForm.imageZoom),
                   imageOffsetX: clampImageOffset(modalForm.imageOffsetX),
@@ -1151,10 +1219,12 @@ export default function AdminFacilities() {
       }
 
       const cleanContent = mergeFacilitiesContent(nextForm);
-      await saveContentToBackend(
+      const saved = await saveContentToBackend(
         cleanContent,
         "Selected facilities item saved successfully."
       );
+
+      if (!saved) return;
 
       setImageAdjustOpen(false);
       setEditingTarget(null);
@@ -1278,6 +1348,10 @@ export default function AdminFacilities() {
 
   return (
     <div className="space-y-6">
+      <AdminValidationPopup
+        message={validationMessage}
+        onClose={() => setValidationMessage("")}
+      />
 
       <style>
         {`
@@ -1656,6 +1730,7 @@ export default function AdminFacilities() {
                           onDeleteRoute={handleDeleteBusRoute}
                           editingRouteId={editingRouteId}
                           setEditingRouteId={setEditingRouteId}
+                          onValidationError={setValidationMessage}
                         />
                       )}
 
@@ -1796,3 +1871,6 @@ export default function AdminFacilities() {
     </div>
   );
 }
+
+
+

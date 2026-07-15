@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
+import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
+
 import {
   ArrowLeft,
   Save,
@@ -552,6 +554,7 @@ export default function AdminAnnouncements() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [validationMessage, setValidationMessage] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
@@ -610,7 +613,7 @@ export default function AdminAnnouncements() {
     fetchAnnouncements();
   }, []);
 
-  const resetForm = () => {
+  const resetForm = (clearMessages = true) => {
     setFormData({
       title: "",
       image_url: "",
@@ -623,8 +626,11 @@ export default function AdminAnnouncements() {
     setImageFile(null);
     setImagePreview(null);
     setEditingId(null);
-    setSuccess("");
-    setError("");
+
+    if (clearMessages) {
+      setSuccess("");
+      setError("");
+    }
   };
 
   const handleEdit = (item) => {
@@ -667,7 +673,7 @@ export default function AdminAnnouncements() {
 
       if (data.success) {
         setSuccess("Announcement deleted successfully.");
-        if (editingId === deleteTarget.id) resetForm();
+        if (editingId === deleteTarget.id) resetForm(false);
         setDeleteTarget(null);
         fetchAnnouncements();
       } else {
@@ -815,6 +821,17 @@ export default function AdminAnnouncements() {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    const validationError = getFirstEmptyField([
+      ["Announcement title", formData.title],
+      ["Announcement description", formData.description],
+    ]);
+
+    if (validationError) {
+      setValidationMessage(validationError);
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -837,9 +854,9 @@ export default function AdminAnnouncements() {
       }
 
       const announcementData = {
-        title: formData.title,
+        title: formData.title.trim(),
         image_url: imageUrl || "",
-        description: formData.description,
+        description: formData.description.trim(),
         active: formData.active,
         visible: formData.visible,
         show_on_homepage: formData.show_on_homepage,
@@ -871,7 +888,7 @@ export default function AdminAnnouncements() {
             ? "Announcement updated successfully."
             : "Announcement added successfully."
         );
-        resetForm();
+        resetForm(false);
         fetchAnnouncements();
       } else {
         setError(data.message || "Could not save announcement.");
@@ -908,6 +925,11 @@ export default function AdminAnnouncements() {
         `,
       }}
     >
+      <AdminValidationPopup
+        message={validationMessage}
+        onClose={() => setValidationMessage("")}
+      />
+
       <div className="absolute top-40 right-20 w-64 h-64 rounded-full bg-red-500/5 blur-3xl pointer-events-none" />
       <div className="absolute bottom-40 left-20 w-72 h-72 rounded-full bg-purple-500/5 blur-3xl pointer-events-none" />
 
@@ -1161,7 +1183,7 @@ export default function AdminAnnouncements() {
                   {editingId && (
                     <button
                       type="button"
-                      onClick={resetForm}
+                      onClick={() => resetForm(true)}
                       className="px-6 py-3 rounded-2xl font-bold transition-all hover:scale-105"
                       style={{
                         background: "rgba(100,116,139,0.1)",
@@ -1280,3 +1302,6 @@ export default function AdminAnnouncements() {
     </section>
   );
 }
+
+
+

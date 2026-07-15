@@ -4,13 +4,17 @@ import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import {
   AlertCircle,
-  Camera,
+  ArrowDown,
+  ArrowUp,
   CheckCircle2,
   Eye,
   Image as ImageIcon,
   Link as LinkIcon,
+  ListTree,
   Pencil,
+  Plus,
   Save,
+  Trash2,
   UploadCloud,
   X,
 } from "lucide-react";
@@ -21,6 +25,8 @@ import {
   mergeNavbarContent,
 } from "../app/components/Navbar";
 
+const API_BASE = "https://school-website-backend-ixx2.onrender.com";
+
 const colors = {
   red: "#D71920",
   green: "#168A3A",
@@ -30,7 +36,13 @@ const colors = {
   gold: "#FACC15",
 };
 
-function Field({ label, value, onChange, placeholder = "" }) {
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder = "",
+  type = "text",
+}) {
   return (
     <div>
       <label className="block text-sm font-black mb-2 text-slate-700">
@@ -38,8 +50,9 @@ function Field({ label, value, onChange, placeholder = "" }) {
       </label>
 
       <input
+        type={type}
         value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
         style={{
@@ -70,7 +83,7 @@ function Toggle({ checked, onChange, label }) {
       <span className="text-sm font-black text-slate-700">{label}</span>
 
       <span
-        className="relative w-12 h-7 rounded-full transition-all"
+        className="relative w-12 h-7 rounded-full transition-all flex-shrink-0"
         style={{
           background: checked ? colors.green : "#CBD5E1",
         }}
@@ -100,56 +113,85 @@ function getUploadUrl(payload) {
   );
 }
 
+function createMenuId(label, existingLinks) {
+  const base =
+    String(label || "menu")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "menu";
+
+  const existingIds = new Set(
+    existingLinks.map((link) => String(link.id || "").trim())
+  );
+
+  if (!existingIds.has(base)) return base;
+
+  let counter = 2;
+  let nextId = `${base}-${counter}`;
+
+  while (existingIds.has(nextId)) {
+    counter += 1;
+    nextId = `${base}-${counter}`;
+  }
+
+  return nextId;
+}
+
 export default function AdminNavbar() {
   const [form, setForm] = useState(defaultNavbarContent);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [editingTarget, setEditingTarget] = useState(null);
   const [modalForm, setModalForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [modalError, setModalError] = useState("");
+  const [modalNotice, setModalNotice] = useState("");
 
   function getAdminToken() {
-  return (
-    localStorage.getItem("adminToken") ||
-    localStorage.getItem("token") ||
-    localStorage.getItem("admin_token") ||
-    ""
-  );
-}
-
-function getAuthHeaders() {
-  const token = getAdminToken();
-
-  if (!token) {
-    return null;
+    return (
+      localStorage.getItem("adminToken") ||
+      localStorage.getItem("token") ||
+      localStorage.getItem("admin_token") ||
+      ""
+    );
   }
 
-  return {
-    Authorization: `Bearer ${token}`,
-  };
-}
+  function getAuthHeaders() {
+    const token = getAdminToken();
+
+    if (!token) return null;
+
+    return {
+      Authorization: `Bearer ${token}`,
+    };
+  }
 
   useEffect(() => {
     let alive = true;
 
     const loadNavbarContent = async () => {
+      setLoading(true);
+
       try {
-        const res = await axios.get(
-          "https://school-website-backend-ixx2.onrender.com/api/site-content/navbar",
+        const response = await axios.get(
+          `${API_BASE}/api/site-content/navbar`,
           { timeout: 20000 }
         );
 
         if (!alive) return;
 
-        const savedContent = res.data?.data?.content || {};
+        const savedContent = response.data?.data?.content || {};
         setForm(mergeNavbarContent(savedContent));
-      } catch (err) {
-        console.error("Load navbar content error:", err);
+      } catch (requestError) {
+        console.error("Load navbar content error:", requestError);
 
         if (alive) {
-          setError("Could not load saved navbar content. Default content shown.");
+          setError(
+            "Could not load saved navbar content. Default content is shown."
+          );
         }
       } finally {
         if (alive) setLoading(false);
@@ -163,33 +205,26 @@ function getAuthHeaders() {
     };
   }, []);
 
-  const selectedLink = useMemo(() => {
-    if (editingTarget?.type !== "link") return null;
-    return form.links.find((link) => link.id === editingTarget.id) || null;
-  }, [editingTarget, form.links]);
-
   const openEditor = (target) => {
     setSuccess("");
     setError("");
+    setModalError("");
+    setModalNotice("");
     setEditingTarget(target);
 
-    if (target.type === "logo") {
+    if (target.type === "branding") {
       setModalForm({
         logoUrl: form.logoUrl || "",
-      });
-      return;
-    }
-
-    if (target.type === "schoolName") {
-      setModalForm({
         schoolName: form.schoolName || "",
+        schoolSubtitle: form.schoolSubtitle || "",
+        logoTouched: false,
       });
       return;
     }
 
-    if (target.type === "schoolSubtitle") {
+    if (target.type === "menu") {
       setModalForm({
-        schoolSubtitle: form.schoolSubtitle || "",
+        links: form.links.map((link) => ({ ...link })),
       });
       return;
     }
@@ -200,31 +235,103 @@ function getAuthHeaders() {
         admissionButtonLink: form.admissionButtonLink || "/admissions",
         showAdmissionButton: form.showAdmissionButton !== false,
       });
-      return;
-    }
-
-    if (target.type === "link") {
-      const link = form.links.find((item) => item.id === target.id);
-
-      setModalForm({
-        label: link?.label || "",
-        href: link?.href || "/",
-        visible: link?.visible !== false,
-      });
     }
   };
 
   const closeEditor = () => {
     if (saving || uploadingLogo) return;
+
     setEditingTarget(null);
     setModalForm({});
+    setModalError("");
+    setModalNotice("");
   };
 
   const updateModalField = (name, value) => {
-    setModalForm((prev) => ({
-      ...prev,
+    setModalForm((previous) => ({
+      ...previous,
       [name]: value,
     }));
+    setModalError("");
+  };
+
+  const updateBrandingLogo = (value) => {
+    setModalForm((previous) => ({
+      ...previous,
+      logoUrl: value,
+      logoTouched: true,
+    }));
+    setModalError("");
+  };
+
+  const updateMenuLink = (id, field, value) => {
+    setModalForm((previous) => ({
+      ...previous,
+      links: (previous.links || []).map((link) =>
+        link.id === id
+          ? {
+              ...link,
+              [field]: value,
+            }
+          : link
+      ),
+    }));
+    setModalError("");
+  };
+
+  const addMenuLink = () => {
+    setModalForm((previous) => {
+      const currentLinks = previous.links || [];
+      const id = createMenuId("new-menu", currentLinks);
+
+      return {
+        ...previous,
+        links: [
+          ...currentLinks,
+          {
+            id,
+            label: "",
+            href: "/",
+            visible: true,
+          },
+        ],
+      };
+    });
+
+    setModalError("");
+    setModalNotice("New menu item added. Complete its label and link.");
+  };
+
+  const removeMenuLink = (id) => {
+    setModalForm((previous) => ({
+      ...previous,
+      links: (previous.links || []).filter((link) => link.id !== id),
+    }));
+
+    setModalError("");
+    setModalNotice(
+      "Menu item removed from this draft. Click Save Menu to publish."
+    );
+  };
+
+  const moveMenuLink = (index, direction) => {
+    setModalForm((previous) => {
+      const links = [...(previous.links || [])];
+      const nextIndex = index + direction;
+
+      if (nextIndex < 0 || nextIndex >= links.length) {
+        return previous;
+      }
+
+      [links[index], links[nextIndex]] = [links[nextIndex], links[index]];
+
+      return {
+        ...previous,
+        links,
+      };
+    });
+
+    setModalError("");
   };
 
   const uploadLogoImage = async (file) => {
@@ -234,141 +341,236 @@ function getAuthHeaders() {
     const maxSize = 6 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
-      setError("Please upload only PNG, JPG, or WebP image.");
+      setModalError("Please upload only PNG, JPG, or WebP image.");
       return;
     }
 
     if (file.size > maxSize) {
-      setError("Logo image must be less than 6 MB.");
+      setModalError("Logo image must be less than 6 MB.");
       return;
     }
 
-    setSuccess("");
-    setError("");
+    const authHeaders = getAuthHeaders();
+
+    if (!authHeaders) {
+      setModalError("Admin login expired. Please log out and log in again.");
+      return;
+    }
+
+    setModalError("");
+    setModalNotice("");
     setUploadingLogo(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const uploadData = new FormData();
+      uploadData.append("file", file);
 
-      const authHeaders = getAuthHeaders();
+      const response = await axios.post(
+        `${API_BASE}/api/upload`,
+        uploadData,
+        {
+          headers: {
+            ...authHeaders,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-if (!authHeaders) {
-  setError("Admin login expired. Please logout and login again.");
-  return;
-}
-
-const res = await axios.post("https://school-website-backend-ixx2.onrender.com/api/upload", formData, {
-  headers: {
-    ...authHeaders,
-    "Content-Type": "multipart/form-data",
-  },
-});
-
-      const uploadedUrl = getUploadUrl(res.data);
+      const uploadedUrl = getUploadUrl(response.data);
 
       if (!uploadedUrl) {
-        setError("Image uploaded but backend did not return image URL.");
+        setModalError(
+          "Image uploaded, but the backend did not return an image URL."
+        );
         return;
       }
 
-      updateModalField("logoUrl", uploadedUrl);
-      setSuccess("Logo uploaded. Click Save Logo to publish it.");
-    } catch (err) {
-      console.error("Logo upload error:", err);
-      setError(err.response?.data?.message || "Logo upload failed.");
+      setModalForm((previous) => ({
+        ...previous,
+        logoUrl: uploadedUrl,
+        logoTouched: true,
+      }));
+      setModalNotice("Logo uploaded. Click Save Branding to publish it.");
+    } catch (requestError) {
+      console.error("Logo upload error:", requestError);
+      setModalError(
+        requestError.response?.data?.message || "Logo upload failed."
+      );
     } finally {
       setUploadingLogo(false);
     }
   };
 
+  const validateBranding = () => {
+    const schoolName = String(modalForm.schoolName || "").trim();
+    const schoolSubtitle = String(modalForm.schoolSubtitle || "").trim();
+    const logoUrl = String(modalForm.logoUrl || "").trim();
+
+    if (!schoolName) {
+      return "Please write the school name before saving.";
+    }
+
+    if (!schoolSubtitle) {
+      return "Please write the school subtitle before saving.";
+    }
+
+    if (modalForm.logoTouched && !logoUrl) {
+      return "Please upload or enter a school logo before saving.";
+    }
+
+    return "";
+  };
+
+  const validateMenu = () => {
+    const links = Array.isArray(modalForm.links) ? modalForm.links : [];
+    const seenIds = new Set();
+
+    for (let index = 0; index < links.length; index += 1) {
+      const link = links[index];
+      const position = index + 1;
+      const label = String(link.label || "").trim();
+      const href = String(link.href || "").trim();
+      const id = String(link.id || "").trim();
+
+      if (!label) {
+        return `Please write the menu label for item ${position}.`;
+      }
+
+      if (!href) {
+        return `Please write the menu link for "${label}".`;
+      }
+
+      if (!id) {
+        return `Menu item ${position} has no ID. Remove it and add it again.`;
+      }
+
+      if (seenIds.has(id)) {
+        return `The menu ID "${id}" is duplicated. Remove one duplicate item.`;
+      }
+
+      seenIds.add(id);
+    }
+
+    return "";
+  };
+
+  const validateAdmission = () => {
+    if (!String(modalForm.admissionButtonText || "").trim()) {
+      return "Please write the admission button text before saving.";
+    }
+
+    if (!String(modalForm.admissionButtonLink || "").trim()) {
+      return "Please write the admission button link before saving.";
+    }
+
+    return "";
+  };
+
   const saveSelectedPart = async () => {
     if (!editingTarget) return;
 
+    let validationMessage = "";
+
+    if (editingTarget.type === "branding") {
+      validationMessage = validateBranding();
+    }
+
+    if (editingTarget.type === "menu") {
+      validationMessage = validateMenu();
+    }
+
+    if (editingTarget.type === "admission") {
+      validationMessage = validateAdmission();
+    }
+
+    if (validationMessage) {
+      setModalError(validationMessage);
+      return;
+    }
+
+    const authHeaders = getAuthHeaders();
+
+    if (!authHeaders) {
+      setModalError("Admin login expired. Please log out and log in again.");
+      return;
+    }
+
     setSaving(true);
-    setSuccess("");
-    setError("");
+    setModalError("");
+    setModalNotice("");
 
     try {
       let nextForm = mergeNavbarContent(form);
 
-      if (editingTarget.type === "logo") {
+      if (editingTarget.type === "branding") {
         nextForm = {
           ...nextForm,
-          logoUrl: modalForm.logoUrl || "",
+          logoUrl: String(modalForm.logoUrl || "").trim(),
+          schoolName: String(modalForm.schoolName || "").trim(),
+          schoolSubtitle: String(modalForm.schoolSubtitle || "").trim(),
         };
       }
 
-      if (editingTarget.type === "schoolName") {
+      if (editingTarget.type === "menu") {
         nextForm = {
           ...nextForm,
-          schoolName: modalForm.schoolName || "",
-        };
-      }
-
-      if (editingTarget.type === "schoolSubtitle") {
-        nextForm = {
-          ...nextForm,
-          schoolSubtitle: modalForm.schoolSubtitle || "",
+          links: (modalForm.links || []).map((link) => ({
+            id: String(link.id || "").trim(),
+            label: String(link.label || "").trim(),
+            href: String(link.href || "").trim(),
+            visible: link.visible !== false,
+          })),
         };
       }
 
       if (editingTarget.type === "admission") {
         nextForm = {
           ...nextForm,
-          admissionButtonText: modalForm.admissionButtonText || "",
-          admissionButtonLink: modalForm.admissionButtonLink || "/admissions",
+          admissionButtonText: String(
+            modalForm.admissionButtonText || ""
+          ).trim(),
+          admissionButtonLink: String(
+            modalForm.admissionButtonLink || ""
+          ).trim(),
           showAdmissionButton: modalForm.showAdmissionButton !== false,
-        };
-      }
-
-      if (editingTarget.type === "link") {
-        nextForm = {
-          ...nextForm,
-          links: nextForm.links.map((link) =>
-            link.id === editingTarget.id
-              ? {
-                  ...link,
-                  label: modalForm.label || "",
-                  href: modalForm.href || "/",
-                  visible: modalForm.visible !== false,
-                }
-              : link
-          ),
         };
       }
 
       const cleanContent = mergeNavbarContent(nextForm);
 
-      const authHeaders = getAuthHeaders();
-
-if (!authHeaders) {
-  setError("Admin login expired. Please logout and login again.");
-  setSaving(false);
-  return;
-}
-
-await axios.put(
-  "https://school-website-backend-ixx2.onrender.com/api/site-content/navbar",
-  {
-    content: cleanContent,
-  },
-  {
-    headers: authHeaders,
-  }
-);
+      await axios.put(
+        `${API_BASE}/api/site-content/navbar`,
+        {
+          content: cleanContent,
+        },
+        {
+          headers: authHeaders,
+        }
+      );
 
       setForm(cleanContent);
       setEditingTarget(null);
       setModalForm({});
-      setSuccess("Selected navbar item saved successfully.");
-    } catch (err) {
-      console.error("Save selected navbar item error:", err);
-      if (err.response?.status === 401) {
-  setError("Admin login expired or token is invalid. Please logout and login again.");
-} else {
-  setError(err.response?.data?.message || "Could not save selected item.");
-}
+      setSuccess(
+        editingTarget.type === "branding"
+          ? "School logo and name saved successfully."
+          : editingTarget.type === "menu"
+            ? "Navbar menu saved successfully."
+            : "Admission button saved successfully."
+      );
+    } catch (requestError) {
+      console.error("Save navbar section error:", requestError);
+
+      if (requestError.response?.status === 401) {
+        setModalError(
+          "Admin login expired or the token is invalid. Please log out and log in again."
+        );
+      } else {
+        setModalError(
+          requestError.response?.data?.message ||
+            "Could not save the selected navbar section."
+        );
+      }
     } finally {
       setSaving(false);
     }
@@ -377,37 +579,34 @@ await axios.put(
   const modalTitle = useMemo(() => {
     if (!editingTarget) return "";
 
-    if (editingTarget.type === "logo") return "Change School Logo";
-    if (editingTarget.type === "schoolName") return "Edit School Name";
-    if (editingTarget.type === "schoolSubtitle") return "Edit School Subtitle";
-    if (editingTarget.type === "admission") return "Edit Admission Button";
-    if (editingTarget.type === "link") {
-      return selectedLink ? `Edit Menu: ${selectedLink.label}` : "Edit Menu Link";
+    if (editingTarget.type === "branding") {
+      return "Edit School Logo and Name";
+    }
+
+    if (editingTarget.type === "menu") {
+      return "Manage Navbar Menu";
+    }
+
+    if (editingTarget.type === "admission") {
+      return "Edit Admission Button";
     }
 
     return "Edit Navbar";
-  }, [editingTarget, selectedLink]);
+  }, [editingTarget]);
 
-  const modalIcon = useMemo(() => {
-    if (!editingTarget) return Pencil;
-    if (editingTarget.type === "logo") return Camera;
-    if (editingTarget.type === "link") return LinkIcon;
+  const ModalIcon = useMemo(() => {
+    if (editingTarget?.type === "branding") return ImageIcon;
+    if (editingTarget?.type === "menu") return ListTree;
+    if (editingTarget?.type === "admission") return LinkIcon;
     return Pencil;
   }, [editingTarget]);
 
   const saveButtonText = useMemo(() => {
-    if (!editingTarget) return "Save";
-
-    if (editingTarget.type === "logo") return "Save Logo";
-    if (editingTarget.type === "schoolName") return "Save Name";
-    if (editingTarget.type === "schoolSubtitle") return "Save Subtitle";
-    if (editingTarget.type === "admission") return "Save Button";
-    if (editingTarget.type === "link") return "Save Menu Link";
-
+    if (editingTarget?.type === "branding") return "Save Branding";
+    if (editingTarget?.type === "menu") return "Save Menu";
+    if (editingTarget?.type === "admission") return "Save Admission Button";
     return "Save";
   }, [editingTarget]);
-
-  const ModalIcon = modalIcon;
 
   if (loading) {
     return (
@@ -423,257 +622,27 @@ await axios.put(
     <div className="space-y-6">
       <style>
         {`
-          @media (max-width: 767px) {
-            .admin-navbar-preview-frame [class*="opacity-0"] {
-              opacity: 1 !important;
-            }
-
-            .admin-navbar-preview-frame [class*="group-hover:opacity"] {
-              opacity: 1 !important;
-            }
-
-            .admin-navbar-preview-frame [class*="z-50"],
-            .admin-navbar-preview-frame [class*="z-[50]"],
-            .admin-navbar-preview-frame [class*="z-[60]"],
-            .admin-navbar-preview-frame [class*="z-[70]"],
-            .admin-navbar-preview-frame [class*="z-[80]"],
-            .admin-navbar-preview-frame [class*="z-[90]"],
-            .admin-navbar-preview-frame [class*="z-[999]"] {
-              z-index: 20 !important;
-            }
-          }
-        `}
-      </style>
-
-      <style>
-        {`
-          @media (max-width: 767px) {
-            .admin-navbar-preview-frame {
-              overflow: visible !important;
-            }
-
-            .admin-navbar-preview-frame .group .opacity-0,
-            .admin-navbar-preview-frame .group [class*="opacity-0"],
-            .admin-navbar-preview-frame .group [class*="group-hover:opacity"],
-            .admin-navbar-preview-frame [class*="group-hover:opacity"],
-            .admin-navbar-preview-frame button[class*="opacity-0"],
-            .admin-navbar-preview-frame button[class*="group-hover:opacity"] {
-              opacity: 1 !important;
-              visibility: visible !important;
-              pointer-events: auto !important;
-            }
-
-            .admin-navbar-preview-frame .group .pointer-events-none,
-            .admin-navbar-preview-frame .group [class*="pointer-events-none"] {
-              pointer-events: auto !important;
-            }
-
-            .admin-navbar-preview-frame [class*="absolute"] button,
-            .admin-navbar-preview-frame button[class*="rounded-full"] {
-              min-width: 2.25rem !important;
-              min-height: 2.25rem !important;
-              z-index: 30 !important;
-              pointer-events: auto !important;
-            }
-
-            .admin-navbar-preview-frame [class*="absolute"][class*="z-50"],
-            .admin-navbar-preview-frame [class*="absolute"][class*="z-[50]"],
-            .admin-navbar-preview-frame [class*="absolute"][class*="z-[60]"],
-            .admin-navbar-preview-frame [class*="absolute"][class*="z-[70]"],
-            .admin-navbar-preview-frame [class*="absolute"][class*="z-[80]"],
-            .admin-navbar-preview-frame [class*="absolute"][class*="z-[90]"],
-            .admin-navbar-preview-frame [class*="absolute"][class*="z-[999]"] {
-              z-index: 30 !important;
-            }
-          }
-        `}
-      </style>
-
-
-      <style>
-        {`
-          @media (max-width: 767px) {
+          @media (max-width: 1279px) {
             .admin-navbar-preview-frame {
               position: relative !important;
+              min-height: 660px !important;
               overflow: hidden !important;
               isolation: isolate !important;
             }
 
-            .admin-navbar-preview-frame nav,
-            .admin-navbar-preview-frame header {
-              position: relative !important;
-              z-index: 60 !important;
-            }
-
-            .admin-navbar-preview-frame [class*="fixed"] {
-              position: absolute !important;
-              inset: 4.25rem 0 auto 0 !important;
-              width: 100% !important;
-              max-width: 100% !important;
-              height: auto !important;
-              max-height: 360px !important;
-              overflow-y: auto !important;
-              border-radius: 1.5rem !important;
-              z-index: 35 !important;
-            }
-
-            .admin-navbar-preview-frame [class*="fixed"][class*="inset-0"],
-            .admin-navbar-preview-frame [class*="fixed"][class*="inset"] {
-              inset: 4.25rem 0 auto 0 !important;
-            }
-
-            .admin-navbar-preview-frame [class*="fixed"]::before,
-            .admin-navbar-preview-frame [class*="fixed"]::after {
-              display: none !important;
-            }
-
-            .admin-navbar-preview-frame button,
-            .admin-navbar-preview-frame a {
-              pointer-events: auto !important;
-            }
-
-            .admin-navbar-preview-frame button[aria-label],
-            .admin-navbar-preview-frame button[type="button"] {
-              position: relative !important;
-              z-index: 70 !important;
-            }
-
-            .admin-navbar-preview-frame .group .opacity-0,
-            .admin-navbar-preview-frame .group [class*="opacity-0"],
-            .admin-navbar-preview-frame .group [class*="group-hover:opacity"],
-            .admin-navbar-preview-frame [class*="group-hover:opacity"],
-            .admin-navbar-preview-frame button[class*="opacity-0"],
-            .admin-navbar-preview-frame button[class*="group-hover:opacity"] {
+            .admin-navbar-preview-frame .admin-navbar-edit-indicator {
               opacity: 1 !important;
-              visibility: visible !important;
-              pointer-events: auto !important;
-            }
-
-            .admin-navbar-preview-frame [class*="absolute"] button,
-            .admin-navbar-preview-frame button[class*="rounded-full"] {
-              min-width: 2.25rem !important;
-              min-height: 2.25rem !important;
-              z-index: 75 !important;
-              pointer-events: auto !important;
-            }
-
-            .admin-navbar-preview-frame [class*="z-50"],
-            .admin-navbar-preview-frame [class*="z-[50]"],
-            .admin-navbar-preview-frame [class*="z-[60]"],
-            .admin-navbar-preview-frame [class*="z-[70]"],
-            .admin-navbar-preview-frame [class*="z-[80]"],
-            .admin-navbar-preview-frame [class*="z-[90]"],
-            .admin-navbar-preview-frame [class*="z-[999]"] {
-              z-index: 35 !important;
-            }
-
-            .admin-navbar-preview-frame nav [class*="z-50"],
-            .admin-navbar-preview-frame nav [class*="z-[50]"],
-            .admin-navbar-preview-frame nav [class*="z-[60]"],
-            .admin-navbar-preview-frame nav [class*="z-[70]"],
-            .admin-navbar-preview-frame nav [class*="z-[80]"],
-            .admin-navbar-preview-frame nav [class*="z-[90]"],
-            .admin-navbar-preview-frame nav [class*="z-[999]"] {
-              z-index: 70 !important;
-            }
-          }
-        `}
-      </style>
-
-
-      <style>
-        {`
-          @media (max-width: 767px) {
-            .admin-navbar-preview-frame {
-              min-height: 430px !important;
-              overflow: hidden !important;
+              transform: scale(1) !important;
             }
 
             .admin-navbar-preview-frame [class*="fixed"] {
               position: absolute !important;
-              top: 4.25rem !important;
-              left: 0.75rem !important;
-              right: 0.75rem !important;
-              bottom: auto !important;
-              width: auto !important;
-              max-width: calc(100% - 1.5rem) !important;
-              height: auto !important;
-              max-height: 320px !important;
-              overflow-y: auto !important;
-              border-radius: 1.5rem !important;
-              z-index: 45 !important;
-            }
-
-            .admin-navbar-preview-frame [class*="fixed"][class*="inset-0"],
-            .admin-navbar-preview-frame [class*="fixed"][class*="inset"] {
-              inset: 4.25rem 0.75rem auto 0.75rem !important;
-            }
-
-            .admin-navbar-preview-frame nav,
-            .admin-navbar-preview-frame header {
-              position: relative !important;
-              z-index: 80 !important;
-            }
-
-            .admin-navbar-preview-frame nav button,
-            .admin-navbar-preview-frame header button {
-              position: relative !important;
-              z-index: 90 !important;
-              pointer-events: auto !important;
             }
           }
-        `}
-      </style>
 
-
-      <style>
-        {`
-          @media (max-width: 767px) {
+          @media (min-width: 1280px) {
             .admin-navbar-preview-frame {
-              min-height: 660px !important;
-              overflow: hidden !important;
-              position: relative !important;
-            }
-
-            .admin-navbar-preview-frame [class*="fixed"] {
-              position: absolute !important;
-              top: 4.25rem !important;
-              left: 0.75rem !important;
-              right: 0.75rem !important;
-              bottom: auto !important;
-              width: auto !important;
-              max-width: calc(100% - 1.5rem) !important;
-              height: auto !important;
-              min-height: auto !important;
-              max-height: none !important;
-              overflow: visible !important;
-              border-radius: 1.5rem !important;
-              z-index: 45 !important;
-            }
-
-            .admin-navbar-preview-frame [class*="fixed"][class*="inset-0"],
-            .admin-navbar-preview-frame [class*="fixed"][class*="inset"] {
-              inset: 4.25rem 0.75rem auto 0.75rem !important;
-            }
-
-            .admin-navbar-preview-frame [class*="fixed"] > div,
-            .admin-navbar-preview-frame [class*="fixed"] ul,
-            .admin-navbar-preview-frame [class*="fixed"] li {
-              max-height: none !important;
-              overflow: visible !important;
-            }
-
-            .admin-navbar-preview-frame nav,
-            .admin-navbar-preview-frame header {
-              position: relative !important;
-              z-index: 80 !important;
-            }
-
-            .admin-navbar-preview-frame nav button,
-            .admin-navbar-preview-frame header button {
-              position: relative !important;
-              z-index: 90 !important;
-              pointer-events: auto !important;
+              min-height: 170px !important;
             }
           }
         `}
@@ -704,75 +673,90 @@ await axios.put(
                 letterSpacing: "-0.04em",
               }}
             >
-              Hover and Edit Navbar
+              Edit Navbar Sections
             </h2>
 
             <p className="text-sm text-slate-500 mt-1">
-              Hover logo, school name, menu links, or admission button. Click
-              the edit icon and save only that selected item.
+              Use one editor for school branding, one for the complete menu,
+              and one for the admission button.
             </p>
           </div>
         </div>
 
         {success && (
           <div className="mb-4 rounded-2xl px-4 py-3 flex items-center gap-2 font-semibold bg-green-50 text-green-700 border border-green-100">
-            <CheckCircle2 className="w-4 h-4" />
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             {success}
           </div>
         )}
 
         {error && (
           <div className="mb-4 rounded-2xl px-4 py-3 flex items-center gap-2 font-semibold bg-red-50 text-red-700 border border-red-100">
-            <AlertCircle className="w-4 h-4" />
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
             {error}
           </div>
         )}
 
         <div
-  className="admin-navbar-preview-frame rounded-[2rem] p-3 sm:p-4 md:p-6 overflow-hidden"
-  style={{
-    background:
-      "radial-gradient(circle at top left, rgba(56,189,248,0.14), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
-    border: "1px solid rgba(15,23,42,0.08)",
-    minHeight: "170px",
-  }}
->
-  <div className="w-full min-w-0">
-    <Navbar editMode contentOverride={form} onEditTarget={openEditor} />
-  </div>
-</div>
+          className="admin-navbar-preview-frame rounded-[2rem] p-3 sm:p-4 md:p-6 overflow-hidden"
+          style={{
+            background:
+              "radial-gradient(circle at top left, rgba(56,189,248,0.14), transparent 34%), linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)",
+            border: "1px solid rgba(15,23,42,0.08)",
+          }}
+        >
+          <div className="w-full min-w-0">
+            <Navbar
+              editMode
+              contentOverride={form}
+              onEditTarget={openEditor}
+            />
+          </div>
+        </div>
       </motion.div>
 
       <div className="grid md:grid-cols-3 gap-4">
-        <div className="rounded-2xl p-4 bg-white border border-slate-100">
+        <button
+          type="button"
+          onClick={() => openEditor({ type: "branding" })}
+          className="text-left rounded-2xl p-4 bg-white border border-slate-100 transition-all hover:-translate-y-0.5 hover:shadow-lg"
+        >
           <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center mb-3">
-            <Camera className="w-5 h-5" />
+            <ImageIcon className="w-5 h-5" />
           </div>
-          <div className="font-black text-slate-950">Logo</div>
+          <div className="font-black text-slate-950">School Branding</div>
           <div className="text-sm text-slate-500 mt-1">
-            Hover the school logo and click camera icon.
+            Edit logo, school name, and subtitle together.
           </div>
-        </div>
+        </button>
 
-        <div className="rounded-2xl p-4 bg-white border border-slate-100">
+        <button
+          type="button"
+          onClick={() => openEditor({ type: "menu" })}
+          className="text-left rounded-2xl p-4 bg-white border border-slate-100 transition-all hover:-translate-y-0.5 hover:shadow-lg"
+        >
           <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center mb-3">
-            <Pencil className="w-5 h-5" />
+            <ListTree className="w-5 h-5" />
           </div>
-          <div className="font-black text-slate-950">Text</div>
+          <div className="font-black text-slate-950">Complete Menu</div>
           <div className="text-sm text-slate-500 mt-1">
-            Hover school name or subtitle and click edit icon.
+            Add, remove, hide, restore, and arrange all menu items.
           </div>
-        </div>
+        </button>
 
-        <div className="rounded-2xl p-4 bg-white border border-slate-100">
+        <button
+          type="button"
+          onClick={() => openEditor({ type: "admission" })}
+          className="text-left rounded-2xl p-4 bg-white border border-slate-100 transition-all hover:-translate-y-0.5 hover:shadow-lg"
+        >
           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center mb-3">
             <LinkIcon className="w-5 h-5" />
           </div>
-          <div className="font-black text-slate-950">Menu</div>
+          <div className="font-black text-slate-950">Admission Button</div>
           <div className="text-sm text-slate-500 mt-1">
-            Hover any menu item or admission button to edit.
+            Edit or restore the button even when it is hidden.
           </div>
-        </div>
+        </button>
       </div>
 
       <AnimatePresence>
@@ -793,13 +777,18 @@ await axios.put(
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 14, scale: 0.96 }}
               transition={{ type: "spring", stiffness: 130, damping: 16 }}
-              className="w-full max-w-lg rounded-[28px] overflow-hidden"
+              className={`w-full rounded-[28px] overflow-hidden ${
+                editingTarget.type === "menu"
+                  ? "max-w-4xl"
+                  : "max-w-xl"
+              }`}
               style={{
                 background: "#FFFFFF",
                 border: "1px solid rgba(255,255,255,0.75)",
                 boxShadow: "0 42px 110px rgba(0,0,0,0.28)",
+                maxHeight: "92vh",
               }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
             >
               <div
                 className="h-1"
@@ -808,236 +797,373 @@ await axios.put(
                 }}
               />
 
-              <div className="p-6">
-                <div className="flex items-start justify-between gap-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(56,189,248,0.18))",
-                        color: colors.dark,
-                      }}
-                    >
-                      <ModalIcon className="w-5 h-5" />
-                    </div>
-
-                    <div>
-                      <h3 className="text-xl font-black text-slate-950">
-                        {modalTitle}
-                      </h3>
-                      <p className="text-sm text-slate-500">
-                        Save only this selected navbar item.
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={closeEditor}
-                    className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="space-y-5">
-                  {editingTarget.type === "logo" && (
-                    <>
+              <div className="flex flex-col max-h-[calc(92vh-4px)]">
+                <div className="p-5 sm:p-6 border-b border-slate-100">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className="rounded-3xl p-5"
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
                         style={{
                           background:
-                            "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))",
-                          border: "1px solid rgba(255,255,255,0.12)",
+                            "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(56,189,248,0.18))",
+                          color: colors.dark,
                         }}
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="w-24 h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center">
-                            {modalForm.logoUrl ? (
+                        <ModalIcon className="w-5 h-5" />
+                      </div>
+
+                      <div className="min-w-0">
+                        <h3 className="text-xl font-black text-slate-950">
+                          {modalTitle}
+                        </h3>
+                        <p className="text-sm text-slate-500">
+                          Changes are published only after you click save.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={closeEditor}
+                      disabled={saving || uploadingLogo}
+                      className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600 flex-shrink-0 disabled:opacity-60"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="overflow-y-auto p-5 sm:p-6">
+                  {modalError && (
+                    <div className="mb-5 rounded-2xl px-4 py-3 flex items-start gap-2 font-semibold bg-red-50 text-red-700 border border-red-100">
+                      <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <span>{modalError}</span>
+                    </div>
+                  )}
+
+                  {modalNotice && (
+                    <div className="mb-5 rounded-2xl px-4 py-3 flex items-start gap-2 font-semibold bg-sky-50 text-sky-700 border border-sky-100">
+                      <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <span>{modalNotice}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-5">
+                    {editingTarget.type === "branding" && (
+                      <>
+                        <div
+                          className="rounded-3xl p-5"
+                          style={{
+                            background:
+                              "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))",
+                            border: "1px solid rgba(255,255,255,0.12)",
+                          }}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                            <div className="w-24 h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center flex-shrink-0">
                               <img
-                                src={modalForm.logoUrl}
+                                src={
+                                  modalForm.logoUrl || defaultSchoolLogo
+                                }
                                 alt="Logo preview"
                                 className="w-full h-full object-contain p-1"
                               />
-                            ) : (
-                              <img
-                                src={defaultSchoolLogo}
-                                alt="Default logo"
-                                className="w-full h-full object-contain p-1"
-                              />
-                            )}
-                          </div>
-
-                          <div>
-                            <div className="text-white font-black">
-                              Logo Preview
                             </div>
-                            <div className="text-white/55 text-sm mt-1 leading-relaxed">
-                              Recommended: 512×512 square, PNG/JPG/WebP, max 6 MB.
+
+                            <div>
+                              <div className="text-white font-black">
+                                School Logo
+                              </div>
+                              <div className="text-white/55 text-sm mt-1 leading-relaxed">
+                                Recommended: 512×512 square, PNG/JPG/WebP,
+                                maximum 6 MB.
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <label
-                          className="mt-5 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black cursor-pointer"
-                          style={{
-                            background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                            color: colors.dark,
-                          }}
-                        >
-                          <UploadCloud className="w-4 h-4" />
-                          {uploadingLogo ? "Uploading..." : "Upload New Logo"}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            disabled={uploadingLogo}
-                            onChange={(e) => {
-                              uploadLogoImage(e.target.files?.[0]);
-                              e.target.value = "";
-                            }}
-                            className="hidden"
-                          />
-                        </label>
-
-                        {modalForm.logoUrl && (
-                          <button
-                            type="button"
-                            onClick={() => updateModalField("logoUrl", "")}
-                            className="mt-3 w-full px-4 py-3 rounded-2xl text-sm font-black"
+                          <label
+                            className="mt-5 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black cursor-pointer"
                             style={{
-                              background: "rgba(215,25,32,0.12)",
-                              color: "#FFFFFF",
-                              border: "1px solid rgba(255,255,255,0.12)",
+                              background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                              color: colors.dark,
                             }}
                           >
-                            Use Default Logo
+                            <UploadCloud className="w-4 h-4" />
+                            {uploadingLogo
+                              ? "Uploading..."
+                              : "Upload New Logo"}
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp"
+                              disabled={uploadingLogo}
+                              onChange={(event) => {
+                                uploadLogoImage(event.target.files?.[0]);
+                                event.target.value = "";
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+
+                        <Field
+                          label="Logo Image URL"
+                          value={modalForm.logoUrl}
+                          onChange={updateBrandingLogo}
+                          placeholder="Upload a logo or paste its image URL"
+                        />
+
+                        <Field
+                          label="School Name"
+                          value={modalForm.schoolName}
+                          onChange={(value) =>
+                            updateModalField("schoolName", value)
+                          }
+                          placeholder="Baljagriti"
+                        />
+
+                        <Field
+                          label="School Subtitle"
+                          value={modalForm.schoolSubtitle}
+                          onChange={(value) =>
+                            updateModalField("schoolSubtitle", value)
+                          }
+                          placeholder="Secondary English School"
+                        />
+                      </>
+                    )}
+
+                    {editingTarget.type === "menu" && (
+                      <>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div>
+                            <div className="font-black text-slate-950">
+                              Menu Items
+                            </div>
+                            <div className="text-sm text-slate-500 mt-1">
+                              Use arrows to arrange the order. Hidden items
+                              remain here so they can be restored later.
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={addMenuLink}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-black"
+                            style={{
+                              background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                              color: colors.dark,
+                            }}
+                          >
+                            <Plus className="w-4 h-4" />
+                            Add Menu Item
                           </button>
+                        </div>
+
+                        {(modalForm.links || []).length === 0 ? (
+                          <div className="rounded-3xl p-8 text-center bg-slate-50 border border-dashed border-slate-300">
+                            <ListTree className="w-8 h-8 mx-auto text-slate-400" />
+                            <div className="font-black text-slate-800 mt-3">
+                              No menu items
+                            </div>
+                            <div className="text-sm text-slate-500 mt-1">
+                              Add a menu item to show navigation links again.
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {(modalForm.links || []).map((link, index) => (
+                              <div
+                                key={link.id}
+                                className="rounded-3xl p-4 sm:p-5 bg-slate-50 border border-slate-200"
+                              >
+                                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center text-sm font-black">
+                                      {index + 1}
+                                    </div>
+
+                                    <div>
+                                      <div className="font-black text-slate-950">
+                                        {link.label || "New Menu Item"}
+                                      </div>
+                                      <div className="text-xs text-slate-500">
+                                        ID: {link.id}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        moveMenuLink(index, -1)
+                                      }
+                                      disabled={index === 0}
+                                      className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 disabled:opacity-35"
+                                      title="Move up"
+                                    >
+                                      <ArrowUp className="w-4 h-4" />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        moveMenuLink(index, 1)
+                                      }
+                                      disabled={
+                                        index ===
+                                        (modalForm.links || []).length - 1
+                                      }
+                                      className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 disabled:opacity-35"
+                                      title="Move down"
+                                    >
+                                      <ArrowDown className="w-4 h-4" />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        removeMenuLink(link.id)
+                                      }
+                                      className="w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600"
+                                      title="Remove menu item"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="grid lg:grid-cols-2 gap-4">
+                                  <Field
+                                    label="Menu Label"
+                                    value={link.label}
+                                    onChange={(value) =>
+                                      updateMenuLink(
+                                        link.id,
+                                        "label",
+                                        value
+                                      )
+                                    }
+                                    placeholder="Academics"
+                                  />
+
+                                  <Field
+                                    label="Menu Link"
+                                    value={link.href}
+                                    onChange={(value) =>
+                                      updateMenuLink(
+                                        link.id,
+                                        "href",
+                                        value
+                                      )
+                                    }
+                                    placeholder="/academics"
+                                  />
+                                </div>
+
+                                <div className="mt-4">
+                                  <Toggle
+                                    checked={link.visible !== false}
+                                    onChange={(value) =>
+                                      updateMenuLink(
+                                        link.id,
+                                        "visible",
+                                        value
+                                      )
+                                    }
+                                    label="Show this item in the navbar"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         )}
-                      </div>
+                      </>
+                    )}
 
-                      <Field
-                        label="Logo Image URL"
-                        value={modalForm.logoUrl}
-                        onChange={(value) => updateModalField("logoUrl", value)}
-                        placeholder="Image URL appears after upload"
-                      />
-                    </>
-                  )}
+                    {editingTarget.type === "admission" && (
+                      <>
+                        <Toggle
+                          checked={
+                            modalForm.showAdmissionButton !== false
+                          }
+                          onChange={(value) =>
+                            updateModalField(
+                              "showAdmissionButton",
+                              value
+                            )
+                          }
+                          label="Show admission button"
+                        />
 
-                  {editingTarget.type === "schoolName" && (
-                    <Field
-                      label="School Name"
-                      value={modalForm.schoolName}
-                      onChange={(value) =>
-                        updateModalField("schoolName", value)
-                      }
-                      placeholder="Baljagriti"
-                    />
-                  )}
+                        <Field
+                          label="Button Text"
+                          value={modalForm.admissionButtonText}
+                          onChange={(value) =>
+                            updateModalField(
+                              "admissionButtonText",
+                              value
+                            )
+                          }
+                          placeholder="Admission Open"
+                        />
 
-                  {editingTarget.type === "schoolSubtitle" && (
-                    <Field
-                      label="School Subtitle"
-                      value={modalForm.schoolSubtitle}
-                      onChange={(value) =>
-                        updateModalField("schoolSubtitle", value)
-                      }
-                      placeholder="Secondary English School"
-                    />
-                  )}
+                        <Field
+                          label="Button Link"
+                          value={modalForm.admissionButtonLink}
+                          onChange={(value) =>
+                            updateModalField(
+                              "admissionButtonLink",
+                              value
+                            )
+                          }
+                          placeholder="/admissions"
+                        />
 
-                  {editingTarget.type === "admission" && (
-                    <>
-                      <Toggle
-                        checked={modalForm.showAdmissionButton !== false}
-                        onChange={(value) =>
-                          updateModalField("showAdmissionButton", value)
-                        }
-                        label="Show admission button"
-                      />
-
-                      <Field
-                        label="Button Text"
-                        value={modalForm.admissionButtonText}
-                        onChange={(value) =>
-                          updateModalField("admissionButtonText", value)
-                        }
-                        placeholder="Admission Open"
-                      />
-
-                      <Field
-                        label="Button Link"
-                        value={modalForm.admissionButtonLink}
-                        onChange={(value) =>
-                          updateModalField("admissionButtonLink", value)
-                        }
-                        placeholder="/admissions"
-                      />
-                    </>
-                  )}
-
-                  {editingTarget.type === "link" && (
-                    <>
-                      <Toggle
-                        checked={modalForm.visible !== false}
-                        onChange={(value) => updateModalField("visible", value)}
-                        label="Show this menu item"
-                      />
-
-                      <Field
-                        label="Menu Label"
-                        value={modalForm.label}
-                        onChange={(value) => updateModalField("label", value)}
-                        placeholder="Home"
-                      />
-
-                      <Field
-                        label="Menu Link"
-                        value={modalForm.href}
-                        onChange={(value) => updateModalField("href", value)}
-                        placeholder="/about"
-                      />
-
-                      <div className="rounded-2xl p-4 bg-slate-50 border border-slate-200 text-slate-600 text-sm">
-                        Fixed Link ID:{" "}
-                        <span className="font-black text-slate-900">
-                          {editingTarget.id}
-                        </span>
-                      </div>
-                    </>
-                  )}
+                        {modalForm.showAdmissionButton === false && (
+                          <div className="rounded-2xl p-4 bg-amber-50 border border-amber-100 text-amber-800 text-sm font-semibold">
+                            The button will be hidden on the public website,
+                            but this editor will remain available in the admin
+                            panel so you can restore it later.
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex gap-3 mt-7">
-                  <button
-                    type="button"
-                    onClick={closeEditor}
-                    disabled={saving || uploadingLogo}
-                    className="flex-1 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5 disabled:opacity-60"
-                    style={{
-                      background: "rgba(15,23,42,0.06)",
-                      color: "rgba(15,23,42,0.65)",
-                      border: "1px solid rgba(15,23,42,0.08)",
-                    }}
-                  >
-                    Cancel
-                  </button>
+                <div className="p-5 sm:p-6 border-t border-slate-100 bg-white">
+                  <div className="flex flex-col-reverse sm:flex-row gap-3">
+                    <button
+                      type="button"
+                      onClick={closeEditor}
+                      disabled={saving || uploadingLogo}
+                      className="flex-1 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5 disabled:opacity-60"
+                      style={{
+                        background: "rgba(15,23,42,0.06)",
+                        color: "rgba(15,23,42,0.65)",
+                        border: "1px solid rgba(15,23,42,0.08)",
+                      }}
+                    >
+                      Cancel
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={saveSelectedPart}
-                    disabled={saving || uploadingLogo}
-                    className="flex-1 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5 disabled:opacity-60 inline-flex items-center justify-center gap-2"
-                    style={{
-                      background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                      color: "#020617",
-                      boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
-                    }}
-                  >
-                    <Save className="w-4 h-4" />
-                    {saving ? "Saving..." : saveButtonText}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={saveSelectedPart}
+                      disabled={saving || uploadingLogo}
+                      className="flex-1 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-0.5 disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                      style={{
+                        background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                        color: colors.dark,
+                        boxShadow:
+                          "0 16px 38px rgba(56,189,248,0.24)",
+                      }}
+                    >
+                      <Save className="w-4 h-4" />
+                      {saving ? "Saving..." : saveButtonText}
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>

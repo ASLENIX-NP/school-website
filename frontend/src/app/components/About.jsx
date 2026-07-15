@@ -192,6 +192,7 @@ function normalizeArray(savedArray, defaultArray) {
     ...(defaultArray[index] || {}),
     ...item,
     id: item.id || Date.now() + index,
+    visible: true,
   }));
 }
 
@@ -692,18 +693,10 @@ export function About({
     };
   }, [contentOverride]);
 
-  const visiblePillars = (content.pillars || []).filter(
-    (item) => item.visible !== false
-  );
-  const visibleMissionVision = (content.missionVision || []).filter(
-    (item) => item.visible !== false
-  );
-  const visibleJourney = (content.journey || []).filter(
-    (item) => item.visible !== false
-  );
-  const visibleMessages = (content.messages || []).filter(
-    (item) => item.visible !== false
-  );
+  const visiblePillars = content.pillars || [];
+  const visibleMissionVision = content.missionVision || [];
+  const visibleJourney = content.journey || [];
+  const visibleMessages = content.messages || [];
 
   const selectedMessageId =
     typeof window !== "undefined"

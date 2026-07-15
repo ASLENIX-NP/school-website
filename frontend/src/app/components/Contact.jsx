@@ -93,16 +93,15 @@ export function mergeContactContent(saved = {}) {
   return {
     ...defaultContactContent,
     ...saved,
-    contactInfo:
-      Array.isArray(saved.contactInfo) && saved.contactInfo.length
-        ? saved.contactInfo.map((item, index) => ({
-            id: item.id || `contact-${index}-${Date.now()}`,
-            icon: item.icon || "map",
-            label: item.label || "Contact",
-            value: item.value || "",
-            color: item.color || colors.purple,
-          }))
-        : defaultContactContent.contactInfo,
+    contactInfo: Array.isArray(saved.contactInfo)
+      ? saved.contactInfo.map((item, index) => ({
+          id: item.id || `contact-${index}-${Date.now()}`,
+          icon: item.icon || "map",
+          label: typeof item.label === "string" ? item.label : "Contact",
+          value: typeof item.value === "string" ? item.value : "",
+          color: item.color || colors.purple,
+        }))
+      : defaultContactContent.contactInfo,
     mapCard: {
       ...defaultContactContent.mapCard,
       ...(saved.mapCard || {}),
@@ -442,6 +441,64 @@ const countryCodes = [
   { code: "+263", country: "Zimbabwe", flag: "🇿🇼" },
 ];
 
+// Convert the Unicode flag into its ISO country code.
+// The ISO value also gives every country a unique identity when calling codes repeat.
+function getCountryIso(flag = "") {
+  const letters = Array.from(flag)
+    .map((character) => {
+      const codePoint = character.codePointAt(0);
+
+      if (codePoint >= 0x1f1e6 && codePoint <= 0x1f1ff) {
+        return String.fromCharCode(codePoint - 0x1f1e6 + 65);
+      }
+
+      return "";
+    })
+    .join("");
+
+  return letters.length === 2 ? letters : "";
+}
+
+const countries = countryCodes.map((country, index) => ({
+  ...country,
+  iso: getCountryIso(country.flag) || `COUNTRY-${index}`,
+}));
+
+const defaultPhoneCountry =
+  countries.find((country) => country.country === "Nepal") || countries[0];
+
+function CountryFlag({ country, size = "normal" }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const iso = String(country?.iso || "").toLowerCase();
+  const dimensions = size === "small" ? "w-6 h-[18px]" : "w-7 h-5";
+
+  if (!country) {
+    return <span className={`${dimensions} inline-block rounded bg-slate-200`} />;
+  }
+
+  if (!iso || iso.startsWith("country-") || imageFailed) {
+    return (
+      <span
+        className={`${dimensions} inline-flex items-center justify-center rounded bg-slate-100 text-[9px] font-black text-slate-500`}
+        aria-label={`${country.country} flag`}
+      >
+        {String(country.iso || "").slice(0, 2)}
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={`https://flagcdn.com/28x21/${iso}.png`}
+      srcSet={`https://flagcdn.com/56x42/${iso}.png 2x`}
+      alt=""
+      className={`${dimensions} rounded-sm object-cover shadow-sm`}
+      loading="lazy"
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
+
 // Country select component with search
 function CountrySelect({ value, onChange, disabled }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -449,13 +506,14 @@ function CountrySelect({ value, onChange, disabled }) {
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
 
-  const filteredCountries = countryCodes.filter(
+  const filteredCountries = countries.filter(
     (country) =>
       country.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
       country.code.includes(searchTerm)
   );
 
-  const selectedCountry = countryCodes.find((c) => c.code === value);
+  const selectedCountry =
+    countries.find((country) => country.iso === value) || defaultPhoneCountry;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -463,12 +521,13 @@ function CountrySelect({ value, onChange, disabled }) {
         setIsOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelect = (code) => {
-    onChange({ target: { value: code } });
+  const handleSelect = (country) => {
+    onChange(country);
     setIsOpen(false);
     setSearchTerm("");
   };
@@ -477,24 +536,26 @@ function CountrySelect({ value, onChange, disabled }) {
     <div className="relative flex-shrink-0" ref={dropdownRef}>
       <button
         type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={() => !disabled && setIsOpen((open) => !open)}
         disabled={disabled}
-        className="px-3 py-3.5 rounded-2xl text-sm outline-none transition-all disabled:opacity-70 focus:ring-4 focus:ring-purple-100 w-[130px] flex items-center justify-between gap-2"
+        className="px-3 py-3.5 rounded-2xl text-sm outline-none transition-all disabled:opacity-70 focus:ring-4 focus:ring-purple-100 w-[132px] flex items-center justify-between gap-2"
         style={{
           background: "rgba(255,255,255,0.92)",
           border: "1px solid rgba(75,46,131,0.14)",
           color: colors.dark,
         }}
+        aria-label="Choose country calling code"
       >
-        <span>
-          {selectedCountry ? `${selectedCountry.flag} ${selectedCountry.code}` : "Select"}
+        <span className="flex min-w-0 items-center gap-2">
+          <CountryFlag country={selectedCountry} />
+          <span className="font-bold">{selectedCountry.code}</span>
         </span>
         <span className="text-xs">▼</span>
       </button>
 
       {isOpen && !disabled && (
         <div
-          className="absolute top-full left-0 mt-1 w-[280px] rounded-2xl shadow-xl z-50 overflow-hidden"
+          className="absolute top-full left-0 mt-1 w-[290px] rounded-2xl shadow-xl z-50 overflow-hidden"
           style={{
             background: "rgba(255,255,255,0.98)",
             backdropFilter: "blur(12px)",
@@ -507,16 +568,18 @@ function CountrySelect({ value, onChange, disabled }) {
               <input
                 ref={inputRef}
                 type="text"
-                placeholder="Search country..."
+                placeholder="Search country or code..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-sm"
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className="flex-1 bg-transparent outline-none text-sm min-w-0"
                 autoFocus
               />
               {searchTerm && (
                 <button
+                  type="button"
                   onClick={() => setSearchTerm("")}
                   className="text-gray-400 hover:text-gray-600"
+                  aria-label="Clear country search"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -528,18 +591,24 @@ function CountrySelect({ value, onChange, disabled }) {
             {filteredCountries.length > 0 ? (
               filteredCountries.map((country) => (
                 <button
-                  key={country.code}
+                  key={country.iso}
                   type="button"
-                  onClick={() => handleSelect(country.code)}
+                  onClick={() => handleSelect(country)}
                   className="w-full px-4 py-2.5 text-left hover:bg-purple-50 transition-colors flex items-center gap-3 text-sm"
                   style={{
                     background:
-                      country.code === value ? "rgba(75,46,131,0.08)" : "transparent",
+                      country.iso === value
+                        ? "rgba(75,46,131,0.08)"
+                        : "transparent",
                   }}
                 >
-                  <span className="text-lg">{country.flag}</span>
-                  <span className="font-medium">{country.country}</span>
-                  <span className="ml-auto text-gray-500 text-xs">{country.code}</span>
+                  <CountryFlag country={country} size="small" />
+                  <span className="font-medium min-w-0 flex-1 truncate">
+                    {country.country}
+                  </span>
+                  <span className="text-gray-500 text-xs shrink-0">
+                    {country.code}
+                  </span>
                 </button>
               ))
             ) : (
@@ -569,7 +638,7 @@ export function Contact({
   );
   const [submitMessage, setSubmitMessage] = useState("");
   const [submitError, setSubmitError] = useState("");
-  const [selectedCountryCode, setSelectedCountryCode] = useState("+977");
+  const [selectedCountry, setSelectedCountry] = useState(defaultPhoneCountry);
   const [phoneNumber, setPhoneNumber] = useState("");
 
   const content = contentOverride
@@ -614,8 +683,8 @@ export function Contact({
     setSubmitMessage("");
     setSubmitError("");
 
-    const fullPhoneNumber = selectedCountryCode + phoneNumber;
-    
+    const fullPhoneNumber = `${selectedCountry?.code || "+977"}${phoneNumber}`;
+
     const payload = {
       ...data,
       phone: fullPhoneNumber,
@@ -642,19 +711,23 @@ export function Contact({
     }
   };
 
-  const handlePhoneChange = (e) => {
-    const value = e.target.value.replace(/\D/g, "");
-    if (value.length <= 10) {
+  const handlePhoneChange = (event) => {
+    const value = event.target.value.replace(/\D/g, "");
+    const callingCodeDigits = String(selectedCountry?.code || "")
+      .replace(/\D/g, "")
+      .length;
+    const maxLocalDigits = Math.max(6, 15 - callingCodeDigits);
+
+    if (value.length <= maxLocalDigits) {
       setPhoneNumber(value);
-      setValue("phone", selectedCountryCode + value);
+      setValue("phone", value, { shouldValidate: true });
       trigger("phone");
     }
   };
 
-  const handleCountryChange = (e) => {
-    const code = e.target.value;
-    setSelectedCountryCode(code);
-    setValue("phone", code + phoneNumber);
+  const handleCountryChange = (country) => {
+    setSelectedCountry(country);
+    setValue("phone", phoneNumber, { shouldValidate: true });
     trigger("phone");
   };
 
@@ -1190,7 +1263,7 @@ export function Contact({
                     </label>
                     <div className="flex gap-2">
                       <CountrySelect
-                        value={selectedCountryCode}
+                        value={selectedCountry?.iso}
                         onChange={handleCountryChange}
                         disabled={editMode}
                       />
@@ -1198,10 +1271,20 @@ export function Contact({
                         {...register("phone", {
                           required: "Phone number is required.",
                           validate: (value) => {
-                            const digitsOnly = value.replace(/\D/g, "");
-                            if (digitsOnly.length !== 10) {
-                              return "Phone number must be exactly 10 digits.";
+                            const localDigits = String(value || "").replace(/\D/g, "");
+                            const callingCodeDigits = String(
+                              selectedCountry?.code || ""
+                            ).replace(/\D/g, "");
+                            const totalDigits = `${callingCodeDigits}${localDigits}`;
+
+                            if (
+                              localDigits.length < 6 ||
+                              totalDigits.length < 10 ||
+                              totalDigits.length > 15
+                            ) {
+                              return "Please enter a valid phone number for the selected country.";
                             }
+
                             return true;
                           },
                         })}
@@ -1209,10 +1292,10 @@ export function Contact({
                         type="tel"
                         value={phoneNumber}
                         onChange={handlePhoneChange}
-                        placeholder="9863468125"
+                        placeholder={content.form.phonePlaceholder}
                         className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all disabled:opacity-70 focus:ring-4 focus:ring-purple-100"
                         style={inputStyle}
-                        maxLength={10}
+                        maxLength={15}
                       />
                     </div>
                     <ErrorText>{errors.phone?.message}</ErrorText>

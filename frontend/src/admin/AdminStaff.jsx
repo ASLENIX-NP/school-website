@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
+import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
+
 import {
   AlertCircle,
   ArrowLeft,
@@ -625,6 +627,42 @@ function getDeleteName(target) {
   return "this item";
 }
 
+function findStaffContentError(content = {}) {
+  const headingError = getFirstEmptyField([
+    ["Staff badge text", content.badgeText],
+    ["Staff page title", content.title],
+    ["Highlighted word", content.highlightedWord],
+    ["Staff page subtitle", content.subtitle],
+  ]);
+
+  if (headingError) return headingError;
+
+  for (let index = 0; index < (content.stats || []).length; index += 1) {
+    const stat = content.stats[index] || {};
+    const statError = getFirstEmptyField([
+      [`Staff statistic ${index + 1} number`, stat.value],
+      [`Staff statistic ${index + 1} label`, stat.label],
+      [`Staff statistic ${index + 1} icon`, stat.icon],
+    ]);
+
+    if (statError) return statError;
+  }
+
+  for (let index = 0; index < (content.staff || []).length; index += 1) {
+    const member = content.staff[index] || {};
+    const memberError = getFirstEmptyField([
+      [`Staff member ${index + 1} name`, member.name],
+      [`Staff member ${index + 1} position`, member.position],
+      [`Staff member ${index + 1} qualification`, member.qualification],
+      [`Staff member ${index + 1} description`, member.description],
+    ]);
+
+    if (memberError) return memberError;
+  }
+
+  return "";
+}
+
 export default function AdminStaff() {
   const navigate = useNavigate();
 
@@ -638,6 +676,7 @@ export default function AdminStaff() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [validationMessage, setValidationMessage] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -723,12 +762,27 @@ export default function AdminStaff() {
 
   const closeEditor = () => {
     if (saving || uploadingImage) return;
+
+    if (editingTarget?.isNew && editingTarget.type === "staffCard") {
+      setForm((prev) => ({
+        ...prev,
+        staff: prev.staff.filter((_, index) => index !== editingTarget.index),
+      }));
+    }
+
     setPhotoAdjustOpen(false);
     setEditingTarget(null);
     setModalForm({});
   };
 
   const saveContentToBackend = async (nextForm, message) => {
+    const validationError = findStaffContentError(nextForm);
+
+    if (validationError) {
+      setValidationMessage(validationError);
+      return false;
+    }
+
     const authHeaders = getAuthHeaders();
 
     if (!authHeaders) {
@@ -822,10 +876,10 @@ export default function AdminStaff() {
       if (editingTarget.type === "pageHeader") {
         nextForm = {
           ...nextForm,
-          badgeText: modalForm.badgeText || "",
-          title: modalForm.title || "",
-          highlightedWord: modalForm.highlightedWord || "",
-          subtitle: modalForm.subtitle || "",
+          badgeText: String(modalForm.badgeText ?? "").trim(),
+          title: String(modalForm.title ?? "").trim(),
+          highlightedWord: String(modalForm.highlightedWord ?? "").trim(),
+          subtitle: String(modalForm.subtitle ?? "").trim(),
         };
       }
 
@@ -836,9 +890,9 @@ export default function AdminStaff() {
             index === editingTarget.index
               ? {
                   ...stat,
-                  value: modalForm.value || "",
-                  label: modalForm.label || "",
-                  icon: modalForm.icon || "users",
+                  value: String(modalForm.value ?? "").trim(),
+                  label: String(modalForm.label ?? "").trim(),
+                  icon: String(modalForm.icon ?? "").trim(),
                   color: modalForm.color || statColors[index % statColors.length],
                 }
               : stat
@@ -853,16 +907,16 @@ export default function AdminStaff() {
             index === editingTarget.index
               ? {
                   ...member,
-                  name: modalForm.name || "",
-                  position: modalForm.position || "",
-                  imageUrl: modalForm.imageUrl || "",
+                  name: String(modalForm.name ?? "").trim(),
+                  position: String(modalForm.position ?? "").trim(),
+                  imageUrl: String(modalForm.imageUrl ?? "").trim(),
                   imageZoom: clampImageZoom(modalForm.imageZoom),
                   imageOffsetX: clampImageOffset(modalForm.imageOffsetX),
                   imageOffsetY: clampImageOffset(modalForm.imageOffsetY),
-                  qualification: modalForm.qualification || "",
-                  phone: modalForm.phone || "",
-                  email: modalForm.email || "",
-                  description: modalForm.description || "",
+                  qualification: String(modalForm.qualification ?? "").trim(),
+                  phone: String(modalForm.phone ?? "").trim(),
+                  email: String(modalForm.email ?? "").trim(),
+                  description: String(modalForm.description ?? "").trim(),
                   visible: modalForm.visible !== false,
                 }
               : member
@@ -871,7 +925,12 @@ export default function AdminStaff() {
       }
 
       const cleanContent = mergeStaffContent(nextForm);
-      await saveContentToBackend(cleanContent, "Selected staff item saved successfully.");
+      const saved = await saveContentToBackend(
+        cleanContent,
+        "Selected staff item saved successfully."
+      );
+
+      if (!saved) return;
 
       setPhotoAdjustOpen(false);
       setEditingTarget(null);
@@ -889,39 +948,33 @@ export default function AdminStaff() {
     }
   };
 
-  const addStaffMember = async () => {
-    setSaving(true);
+  const addStaffMember = () => {
     setSuccess("");
     setError("");
 
-    try {
-      const newMember = {
-        id: Date.now(),
-        name: "New Staff Member",
-        position: "Teacher",
-        imageUrl: "",
-        imageZoom: 1,
-        imageOffsetX: 0,
-        imageOffsetY: 0,
-        qualification: "",
-        phone: "",
-        email: "",
-        description: "Write a short bio about this staff member.",
-        visible: true,
-      };
+    const newMember = {
+      id: Date.now(),
+      name: "",
+      position: "",
+      imageUrl: "",
+      imageZoom: 1,
+      imageOffsetX: 0,
+      imageOffsetY: 0,
+      qualification: "",
+      phone: "",
+      email: "",
+      description: "",
+      visible: true,
+    };
 
-      const nextForm = mergeStaffContent({
-        ...form,
-        staff: [...form.staff, newMember],
-      });
+    const newIndex = form.staff.length;
 
-      await saveContentToBackend(nextForm, "New staff member added successfully.");
-    } catch (err) {
-      console.error("Add staff member error:", err);
-      setError(err.response?.data?.message || "Could not add staff member.");
-    } finally {
-      setSaving(false);
-    }
+    setForm((prev) => ({
+      ...prev,
+      staff: [...prev.staff, newMember],
+    }));
+    setEditingTarget({ type: "staffCard", index: newIndex, isNew: true });
+    setModalForm({ ...newMember });
   };
 
   const deleteTargetItem = async (target) => {
@@ -985,6 +1038,10 @@ export default function AdminStaff() {
 
   return (
     <div className="space-y-6">
+      <AdminValidationPopup
+        message={validationMessage}
+        onClose={() => setValidationMessage("")}
+      />
 
       <style>
         {`
@@ -1435,10 +1492,7 @@ export default function AdminStaff() {
             uploadingImage={uploadingImage}
             saving={saving}
             onClose={() => setPhotoAdjustOpen(false)}
-            onSave={async () => {
-              await saveSelectedPart();
-              setPhotoAdjustOpen(false);
-            }}
+            onSave={saveSelectedPart}
           />
         )}
 
@@ -1518,3 +1572,6 @@ export default function AdminStaff() {
     </div>
   );
 }
+
+
+

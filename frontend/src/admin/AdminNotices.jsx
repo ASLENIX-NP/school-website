@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
+import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
+
 import {
   AlertCircle,
   ArrowLeft,
@@ -143,10 +145,10 @@ function getUploadUrl(payload) {
 
 function noticeToBackendPayload(notice = {}) {
   return {
-    title: notice.title || "",
-    category: notice.category || "",
-    notice_date: notice.notice_date || null,
-    description: notice.description || "",
+    title: String(notice.title ?? "").trim(),
+    category: String(notice.category ?? "").trim(),
+    notice_date: String(notice.notice_date ?? "").trim() || null,
+    description: String(notice.description ?? "").trim(),
     pdf_url: notice.pdf_url || "",
     pinned: Boolean(notice.pinned),
   };
@@ -167,6 +169,7 @@ export default function AdminNotices() {
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [validationMessage, setValidationMessage] = useState("");
 
   const [editingTarget, setEditingTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -309,6 +312,39 @@ export default function AdminNotices() {
   const saveSelectedPart = async () => {
     if (!editingTarget) return;
 
+    let validationError = "";
+
+    if (editingTarget.type === "pageHeader") {
+      validationError = getFirstEmptyField([
+        ["Notice page badge", modalForm.page_badge],
+        ["Notice page title", modalForm.page_title],
+        ["Notice page description", modalForm.page_description],
+      ]);
+    }
+
+    if (editingTarget.type === "sidebar") {
+      validationError = getFirstEmptyField([
+        ["Sidebar title", modalForm.sidebar_title],
+        ["Sidebar description", modalForm.sidebar_description],
+        ["Sidebar button text", modalForm.sidebar_button_text],
+        ["Sidebar button link", modalForm.sidebar_button_link],
+      ]);
+    }
+
+    if (editingTarget.type === "newNotice" || editingTarget.type === "notice") {
+      validationError = getFirstEmptyField([
+        ["Notice title", modalForm.title],
+        ["Notice category", modalForm.category],
+        ["Notice date", modalForm.notice_date],
+        ["Notice description", modalForm.description],
+      ]);
+    }
+
+    if (validationError) {
+      setValidationMessage(validationError);
+      return;
+    }
+
     setSaving(true);
     setSuccess("");
     setError("");
@@ -317,9 +353,9 @@ export default function AdminNotices() {
       if (editingTarget.type === "pageHeader") {
         await saveSettingsPatch(
           {
-            page_badge: modalForm.page_badge || "",
-            page_title: modalForm.page_title || "",
-            page_description: modalForm.page_description || "",
+            page_badge: modalForm.page_badge.trim(),
+            page_title: modalForm.page_title.trim(),
+            page_description: modalForm.page_description.trim(),
           },
           "Notice page heading saved successfully."
         );
@@ -328,20 +364,16 @@ export default function AdminNotices() {
       if (editingTarget.type === "sidebar") {
         await saveSettingsPatch(
           {
-            sidebar_title: modalForm.sidebar_title || "",
-            sidebar_description: modalForm.sidebar_description || "",
-            sidebar_button_text: modalForm.sidebar_button_text || "",
-            sidebar_button_link: modalForm.sidebar_button_link || "",
+            sidebar_title: modalForm.sidebar_title.trim(),
+            sidebar_description: modalForm.sidebar_description.trim(),
+            sidebar_button_text: modalForm.sidebar_button_text.trim(),
+            sidebar_button_link: modalForm.sidebar_button_link.trim(),
           },
           "Sidebar card saved successfully."
         );
       }
 
       if (editingTarget.type === "newNotice") {
-        if (!String(modalForm.title || "").trim()) {
-          throw new Error("Notice title is required.");
-        }
-
         const response = await fetch("https://school-website-backend-ixx2.onrender.com/api/notices", {
           method: "POST",
           headers: getAuthHeaders(true),
@@ -359,10 +391,6 @@ export default function AdminNotices() {
       }
 
       if (editingTarget.type === "notice") {
-        if (!String(modalForm.title || "").trim()) {
-          throw new Error("Notice title is required.");
-        }
-
         const response = await fetch(
           `https://school-website-backend-ixx2.onrender.com/api/notices/${editingTarget.id}`,
           {
@@ -563,6 +591,10 @@ export default function AdminNotices() {
 
   return (
     <div className="space-y-6">
+      <AdminValidationPopup
+        message={validationMessage}
+        onClose={() => setValidationMessage("")}
+      />
       <style>
         {`
           .admin-notices-preview-frame .bg-slate-950 {
@@ -1228,3 +1260,6 @@ export default function AdminNotices() {
     </div>
   );
 }
+
+
+

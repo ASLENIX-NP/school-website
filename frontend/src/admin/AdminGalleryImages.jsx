@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
+import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
+
 import {
   ArrowLeft,
   Save,
@@ -125,8 +127,15 @@ function normalizeImageCategory(category, categories = []) {
 
 function normalizeCategoryDescriptions(descriptions = {}, categories = []) {
   return normalizeCategories(categories).reduce((acc, category) => {
-    acc[category] =
-      descriptions?.[category] || fallbackCategoryDescriptions[category] || "";
+    const hasSavedDescription = Object.prototype.hasOwnProperty.call(
+      descriptions || {},
+      category
+    );
+
+    acc[category] = hasSavedDescription
+      ? String(descriptions?.[category] ?? "")
+      : fallbackCategoryDescriptions[category] || "";
+
     return acc;
   }, {});
 }
@@ -144,24 +153,28 @@ function normalizeSubcategories(subcategories = {}, categories = null) {
         const name =
           typeof item === "string" ? item : String(item?.name || "").trim();
 
-        if (!name) return null;
+        const safeName = name || "subcategory";
 
         return {
           id:
             item?.id ||
-            `${category.toLowerCase()}-${index}-${name
+            `${category.toLowerCase()}-${index}-${safeName
               .toLowerCase()
               .replace(/[^a-z0-9]+/g, "-")}`,
           name,
+          originalName:
+            typeof item === "string"
+              ? item
+              : item?.originalName || name,
           description:
             typeof item === "string"
               ? ""
-              : item?.description ||
-                `Photos and memories from ${name.toLowerCase()}.`,
+              : typeof item?.description === "string"
+              ? item.description
+              : `Photos and memories from ${safeName.toLowerCase()}.`,
           visible: item?.visible !== false,
         };
-      })
-      .filter(Boolean);
+      });
 
     return acc;
   }, {});
@@ -367,6 +380,92 @@ function ConfirmDialog({ target, onCancel, onConfirm }) {
 }
 
 
+function findGalleryImagesError(content = {}) {
+  const pageError = getFirstEmptyField([
+    ["Gallery badge", content.badge],
+    ["Gallery title", content.title],
+    ["Highlighted text", content.highlightedText],
+    ["Gallery description", content.description],
+    ["Bottom title", content.bottomTitle],
+    ["Bottom description", content.bottomDescription],
+    ["Bottom note", content.bottomNote],
+  ]);
+
+  if (pageError) return pageError;
+
+  const categories = Array.isArray(content.categories) ? content.categories : [];
+  if (categories.length === 0) return "At least one gallery category is required.";
+
+  for (let index = 0; index < categories.length; index += 1) {
+    const category = String(categories[index] ?? "").trim();
+    if (!category) return `Gallery category ${index + 1} name cannot be empty.`;
+    if (!String(content.categoryDescriptions?.[category] ?? "").trim()) {
+      return `${category} category description cannot be empty.`;
+    }
+
+    const subcategories = Array.isArray(content.subcategories?.[category])
+      ? content.subcategories[category]
+      : [];
+
+    for (let subIndex = 0; subIndex < subcategories.length; subIndex += 1) {
+      const sub = subcategories[subIndex] || {};
+      const subError = getFirstEmptyField([
+        [`${category} subcategory ${subIndex + 1} name`, sub.name],
+        [`${category} subcategory ${subIndex + 1} description`, sub.description],
+      ]);
+      if (subError) return subError;
+    }
+  }
+
+  for (let index = 0; index < (content.images || []).length; index += 1) {
+    const image = content.images[index] || {};
+    const imageError = getFirstEmptyField([
+      [`Gallery image ${index + 1} title`, image.title],
+      [`Gallery image ${index + 1} category`, image.category],
+      [`Gallery image ${index + 1} date / label`, image.date],
+    ]);
+    if (imageError) return imageError;
+
+    const urls = Array.isArray(image.images) && image.images.length > 0
+      ? image.images.filter(Boolean)
+      : image.image
+      ? [image.image]
+      : [];
+    if (urls.length === 0) return `Gallery image ${index + 1} file is missing.`;
+  }
+
+  return "";
+}
+
+function renameGalleryCategory(content, oldCategory, nextCategory) {
+  if (!oldCategory || oldCategory === nextCategory) return content;
+
+  const categories = normalizeCategories(content.categories).map((category) =>
+    category === oldCategory ? nextCategory : category
+  );
+
+  const descriptions = { ...(content.categoryDescriptions || {}) };
+  descriptions[nextCategory] = descriptions[oldCategory] ?? "";
+  delete descriptions[oldCategory];
+
+  const normalizedSubs = normalizeSubcategories(content.subcategories, content.categories);
+  const subcategories = { ...normalizedSubs };
+  subcategories[nextCategory] = subcategories[oldCategory] || [];
+  delete subcategories[oldCategory];
+
+  return {
+    ...content,
+    categories: Array.from(new Set(categories)),
+    categoryDescriptions: descriptions,
+    subcategories,
+    images: (content.images || []).map((image) =>
+      image.category === oldCategory
+        ? { ...image, category: nextCategory }
+        : image
+    ),
+  };
+}
+
 export default function AdminGalleryImages() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -377,6 +476,7 @@ export default function AdminGalleryImages() {
 
   const [form, setForm] = useState(defaultGalleryContent);
   const [selectedCategory, setSelectedCategory] = useState("Classroom");
+  const [categoryNameDraft, setCategoryNameDraft] = useState("Classroom");
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -384,6 +484,7 @@ export default function AdminGalleryImages() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [validationMessage, setValidationMessage] = useState("");
   const [confirmTarget, setConfirmTarget] = useState(null);
 
   const token = localStorage.getItem("adminToken");
@@ -421,6 +522,7 @@ export default function AdminGalleryImages() {
 
         setForm(merged);
         setSelectedCategory(initialCategory);
+        setCategoryNameDraft(initialCategory);
         setSelectedSubcategory(initialSubcategory);
         setError("");
       } catch (err) {
@@ -445,6 +547,7 @@ export default function AdminGalleryImages() {
 
         setForm(fallback);
         setSelectedCategory(initialCategory);
+        setCategoryNameDraft(initialCategory);
         setSelectedSubcategory(initialSubcategory);
         setError(
           "Gallery content took too long to load. Default image manager is shown. Check backend if saved content is missing."
@@ -518,43 +621,7 @@ export default function AdminGalleryImages() {
   };
 
   const updateSelectedCategoryName = (value) => {
-    const nextName = String(value || "").trimStart();
-    if (!nextName) return;
-
-    const existing = categoryOptions.filter((category) => category !== selectedCategory);
-    if (existing.includes(nextName)) {
-      setError(`Category "${nextName}" already exists.`);
-      return;
-    }
-
-    const oldCategory = selectedCategory;
-
-    setForm((prev) => {
-      const categories = normalizeCategories(prev.categories).map((category) =>
-        category === oldCategory ? nextName : category
-      );
-
-      const nextDescriptions = { ...(prev.categoryDescriptions || {}) };
-      nextDescriptions[nextName] = nextDescriptions[oldCategory] || "";
-      delete nextDescriptions[oldCategory];
-
-      const normalizedSubcategories = normalizeSubcategories(prev.subcategories, prev.categories);
-      const nextSubcategories = { ...normalizedSubcategories };
-      nextSubcategories[nextName] = nextSubcategories[oldCategory] || [];
-      delete nextSubcategories[oldCategory];
-
-      return {
-        ...prev,
-        categories: Array.from(new Set(categories)),
-        categoryDescriptions: nextDescriptions,
-        subcategories: nextSubcategories,
-        images: prev.images.map((image) =>
-          image.category === oldCategory ? { ...image, category: nextName } : image
-        ),
-      };
-    });
-
-    setSelectedCategory(nextName);
+    setCategoryNameDraft(String(value ?? "").trimStart());
     setError("");
   };
 
@@ -598,17 +665,22 @@ export default function AdminGalleryImages() {
       const currentList = normalizedSubcategories[selectedCategory] || [];
       const oldItem = currentList.find((item) => item.id === subcategoryId);
 
-      const cleanValue = field === "name" ? String(value || "").trimStart() : value;
-      if (field === "name" && !cleanValue) return prev;
+      const cleanValue =
+        field === "name" ? String(value ?? "").trimStart() : value;
 
       const updatedList = currentList.map((item) =>
         item.id === subcategoryId ? { ...item, [field]: cleanValue } : item
       );
 
+      const previousName = oldItem?.name || "";
+      const originalName = oldItem?.originalName || previousName;
+
       const updatedImages =
-        field === "name" && oldItem
+        field === "name" && oldItem && cleanValue
           ? prev.images.map((image) =>
-              image.category === selectedCategory && image.subcategory === oldItem.name
+              image.category === selectedCategory &&
+              (image.subcategory === previousName ||
+                (!previousName && image.subcategory === originalName))
                 ? { ...image, subcategory: cleanValue }
                 : image
             )
@@ -873,17 +945,56 @@ export default function AdminGalleryImages() {
   async function saveGalleryContent() {
     setSuccess("");
     setError("");
+
+    const nextCategoryName = String(categoryNameDraft ?? "").trim();
+    if (!nextCategoryName) {
+      setValidationMessage("Selected category name cannot be empty.");
+      return;
+    }
+
+    const duplicateCategory = normalizeCategories(form.categories).some(
+      (category) =>
+        category !== selectedCategory &&
+        category.toLowerCase() === nextCategoryName.toLowerCase()
+    );
+
+    if (duplicateCategory) {
+      setValidationMessage(`Gallery category "${nextCategoryName}" already exists.`);
+      return;
+    }
+
+    const draftForm = renameGalleryCategory(
+      form,
+      selectedCategory,
+      nextCategoryName
+    );
+
+    const validationError = findGalleryImagesError(draftForm);
+    if (validationError) {
+      setValidationMessage(validationError);
+      return;
+    }
+
     setSaving(true);
 
     try {
-      const cleanedCategories = normalizeCategories(form.categories);
+      const cleanedCategories = normalizeCategories(draftForm.categories);
       const cleanedDescriptions = normalizeCategoryDescriptions(
-        form.categoryDescriptions,
+        draftForm.categoryDescriptions,
         cleanedCategories
       );
-      const cleanedSubcategories = normalizeSubcategories(form.subcategories, cleanedCategories);
+      const cleanedSubcategoriesRaw = normalizeSubcategories(
+        draftForm.subcategories,
+        cleanedCategories
+      );
+      const cleanedSubcategories = Object.fromEntries(
+        Object.entries(cleanedSubcategoriesRaw).map(([category, items]) => [
+          category,
+          (items || []).map(({ originalName, ...item }) => item),
+        ])
+      );
 
-      const cleanedImages = form.images.map((image) => {
+      const cleanedImages = draftForm.images.map((image) => {
         const category = normalizeImageCategory(
           image.category,
           cleanedCategories
@@ -914,7 +1025,7 @@ export default function AdminGalleryImages() {
       });
 
       const cleanedForm = {
-        ...form,
+        ...draftForm,
         categories: cleanedCategories,
         categoryDescriptions: cleanedDescriptions,
         subcategories: cleanedSubcategories,
@@ -933,6 +1044,8 @@ export default function AdminGalleryImages() {
       );
 
       setForm(cleanedForm);
+      setSelectedCategory(nextCategoryName);
+      setCategoryNameDraft(nextCategoryName);
       setSuccess("Gallery images saved successfully.");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
@@ -981,6 +1094,11 @@ export default function AdminGalleryImages() {
         `,
       }}
     >
+      <AdminValidationPopup
+        message={validationMessage}
+        onClose={() => setValidationMessage("")}
+      />
+
       <header
         className="relative z-0"
         style={{
@@ -1109,6 +1227,7 @@ export default function AdminGalleryImages() {
                     [];
 
                   setSelectedCategory(nextCategory);
+                  setCategoryNameDraft(nextCategory);
                   setSelectedSubcategory(nextSubcategories[0]?.name || "");
                   setSelectedIds([]);
                 }}
@@ -1191,16 +1310,19 @@ export default function AdminGalleryImages() {
           <div className="mt-6 grid gap-5">
             <Field
               label="Selected Category Name"
-              value={selectedCategory}
+              value={categoryNameDraft}
               onChange={updateSelectedCategoryName}
             />
 
             <TextArea
               label={`${selectedCategory} Category Description`}
               value={
-                form.categoryDescriptions?.[selectedCategory] ||
-                fallbackCategoryDescriptions[selectedCategory] ||
-                ""
+                Object.prototype.hasOwnProperty.call(
+                  form.categoryDescriptions || {},
+                  selectedCategory
+                )
+                  ? String(form.categoryDescriptions?.[selectedCategory] ?? "")
+                  : fallbackCategoryDescriptions[selectedCategory] || ""
               }
               onChange={updateCategoryDescription}
               rows={4}
@@ -1587,3 +1709,6 @@ export default function AdminGalleryImages() {
     </section>
   );
 }
+
+
+

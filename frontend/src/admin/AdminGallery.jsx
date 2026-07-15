@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
+import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
+
 import {
   ArrowLeft,
   Save,
@@ -144,8 +146,15 @@ function normalizeImageCategory(category, categories = []) {
 
 function normalizeCategoryDescriptions(descriptions = {}, categories = []) {
   return normalizeCategories(categories).reduce((acc, category) => {
-    acc[category] =
-      descriptions?.[category] || fallbackCategoryDescriptions[category] || "";
+    const hasSavedDescription = Object.prototype.hasOwnProperty.call(
+      descriptions || {},
+      category
+    );
+
+    acc[category] = hasSavedDescription
+      ? String(descriptions?.[category] ?? "")
+      : fallbackCategoryDescriptions[category] || "";
+
     return acc;
   }, {});
 }
@@ -175,8 +184,9 @@ function normalizeSubcategories(subcategories = {}, categories = null) {
           description:
             typeof item === "string"
               ? ""
-              : item?.description ||
-                `Photos and memories from ${name.toLowerCase()}.`,
+              : typeof item?.description === "string"
+              ? item.description
+              : `Photos and memories from ${name.toLowerCase()}.`,
           visible: item?.visible !== false,
         };
       })
@@ -266,10 +276,13 @@ function buildSingleCategoryAlbum(content, category) {
     subcategory: "",
     title: category,
     date: categoryItems[0]?.date || "School Gallery",
-    description:
-      content.categoryDescriptions?.[category] ||
-      fallbackCategoryDescriptions[category] ||
-      "Explore school moments from this category.",
+    description: Object.prototype.hasOwnProperty.call(
+      content.categoryDescriptions || {},
+      category
+    )
+      ? String(content.categoryDescriptions?.[category] ?? "")
+      : fallbackCategoryDescriptions[category] ||
+        "Explore school moments from this category.",
     cover,
     photos,
     total: photos.length,
@@ -340,9 +353,12 @@ function buildSubcategoryAlbums(content, parentCategory) {
       subcategory: "",
       title: `General ${parentCategory}`,
       date: uncategorizedItems[0]?.date || parentCategory,
-      description:
-        content.categoryDescriptions?.[parentCategory] ||
-        fallbackCategoryDescriptions[parentCategory],
+      description: Object.prototype.hasOwnProperty.call(
+        content.categoryDescriptions || {},
+        parentCategory
+      )
+        ? String(content.categoryDescriptions?.[parentCategory] ?? "")
+        : fallbackCategoryDescriptions[parentCategory] || "",
       cover:
         uncategorizedItems.find((item) => item.image)?.image ||
         photos[0]?.url ||
@@ -1101,6 +1117,51 @@ function GalleryVisualEditor({ form, activeCategory, setActiveCategory, onEditHe
   );
 }
 
+function findGalleryContentError(content = {}) {
+  const pageError = getFirstEmptyField([
+    ["Gallery badge", content.badge],
+    ["Gallery title", content.title],
+    ["Highlighted text", content.highlightedText],
+    ["Gallery description", content.description],
+    ["Bottom title", content.bottomTitle],
+    ["Bottom description", content.bottomDescription],
+    ["Bottom note", content.bottomNote],
+  ]);
+
+  if (pageError) return pageError;
+
+  const categories = Array.isArray(content.categories) ? content.categories : [];
+  if (categories.length === 0) return "At least one gallery category is required.";
+
+  const seen = new Set();
+  for (let index = 0; index < categories.length; index += 1) {
+    const category = String(categories[index] ?? "").trim();
+    if (!category) return `Gallery category ${index + 1} name cannot be empty.`;
+    if (seen.has(category.toLowerCase())) return `Gallery category "${category}" is duplicated.`;
+    seen.add(category.toLowerCase());
+
+    const description = content.categoryDescriptions?.[category];
+    if (!String(description ?? "").trim()) {
+      return `${category} category description cannot be empty.`;
+    }
+
+    const subcategories = Array.isArray(content.subcategories?.[category])
+      ? content.subcategories[category]
+      : [];
+
+    for (let subIndex = 0; subIndex < subcategories.length; subIndex += 1) {
+      const sub = subcategories[subIndex] || {};
+      const subError = getFirstEmptyField([
+        [`${category} subcategory ${subIndex + 1} name`, sub.name],
+        [`${category} subcategory ${subIndex + 1} description`, sub.description],
+      ]);
+      if (subError) return subError;
+    }
+  }
+
+  return "";
+}
+
 export default function AdminGallery() {
   const navigate = useNavigate();
 
@@ -1109,6 +1170,7 @@ export default function AdminGallery() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [validationMessage, setValidationMessage] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [editingTarget, setEditingTarget] = useState(null);
   const [modalForm, setModalForm] = useState({});
@@ -1185,10 +1247,12 @@ export default function AdminGallery() {
 
     setModalForm({
       name: category,
-      description:
-        form.categoryDescriptions?.[category] ||
-        fallbackCategoryDescriptions[category] ||
-        "",
+      description: Object.prototype.hasOwnProperty.call(
+        form.categoryDescriptions || {},
+        category
+      )
+        ? String(form.categoryDescriptions?.[category] ?? "")
+        : fallbackCategoryDescriptions[category] || "",
       subcategories: (normalizedSubcategories[category] || []).map((sub) => ({
         ...sub,
         originalName: sub.name,
@@ -1221,7 +1285,7 @@ export default function AdminGallery() {
         categories: [...categories, newName],
         categoryDescriptions: {
           ...(form.categoryDescriptions || {}),
-          [newName]: "",
+          [newName]: "Write a short description for this gallery category.",
         },
         subcategories: {
           ...normalizeSubcategories(form.subcategories, form.categories),
@@ -1506,13 +1570,55 @@ export default function AdminGallery() {
   const saveEditingSection = () => {
     if (!editingTarget) return;
 
+    let validationError = "";
+
+    if (editingTarget.type === "hero") {
+      validationError = getFirstEmptyField([
+        ["Gallery badge", modalForm.badge],
+        ["Gallery title", modalForm.title],
+        ["Highlighted text", modalForm.highlightedText],
+        ["Gallery description", modalForm.description],
+      ]);
+    }
+
+    if (editingTarget.type === "bottom") {
+      validationError = getFirstEmptyField([
+        ["Bottom title", modalForm.bottomTitle],
+        ["Bottom description", modalForm.bottomDescription],
+        ["Bottom note", modalForm.bottomNote],
+      ]);
+    }
+
+    if (editingTarget.type === "category") {
+      validationError = getFirstEmptyField([
+        ["Category name", modalForm.name],
+        ["Category description", modalForm.description],
+      ]);
+
+      if (!validationError) {
+        for (let index = 0; index < (modalForm.subcategories || []).length; index += 1) {
+          const sub = modalForm.subcategories[index] || {};
+          validationError = getFirstEmptyField([
+            [`Subcategory ${index + 1} name`, sub.name],
+            [`Subcategory ${index + 1} description`, sub.description],
+          ]);
+          if (validationError) break;
+        }
+      }
+    }
+
+    if (validationError) {
+      setValidationMessage(validationError);
+      return;
+    }
+
     if (editingTarget.type === "hero") {
       setForm((prev) => ({
         ...prev,
-        badge: modalForm.badge,
-        title: modalForm.title,
-        highlightedText: modalForm.highlightedText,
-        description: modalForm.description,
+        badge: modalForm.badge.trim(),
+        title: modalForm.title.trim(),
+        highlightedText: modalForm.highlightedText.trim(),
+        description: modalForm.description.trim(),
       }));
       closeModal();
       setSuccess("Heading updated. Click Save Changes to publish.");
@@ -1522,9 +1628,9 @@ export default function AdminGallery() {
     if (editingTarget.type === "bottom") {
       setForm((prev) => ({
         ...prev,
-        bottomTitle: modalForm.bottomTitle,
-        bottomDescription: modalForm.bottomDescription,
-        bottomNote: modalForm.bottomNote,
+        bottomTitle: modalForm.bottomTitle.trim(),
+        bottomDescription: modalForm.bottomDescription.trim(),
+        bottomNote: modalForm.bottomNote.trim(),
       }));
       closeModal();
       setSuccess("Bottom card updated. Click Save Changes to publish.");
@@ -1535,8 +1641,14 @@ export default function AdminGallery() {
       const oldCategory = editingTarget.category;
       const newCategory = String(modalForm.name || "").trim();
 
-      if (!newCategory) {
-        setError("Category name cannot be empty.");
+      const duplicateCategory = normalizeCategories(form.categories).some(
+        (category) =>
+          category !== oldCategory &&
+          category.toLowerCase() === newCategory.toLowerCase()
+      );
+
+      if (duplicateCategory) {
+        setValidationMessage(`Gallery category "${newCategory}" already exists.`);
         return;
       }
 
@@ -1548,7 +1660,7 @@ export default function AdminGallery() {
 
         const nextDescriptions = { ...(prev.categoryDescriptions || {}) };
         delete nextDescriptions[oldCategory];
-        nextDescriptions[newCategory] = modalForm.description || "";
+        nextDescriptions[newCategory] = modalForm.description.trim();
 
         const normalizedSubcategories = normalizeSubcategories(prev.subcategories, prev.categories);
         const nextSubcategories = { ...normalizedSubcategories };
@@ -1557,7 +1669,7 @@ export default function AdminGallery() {
           .map((sub) => ({
             id: sub.id || `${newCategory.toLowerCase()}-${Date.now()}`,
             name: String(sub.name || "").trim(),
-            description: sub.description || "",
+            description: String(sub.description ?? "").trim(),
             visible: sub.visible !== false,
             originalName: sub.originalName || "",
           }))
@@ -1617,6 +1729,12 @@ export default function AdminGallery() {
   async function saveGalleryContent() {
     setSuccess("");
     setError("");
+
+    const validationError = findGalleryContentError(form);
+    if (validationError) {
+      setValidationMessage(validationError);
+      return;
+    }
 
     const saved = await persistGalleryContent(
       form,
@@ -1678,6 +1796,10 @@ export default function AdminGallery() {
 
   return (
     <section className="min-h-screen bg-[#FFF8EE] overflow-x-hidden">
+      <AdminValidationPopup
+        message={validationMessage}
+        onClose={() => setValidationMessage("")}
+      />
       <AnimatePresence>
         {busyOverlayText && (
           <motion.div
@@ -1880,3 +2002,5 @@ export default function AdminGallery() {
     </section>
   );
 }
+
+

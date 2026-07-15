@@ -140,6 +140,10 @@ function getAuthHeaders() {
   };
 }
 
+function cleanRequiredText(value) {
+  return String(value ?? "").trim();
+}
+
 function normalizeImageList(images = [], fallbackImage = "") {
   const source = Array.isArray(images) ? images : [];
 
@@ -593,6 +597,7 @@ export default function AdminHome() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [validationPopup, setValidationPopup] = useState("");
   const [imageAdjustTarget, setImageAdjustTarget] = useState(null);
 
   useEffect(() => {
@@ -624,6 +629,7 @@ export default function AdminHome() {
   const openEditor = (target) => {
     setSuccess("");
     setError("");
+    setValidationPopup("");
     setEditingTarget(target);
 
     if (target.type === "heroBadge") {
@@ -684,6 +690,15 @@ export default function AdminHome() {
       setModalForm({
         imageBottomTitle: form.hero.imageBottomTitle || "",
         imageBottomDescription: form.hero.imageBottomDescription || "",
+      });
+      return;
+    }
+
+    if (target.type === "heroMotto") {
+      setModalForm({
+        motto:
+          form.hero.motto ||
+          "Our motto is to provide quality education.",
       });
       return;
     }
@@ -797,6 +812,7 @@ export default function AdminHome() {
     setImageAdjustTarget(null);
     setEditingTarget(null);
     setModalForm({});
+    setValidationPopup("");
   };
 
   const updateModalField = (name, value) => {
@@ -804,6 +820,7 @@ export default function AdminHome() {
       ...prev,
       [name]: value,
     }));
+    setValidationPopup("");
   };
 
   const uploadImages = async (files) => {
@@ -1042,19 +1059,189 @@ export default function AdminHome() {
     return null;
   };
 
+  const validateSelectedPart = () => {
+    if (!editingTarget) return "No homepage item is selected.";
+
+    const requireFields = (fields) => {
+      const missingField = fields.find(
+        ({ value }) => !cleanRequiredText(value)
+      );
+
+      return missingField
+        ? `Please write ${missingField.label} before saving.`
+        : "";
+    };
+
+    if (editingTarget.type === "heroBadge") {
+      return requireFields([
+        { label: "the hero badge text", value: modalForm.badge },
+      ]);
+    }
+
+    if (editingTarget.type === "heroTitle") {
+      return requireFields([
+        { label: "hero title line 1", value: modalForm.titleLine1 },
+        { label: "hero title line 2", value: modalForm.titleLine2 },
+        { label: "hero title line 3", value: modalForm.titleLine3 },
+      ]);
+    }
+
+    if (editingTarget.type === "heroDescription") {
+      return requireFields([
+        { label: "the hero description", value: modalForm.description },
+      ]);
+    }
+
+    if (editingTarget.type === "heroButtons") {
+      return requireFields([
+        { label: "the primary button text", value: modalForm.primaryButtonText },
+        { label: "the primary button link", value: modalForm.primaryButtonLink },
+        {
+          label: "the secondary button text",
+          value: modalForm.secondaryButtonText,
+        },
+        {
+          label: "the secondary button link",
+          value: modalForm.secondaryButtonLink,
+        },
+      ]);
+    }
+
+    if (editingTarget.type === "heroImage") {
+      const images = normalizeImageList(modalForm.images, modalForm.image);
+
+      return images.length === 0
+        ? "Please upload or enter at least one hero image before saving."
+        : "";
+    }
+
+    if (editingTarget.type === "heroImageText") {
+      return requireFields([
+        { label: "the image bottom title", value: modalForm.imageBottomTitle },
+        {
+          label: "the image bottom description",
+          value: modalForm.imageBottomDescription,
+        },
+      ]);
+    }
+
+    if (editingTarget.type === "heroMotto") {
+      return requireFields([
+        { label: "the school motto", value: modalForm.motto },
+      ]);
+    }
+
+    if (editingTarget.type === "heroStat") {
+      return requireFields([
+        { label: "the stat value", value: modalForm.value },
+        { label: "the stat label", value: modalForm.label },
+      ]);
+    }
+
+    if (editingTarget.type === "heroFloating") {
+      return requireFields([
+        { label: "the floating label title", value: modalForm.title },
+        { label: "the floating label subtitle", value: modalForm.subtitle },
+      ]);
+    }
+
+    if (editingTarget.type === "statsHeader") {
+      return requireFields([
+        { label: "the School Highlights eyebrow", value: modalForm.eyebrow },
+        { label: "the School Highlights title", value: modalForm.title },
+        {
+          label: "the School Highlights description",
+          value: modalForm.description,
+        },
+      ]);
+    }
+
+    if (editingTarget.type === "statsCard") {
+      return requireFields([
+        { label: "the number value", value: modalForm.value },
+        { label: "the number suffix", value: modalForm.suffix },
+        { label: "the card label", value: modalForm.label },
+        { label: "the small note", value: modalForm.note },
+      ]);
+    }
+
+    if (editingTarget.type === "storyImage") {
+      return requireFields([
+        { label: "the story image", value: modalForm.image },
+      ]);
+    }
+
+    if (editingTarget.type === "storyImageText") {
+      return requireFields([
+        { label: "the image top title", value: modalForm.imageTopTitle },
+        { label: "the image top subtitle", value: modalForm.imageTopSubtitle },
+        { label: "the image bottom title", value: modalForm.imageBottomTitle },
+        {
+          label: "the image bottom description",
+          value: modalForm.imageBottomDescription,
+        },
+      ]);
+    }
+
+    if (editingTarget.type === "storyText") {
+      return requireFields([
+        { label: "the story badge", value: modalForm.badge },
+        { label: "the story title", value: modalForm.title },
+        { label: "story paragraph 1", value: modalForm.paragraph1 },
+        { label: "story paragraph 2", value: modalForm.paragraph2 },
+      ]);
+    }
+
+    if (editingTarget.type === "storyButton") {
+      return requireFields([
+        { label: "the story button text", value: modalForm.buttonText },
+        { label: "the story button link", value: modalForm.buttonLink },
+      ]);
+    }
+
+    if (editingTarget.type === "excellenceHeader") {
+      return requireFields([
+        { label: "the Academic Excellence title", value: modalForm.title },
+        {
+          label: "the Academic Excellence description",
+          value: modalForm.description,
+        },
+      ]);
+    }
+
+    if (editingTarget.type === "excellenceCard") {
+      return requireFields([
+        { label: "the card title", value: modalForm.title },
+        { label: "the card description", value: modalForm.description },
+      ]);
+    }
+
+    return "";
+  };
+
   const saveSelectedPart = async () => {
     if (!editingTarget) return;
+
+    const validationError = validateSelectedPart();
+
+    if (validationError) {
+      setValidationPopup(validationError);
+      return;
+    }
 
     const authHeaders = getAuthHeaders();
 
     if (!authHeaders) {
-      setError("Admin login expired. Please logout and login again.");
+      setValidationPopup(
+        "Admin login expired. Please logout and login again."
+      );
       return;
     }
 
     setSaving(true);
     setSuccess("");
     setError("");
+    setValidationPopup("");
 
     try {
       let nextForm = mergeHomeContent(form);
@@ -1062,33 +1249,33 @@ export default function AdminHome() {
       if (editingTarget.type === "heroBadge") {
         nextForm.hero = {
           ...nextForm.hero,
-          badge: modalForm.badge || "",
+          badge: cleanRequiredText(modalForm.badge),
         };
       }
 
       if (editingTarget.type === "heroTitle") {
         nextForm.hero = {
           ...nextForm.hero,
-          titleLine1: modalForm.titleLine1 || "",
-          titleLine2: modalForm.titleLine2 || "",
-          titleLine3: modalForm.titleLine3 || "",
+          titleLine1: cleanRequiredText(modalForm.titleLine1),
+          titleLine2: cleanRequiredText(modalForm.titleLine2),
+          titleLine3: cleanRequiredText(modalForm.titleLine3),
         };
       }
 
       if (editingTarget.type === "heroDescription") {
         nextForm.hero = {
           ...nextForm.hero,
-          description: modalForm.description || "",
+          description: cleanRequiredText(modalForm.description),
         };
       }
 
       if (editingTarget.type === "heroButtons") {
         nextForm.hero = {
           ...nextForm.hero,
-          primaryButtonText: modalForm.primaryButtonText || "",
-          primaryButtonLink: modalForm.primaryButtonLink || "/admissions",
-          secondaryButtonText: modalForm.secondaryButtonText || "",
-          secondaryButtonLink: modalForm.secondaryButtonLink || "/facilities",
+          primaryButtonText: cleanRequiredText(modalForm.primaryButtonText),
+          primaryButtonLink: cleanRequiredText(modalForm.primaryButtonLink),
+          secondaryButtonText: cleanRequiredText(modalForm.secondaryButtonText),
+          secondaryButtonLink: cleanRequiredText(modalForm.secondaryButtonLink),
         };
       }
 
@@ -1118,8 +1305,15 @@ export default function AdminHome() {
       if (editingTarget.type === "heroImageText") {
         nextForm.hero = {
           ...nextForm.hero,
-          imageBottomTitle: modalForm.imageBottomTitle || "",
-          imageBottomDescription: modalForm.imageBottomDescription || "",
+          imageBottomTitle: cleanRequiredText(modalForm.imageBottomTitle),
+          imageBottomDescription: cleanRequiredText(modalForm.imageBottomDescription),
+        };
+      }
+
+      if (editingTarget.type === "heroMotto") {
+        nextForm.hero = {
+          ...nextForm.hero,
+          motto: cleanRequiredText(modalForm.motto),
         };
       }
 
@@ -1134,8 +1328,8 @@ export default function AdminHome() {
 
         nextForm.hero = {
           ...nextForm.hero,
-          [valueKey]: modalForm.value || "",
-          [labelKey]: modalForm.label || "",
+          [valueKey]: cleanRequiredText(modalForm.value),
+          [labelKey]: cleanRequiredText(modalForm.label),
         };
       }
 
@@ -1144,17 +1338,17 @@ export default function AdminHome() {
 
         nextForm.hero = {
           ...nextForm.hero,
-          [titleKey]: modalForm.title || "",
-          [subtitleKey]: modalForm.subtitle || "",
+          [titleKey]: cleanRequiredText(modalForm.title),
+          [subtitleKey]: cleanRequiredText(modalForm.subtitle),
         };
       }
 
       if (editingTarget.type === "statsHeader") {
         nextForm.statsSection = {
           ...nextForm.statsSection,
-          eyebrow: modalForm.eyebrow || "",
-          title: modalForm.title || "",
-          description: modalForm.description || "",
+          eyebrow: cleanRequiredText(modalForm.eyebrow),
+          title: cleanRequiredText(modalForm.title),
+          description: cleanRequiredText(modalForm.description),
         };
       }
 
@@ -1165,10 +1359,10 @@ export default function AdminHome() {
             index === editingTarget.index
               ? {
                   ...item,
-                  value: modalForm.value || "",
-                  suffix: modalForm.suffix || "",
-                  label: modalForm.label || "",
-                  note: modalForm.note || "",
+                  value: cleanRequiredText(modalForm.value),
+                  suffix: String(modalForm.suffix ?? "").trim(),
+                  label: cleanRequiredText(modalForm.label),
+                  note: cleanRequiredText(modalForm.note),
                 }
               : item
           ),
@@ -1180,7 +1374,7 @@ export default function AdminHome() {
           ...nextForm.statsSection,
           story: {
             ...nextForm.statsSection.story,
-            image: modalForm.image || "",
+            image: cleanRequiredText(modalForm.image),
             imageZoom: clampImageZoom(modalForm.imageZoom),
             imageOffsetX: clampImageOffset(modalForm.imageOffsetX),
             imageOffsetY: clampImageOffset(modalForm.imageOffsetY),
@@ -1193,10 +1387,10 @@ export default function AdminHome() {
           ...nextForm.statsSection,
           story: {
             ...nextForm.statsSection.story,
-            imageTopTitle: modalForm.imageTopTitle || "",
-            imageTopSubtitle: modalForm.imageTopSubtitle || "",
-            imageBottomTitle: modalForm.imageBottomTitle || "",
-            imageBottomDescription: modalForm.imageBottomDescription || "",
+            imageTopTitle: cleanRequiredText(modalForm.imageTopTitle),
+            imageTopSubtitle: cleanRequiredText(modalForm.imageTopSubtitle),
+            imageBottomTitle: cleanRequiredText(modalForm.imageBottomTitle),
+            imageBottomDescription: cleanRequiredText(modalForm.imageBottomDescription),
           },
         };
       }
@@ -1206,9 +1400,12 @@ export default function AdminHome() {
           ...nextForm.statsSection,
           story: {
             ...nextForm.statsSection.story,
-            badge: modalForm.badge || "",
-            title: modalForm.title || "",
-            paragraphs: [modalForm.paragraph1 || "", modalForm.paragraph2 || ""],
+            badge: cleanRequiredText(modalForm.badge),
+            title: cleanRequiredText(modalForm.title),
+            paragraphs: [
+              cleanRequiredText(modalForm.paragraph1),
+              cleanRequiredText(modalForm.paragraph2),
+            ],
           },
         };
       }
@@ -1218,8 +1415,8 @@ export default function AdminHome() {
           ...nextForm.statsSection,
           story: {
             ...nextForm.statsSection.story,
-            buttonText: modalForm.buttonText || "",
-            buttonLink: modalForm.buttonLink || "/about",
+            buttonText: cleanRequiredText(modalForm.buttonText),
+            buttonLink: cleanRequiredText(modalForm.buttonLink),
           },
         };
       }
@@ -1229,8 +1426,8 @@ export default function AdminHome() {
           ...nextForm.statsSection,
           excellence: {
             ...nextForm.statsSection.excellence,
-            title: modalForm.title || "",
-            description: modalForm.description || "",
+            title: cleanRequiredText(modalForm.title),
+            description: cleanRequiredText(modalForm.description),
           },
         };
       }
@@ -1244,8 +1441,8 @@ export default function AdminHome() {
               index === editingTarget.index
                 ? {
                     ...item,
-                    title: modalForm.title || "",
-                    description: modalForm.description || "",
+                    title: cleanRequiredText(modalForm.title),
+                    description: cleanRequiredText(modalForm.description),
                   }
                 : item
             ),
@@ -1269,14 +1466,19 @@ export default function AdminHome() {
       setImageAdjustTarget(null);
       setEditingTarget(null);
       setModalForm({});
+      setValidationPopup("");
       setSuccess("Selected homepage item saved successfully.");
     } catch (err) {
       console.error("Save selected home item error:", err);
 
       if (err.response?.status === 401) {
-        setError("Admin login expired or token is invalid. Please login again.");
+        setValidationPopup(
+          "Admin login expired or token is invalid. Please login again."
+        );
       } else {
-        setError(err.response?.data?.message || "Could not save selected item.");
+        setValidationPopup(
+          err.response?.data?.message || "Could not save selected item."
+        );
       }
     } finally {
       setSaving(false);
@@ -1293,6 +1495,7 @@ export default function AdminHome() {
       heroButtons: "Edit Hero Buttons",
       heroImage: "Change Hero Image",
       heroImageText: "Edit Hero Image Text",
+      heroMotto: "Edit School Motto",
       heroStat: "Edit Hero Stat",
       heroFloating: "Edit Floating Label",
       statsHeader: "Edit School Highlights Heading",
@@ -1330,6 +1533,7 @@ export default function AdminHome() {
     if (editingTarget.type === "storyImage") return "Save Story Image";
     if (editingTarget.type === "heroTitle") return "Save Hero Title";
     if (editingTarget.type === "heroButtons") return "Save Buttons";
+    if (editingTarget.type === "heroMotto") return "Save Motto";
     if (editingTarget.type === "statsCard") return "Save Number Card";
     if (editingTarget.type === "excellenceCard") return "Save Card";
 
@@ -1659,13 +1863,14 @@ export default function AdminHome() {
                       <Field
                         label="Main Image URL"
                         value={modalForm.image}
-                        onChange={(value) =>
+                        onChange={(value) => {
                           setModalForm((prev) => ({
                             ...prev,
                             image: value,
                             images: normalizeImageList(prev.images, value),
-                          }))
-                        }
+                          }));
+                          setValidationPopup("");
+                        }}
                         placeholder="First image URL appears here after upload"
                       />
 
@@ -1964,6 +2169,18 @@ export default function AdminHome() {
                     </>
                   )}
 
+                  {editingTarget.type === "heroMotto" && (
+                    <Field
+                      label="School Motto"
+                      value={modalForm.motto}
+                      onChange={(value) =>
+                        updateModalField("motto", value)
+                      }
+                      placeholder="Our motto is to provide quality education."
+                      textarea
+                    />
+                  )}
+
                   {editingTarget.type === "heroFloating" && (
                     <>
                       <Field
@@ -2198,6 +2415,59 @@ export default function AdminHome() {
                   </button>
                 </div>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {validationPopup && (
+          <motion.div
+            className="fixed inset-0 z-[30000] flex items-center justify-center p-4"
+            style={{
+              background: "rgba(2,6,23,0.62)",
+              backdropFilter: "blur(10px)",
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setValidationPopup("")}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 18, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.96 }}
+              className="w-full max-w-sm rounded-[28px] bg-white p-6 text-center shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div
+                className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
+                style={{
+                  background: "rgba(215,25,32,0.10)",
+                  color: colors.red,
+                }}
+              >
+                <AlertCircle className="h-7 w-7" />
+              </div>
+
+              <h3 className="mt-4 text-xl font-black text-slate-950">
+                Please complete this field
+              </h3>
+
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-600">
+                {validationPopup}
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setValidationPopup("")}
+                className="mt-6 w-full rounded-2xl px-4 py-3 text-sm font-black text-slate-950"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                }}
+              >
+                OK
+              </button>
             </motion.div>
           </motion.div>
         )}

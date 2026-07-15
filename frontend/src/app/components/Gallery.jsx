@@ -123,8 +123,15 @@ function normalizeImageCategory(category, categories = []) {
 
 function normalizeCategoryDescriptions(descriptions = {}, categories = []) {
   return normalizeCategories(categories).reduce((acc, category) => {
-    acc[category] =
-      descriptions?.[category] || fallbackCategoryDescriptions[category] || "";
+    const hasSavedDescription = Object.prototype.hasOwnProperty.call(
+      descriptions || {},
+      category
+    );
+
+    acc[category] = hasSavedDescription
+      ? String(descriptions?.[category] ?? "")
+      : fallbackCategoryDescriptions[category] || "";
+
     return acc;
   }, {});
 }
@@ -154,8 +161,9 @@ function normalizeSubcategories(subcategories = {}, categories = null) {
           description:
             typeof item === "string"
               ? ""
-              : item?.description ||
-                `Photos and memories from ${name.toLowerCase()}.`,
+              : typeof item?.description === "string"
+              ? item.description
+              : `Photos and memories from ${name.toLowerCase()}.`,
           visible: item?.visible !== false,
         };
       })
@@ -349,10 +357,13 @@ function buildSingleCategoryAlbum(content, category) {
     subcategory: "",
     title: category,
     date: categoryItems[0]?.date || "School Gallery",
-    description:
-      content.categoryDescriptions?.[category] ||
-      fallbackCategoryDescriptions[category] ||
-      "Explore school moments from this category.",
+    description: Object.prototype.hasOwnProperty.call(
+      content.categoryDescriptions || {},
+      category
+    )
+      ? String(content.categoryDescriptions?.[category] ?? "")
+      : fallbackCategoryDescriptions[category] ||
+        "Explore school moments from this category.",
     cover,
     photos,
     total: photos.length,
@@ -425,9 +436,12 @@ function buildSubcategoryAlbums(content, parentCategory) {
       subcategory: "",
       title: `General ${parentCategory}`,
       date: uncategorizedItems[0]?.date || parentCategory,
-      description:
-        content.categoryDescriptions?.[parentCategory] ||
-        fallbackCategoryDescriptions[parentCategory],
+      description: Object.prototype.hasOwnProperty.call(
+        content.categoryDescriptions || {},
+        parentCategory
+      )
+        ? String(content.categoryDescriptions?.[parentCategory] ?? "")
+        : fallbackCategoryDescriptions[parentCategory] || "",
       cover:
         uncategorizedItems.find((item) => item.image)?.image ||
         photos[0]?.url ||
@@ -1181,5 +1195,8 @@ function Gallery() {
 
 export { Gallery };
 export default Gallery;
+
+
+
 
 

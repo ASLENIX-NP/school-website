@@ -119,7 +119,7 @@ export const defaultStaffContent = {
 };
 
 function normalizeStats(stats) {
-  if (!Array.isArray(stats) || stats.length === 0) {
+  if (!Array.isArray(stats)) {
     return defaultStaffContent.stats;
   }
 
@@ -141,7 +141,7 @@ function clampNumber(value, min, max, fallback) {
 }
 
 function normalizeStaff(staff) {
-  if (!Array.isArray(staff) || staff.length === 0) {
+  if (!Array.isArray(staff)) {
     return defaultStaffContent.staff;
   }
 
@@ -155,8 +155,10 @@ function normalizeStaff(staff) {
       ...(defaultStaffContent.staff[index] || {}),
       ...member,
       id: member.id || Date.now() + index,
-      name: member.name || "Staff Member",
-      position: member.position || "Teacher",
+      name:
+        typeof member.name === "string" ? member.name : "Staff Member",
+      position:
+        typeof member.position === "string" ? member.position : "Teacher",
       imageUrl: cleanImageUrl,
       imageZoom: clampNumber(member.imageZoom, 1, 3, 1),
       imageOffsetX: clampNumber(member.imageOffsetX, -60, 60, 0),
@@ -859,5 +861,6 @@ export function Staff({
 }
 
 export default Staff;
+
 
 

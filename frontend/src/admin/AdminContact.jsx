@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
+import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
 import {
   ArrowLeft,
   Save,
@@ -144,6 +145,58 @@ function getContactIcon(icon) {
   return MapPin;
 }
 
+function findContactContentError(content = {}) {
+  const headingError = getFirstEmptyField([
+    ["Contact badge text", content.badgeText],
+    ["Contact page title", content.title],
+    ["Highlighted text", content.highlightedText],
+    ["Contact page subtitle", content.subtitle],
+  ]);
+
+  if (headingError) return headingError;
+
+  if (!Array.isArray(content.contactInfo) || content.contactInfo.length === 0) {
+    return "At least one contact information block is required.";
+  }
+
+  for (let index = 0; index < content.contactInfo.length; index += 1) {
+    const item = content.contactInfo[index] || {};
+    const itemError = getFirstEmptyField([
+      [`Contact block ${index + 1} label`, item.label],
+      [`Contact block ${index + 1} value`, item.value],
+    ]);
+
+    if (itemError) return itemError;
+  }
+
+  const mapError = getFirstEmptyField([
+    ["Map card title", content.mapCard?.title],
+    ["Map card address", content.mapCard?.address],
+    ["Map button text", content.mapCard?.buttonText],
+    ["Google Maps link", content.mapCard?.mapUrl],
+  ]);
+
+  if (mapError) return mapError;
+
+  return getFirstEmptyField([
+    ["Contact form title", content.form?.title],
+    ["Name label", content.form?.nameLabel],
+    ["Name placeholder", content.form?.namePlaceholder],
+    ["Email label", content.form?.emailLabel],
+    ["Email placeholder", content.form?.emailPlaceholder],
+    ["Phone label", content.form?.phoneLabel],
+    ["Phone placeholder", content.form?.phonePlaceholder],
+    ["Subject label", content.form?.subjectLabel],
+    ["Subject placeholder", content.form?.subjectPlaceholder],
+    ["Message label", content.form?.messageLabel],
+    ["Message placeholder", content.form?.messagePlaceholder],
+    ["Button text", content.form?.buttonText],
+    ["Sending text", content.form?.sendingText],
+    ["Success message", content.form?.successMessage],
+    ["Error message", content.form?.errorMessage],
+  ]);
+}
+
 function EditorHint({ icon: Icon, title, text, color }) {
   return (
     <div
@@ -279,6 +332,7 @@ export default function AdminContact() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [validationMessage, setValidationMessage] = useState("");
   const [editingTarget, setEditingTarget] = useState(null);
   const [modalForm, setModalForm] = useState({});
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -382,26 +436,33 @@ export default function AdminContact() {
 
     return {
       ...merged,
-      contactInfo: merged.contactInfo
-        .map((item, index) => ({
-          id: item.id || `contact-${Date.now()}-${index}`,
-          icon: item.icon || "map",
-          label: String(item.label || "Contact").trim() || "Contact",
-          value: String(item.value || "").trim(),
-          color: item.color || colors.purple,
-        }))
-        .filter((item) => item.label || item.value),
+      badgeText: String(merged.badgeText ?? "").trim(),
+      title: String(merged.title ?? "").trim(),
+      highlightedText: String(merged.highlightedText ?? "").trim(),
+      subtitle: String(merged.subtitle ?? "").trim(),
+      contactInfo: (merged.contactInfo || []).map((item, index) => ({
+        id: item.id || `contact-${Date.now()}-${index}`,
+        icon: item.icon || "map",
+        label: String(item.label ?? "").trim(),
+        value: String(item.value ?? "").trim(),
+        color: item.color || colors.purple,
+      })),
       mapCard: {
         ...merged.mapCard,
-        title: merged.mapCard.title || "School Location",
-        address: merged.mapCard.address || "",
-        buttonText: merged.mapCard.buttonText || "Open in Maps",
-        mapUrl: normalizeExternalUrl(merged.mapCard.mapUrl),
+        title: String(merged.mapCard?.title ?? "").trim(),
+        address: String(merged.mapCard?.address ?? "").trim(),
+        buttonText: String(merged.mapCard?.buttonText ?? "").trim(),
+        mapUrl: normalizeExternalUrl(String(merged.mapCard?.mapUrl ?? "").trim()),
       },
-      form: {
-        ...defaultContactContent.form,
-        ...(merged.form || {}),
-      },
+      form: Object.fromEntries(
+        Object.entries({
+          ...defaultContactContent.form,
+          ...(merged.form || {}),
+        }).map(([key, value]) => [
+          key,
+          typeof value === "string" ? value.trim() : value,
+        ])
+      ),
     };
   };
 
@@ -411,6 +472,14 @@ export default function AdminContact() {
   ) {
     setSuccess("");
     setError("");
+
+    const validationError = findContactContentError(nextContent);
+
+    if (validationError) {
+      setValidationMessage(validationError);
+      return null;
+    }
+
     setSaving(true);
 
     try {
@@ -451,10 +520,10 @@ export default function AdminContact() {
     if (editingTarget.type === "hero") {
       nextForm = {
         ...nextForm,
-        badgeText: modalForm.badgeText || "",
-        title: modalForm.title || "",
-        highlightedText: modalForm.highlightedText || "",
-        subtitle: modalForm.subtitle || "",
+        badgeText: String(modalForm.badgeText ?? "").trim(),
+        title: String(modalForm.title ?? "").trim(),
+        highlightedText: String(modalForm.highlightedText ?? "").trim(),
+        subtitle: String(modalForm.subtitle ?? "").trim(),
       };
     }
 
@@ -465,9 +534,9 @@ export default function AdminContact() {
           item.id === editingTarget.id
             ? {
                 ...item,
-                label: modalForm.label || "",
+                label: String(modalForm.label ?? "").trim(),
                 icon: modalForm.icon || "map",
-                value: modalForm.value || "",
+                value: String(modalForm.value ?? "").trim(),
                 color: modalForm.color || colors.purple,
               }
             : item
@@ -480,10 +549,10 @@ export default function AdminContact() {
         ...nextForm,
         mapCard: {
           ...nextForm.mapCard,
-          title: modalForm.title || "",
-          address: modalForm.address || "",
-          buttonText: modalForm.buttonText || "Open in Maps",
-          mapUrl: normalizeExternalUrl(modalForm.mapUrl),
+          title: String(modalForm.title ?? "").trim(),
+          address: String(modalForm.address ?? "").trim(),
+          buttonText: String(modalForm.buttonText ?? "").trim(),
+          mapUrl: normalizeExternalUrl(String(modalForm.mapUrl ?? "").trim()),
         },
       };
     }
@@ -615,6 +684,11 @@ export default function AdminContact() {
         `,
       }}
     >
+      <AdminValidationPopup
+        message={validationMessage}
+        onClose={() => setValidationMessage("")}
+      />
+
       <style>
         {`
           .admin-contact-preview-frame {
@@ -1212,5 +1286,3 @@ export default function AdminContact() {
     </section>
   );
 }
-
-

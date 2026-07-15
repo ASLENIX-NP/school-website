@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
+import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
+
 import {
   AlertCircle,
   CheckCircle2,
@@ -156,6 +158,7 @@ export default function AdminBlog() {
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [validationMessage, setValidationMessage] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -211,22 +214,38 @@ export default function AdminBlog() {
   };
 
   const saveSettings = async () => {
-    setSaving(true);
     setSuccess("");
     setError("");
 
-    try {
-      const categories = String(settingsForm.categoriesText || settingsForm.categories?.join(", ") || "")
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean);
+    const categories = String(
+      settingsForm.categoriesText ??
+        (settingsForm.categories || []).filter((item) => item !== "All").join(", ")
+    )
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
 
+    const validationError =
+      getFirstEmptyField([
+        ["Page badge", settingsForm.pageBadge],
+        ["Page title", settingsForm.pageTitle],
+        ["Page description", settingsForm.pageDescription],
+      ]) || (categories.length === 0 ? "At least one blog category is required." : "");
+
+    if (validationError) {
+      setValidationMessage(validationError);
+      return;
+    }
+
+    setSaving(true);
+
+    try {
       await saveBlogContent(
         {
           ...content,
-          pageBadge: settingsForm.pageBadge || "",
-          pageTitle: settingsForm.pageTitle || "",
-          pageDescription: settingsForm.pageDescription || "",
+          pageBadge: settingsForm.pageBadge.trim(),
+          pageTitle: settingsForm.pageTitle.trim(),
+          pageDescription: settingsForm.pageDescription.trim(),
           categories: ["All", ...categories.filter((item) => item !== "All")],
         },
         "Blog page settings saved."
@@ -316,8 +335,21 @@ export default function AdminBlog() {
   };
 
   const savePost = async () => {
-    if (!String(editingPost?.title || "").trim()) {
-      setError("Blog title is required.");
+    const validationError = getFirstEmptyField([
+      ["Blog title", editingPost?.title],
+      ["Category", editingPost?.category],
+      ["Date", editingPost?.date],
+      ["Excerpt / short summary", editingPost?.excerpt],
+      ["Full content", editingPost?.content],
+    ]);
+
+    if (validationError) {
+      setValidationMessage(validationError);
+      return;
+    }
+
+    if (editingPost?.imageUrl && !String(editingPost?.imageAlt || "").trim()) {
+      setValidationMessage("Image alt text cannot be empty when a blog image is used.");
       return;
     }
 
@@ -329,8 +361,13 @@ export default function AdminBlog() {
       const cleanPost = normalizeBlogPost(
         {
           ...editingPost,
-          slug: makeBlogSlug(editingPost.title, editingPost.id),
-          imageAlt: editingPost.imageAlt || editingPost.title,
+          title: editingPost.title.trim(),
+          category: editingPost.category.trim(),
+          date: editingPost.date.trim(),
+          excerpt: editingPost.excerpt.trim(),
+          content: editingPost.content.trim(),
+          imageAlt: String(editingPost.imageAlt || "").trim(),
+          slug: makeBlogSlug(editingPost.title.trim(), editingPost.id),
         },
         0
       );
@@ -398,6 +435,10 @@ export default function AdminBlog() {
 
   return (
     <div className="space-y-6">
+      <AdminValidationPopup
+        message={validationMessage}
+        onClose={() => setValidationMessage("")}
+      />
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
@@ -670,3 +711,6 @@ export default function AdminBlog() {
     </div>
   );
 }
+
+
+

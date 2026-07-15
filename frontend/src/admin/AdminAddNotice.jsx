@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
+
 import {
   ArrowLeft,
   Save,
@@ -104,6 +106,7 @@ export default function AdminAddNotice() {
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [validationMessage, setValidationMessage] = useState("");
 
   const updateField = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -163,8 +166,15 @@ export default function AdminAddNotice() {
     setSuccess("");
     setError("");
 
-    if (!form.title.trim()) {
-      setError("Notice title is required.");
+    const validationError = getFirstEmptyField([
+      ["Notice title", form.title],
+      ["Category", form.category],
+      ["Notice date", form.notice_date],
+      ["Description", form.description],
+    ]);
+
+    if (validationError) {
+      setValidationMessage(validationError);
       return;
     }
 
@@ -175,10 +185,10 @@ export default function AdminAddNotice() {
         method: "POST",
         headers: getAuthHeaders(true),
         body: JSON.stringify({
-          title: form.title,
-          category: form.category,
-          notice_date: form.notice_date || null,
-          description: form.description,
+          title: form.title.trim(),
+          category: form.category.trim(),
+          notice_date: form.notice_date,
+          description: form.description.trim(),
           pdf_url: form.pdf_url,
           pinned: form.pinned,
         }),
@@ -211,6 +221,11 @@ export default function AdminAddNotice() {
         `,
       }}
     >
+      <AdminValidationPopup
+        message={validationMessage}
+        onClose={() => setValidationMessage("")}
+      />
+
       <header
         className="sticky top-0 z-40"
         style={{
@@ -447,3 +462,6 @@ export default function AdminAddNotice() {
     </section>
   );
 }
+
+
+

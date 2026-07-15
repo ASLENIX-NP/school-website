@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
+import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
+
 import {
   ArrowLeft,
   Save,
@@ -241,6 +243,120 @@ function ConfirmDialog({ target, onCancel, onConfirm }) {
   );
 }
 
+function findFooterSectionError(target, modalForm = {}) {
+  if (!target) return "";
+
+  if (target.type === "identity") {
+    return getFirstEmptyField([
+      ["School name", modalForm.schoolName],
+      ["School subtitle", modalForm.schoolSubtitle],
+      ...(modalForm.showAdmissionBadge !== false
+        ? [["Admission badge text", modalForm.admissionBadgeText]]
+        : []),
+    ]);
+  }
+
+  if (target.type === "navLinks") {
+    if (!Array.isArray(modalForm.navLinks) || modalForm.navLinks.length === 0) {
+      return "At least one footer navigation link is required.";
+    }
+
+    for (let index = 0; index < modalForm.navLinks.length; index += 1) {
+      const link = modalForm.navLinks[index] || {};
+      const error = getFirstEmptyField([
+        [`Footer link ${index + 1} label`, link.label],
+        [`Footer link ${index + 1} destination`, link.href],
+      ]);
+      if (error) return error;
+    }
+  }
+
+  if (target.type === "navLink") {
+    return getFirstEmptyField([
+      ["Footer link label", modalForm.label],
+      ["Footer link destination", modalForm.href],
+    ]);
+  }
+
+  if (target.type === "socials") {
+    if (!Array.isArray(modalForm.socials) || modalForm.socials.length === 0) {
+      return "At least one social link is required.";
+    }
+
+    for (let index = 0; index < modalForm.socials.length; index += 1) {
+      const social = modalForm.socials[index] || {};
+      const error = getFirstEmptyField([
+        [`Social link ${index + 1} label`, social.label],
+        [`Social link ${index + 1} type`, social.type],
+        [`Social link ${index + 1} URL`, social.href],
+      ]);
+      if (error) return error;
+    }
+  }
+
+  if (target.type === "social") {
+    return getFirstEmptyField([
+      ["Social label", modalForm.label],
+      ["Social type", modalForm.type],
+      ["Social URL", modalForm.href],
+    ]);
+  }
+
+  if (target.type === "contact") {
+    const baseError = getFirstEmptyField([
+      ["Footer address", modalForm.address],
+      ["Google Maps URL", modalForm.mapUrl],
+      ["Footer email", modalForm.email],
+    ]);
+
+    if (baseError) return baseError;
+
+    const phones = Array.isArray(modalForm.phones) ? modalForm.phones : [];
+    if (phones.length === 0) return "At least one footer phone number is required.";
+
+    for (let index = 0; index < phones.length; index += 1) {
+      if (!String(phones[index] ?? "").trim()) {
+        return `Footer phone number ${index + 1} cannot be empty.`;
+      }
+    }
+  }
+
+  if (target.type === "phonePopup") {
+    return getFirstEmptyField([
+      ["Phone popup title", modalForm.modalTitle],
+      ["Phone popup hint", modalForm.modalHint],
+      ["Copied confirmation text", modalForm.copiedText],
+      ["Close button text", modalForm.closeButtonText],
+    ]);
+  }
+
+  if (target.type === "copyright") {
+    return getFirstEmptyField([["Copyright text", modalForm.copyrightText]]);
+  }
+
+  return "";
+}
+
+function findFooterContentError(content = {}) {
+  return (
+    findFooterSectionError({ type: "identity" }, content) ||
+    findFooterSectionError(
+      { type: "navLinks" },
+      { navLinks: content.navLinks || [] }
+    ) ||
+    findFooterSectionError(
+      { type: "socials" },
+      { socials: content.socials || [] }
+    ) ||
+    findFooterSectionError(
+      { type: "contact" },
+      content.contact || {}
+    ) ||
+    findFooterSectionError({ type: "phonePopup" }, content) ||
+    findFooterSectionError({ type: "copyright" }, content)
+  );
+}
+
 export default function AdminFooter() {
   const navigate = useNavigate();
 
@@ -253,6 +369,7 @@ export default function AdminFooter() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [validationMessage, setValidationMessage] = useState("");
 
   useEffect(() => {
     const loadFooterContent = async () => {
@@ -652,15 +769,18 @@ export default function AdminFooter() {
       },
     });
 
-    if (!cleanForm.contact.phones.length) {
-      cleanForm.contact.phones = ["057-590144"];
-    }
-
     return cleanForm;
   };
 
   const saveSelectedPart = async () => {
     if (!editingTarget) return;
+
+    const validationError = findFooterSectionError(editingTarget, modalForm);
+
+    if (validationError) {
+      setValidationMessage(validationError);
+      return;
+    }
 
     const authHeaders = getAuthHeaders();
 
@@ -679,10 +799,10 @@ export default function AdminFooter() {
       if (editingTarget.type === "identity") {
         nextForm = {
           ...nextForm,
-          logoUrl: modalForm.logoUrl || "",
-          schoolName: modalForm.schoolName || "",
-          schoolSubtitle: modalForm.schoolSubtitle || "",
-          admissionBadgeText: modalForm.admissionBadgeText || "",
+          logoUrl: String(modalForm.logoUrl ?? "").trim(),
+          schoolName: String(modalForm.schoolName ?? "").trim(),
+          schoolSubtitle: String(modalForm.schoolSubtitle ?? "").trim(),
+          admissionBadgeText: String(modalForm.admissionBadgeText ?? "").trim(),
           showAdmissionBadge: modalForm.showAdmissionBadge !== false,
         };
       }
@@ -691,15 +811,15 @@ export default function AdminFooter() {
         const cleanedLinks = (modalForm.navLinks || [])
           .map((link) => ({
             id: link.id || Date.now() + Math.random(),
-            label: String(link.label || "").trim() || "New Link",
-            href: String(link.href || "/").trim() || "/",
+            label: String(link.label ?? "").trim(),
+            href: String(link.href ?? "").trim(),
             visible: link.visible !== false,
           }))
           .filter((link) => link.label || link.href);
 
         nextForm = {
           ...nextForm,
-          navLinks: cleanedLinks.length ? cleanedLinks : defaultFooterContent.navLinks,
+          navLinks: cleanedLinks,
         };
       }
 
@@ -710,8 +830,8 @@ export default function AdminFooter() {
             link.id === editingTarget.id
               ? {
                   ...link,
-                  label: modalForm.label || "",
-                  href: modalForm.href || "/",
+                  label: String(modalForm.label ?? "").trim(),
+                  href: String(modalForm.href ?? "").trim(),
                   visible: modalForm.visible !== false,
                 }
               : link
@@ -723,16 +843,16 @@ export default function AdminFooter() {
         const cleanedSocials = (modalForm.socials || [])
           .map((social) => ({
             id: social.id || Date.now() + Math.random(),
-            label: String(social.label || "").trim() || "Website",
-            type: social.type || "website",
-            href: normalizeExternalUrl(String(social.href || "").trim()),
+            label: String(social.label ?? "").trim(),
+            type: String(social.type ?? "").trim(),
+            href: normalizeExternalUrl(String(social.href ?? "").trim()),
             visible: social.visible !== false,
           }))
           .filter((social) => social.label || social.href);
 
         nextForm = {
           ...nextForm,
-          socials: cleanedSocials.length ? cleanedSocials : defaultFooterContent.socials,
+          socials: cleanedSocials,
         };
       }
 
@@ -743,9 +863,9 @@ export default function AdminFooter() {
             social.id === editingTarget.id
               ? {
                   ...social,
-                  label: modalForm.label || "",
-                  type: modalForm.type || "website",
-                  href: normalizeExternalUrl(modalForm.href || ""),
+                  label: String(modalForm.label ?? "").trim(),
+                  type: String(modalForm.type ?? "").trim(),
+                  href: normalizeExternalUrl(String(modalForm.href ?? "").trim()),
                   visible: modalForm.visible !== false,
                 }
               : social
@@ -758,33 +878,42 @@ export default function AdminFooter() {
           ...nextForm,
           contact: {
             ...nextForm.contact,
-            address: modalForm.address || "",
-            mapUrl: normalizeMapUrl(modalForm.mapUrl || "", modalForm.address || ""),
-            email: modalForm.email || "",
-            phones: (modalForm.phones || []).map((phone) => phone.trim()).filter(Boolean),
+            address: String(modalForm.address ?? "").trim(),
+            mapUrl: normalizeMapUrl(
+              String(modalForm.mapUrl ?? "").trim(),
+              String(modalForm.address ?? "").trim()
+            ),
+            email: String(modalForm.email ?? "").trim(),
+            phones: (modalForm.phones || [])
+              .map((phone) => String(phone ?? "").trim())
+              .filter(Boolean),
           },
         };
 
-        if (nextForm.contact.phones.length === 0) {
-          nextForm.contact.phones = ["057-590144"];
-        }
       }
 
       if (editingTarget.type === "phonePopup") {
         nextForm = {
           ...nextForm,
-          modalTitle: modalForm.modalTitle || "",
-          modalHint: modalForm.modalHint || "",
-          copiedText: modalForm.copiedText || "Copied",
-          closeButtonText: modalForm.closeButtonText || "Close",
+          modalTitle: String(modalForm.modalTitle ?? "").trim(),
+          modalHint: String(modalForm.modalHint ?? "").trim(),
+          copiedText: String(modalForm.copiedText ?? "").trim(),
+          closeButtonText: String(modalForm.closeButtonText ?? "").trim(),
         };
       }
 
       if (editingTarget.type === "copyright") {
         nextForm = {
           ...nextForm,
-          copyrightText: modalForm.copyrightText || "",
+          copyrightText: String(modalForm.copyrightText ?? "").trim(),
         };
+      }
+
+      const contentValidationError = findFooterContentError(nextForm);
+
+      if (contentValidationError) {
+        setValidationMessage(contentValidationError);
+        return;
       }
 
       const cleanForm = buildCleanFooterContent(nextForm);
@@ -841,6 +970,11 @@ export default function AdminFooter() {
         `,
       }}
     >
+      <AdminValidationPopup
+        message={validationMessage}
+        onClose={() => setValidationMessage("")}
+      />
+
       <style>
   {`
     .admin-footer-preview-frame {
@@ -1453,4 +1587,7 @@ export default function AdminFooter() {
     </section>
   );
 }
+
+
+
 
