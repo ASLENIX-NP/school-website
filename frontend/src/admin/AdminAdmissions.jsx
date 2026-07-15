@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
+  AlertCircle,
   ArrowLeft,
   CheckCircle2,
   ExternalLink,
@@ -49,7 +50,11 @@ function getAdminToken() {
 
 function getAuthHeaders() {
   const token = getAdminToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  return token ? { Authorization: `Bearer ${token}` } : null;
+}
+
+function cleanText(value) {
+  return String(value ?? "").trim();
 }
 
 function Field({ label, value, onChange, placeholder = "", type = "text" }) {
@@ -98,37 +103,7 @@ function TextArea({ label, value, onChange, placeholder = "", rows = 4 }) {
   );
 }
 
-function Toggle({ checked, onChange, label }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      className="w-full flex items-center justify-between gap-4 rounded-2xl px-4 py-3 text-left"
-      style={{
-        background: checked
-          ? "rgba(22,138,58,0.08)"
-          : "rgba(100,116,139,0.08)",
-        border: checked
-          ? "1px solid rgba(22,138,58,0.18)"
-          : "1px solid rgba(100,116,139,0.18)",
-      }}
-    >
-      <span className="text-sm font-black text-slate-700">{label}</span>
-
-      <span
-        className="relative w-12 h-7 rounded-full transition-all"
-        style={{ background: checked ? colors.green : "#CBD5E1" }}
-      >
-        <span
-          className="absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow"
-          style={{ left: checked ? "24px" : "4px" }}
-        />
-      </span>
-    </button>
-  );
-}
-
-function ModalShell({ title, subtitle, icon: Icon, children, onClose }) {
+function ModalShell({ title, subtitle, icon: Icon, children, onClose, error = "" }) {
   return (
     <motion.div
       className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-5"
@@ -192,6 +167,15 @@ function ModalShell({ title, subtitle, icon: Icon, children, onClose }) {
             </button>
           </div>
 
+          {error && (
+            <div className="mb-5 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-700">
+              <div className="flex items-start gap-2 font-semibold">
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            </div>
+          )}
+
           {children}
         </div>
       </motion.div>
@@ -203,7 +187,7 @@ function ConfirmDelete({ itemTitle, onCancel, onConfirm }) {
   return (
     <ModalShell
       title="Delete Admission Step?"
-      subtitle="This action only becomes public after saving the admissions page."
+      subtitle="This admission step will be removed immediately after confirmation."
       icon={Trash2}
       onClose={onCancel}
     >
@@ -233,6 +217,139 @@ function ConfirmDelete({ itemTitle, onCancel, onConfirm }) {
   );
 }
 
+function validateRequiredFields(fields) {
+  const missing = fields.find(({ value }) => !cleanText(value));
+  return missing ? `Please write ${missing.label} before saving.` : "";
+}
+
+function validateAdmissionsContent(content = {}) {
+  const heroError = validateRequiredFields([
+    { label: "the admissions badge", value: content.badgeText },
+    { label: "the admissions title", value: content.title },
+    { label: "the highlighted title text", value: content.highlightedText },
+    { label: "the admissions subtitle", value: content.subtitle },
+  ]);
+
+  if (heroError) return heroError;
+
+  if (
+    cleanText(content.highlightedText) &&
+    !cleanText(content.title).includes(cleanText(content.highlightedText))
+  ) {
+    return "The highlighted text must be part of the main title.";
+  }
+
+  for (const [index, step] of (content.steps || []).entries()) {
+    const stepError = validateRequiredFields([
+      { label: `step ${index + 1} number`, value: step?.step },
+      { label: `step ${index + 1} title`, value: step?.title },
+      { label: `step ${index + 1} description`, value: step?.desc },
+      { label: `step ${index + 1} accent color`, value: step?.color },
+    ]);
+
+    if (stepError) return stepError;
+  }
+
+  const formError = validateRequiredFields([
+    { label: "the form title", value: content.formTitle },
+    { label: "the form description", value: content.formDescription },
+    { label: "the name label", value: content.nameLabel },
+    { label: "the name placeholder", value: content.namePlaceholder },
+    { label: "the email label", value: content.emailLabel },
+    { label: "the email placeholder", value: content.emailPlaceholder },
+    { label: "the phone label", value: content.phoneLabel },
+    { label: "the phone placeholder", value: content.phonePlaceholder },
+    { label: "the grade label", value: content.gradeLabel },
+    { label: "the grade placeholder", value: content.gradePlaceholder },
+    { label: "the message label", value: content.messageLabel },
+    { label: "the message placeholder", value: content.messagePlaceholder },
+    { label: "the submit button text", value: content.submitButtonText },
+    { label: "the submitting text", value: content.submittingText },
+    { label: "the success title", value: content.successTitle },
+    { label: "the success message", value: content.successMessage },
+  ]);
+
+  if (formError) return formError;
+
+  const grades = Array.isArray(content.grades)
+    ? content.grades.map((item) => cleanText(item)).filter(Boolean)
+    : [];
+
+  if (grades.length === 0) {
+    return "Please add at least one grade option before saving.";
+  }
+
+  return "";
+}
+
+function validateAdmissionModal(editing, modalForm) {
+  if (!editing) return "No admissions section is selected.";
+
+  if (editing.type === "hero") {
+    const error = validateRequiredFields([
+      { label: "the admissions badge", value: modalForm.badgeText },
+      { label: "the main title", value: modalForm.title },
+      { label: "the highlighted title text", value: modalForm.highlightedText },
+      { label: "the subtitle", value: modalForm.subtitle },
+    ]);
+
+    if (error) return error;
+
+    if (
+      !cleanText(modalForm.title).includes(
+        cleanText(modalForm.highlightedText)
+      )
+    ) {
+      return "The highlighted text must be part of the main title.";
+    }
+
+    return "";
+  }
+
+  if (editing.type === "step") {
+    return validateRequiredFields([
+      { label: "the step number", value: modalForm.step },
+      { label: "the step title", value: modalForm.title },
+      { label: "the step description", value: modalForm.desc },
+      { label: "the accent color", value: modalForm.color },
+    ]);
+  }
+
+  if (editing.type === "form") {
+    const error = validateRequiredFields([
+      { label: "the form title", value: modalForm.formTitle },
+      { label: "the form description", value: modalForm.formDescription },
+      { label: "the name label", value: modalForm.nameLabel },
+      { label: "the name placeholder", value: modalForm.namePlaceholder },
+      { label: "the email label", value: modalForm.emailLabel },
+      { label: "the email placeholder", value: modalForm.emailPlaceholder },
+      { label: "the phone label", value: modalForm.phoneLabel },
+      { label: "the phone placeholder", value: modalForm.phonePlaceholder },
+      { label: "the grade label", value: modalForm.gradeLabel },
+      { label: "the grade placeholder", value: modalForm.gradePlaceholder },
+      { label: "the message label", value: modalForm.messageLabel },
+      { label: "the message placeholder", value: modalForm.messagePlaceholder },
+      { label: "the submit button text", value: modalForm.submitButtonText },
+      { label: "the submitting text", value: modalForm.submittingText },
+      { label: "the success title", value: modalForm.successTitle },
+      { label: "the success message", value: modalForm.successMessage },
+    ]);
+
+    if (error) return error;
+
+    const grades = cleanText(modalForm.gradesText)
+      .split("\n")
+      .map((item) => cleanText(item))
+      .filter(Boolean);
+
+    return grades.length === 0
+      ? "Please add at least one grade option before saving."
+      : "";
+  }
+
+  return "";
+}
+
 export default function AdminAdmissions() {
   const navigate = useNavigate();
 
@@ -241,6 +358,7 @@ export default function AdminAdmissions() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [modalError, setModalError] = useState("");
   const [editing, setEditing] = useState(null);
   const [modalForm, setModalForm] = useState({});
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -276,14 +394,10 @@ export default function AdminAdmissions() {
     };
   }, []);
 
-  const visibleCount = useMemo(
-    () => (form.steps || []).filter((item) => item.visible !== false).length,
-    [form.steps]
-  );
-
   const openHeroEditor = () => {
     setSuccess("");
     setError("");
+    setModalError("");
     setEditing({ type: "hero" });
     setModalForm({
       badgeText: form.badgeText || "",
@@ -296,13 +410,20 @@ export default function AdminAdmissions() {
   const openStepEditor = (step) => {
     setSuccess("");
     setError("");
-    setEditing({ type: "step", id: step.id });
-    setModalForm({ ...step });
+    setModalError("");
+    setEditing({ type: "step", id: step.id, isNew: false });
+    setModalForm({
+      step: step.step || "",
+      title: step.title || "",
+      desc: step.desc || "",
+      color: step.color || colors.green,
+    });
   };
 
   const openFormEditor = () => {
     setSuccess("");
     setError("");
+    setModalError("");
     setEditing({ type: "form" });
     setModalForm({
       formTitle: form.formTitle || "",
@@ -329,152 +450,257 @@ export default function AdminAdmissions() {
     if (saving) return;
     setEditing(null);
     setModalForm({});
+    setModalError("");
   };
 
   const updateModalField = (name, value) => {
     setModalForm((prev) => ({ ...prev, [name]: value }));
+    setModalError("");
   };
 
-  const saveModalChanges = () => {
+  const persistAdmissionsContent = async (nextForm, message) => {
+    const authHeaders = getAuthHeaders();
+
+    if (!authHeaders) {
+      const message = "Admin login expired. Please logout and login again.";
+      setModalError(message);
+      setError(message);
+      return false;
+    }
+
+    const cleanedForm = mergeAdmissionsContent(nextForm);
+    const validationError = validateAdmissionsContent(cleanedForm);
+
+    if (validationError) {
+      setModalError(validationError);
+      return false;
+    }
+
+    await axios.put(
+      "https://school-website-backend-ixx2.onrender.com/api/site-content/admissions",
+      { content: cleanedForm },
+      {
+        headers: authHeaders,
+        timeout: 30000,
+      }
+    );
+
+    setForm(cleanedForm);
+    setSuccess(message || "Admissions page content saved successfully.");
+    return true;
+  };
+
+  const saveModalChanges = async () => {
     if (!editing) return;
 
-    if (editing.type === "hero") {
-      setForm((prev) => ({
-        ...prev,
-        badgeText: modalForm.badgeText || "",
-        title: modalForm.title || "",
-        highlightedText: modalForm.highlightedText || "",
-        subtitle: modalForm.subtitle || "",
-      }));
+    const validationError = validateAdmissionModal(editing, modalForm);
+
+    if (validationError) {
+      setModalError(validationError);
+      return;
     }
 
-    if (editing.type === "step") {
-      setForm((prev) => ({
-        ...prev,
-        steps: prev.steps.map((step) =>
-          step.id === editing.id
-            ? {
-                ...step,
-                step: modalForm.step || "",
-                title: modalForm.title || "",
-                desc: modalForm.desc || "",
-                color: modalForm.color || colors.green,
-                visible: modalForm.visible !== false,
-              }
-            : step
-        ),
-      }));
+    setSaving(true);
+    setSuccess("");
+    setError("");
+    setModalError("");
+
+    try {
+      let nextForm = mergeAdmissionsContent(form);
+
+      if (editing.type === "hero") {
+        nextForm = {
+          ...nextForm,
+          badgeText: cleanText(modalForm.badgeText),
+          title: cleanText(modalForm.title),
+          highlightedText: cleanText(modalForm.highlightedText),
+          subtitle: cleanText(modalForm.subtitle),
+        };
+      }
+
+      if (editing.type === "step") {
+        const nextStep = {
+          id: editing.id,
+          icon: "message",
+          step: cleanText(modalForm.step),
+          title: cleanText(modalForm.title),
+          desc: cleanText(modalForm.desc),
+          color: cleanText(modalForm.color) || colors.green,
+          visible: true,
+        };
+
+        nextForm = {
+          ...nextForm,
+          steps: editing.isNew
+            ? [...(nextForm.steps || []), nextStep]
+            : (nextForm.steps || []).map((step) =>
+                step.id === editing.id
+                  ? {
+                      ...step,
+                      ...nextStep,
+                    }
+                  : step
+              ),
+        };
+      }
+
+      if (editing.type === "form") {
+        const grades = cleanText(modalForm.gradesText)
+          .split("\n")
+          .map((item) => cleanText(item))
+          .filter(Boolean);
+
+        nextForm = {
+          ...nextForm,
+          formTitle: cleanText(modalForm.formTitle),
+          formDescription: cleanText(modalForm.formDescription),
+          nameLabel: cleanText(modalForm.nameLabel),
+          namePlaceholder: cleanText(modalForm.namePlaceholder),
+          emailLabel: cleanText(modalForm.emailLabel),
+          emailPlaceholder: cleanText(modalForm.emailPlaceholder),
+          phoneLabel: cleanText(modalForm.phoneLabel),
+          phonePlaceholder: cleanText(modalForm.phonePlaceholder),
+          gradeLabel: cleanText(modalForm.gradeLabel),
+          gradePlaceholder: cleanText(modalForm.gradePlaceholder),
+          messageLabel: cleanText(modalForm.messageLabel),
+          messagePlaceholder: cleanText(modalForm.messagePlaceholder),
+          grades,
+          submitButtonText: cleanText(modalForm.submitButtonText),
+          submittingText: cleanText(modalForm.submittingText),
+          successTitle: cleanText(modalForm.successTitle),
+          successMessage: cleanText(modalForm.successMessage),
+        };
+      }
+
+      const saved = await persistAdmissionsContent(
+        nextForm,
+        editing.type === "step" && editing.isNew
+          ? "New admission step added successfully."
+          : "Selected admissions item saved successfully."
+      );
+
+      if (!saved) return;
+
+      setEditing(null);
+      setModalForm({});
+      setModalError("");
+    } catch (err) {
+      console.error("Save admissions item error:", err);
+
+      if (err.response?.status === 401) {
+        setModalError(
+          "Admin login expired or token is invalid. Please login again."
+        );
+      } else {
+        setModalError(
+          err.response?.data?.message ||
+            "Could not save the selected admissions item."
+        );
+      }
+    } finally {
+      setSaving(false);
     }
-
-    if (editing.type === "form") {
-      const grades = String(modalForm.gradesText || "")
-        .split("\n")
-        .map((item) => item.trim())
-        .filter(Boolean);
-
-      setForm((prev) => ({
-        ...prev,
-        formTitle: modalForm.formTitle || "",
-        formDescription: modalForm.formDescription || "",
-        nameLabel: modalForm.nameLabel || "",
-        namePlaceholder: modalForm.namePlaceholder || "",
-        emailLabel: modalForm.emailLabel || "",
-        emailPlaceholder: modalForm.emailPlaceholder || "",
-        phoneLabel: modalForm.phoneLabel || "",
-        phonePlaceholder: modalForm.phonePlaceholder || "",
-        gradeLabel: modalForm.gradeLabel || "",
-        gradePlaceholder: modalForm.gradePlaceholder || "",
-        messageLabel: modalForm.messageLabel || "",
-        messagePlaceholder: modalForm.messagePlaceholder || "",
-        grades: grades.length ? grades : prev.grades,
-        submitButtonText: modalForm.submitButtonText || "",
-        submittingText: modalForm.submittingText || "",
-        successTitle: modalForm.successTitle || "",
-        successMessage: modalForm.successMessage || "",
-      }));
-    }
-
-    closeEditor();
-    setSuccess("Section updated. Click Save Changes to publish.");
   };
 
   const addStep = () => {
+    const nextIndex = (form.steps || []).length;
+    const newId = `admission-step-${Date.now()}`;
+
     setSuccess("");
     setError("");
-
-    setForm((prev) => {
-      const nextIndex = (prev.steps || []).length;
-      const newStep = {
-        id: Date.now(),
-        icon: "message",
-        step: String(nextIndex + 1).padStart(2, "0"),
-        title: "New Admission Step",
-        desc: "Write the admission step description here.",
-        color: stepColorOptions[nextIndex % stepColorOptions.length],
-        visible: true,
-      };
-
-      setTimeout(() => {
-        const target = document.getElementById(`admission-step-${newStep.id}`);
-        target?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 120);
-
-      return {
-        ...prev,
-        steps: [...(prev.steps || []), newStep],
-      };
+    setModalError("");
+    setEditing({ type: "step", id: newId, isNew: true });
+    setModalForm({
+      step: String(nextIndex + 1).padStart(2, "0"),
+      title: "",
+      desc: "",
+      color: stepColorOptions[nextIndex % stepColorOptions.length],
     });
-
-    setSuccess("New step added. Click its Edit button, then Save Changes to publish.");
   };
 
   const confirmDeleteStep = (step) => {
     setDeleteTarget(step);
   };
 
-  const deleteStep = () => {
+  const deleteStep = async () => {
     if (!deleteTarget) return;
 
-    if ((form.steps || []).length <= 1) {
-      setDeleteTarget(null);
-      setError("At least one admission step must remain.");
-      return;
+    setSaving(true);
+    setSuccess("");
+    setError("");
+
+    try {
+      const nextForm = {
+        ...mergeAdmissionsContent(form),
+        steps: (form.steps || []).filter(
+          (step) => step.id !== deleteTarget.id
+        ),
+      };
+
+      const saved = await persistAdmissionsContent(
+        nextForm,
+        "Admission step deleted successfully."
+      );
+
+      if (saved) {
+        setDeleteTarget(null);
+      }
+    } catch (err) {
+      console.error("Delete admission step error:", err);
+      setError(
+        err.response?.data?.message ||
+          "Could not delete the admission step."
+      );
+    } finally {
+      setSaving(false);
     }
-
-    setForm((prev) => ({
-      ...prev,
-      steps: prev.steps.filter((step) => step.id !== deleteTarget.id),
-    }));
-
-    setDeleteTarget(null);
-    setSuccess("Step deleted. Click Save Changes to publish.");
   };
 
   async function saveAdmissionsContent() {
     setSuccess("");
     setError("");
+    setModalError("");
+
+    const validationError = validateAdmissionsContent(form);
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setSaving(true);
 
     try {
+      const authHeaders = getAuthHeaders();
+
+      if (!authHeaders) {
+        setError("Admin login expired. Please logout and login again.");
+        return;
+      }
+
       const cleanedForm = mergeAdmissionsContent({
         ...form,
         steps: (form.steps || []).map((step, index) => ({
           ...step,
-          id: step.id || Date.now() + index,
-          step: step.step || String(index + 1).padStart(2, "0"),
-          title: step.title || "Admission Step",
-          desc: step.desc || "Step description.",
-          color: step.color || stepColorOptions[index % stepColorOptions.length],
-          visible: step.visible !== false,
+          id: step.id ?? `admission-step-${index + 1}`,
+          step: cleanText(step.step),
+          title: cleanText(step.title),
+          desc: cleanText(step.desc),
+          color:
+            cleanText(step.color) ||
+            stepColorOptions[index % stepColorOptions.length],
+          visible: true,
         })),
-        grades: (form.grades || []).map((item) => String(item).trim()).filter(Boolean),
+        grades: (form.grades || [])
+          .map((item) => cleanText(item))
+          .filter(Boolean),
       });
 
       await axios.put(
         "https://school-website-backend-ixx2.onrender.com/api/site-content/admissions",
         { content: cleanedForm },
         {
-          headers: getAuthHeaders(),
+          headers: authHeaders,
           timeout: 30000,
         }
       );
@@ -655,7 +881,7 @@ export default function AdminAdmissions() {
               }}
             >
               <Save className="w-4 h-4" />
-              {saving ? "Saving..." : "Save Changes"}
+              {saving ? "Saving..." : "Save All"}
             </button>
           </div>
         </div>
@@ -694,8 +920,8 @@ export default function AdminAdmissions() {
 
           <p className="text-slate-500 max-w-3xl text-base sm:text-lg">
             Hover and edit the real admissions page. Steps can be added,
-            hidden, edited, or deleted. {visibleCount} step
-            {visibleCount === 1 ? "" : "s"} visible on the public page.
+            edited, or permanently deleted. {(form.steps || []).length} step
+            {(form.steps || []).length === 1 ? "" : "s"} currently saved.
           </p>
         </motion.div>
 
@@ -746,6 +972,7 @@ export default function AdminAdmissions() {
             subtitle="Update the badge, main title, highlighted text, and subtitle."
             icon={Pencil}
             onClose={closeEditor}
+            error={modalError}
           >
             <div className="grid gap-5">
               <Field
@@ -787,10 +1014,11 @@ export default function AdminAdmissions() {
               <button
                 type="button"
                 onClick={saveModalChanges}
-                className="flex-1 py-3 rounded-2xl text-sm font-black text-slate-950"
+                disabled={saving}
+                className="flex-1 py-3 rounded-2xl text-sm font-black text-slate-950 disabled:opacity-60"
                 style={{ background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})` }}
               >
-                Update Heading
+                {saving ? "Saving..." : "Update Heading"}
               </button>
             </div>
           </ModalShell>
@@ -798,18 +1026,13 @@ export default function AdminAdmissions() {
 
         {editing?.type === "step" && (
           <ModalShell
-            title="Edit Admission Step"
-            subtitle="Update this step card. Hidden steps remain in admin but do not show publicly."
+            title={editing?.isNew ? "Add Admission Step" : "Edit Admission Step"}
+            subtitle="Complete every field, then save this admission step."
             icon={Pencil}
             onClose={closeEditor}
+            error={modalError}
           >
             <div className="grid gap-5">
-              <Toggle
-                checked={modalForm.visible !== false}
-                onChange={(value) => updateModalField("visible", value)}
-                label="Show this step on public admissions page"
-              />
-
               <div className="grid md:grid-cols-3 gap-4">
                 <Field
                   label="Step Number"
@@ -852,10 +1075,15 @@ export default function AdminAdmissions() {
               <button
                 type="button"
                 onClick={saveModalChanges}
-                className="flex-1 py-3 rounded-2xl text-sm font-black text-slate-950"
+                disabled={saving}
+                className="flex-1 py-3 rounded-2xl text-sm font-black text-slate-950 disabled:opacity-60"
                 style={{ background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})` }}
               >
-                Update Step
+                {saving
+                  ? "Saving..."
+                  : editing?.isNew
+                  ? "Add Step"
+                  : "Update Step"}
               </button>
             </div>
           </ModalShell>
@@ -867,6 +1095,7 @@ export default function AdminAdmissions() {
             subtitle="Update public form labels, placeholders, grade options, and success text."
             icon={Pencil}
             onClose={closeEditor}
+            error={modalError}
           >
             <div className="grid gap-5">
               <Field
@@ -931,10 +1160,11 @@ export default function AdminAdmissions() {
               <button
                 type="button"
                 onClick={saveModalChanges}
-                className="flex-1 py-3 rounded-2xl text-sm font-black text-slate-950"
+                disabled={saving}
+                className="flex-1 py-3 rounded-2xl text-sm font-black text-slate-950 disabled:opacity-60"
                 style={{ background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})` }}
               >
-                Update Form
+                {saving ? "Saving..." : "Update Form"}
               </button>
             </div>
           </ModalShell>

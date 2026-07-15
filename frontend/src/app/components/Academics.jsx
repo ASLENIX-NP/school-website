@@ -396,7 +396,7 @@ function isLegacyAcademicsContent(saved = {}) {
 }
 
 function normalizeLegacyHeroDescription(description, shouldMigrate) {
-  const text = description || defaultAcademicsContent.heroDescription;
+  const text = description ?? defaultAcademicsContent.heroDescription;
 
   if (!shouldMigrate) return text;
 
@@ -444,15 +444,23 @@ function normalizePrograms(programs = [], shouldMigrate = false) {
   });
 }
 
-function normalizeCurriculum(curriculum = {}, shouldMigrate = false) {
+function normalizeCurriculum(curriculum, shouldMigrate = false) {
   const hasSavedCurriculum =
     curriculum &&
     typeof curriculum === "object" &&
-    Object.keys(curriculum).length > 0;
+    !Array.isArray(curriculum);
 
-  const merged = hasSavedCurriculum
+  if (!hasSavedCurriculum) {
+    return { ...defaultAcademicsContent.curriculum };
+  }
+
+  const merged = shouldMigrate
     ? { ...defaultAcademicsContent.curriculum, ...curriculum }
-    : defaultAcademicsContent.curriculum;
+    : { ...curriculum };
+
+  if (!shouldMigrate) {
+    return merged;
+  }
 
   const secondaryGrades = Array.isArray(merged["Secondary Level"])
     ? [...merged["Secondary Level"]]
@@ -469,10 +477,14 @@ function normalizeCurriculum(curriculum = {}, shouldMigrate = false) {
     }
   };
 
-  if (shouldMigrate || secondaryGrades.length < 4) {
-    ensureGrade("Grade 11", defaultAcademicsContent.curriculum["Secondary Level"][2].books);
-    ensureGrade("Grade 12", defaultAcademicsContent.curriculum["Secondary Level"][3].books);
-  }
+  ensureGrade(
+    "Grade 11",
+    defaultAcademicsContent.curriculum["Secondary Level"][2].books
+  );
+  ensureGrade(
+    "Grade 12",
+    defaultAcademicsContent.curriculum["Secondary Level"][3].books
+  );
 
   return {
     ...merged,
@@ -509,13 +521,9 @@ export function mergeAcademicsContent(saved = {}) {
       ? saved.stats
       : defaultAcademicsContent.stats,
 
-    timelineTerms: (Array.isArray(saved.timelineTerms)
+    timelineTerms: Array.isArray(saved.timelineTerms)
       ? saved.timelineTerms
-      : defaultAcademicsContent.timelineTerms
-    ).filter((item) => {
-      const term = String(item.term || "").toLowerCase();
-      return !term.includes("third terminal");
-    }),
+      : defaultAcademicsContent.timelineTerms,
 
     ongoingAssessments: Array.isArray(saved.ongoingAssessments)
       ? saved.ongoingAssessments
@@ -726,7 +734,7 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
 
             return (
               <button
-                key={grade.grade}
+                key={`${grade.grade}-${idx}`}
                 onClick={() => setActiveIndex(idx)}
                 className="shrink-0 md:shrink text-left px-7 py-5 flex items-center gap-4 transition-all duration-300"
                 style={{
@@ -937,19 +945,10 @@ export function Academics({
     loadAcademicsContent();
   }, [contentOverride]);
 
-  const visiblePrograms = content.programs.filter(
-    (item) => item.visible !== false
-  );
-
-  const visibleFeatures = content.features.filter(
-    (item) => item.visible !== false
-  );
-
-  const visibleStats = content.stats.filter((item) => item.visible !== false);
-
-  const visibleTimeline = content.timelineTerms.filter(
-    (item) => item.visible !== false
-  );
+  const visiblePrograms = content.programs || [];
+  const visibleFeatures = content.features || [];
+  const visibleStats = content.stats || [];
+  const visibleTimeline = content.timelineTerms || [];
 
   return (
     <div
@@ -1126,9 +1125,9 @@ export function Academics({
                         Course Structure
                       </span>
 
-                      {(prog.classes || []).map((item) => (
+                      {(prog.classes || []).map((item, classIndex) => (
                         <div
-                          key={item}
+                          key={`${item}-${classIndex}`}
                           className="flex items-center gap-3 text-sm text-slate-700"
                         >
                           <span
@@ -1280,11 +1279,21 @@ export function Academics({
             />
 
             <div className="relative z-10">
-              <div
-                className="text-xl font-black tracking-[0.14em] mb-4"
-                style={{ color: featureColor }}
-              >
-                {String(i + 1).padStart(2, "0")}
+              <div className="mb-4 flex items-center gap-3">
+                <span
+                  className="text-xl font-black tracking-[0.14em]"
+                  style={{ color: featureColor }}
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+
+                <span
+                  className="text-2xl"
+                  role="img"
+                  aria-label={feat.title || "Academic feature"}
+                >
+                  {feat.emoji || "📘"}
+                </span>
               </div>
 
               <div
@@ -1452,12 +1461,7 @@ export function Academics({
 
     <div className="grid lg:grid-cols-12 gap-10 items-stretch">
       <div className="lg:col-span-7 space-y-5">
-        {visibleTimeline
-          .filter((t) => {
-            const term = String(t.term || "").toLowerCase();
-            return !term.includes("third terminal");
-          })
-          .map((t, index) => {
+        {visibleTimeline.map((t, index) => {
             const realIndex = content.timelineTerms.findIndex(
               (item) => item.id === t.id
             );
@@ -1606,9 +1610,9 @@ export function Academics({
         </div>
 
         <div className="relative z-10 grid grid-cols-2 gap-4 mt-8">
-          {(content.ongoingAssessments || []).map((item) => (
+          {(content.ongoingAssessments || []).map((item, assessmentIndex) => (
             <div
-              key={item}
+              key={`${item}-${assessmentIndex}`}
               className="rounded-2xl p-4 text-center font-black text-sm transition-all duration-300 hover:-translate-y-1"
               style={{
                 background:
@@ -1725,5 +1729,3 @@ export function Academics({
 }
 
 export default Academics;
-
-

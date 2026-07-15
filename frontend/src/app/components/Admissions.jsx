@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
 import { useForm } from "react-hook-form";
-import { Pencil, Plus, Trash2, EyeOff } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 
 export const colors = {
   red: "#D71920",
@@ -100,28 +100,34 @@ export const defaultAdmissionsContent = {
 };
 
 export function mergeAdmissionsContent(saved = {}) {
+  const hasSavedSteps = Array.isArray(saved.steps);
+  const hasSavedGrades = Array.isArray(saved.grades);
+
   return {
     ...defaultAdmissionsContent,
     ...saved,
-    steps:
-      Array.isArray(saved.steps) && saved.steps.length
-        ? saved.steps.map((step, index) => ({
-            ...step,
-            id: step.id || Date.now() + index,
-            step: step.step || String(index + 1).padStart(2, "0"),
-            title: step.title || "Admission Step",
-            desc: step.desc || "Step description.",
-            color: step.color || stepColorOptions[index % stepColorOptions.length],
-            visible: step.visible !== false,
-          }))
-        : defaultAdmissionsContent.steps,
-    grades:
-      Array.isArray(saved.grades) && saved.grades.length
-        ? saved.grades
-        : defaultAdmissionsContent.grades,
-    messageLabel: saved.messageLabel || defaultAdmissionsContent.messageLabel,
+    steps: hasSavedSteps
+      ? saved.steps.map((step, index) => ({
+          ...step,
+          id: step.id ?? `admission-step-${index + 1}`,
+          step:
+            step.step ?? String(index + 1).padStart(2, "0"),
+          title: step.title ?? "",
+          desc: step.desc ?? "",
+          color:
+            step.color ||
+            stepColorOptions[index % stepColorOptions.length],
+          visible: true,
+        }))
+      : defaultAdmissionsContent.steps,
+    grades: hasSavedGrades
+      ? saved.grades.map((grade) => String(grade ?? ""))
+      : defaultAdmissionsContent.grades,
+    messageLabel:
+      saved.messageLabel ?? defaultAdmissionsContent.messageLabel,
     messagePlaceholder:
-      saved.messagePlaceholder || defaultAdmissionsContent.messagePlaceholder,
+      saved.messagePlaceholder ??
+      defaultAdmissionsContent.messagePlaceholder,
   };
 }
 
@@ -309,9 +315,7 @@ function Admissions({
     }
   };
 
-  const visibleSteps = (content.steps || []).filter(
-    (step) => step.visible !== false || editMode
-  );
+  const visibleSteps = content.steps || [];
 
   return (
     <section
@@ -459,16 +463,13 @@ function Admissions({
                   className="p-6 rounded-3xl h-full transition-all duration-300 group-hover:-translate-y-2 cursor-default relative"
                   style={{
                     background:
-                      step.visible === false && editMode
-                        ? "linear-gradient(145deg, rgba(248,250,252,0.75), rgba(255,255,255,0.62))"
-                        : "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.82))",
+                      "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.82))",
                     border: editMode
                       ? `2px dashed ${stepColor}88`
                       : `1px solid ${stepColor}24`,
                     boxShadow:
                       "0 18px 48px rgba(11,16,32,0.075), inset 0 1px 0 rgba(255,255,255,0.85)",
                     backdropFilter: "blur(16px)",
-                    opacity: step.visible === false && editMode ? 0.62 : 1,
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.boxShadow = `0 26px 64px rgba(11,16,32,0.14), 0 0 0 1px ${stepColor}22`;
@@ -482,13 +483,6 @@ function Admissions({
                       : `${stepColor}24`;
                   }}
                 >
-                  {step.visible === false && editMode && (
-                    <div className="absolute left-4 top-4 z-20 inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1.5 text-xs font-black text-white">
-                      <EyeOff className="h-3.5 w-3.5" />
-                      Hidden
-                    </div>
-                  )}
-
                   <div className="flex items-start justify-between gap-4 mb-6">
                     <span
                       className="text-sm font-black tracking-widest"
@@ -765,5 +759,3 @@ function Admissions({
 
 export { Admissions };
 export default Admissions;
-
-

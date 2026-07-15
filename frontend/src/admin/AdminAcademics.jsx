@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
@@ -49,6 +48,10 @@ const cardColors = [
 
 function cloneJson(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function cleanText(value) {
+  return String(value ?? "").trim();
 }
 
 function getAuthHeaders() {
@@ -108,40 +111,6 @@ function Field({
   );
 }
 
-function Toggle({ checked, onChange, label }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      className="w-full flex items-center justify-between gap-4 rounded-2xl px-4 py-3 text-left"
-      style={{
-        background: checked
-          ? "rgba(22,138,58,0.08)"
-          : "rgba(100,116,139,0.08)",
-        border: checked
-          ? "1px solid rgba(22,138,58,0.18)"
-          : "1px solid rgba(100,116,139,0.18)",
-      }}
-    >
-      <span className="text-sm font-black text-slate-700">{label}</span>
-
-      <span
-        className="relative w-12 h-7 rounded-full transition-all"
-        style={{
-          background: checked ? colors.green : "#CBD5E1",
-        }}
-      >
-        <span
-          className="absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow"
-          style={{
-            left: checked ? "24px" : "4px",
-          }}
-        />
-      </span>
-    </button>
-  );
-}
-
 function getDeleteName(target) {
   if (!target) return "this item";
 
@@ -155,14 +124,346 @@ function getDeleteName(target) {
 
 function sanitizeGrades(grades = []) {
   return grades.map((grade) => ({
-    grade: grade.grade || "New Grade",
-    books: Array.isArray(grade.books)
+    grade: cleanText(grade?.grade),
+    books: Array.isArray(grade?.books)
       ? grade.books.map((book) => ({
-          subject: book.subject || "New Subject",
-          publication: book.publication || "New Publication",
+          subject: cleanText(book?.subject),
+          publication: cleanText(book?.publication),
         }))
       : [],
   }));
+}
+
+function validateRequiredFields(fields) {
+  const missing = fields.find(({ value }) => !cleanText(value));
+  return missing ? `Please write ${missing.label} before saving.` : "";
+}
+
+function validateCurriculumGrades(grades = []) {
+  if (!Array.isArray(grades) || grades.length === 0) {
+    return "Please add at least one curriculum grade before saving.";
+  }
+
+  for (const [gradeIndex, grade] of grades.entries()) {
+    if (!cleanText(grade?.grade)) {
+      return `Please write the name for curriculum grade ${gradeIndex + 1}.`;
+    }
+
+    if (!Array.isArray(grade?.books) || grade.books.length === 0) {
+      return `Please add at least one subject to ${cleanText(grade?.grade) || `grade ${gradeIndex + 1}`}.`;
+    }
+
+    for (const [bookIndex, book] of grade.books.entries()) {
+      if (!cleanText(book?.subject)) {
+        return `Please write subject ${bookIndex + 1} for ${cleanText(grade?.grade)}.`;
+      }
+
+      if (!cleanText(book?.publication)) {
+        return `Please write the publication for ${cleanText(book?.subject)}.`;
+      }
+    }
+  }
+
+  return "";
+}
+
+function validateProgramModal(modalForm, form, editingTarget) {
+  const error = validateRequiredFields([
+    { label: "the program level", value: modalForm.level },
+    { label: "the program span", value: modalForm.span },
+    { label: "the program highlight", value: modalForm.highlight },
+    { label: "the accent color", value: modalForm.badgeColor },
+  ]);
+
+  if (error) return error;
+
+  const classes = cleanText(modalForm.classesText)
+    .split("\n")
+    .map((item) => cleanText(item))
+    .filter(Boolean);
+
+  if (classes.length === 0) {
+    return "Please add at least one course or subject before saving.";
+  }
+
+  const duplicateLevel = (form.programs || []).some(
+    (program, index) =>
+      index !== editingTarget.index &&
+      cleanText(program?.level).toLowerCase() ===
+        cleanText(modalForm.level).toLowerCase()
+  );
+
+  if (duplicateLevel) {
+    return "Another academic program already uses this program level.";
+  }
+
+  return validateCurriculumGrades(modalForm.curriculumGrades || []);
+}
+
+function validateAcademicsContent(content = {}) {
+  const heroError = validateRequiredFields([
+    { label: "the hero badge", value: content.heroBadge },
+    { label: "the hero title", value: content.heroTitle },
+    { label: "the highlighted hero word", value: content.heroHighlight },
+    { label: "the hero description", value: content.heroDescription },
+  ]);
+
+  if (heroError) return heroError;
+
+  if (
+    !cleanText(content.heroTitle).includes(cleanText(content.heroHighlight))
+  ) {
+    return "The highlighted hero word must be part of the hero title.";
+  }
+
+  const programLevels = new Set();
+
+  for (const [index, program] of (content.programs || []).entries()) {
+    const programError = validateRequiredFields([
+      { label: `program ${index + 1} level`, value: program?.level },
+      { label: `program ${index + 1} span`, value: program?.span },
+      { label: `program ${index + 1} highlight`, value: program?.highlight },
+      { label: `program ${index + 1} accent color`, value: program?.badgeColor },
+    ]);
+
+    if (programError) return programError;
+
+    const levelKey = cleanText(program.level).toLowerCase();
+
+    if (programLevels.has(levelKey)) {
+      return `The program level "${cleanText(program.level)}" is duplicated.`;
+    }
+
+    programLevels.add(levelKey);
+
+    const classes = Array.isArray(program.classes)
+      ? program.classes.map((item) => cleanText(item)).filter(Boolean)
+      : [];
+
+    if (classes.length === 0) {
+      return `Please add at least one course or subject to ${cleanText(program.level)}.`;
+    }
+
+    const curriculumError = validateCurriculumGrades(
+      content.curriculum?.[program.level] || []
+    );
+
+    if (curriculumError) {
+      return `${cleanText(program.level)}: ${curriculumError}`;
+    }
+  }
+
+  const featuresHeaderError = validateRequiredFields([
+    { label: "the academic strengths title", value: content.featuresTitle },
+    {
+      label: "the academic strengths description",
+      value: content.featuresDescription,
+    },
+  ]);
+
+  if (featuresHeaderError) return featuresHeaderError;
+
+  for (const [index, feature] of (content.features || []).entries()) {
+    const featureError = validateRequiredFields([
+      { label: `feature ${index + 1} title`, value: feature?.title },
+      { label: `feature ${index + 1} description`, value: feature?.desc },
+      { label: `feature ${index + 1} icon`, value: feature?.emoji },
+      { label: `feature ${index + 1} accent color`, value: feature?.color },
+    ]);
+
+    if (featureError) return featureError;
+  }
+
+  for (const [index, stat] of (content.stats || []).entries()) {
+    const statError = validateRequiredFields([
+      { label: `statistic ${index + 1} value`, value: stat?.value },
+      { label: `statistic ${index + 1} label`, value: stat?.label },
+      { label: `statistic ${index + 1} accent color`, value: stat?.color },
+    ]);
+
+    if (statError) return statError;
+  }
+
+  const examHeaderError = validateRequiredFields([
+    { label: "the examination title", value: content.examTitle },
+    {
+      label: "the examination description",
+      value: content.examDescription,
+    },
+  ]);
+
+  if (examHeaderError) return examHeaderError;
+
+  for (const [index, term] of (content.timelineTerms || []).entries()) {
+    const termError = validateRequiredFields([
+      { label: `exam term ${index + 1}`, value: term?.term },
+      { label: `exam term ${index + 1} timeframe`, value: term?.timeframe },
+    ]);
+
+    if (termError) return termError;
+  }
+
+  const continuousError = validateRequiredFields([
+    {
+      label: "the continuous evaluation title",
+      value: content.continuousTitle,
+    },
+    {
+      label: "the continuous evaluation description",
+      value: content.continuousDescription,
+    },
+  ]);
+
+  if (continuousError) return continuousError;
+
+  const assessments = Array.isArray(content.ongoingAssessments)
+    ? content.ongoingAssessments
+        .map((item) => cleanText(item))
+        .filter(Boolean)
+    : [];
+
+  if (assessments.length === 0) {
+    return "Please add at least one continuous assessment item.";
+  }
+
+  const ctaError = validateRequiredFields([
+    { label: "the CTA title", value: content.ctaTitle },
+    { label: "the CTA description", value: content.ctaDescription },
+    { label: "the primary button text", value: content.primaryButtonText },
+    { label: "the primary button link", value: content.primaryButtonLink },
+    { label: "the secondary button text", value: content.secondaryButtonText },
+    { label: "the secondary button link", value: content.secondaryButtonLink },
+  ]);
+
+  if (ctaError) return ctaError;
+
+  if (
+    !cleanText(content.primaryButtonLink).startsWith("/") ||
+    !cleanText(content.secondaryButtonLink).startsWith("/")
+  ) {
+    return "Academic CTA button links must start with /.";
+  }
+
+  return "";
+}
+
+function validateAcademicsModal(editingTarget, modalForm, form) {
+  if (!editingTarget) return "No Academics item is selected.";
+
+  if (editingTarget.type === "hero") {
+    const error = validateRequiredFields([
+      { label: "the hero badge", value: modalForm.heroBadge },
+      { label: "the hero title", value: modalForm.heroTitle },
+      { label: "the highlighted hero word", value: modalForm.heroHighlight },
+      { label: "the hero description", value: modalForm.heroDescription },
+    ]);
+
+    if (error) return error;
+
+    return cleanText(modalForm.heroTitle).includes(
+      cleanText(modalForm.heroHighlight)
+    )
+      ? ""
+      : "The highlighted hero word must be part of the hero title.";
+  }
+
+  if (editingTarget.type === "program") {
+    return validateProgramModal(modalForm, form, editingTarget);
+  }
+
+  if (editingTarget.type === "featuresHeader") {
+    return validateRequiredFields([
+      { label: "the academic strengths title", value: modalForm.featuresTitle },
+      {
+        label: "the academic strengths description",
+        value: modalForm.featuresDescription,
+      },
+    ]);
+  }
+
+  if (editingTarget.type === "feature") {
+    return validateRequiredFields([
+      { label: "the feature title", value: modalForm.title },
+      { label: "the feature description", value: modalForm.desc },
+      { label: "the feature icon", value: modalForm.emoji },
+      { label: "the accent color", value: modalForm.color },
+    ]);
+  }
+
+  if (editingTarget.type === "stat") {
+    return validateRequiredFields([
+      { label: "the statistic value", value: modalForm.value },
+      { label: "the statistic label", value: modalForm.label },
+      { label: "the accent color", value: modalForm.color },
+    ]);
+  }
+
+  if (editingTarget.type === "examHeader") {
+    return validateRequiredFields([
+      { label: "the examination title", value: modalForm.examTitle },
+      {
+        label: "the examination description",
+        value: modalForm.examDescription,
+      },
+    ]);
+  }
+
+  if (editingTarget.type === "timeline") {
+    return validateRequiredFields([
+      { label: "the exam term", value: modalForm.term },
+      { label: "the exam timeframe", value: modalForm.timeframe },
+    ]);
+  }
+
+  if (editingTarget.type === "continuous") {
+    const error = validateRequiredFields([
+      {
+        label: "the continuous evaluation title",
+        value: modalForm.continuousTitle,
+      },
+      {
+        label: "the continuous evaluation description",
+        value: modalForm.continuousDescription,
+      },
+    ]);
+
+    if (error) return error;
+
+    const assessments = cleanText(modalForm.ongoingAssessmentsText)
+      .split("\n")
+      .map((item) => cleanText(item))
+      .filter(Boolean);
+
+    return assessments.length === 0
+      ? "Please add at least one continuous assessment item."
+      : "";
+  }
+
+  if (editingTarget.type === "cta") {
+    const error = validateRequiredFields([
+      { label: "the CTA title", value: modalForm.ctaTitle },
+      { label: "the CTA description", value: modalForm.ctaDescription },
+      { label: "the primary button text", value: modalForm.primaryButtonText },
+      { label: "the primary button link", value: modalForm.primaryButtonLink },
+      {
+        label: "the secondary button text",
+        value: modalForm.secondaryButtonText,
+      },
+      {
+        label: "the secondary button link",
+        value: modalForm.secondaryButtonLink,
+      },
+    ]);
+
+    if (error) return error;
+
+    return cleanText(modalForm.primaryButtonLink).startsWith("/") &&
+      cleanText(modalForm.secondaryButtonLink).startsWith("/")
+      ? ""
+      : "Academic CTA button links must start with /.";
+  }
+
+  return "";
 }
 
 export default function AdminAcademics() {
@@ -176,6 +477,7 @@ export default function AdminAcademics() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [modalError, setModalError] = useState("");
 
   useEffect(() => {
     const loadAcademicsContent = async () => {
@@ -205,20 +507,32 @@ export default function AdminAcademics() {
       ...prev,
       [name]: value,
     }));
+    setModalError("");
   };
 
   const saveContentToBackend = async (nextForm, message) => {
     const authHeaders = getAuthHeaders();
 
     if (!authHeaders) {
-      setError("Admin login expired. Please logout and login again.");
+      const message = "Admin login expired. Please logout and login again.";
+      setError(message);
+      setModalError(message);
       return false;
     }
 
-    const cleanContent = mergeAcademicsContent({
+    const candidateContent = {
       ...nextForm,
       _contentVersion: 2,
-    });
+    };
+    const validationError = validateAcademicsContent(candidateContent);
+
+    if (validationError) {
+      setError(validationError);
+      setModalError(validationError);
+      return false;
+    }
+
+    const cleanContent = mergeAcademicsContent(candidateContent);
 
     await axios.put(
       "https://school-website-backend-ixx2.onrender.com/api/site-content/academics",
@@ -234,6 +548,7 @@ export default function AdminAcademics() {
   const openEditor = (target) => {
     setSuccess("");
     setError("");
+    setModalError("");
     setEditingTarget(target);
 
     if (target.type === "hero") {
@@ -266,7 +581,6 @@ export default function AdminAcademics() {
         badgeColor: item.badgeColor || colors.green,
         highlight: item.highlight || "",
         classesText: Array.isArray(item.classes) ? item.classes.join("\n") : "",
-        visible: item.visible !== false,
         curriculumGrades,
       });
       return;
@@ -288,7 +602,6 @@ export default function AdminAcademics() {
         desc: item.desc || "",
         emoji: item.emoji || "📘",
         color: item.color || colors.green,
-        visible: item.visible !== false,
       });
       return;
     }
@@ -301,7 +614,6 @@ export default function AdminAcademics() {
         label: item.label || "",
         icon: item.icon || "users",
         color: item.color || colors.green,
-        visible: item.visible !== false,
       });
       return;
     }
@@ -320,7 +632,6 @@ export default function AdminAcademics() {
       setModalForm({
         term: item.term || "",
         timeframe: item.timeframe || "",
-        visible: item.visible !== false,
       });
       return;
     }
@@ -352,9 +663,11 @@ export default function AdminAcademics() {
     if (saving) return;
     setEditingTarget(null);
     setModalForm({});
+    setModalError("");
   };
 
   const updateModalGrade = (gradeIndex, field, value) => {
+    setModalError("");
     setModalForm((prev) => {
       const grades = Array.isArray(prev.curriculumGrades)
         ? [...prev.curriculumGrades]
@@ -373,6 +686,7 @@ export default function AdminAcademics() {
   };
 
   const addModalGrade = () => {
+    setModalError("");
     setModalForm((prev) => ({
       ...prev,
       curriculumGrades: [
@@ -388,6 +702,7 @@ export default function AdminAcademics() {
   };
 
   const removeModalGrade = (gradeIndex) => {
+    setModalError("");
     setModalForm((prev) => ({
       ...prev,
       curriculumGrades: (prev.curriculumGrades || []).filter(
@@ -397,6 +712,7 @@ export default function AdminAcademics() {
   };
 
   const moveModalGrade = (gradeIndex, direction) => {
+    setModalError("");
     setModalForm((prev) => {
       const grades = Array.isArray(prev.curriculumGrades)
         ? [...prev.curriculumGrades]
@@ -417,6 +733,7 @@ export default function AdminAcademics() {
   };
 
   const addModalBook = (gradeIndex) => {
+    setModalError("");
     setModalForm((prev) => {
       const grades = Array.isArray(prev.curriculumGrades)
         ? [...prev.curriculumGrades]
@@ -440,6 +757,7 @@ export default function AdminAcademics() {
   };
 
   const updateModalBook = (gradeIndex, bookIndex, field, value) => {
+    setModalError("");
     setModalForm((prev) => {
       const grades = Array.isArray(prev.curriculumGrades)
         ? [...prev.curriculumGrades]
@@ -466,6 +784,7 @@ export default function AdminAcademics() {
   };
 
   const removeModalBook = (gradeIndex, bookIndex) => {
+    setModalError("");
     setModalForm((prev) => {
       const grades = Array.isArray(prev.curriculumGrades)
         ? [...prev.curriculumGrades]
@@ -488,9 +807,21 @@ export default function AdminAcademics() {
   const saveSelectedPart = async () => {
     if (!editingTarget) return;
 
+    const validationError = validateAcademicsModal(
+      editingTarget,
+      modalForm,
+      form
+    );
+
+    if (validationError) {
+      setModalError(validationError);
+      return;
+    }
+
     setSaving(true);
     setSuccess("");
     setError("");
+    setModalError("");
 
     try {
       let nextForm = mergeAcademicsContent(form);
@@ -498,43 +829,57 @@ export default function AdminAcademics() {
       if (editingTarget.type === "hero") {
         nextForm = {
           ...nextForm,
-          heroBadge: modalForm.heroBadge || "",
-          heroTitle: modalForm.heroTitle || "",
-          heroHighlight: modalForm.heroHighlight || "",
-          heroDescription: modalForm.heroDescription || "",
+          heroBadge: cleanText(modalForm.heroBadge),
+          heroTitle: cleanText(modalForm.heroTitle),
+          heroHighlight: cleanText(modalForm.heroHighlight),
+          heroDescription: cleanText(modalForm.heroDescription),
         };
       }
 
       if (editingTarget.type === "program") {
-        const oldLevel = modalForm.oldLevel || nextForm.programs[editingTarget.index]?.level;
-        const nextLevel = modalForm.level || "New Academic Level";
+        const oldLevel =
+          modalForm.oldLevel ||
+          nextForm.programs[editingTarget.index]?.level;
+        const nextLevel = cleanText(modalForm.level);
         const nextCurriculum = { ...(nextForm.curriculum || {}) };
 
         if (oldLevel && oldLevel !== nextLevel) {
           delete nextCurriculum[oldLevel];
         }
 
-        nextCurriculum[nextLevel] = sanitizeGrades(modalForm.curriculumGrades || []);
+        nextCurriculum[nextLevel] = sanitizeGrades(
+          modalForm.curriculumGrades || []
+        );
+
+        const nextProgram = {
+          id:
+            editingTarget.id ||
+            nextForm.programs[editingTarget.index]?.id ||
+            Date.now(),
+          level: nextLevel,
+          span: cleanText(modalForm.span),
+          badgeColor: modalForm.badgeColor || colors.green,
+          border: `${modalForm.badgeColor || colors.green}24`,
+          highlight: cleanText(modalForm.highlight),
+          classes: cleanText(modalForm.classesText)
+            .split("\n")
+            .map((subject) => cleanText(subject))
+            .filter(Boolean),
+          visible: true,
+        };
 
         nextForm = {
           ...nextForm,
-          programs: nextForm.programs.map((item, index) =>
-            index === editingTarget.index
-              ? {
-                  ...item,
-                  level: nextLevel,
-                  span: modalForm.span || "",
-                  badgeColor: modalForm.badgeColor || colors.green,
-                  border: `${modalForm.badgeColor || colors.green}24`,
-                  highlight: modalForm.highlight || "",
-                  classes: (modalForm.classesText || "")
-                    .split("\n")
-                    .map((subject) => subject.trim())
-                    .filter(Boolean),
-                  visible: modalForm.visible !== false,
-                }
-              : item
-          ),
+          programs: editingTarget.isNew
+            ? [...nextForm.programs, nextProgram]
+            : nextForm.programs.map((item, index) =>
+                index === editingTarget.index
+                  ? {
+                      ...item,
+                      ...nextProgram,
+                    }
+                  : item
+              ),
           curriculum: nextCurriculum,
         };
       }
@@ -542,76 +887,107 @@ export default function AdminAcademics() {
       if (editingTarget.type === "featuresHeader") {
         nextForm = {
           ...nextForm,
-          featuresTitle: modalForm.featuresTitle || "",
-          featuresDescription: modalForm.featuresDescription || "",
+          featuresTitle: cleanText(modalForm.featuresTitle),
+          featuresDescription: cleanText(modalForm.featuresDescription),
         };
       }
 
       if (editingTarget.type === "feature") {
+        const nextFeature = {
+          id:
+            editingTarget.id ||
+            nextForm.features[editingTarget.index]?.id ||
+            Date.now(),
+          title: cleanText(modalForm.title),
+          desc: cleanText(modalForm.desc),
+          emoji: cleanText(modalForm.emoji),
+          color: modalForm.color || colors.green,
+          visible: true,
+        };
+
         nextForm = {
           ...nextForm,
-          features: nextForm.features.map((item, index) =>
-            index === editingTarget.index
-              ? {
-                  ...item,
-                  title: modalForm.title || "",
-                  desc: modalForm.desc || "",
-                  emoji: modalForm.emoji || "📘",
-                  color: modalForm.color || colors.green,
-                  visible: modalForm.visible !== false,
-                }
-              : item
-          ),
+          features: editingTarget.isNew
+            ? [...nextForm.features, nextFeature]
+            : nextForm.features.map((item, index) =>
+                index === editingTarget.index
+                  ? {
+                      ...item,
+                      ...nextFeature,
+                    }
+                  : item
+              ),
         };
       }
 
       if (editingTarget.type === "stat") {
+        const nextStat = {
+          id:
+            editingTarget.id ||
+            nextForm.stats[editingTarget.index]?.id ||
+            Date.now(),
+          value: cleanText(modalForm.value),
+          label: cleanText(modalForm.label),
+          icon:
+            nextForm.stats[editingTarget.index]?.icon || "users",
+          color: modalForm.color || colors.green,
+          visible: true,
+        };
+
         nextForm = {
           ...nextForm,
-          stats: nextForm.stats.map((item, index) =>
-            index === editingTarget.index
-              ? {
-                  ...item,
-                  value: modalForm.value || "",
-                  label: modalForm.label || "",
-                  icon: modalForm.icon || "users",
-                  color: modalForm.color || colors.green,
-                  visible: modalForm.visible !== false,
-                }
-              : item
-          ),
+          stats: editingTarget.isNew
+            ? [...nextForm.stats, nextStat]
+            : nextForm.stats.map((item, index) =>
+                index === editingTarget.index
+                  ? {
+                      ...item,
+                      ...nextStat,
+                    }
+                  : item
+              ),
         };
       }
 
       if (editingTarget.type === "examHeader") {
         nextForm = {
           ...nextForm,
-          examTitle: modalForm.examTitle || "",
-          examDescription: modalForm.examDescription || "",
+          examTitle: cleanText(modalForm.examTitle),
+          examDescription: cleanText(modalForm.examDescription),
         };
       }
 
       if (editingTarget.type === "timeline") {
+        const nextTerm = {
+          id:
+            editingTarget.id ||
+            nextForm.timelineTerms[editingTarget.index]?.id ||
+            Date.now(),
+          term: cleanText(modalForm.term),
+          timeframe: cleanText(modalForm.timeframe),
+          visible: true,
+        };
+
         nextForm = {
           ...nextForm,
-          timelineTerms: nextForm.timelineTerms.map((item, index) =>
-            index === editingTarget.index
-              ? {
-                  ...item,
-                  term: modalForm.term || "",
-                  timeframe: modalForm.timeframe || "",
-                  visible: modalForm.visible !== false,
-                }
-              : item
-          ),
+          timelineTerms: editingTarget.isNew
+            ? [...nextForm.timelineTerms, nextTerm]
+            : nextForm.timelineTerms.map((item, index) =>
+                index === editingTarget.index
+                  ? {
+                      ...item,
+                      ...nextTerm,
+                    }
+                  : item
+              ),
         };
       }
 
       if (editingTarget.type === "continuous") {
         nextForm = {
           ...nextForm,
-          continuousTitle: modalForm.continuousTitle || "",
-          continuousDescription: modalForm.continuousDescription || "",
+          continuousTitle: cleanText(modalForm.continuousTitle),
+          continuousDescription: cleanText(modalForm.continuousDescription),
           ongoingAssessments: (modalForm.ongoingAssessmentsText || "")
             .split("\n")
             .map((item) => item.trim())
@@ -622,135 +998,126 @@ export default function AdminAcademics() {
       if (editingTarget.type === "cta") {
         nextForm = {
           ...nextForm,
-          ctaTitle: modalForm.ctaTitle || "",
-          ctaDescription: modalForm.ctaDescription || "",
-          primaryButtonText: modalForm.primaryButtonText || "",
-          primaryButtonLink: modalForm.primaryButtonLink || "",
-          secondaryButtonText: modalForm.secondaryButtonText || "",
-          secondaryButtonLink: modalForm.secondaryButtonLink || "",
+          ctaTitle: cleanText(modalForm.ctaTitle),
+          ctaDescription: cleanText(modalForm.ctaDescription),
+          primaryButtonText: cleanText(modalForm.primaryButtonText),
+          primaryButtonLink: cleanText(modalForm.primaryButtonLink),
+          secondaryButtonText: cleanText(modalForm.secondaryButtonText),
+          secondaryButtonLink: cleanText(modalForm.secondaryButtonLink),
         };
       }
 
-      await saveContentToBackend(
+      const saved = await saveContentToBackend(
         nextForm,
-        "Selected academics item saved successfully."
+        editingTarget.isNew
+          ? "New academics item added successfully."
+          : "Selected academics item saved successfully."
       );
+
+      if (!saved) return;
 
       setEditingTarget(null);
       setModalForm({});
+      setModalError("");
     } catch (err) {
       console.error("Save selected academics item error:", err);
 
       if (err.response?.status === 401) {
-        setError("Admin login expired or token is invalid. Please login again.");
+        setModalError(
+          "Admin login expired or token is invalid. Please login again."
+        );
       } else {
-        setError(err.response?.data?.message || "Could not save selected item.");
+        setModalError(
+          err.response?.data?.message || "Could not save selected item."
+        );
       }
     } finally {
       setSaving(false);
     }
   };
 
-  const addItem = async (type) => {
-    setSaving(true);
+  const addItem = (type) => {
+    const newId = Date.now();
+
     setSuccess("");
     setError("");
+    setModalError("");
 
-    try {
-      let nextForm = mergeAcademicsContent(form);
+    if (type === "program") {
+      const nextColor =
+        cardColors[(form.programs || []).length % cardColors.length];
 
-      if (type === "program") {
-        const nextColor = cardColors[nextForm.programs.length % cardColors.length];
-        const newLevel = `New Academic Level ${nextForm.programs.length + 1}`;
-
-        nextForm = {
-          ...nextForm,
-          programs: [
-            ...nextForm.programs,
-            {
-              id: Date.now(),
-              level: newLevel,
-              span: "Grade / Level",
-              badgeColor: nextColor,
-              border: `${nextColor}24`,
-              classes: ["Subject 1", "Subject 2"],
-              highlight: "Write a short academic level description.",
-              visible: true,
-            },
-          ],
-          curriculum: {
-            ...nextForm.curriculum,
-            [newLevel]: [
-              {
-                grade: "New Grade",
-                books: [
-                  { subject: "New Subject", publication: "New Publication" },
-                ],
-              },
-            ],
+      setEditingTarget({
+        type: "program",
+        index: (form.programs || []).length,
+        id: newId,
+        isNew: true,
+      });
+      setModalForm({
+        oldLevel: "",
+        level: "",
+        span: "",
+        badgeColor: nextColor,
+        highlight: "",
+        classesText: "",
+        curriculumGrades: [
+          {
+            grade: "",
+            books: [{ subject: "", publication: "" }],
           },
-        };
-      }
+        ],
+      });
+      return;
+    }
 
-      if (type === "feature") {
-        const nextColor = cardColors[nextForm.features.length % cardColors.length];
+    if (type === "feature") {
+      const nextColor =
+        cardColors[(form.features || []).length % cardColors.length];
 
-        nextForm = {
-          ...nextForm,
-          features: [
-            ...nextForm.features,
-            {
-              id: Date.now(),
-              emoji: "📘",
-              title: "New Feature",
-              desc: "Write the feature description.",
-              color: nextColor,
-              visible: true,
-            },
-          ],
-        };
-      }
+      setEditingTarget({
+        type: "feature",
+        index: (form.features || []).length,
+        id: newId,
+        isNew: true,
+      });
+      setModalForm({
+        title: "",
+        desc: "",
+        emoji: "📘",
+        color: nextColor,
+      });
+      return;
+    }
 
-      if (type === "stat") {
-        const nextColor = cardColors[nextForm.stats.length % cardColors.length];
+    if (type === "stat") {
+      const nextColor =
+        cardColors[(form.stats || []).length % cardColors.length];
 
-        nextForm = {
-          ...nextForm,
-          stats: [
-            ...nextForm.stats,
-            {
-              id: Date.now(),
-              value: "100+",
-              label: "New Stat",
-              icon: "users",
-              color: nextColor,
-              visible: true,
-            },
-          ],
-        };
-      }
+      setEditingTarget({
+        type: "stat",
+        index: (form.stats || []).length,
+        id: newId,
+        isNew: true,
+      });
+      setModalForm({
+        value: "",
+        label: "",
+        color: nextColor,
+      });
+      return;
+    }
 
-      if (type === "timeline") {
-        nextForm = {
-          ...nextForm,
-          timelineTerms: [
-            ...nextForm.timelineTerms,
-            {
-              id: Date.now(),
-              term: "New Exam Term",
-              timeframe: "Timeframe description.",
-              visible: true,
-            },
-          ],
-        };
-      }
-
-      await saveContentToBackend(nextForm, "New item added successfully.");
-    } catch (err) {
-      console.error("Add academics item error:", err);
-      setError(err.response?.data?.message || "Could not add item.");
-    } finally {
-      setSaving(false);
+    if (type === "timeline") {
+      setEditingTarget({
+        type: "timeline",
+        index: (form.timelineTerms || []).length,
+        id: newId,
+        isNew: true,
+      });
+      setModalForm({
+        term: "",
+        timeframe: "",
+      });
     }
   };
 
@@ -802,10 +1169,17 @@ export default function AdminAcademics() {
         };
       }
 
-      await saveContentToBackend(nextForm, "Selected item deleted successfully.");
+      const saved = await saveContentToBackend(
+        nextForm,
+        "Selected item deleted successfully."
+      );
+
+      if (!saved) return;
+
       setDeleteTarget(null);
       setEditingTarget(null);
       setModalForm({});
+      setModalError("");
     } catch (err) {
       console.error("Delete academics item error:", err);
       setError(err.response?.data?.message || "Could not delete selected item.");
@@ -818,6 +1192,7 @@ export default function AdminAcademics() {
     setSaving(true);
     setSuccess("");
     setError("");
+    setModalError("");
 
     try {
       await saveContentToBackend(form, "Academics page content saved successfully.");
@@ -848,7 +1223,7 @@ export default function AdminAcademics() {
   }, [editingTarget]);
 
   const canDeleteSelected = useMemo(() => {
-    if (!editingTarget) return false;
+    if (!editingTarget || editingTarget.isNew) return false;
     return ["program", "feature", "stat", "timeline"].includes(editingTarget.type);
   }, [editingTarget]);
   return (
@@ -1051,6 +1426,15 @@ export default function AdminAcademics() {
                   </button>
                 </div>
 
+                {modalError && (
+                  <div className="mb-5 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-700">
+                    <div className="flex items-start gap-2 font-semibold">
+                      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                      <span>{modalError}</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-5">
                   {editingTarget.type === "hero" && (
                     <>
@@ -1115,12 +1499,6 @@ export default function AdminAcademics() {
                         onChange={(value) => updateModalField("classesText", value)}
                         textarea
                         rows={5}
-                      />
-
-                      <Toggle
-                        label="Show this program on website"
-                        checked={modalForm.visible !== false}
-                        onChange={(value) => updateModalField("visible", value)}
                       />
 
                       <div
@@ -1333,11 +1711,6 @@ export default function AdminAcademics() {
                         onChange={(value) => updateModalField("color", value)}
                         type="color"
                       />
-                      <Toggle
-                        label="Show this feature on website"
-                        checked={modalForm.visible !== false}
-                        onChange={(value) => updateModalField("visible", value)}
-                      />
                     </>
                   )}
 
@@ -1358,11 +1731,6 @@ export default function AdminAcademics() {
                         value={modalForm.color}
                         onChange={(value) => updateModalField("color", value)}
                         type="color"
-                      />
-                      <Toggle
-                        label="Show this stat on website"
-                        checked={modalForm.visible !== false}
-                        onChange={(value) => updateModalField("visible", value)}
                       />
                     </>
                   )}
@@ -1395,11 +1763,6 @@ export default function AdminAcademics() {
                         label="Timeframe"
                         value={modalForm.timeframe}
                         onChange={(value) => updateModalField("timeframe", value)}
-                      />
-                      <Toggle
-                        label="Show this exam term on website"
-                        checked={modalForm.visible !== false}
-                        onChange={(value) => updateModalField("visible", value)}
                       />
                     </>
                   )}
