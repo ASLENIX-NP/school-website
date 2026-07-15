@@ -221,6 +221,25 @@ function AdminActionButton({ label, icon: Icon, onClick, tone = "purple" }) {
   );
 }
 
+// Country codes data
+const countryCodes = [
+  { code: "+977", country: "🇳🇵 Nepal", flag: "🇳🇵" },
+  { code: "+91", country: "🇮🇳 India", flag: "🇮🇳" },
+  { code: "+1", country: "🇺🇸 USA", flag: "🇺🇸" },
+  { code: "+44", country: "🇬🇧 UK", flag: "🇬🇧" },
+  { code: "+61", country: "🇦🇺 Australia", flag: "🇦🇺" },
+  { code: "+86", country: "🇨🇳 China", flag: "🇨🇳" },
+  { code: "+81", country: "🇯🇵 Japan", flag: "🇯🇵" },
+  { code: "+82", country: "🇰🇷 South Korea", flag: "🇰🇷" },
+  { code: "+49", country: "🇩🇪 Germany", flag: "🇩🇪" },
+  { code: "+33", country: "🇫🇷 France", flag: "🇫🇷" },
+  { code: "+39", country: "🇮🇹 Italy", flag: "🇮🇹" },
+  { code: "+55", country: "🇧🇷 Brazil", flag: "🇧🇷" },
+  { code: "+7", country: "🇷🇺 Russia", flag: "🇷🇺" },
+  { code: "+52", country: "🇲🇽 Mexico", flag: "🇲🇽" },
+  { code: "+20", country: "🇪🇬 Egypt", flag: "🇪🇬" },
+];
+
 export function Contact({
   editMode = false,
   contentOverride = null,
@@ -236,6 +255,8 @@ export function Contact({
   );
   const [submitMessage, setSubmitMessage] = useState("");
   const [submitError, setSubmitError] = useState("");
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+977");
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   const content = contentOverride
     ? mergeContactContent(contentOverride)
@@ -246,6 +267,8 @@ export function Contact({
     handleSubmit,
     formState: { isSubmitting, errors },
     reset,
+    setValue,
+    trigger,
   } = useForm();
 
   useEffect(() => {
@@ -277,9 +300,11 @@ export function Contact({
     setSubmitMessage("");
     setSubmitError("");
 
+    const fullPhoneNumber = selectedCountryCode + phoneNumber;
+    
     const payload = {
       ...data,
-      phone: normalizePhone(data.phone),
+      phone: fullPhoneNumber,
       source: "contact",
     };
 
@@ -294,12 +319,38 @@ export function Contact({
 
       setSubmitMessage(content.form.successMessage);
       reset();
+      setPhoneNumber("");
     } catch (error) {
       console.error("Contact form error:", error);
       setSubmitError(
         error.response?.data?.message || content.form.errorMessage
       );
     }
+  };
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.replace(/\D/g, "");
+    if (value.length <= 10) {
+      setPhoneNumber(value);
+      setValue("phone", selectedCountryCode + value);
+      trigger("phone");
+    }
+  };
+
+  const handleCountryChange = (e) => {
+    const code = e.target.value;
+    setSelectedCountryCode(code);
+    setValue("phone", code + phoneNumber);
+    trigger("phone");
+  };
+
+  // Glassmorphism style matching the left container
+  const glassStyle = {
+    background: "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.72))",
+    border: "1px solid rgba(255,255,255,0.76)",
+    boxShadow: "0 24px 70px rgba(11,16,32,0.12), inset 0 1px 0 rgba(255,255,255,0.92)",
+    backdropFilter: "blur(16px)",
+    WebkitBackdropFilter: "blur(16px)",
   };
 
   const inputStyle = {
@@ -450,12 +501,8 @@ export function Contact({
             <div
               className="rounded-[34px] p-5 md:p-6 relative overflow-hidden"
               style={{
-                background:
-                  "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.72))",
-                border: "1px solid rgba(255,255,255,0.76)",
-                boxShadow:
-                  "0 24px 70px rgba(11,16,32,0.12), inset 0 1px 0 rgba(255,255,255,0.92)",
-                backdropFilter: "blur(16px)",
+                ...glassStyle,
+                background: "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.72))",
               }}
             >
               <div
@@ -681,12 +728,12 @@ export function Contact({
                 editMode ? "border-2 border-dashed border-sky-300/70" : ""
               }`}
               style={{
-                background:
-                  "linear-gradient(145deg, rgba(255,255,255,0.98), rgba(255,255,255,0.8))",
-                border: editMode ? undefined : "1px solid rgba(75,46,131,0.14)",
-                boxShadow:
-                  "0 28px 78px rgba(11,16,32,0.13), inset 0 1px 0 rgba(255,255,255,0.9)",
+                ...glassStyle,
+                background: "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.72))",
+                border: editMode ? undefined : "1px solid rgba(255,255,255,0.76)",
+                boxShadow: "0 24px 70px rgba(11,16,32,0.12), inset 0 1px 0 rgba(255,255,255,0.92)",
                 backdropFilter: "blur(16px)",
+                WebkitBackdropFilter: "blur(16px)",
               }}
             >
               <div
@@ -827,19 +874,45 @@ export function Contact({
                     >
                       {content.form.phoneLabel}
                     </label>
-                    <input
-                      {...register("phone", {
-                        required: "Phone number is required.",
-                        validate: (value) =>
-                          isValidPhone(value) ||
-                          "Please enter a valid phone number.",
-                      })}
-                      disabled={editMode}
-                      type="tel"
-                      placeholder={content.form.phonePlaceholder}
-                      className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all disabled:opacity-70 focus:ring-4 focus:ring-purple-100"
-                      style={inputStyle}
-                    />
+                    <div className="flex gap-2">
+                      <select
+                        value={selectedCountryCode}
+                        onChange={handleCountryChange}
+                        disabled={editMode}
+                        className="px-3 py-3.5 rounded-2xl text-sm outline-none transition-all disabled:opacity-70 focus:ring-4 focus:ring-purple-100 w-[130px] flex-shrink-0"
+                        style={{
+                          ...inputStyle,
+                          background: "rgba(255,255,255,0.92)",
+                          border: "1px solid rgba(75,46,131,0.14)",
+                        }}
+                      >
+                        {countryCodes.map((country) => (
+                          <option key={country.code} value={country.code}>
+                            {country.flag} {country.code}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        {...register("phone", {
+                          required: "Phone number is required.",
+                          validate: (value) => {
+                            const digitsOnly = value.replace(/\D/g, "");
+                            if (digitsOnly.length !== 10) {
+                              return "Phone number must be exactly 10 digits.";
+                            }
+                            return true;
+                          },
+                        })}
+                        disabled={editMode}
+                        type="tel"
+                        value={phoneNumber}
+                        onChange={handlePhoneChange}
+                        placeholder="9863468125"
+                        className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all disabled:opacity-70 focus:ring-4 focus:ring-purple-100"
+                        style={inputStyle}
+                        maxLength={10}
+                      />
+                    </div>
                     <ErrorText>{errors.phone?.message}</ErrorText>
                   </div>
 
@@ -922,5 +995,3 @@ export function Contact({
 }
 
 export default Contact;
-
-
