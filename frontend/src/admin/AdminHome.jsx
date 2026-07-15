@@ -45,6 +45,225 @@ function mergeHomeContent(saved = {}) {
   };
 }
 
+function repairLoadedHomeContent(saved = {}) {
+  const merged = mergeHomeContent(saved);
+  const requiredText = (value, fallback) =>
+    cleanRequiredText(value) ? value : fallback;
+
+  const repairedStats = Array.isArray(merged.statsSection?.stats)
+    ? merged.statsSection.stats.map((item, index) => {
+        const fallback = defaultStatsSectionData.stats?.[index] || {};
+
+        return {
+          ...item,
+          value: requiredText(item?.value, fallback.value || "0"),
+          suffix: requiredText(item?.suffix, fallback.suffix || "+"),
+          label: requiredText(item?.label, fallback.label || "Highlight"),
+          note: requiredText(item?.note, fallback.note || "School highlight"),
+        };
+      })
+    : defaultStatsSectionData.stats;
+
+  const repairedExcellenceCards = Array.isArray(
+    merged.statsSection?.excellence?.cards
+  )
+    ? merged.statsSection.excellence.cards.map((card, index) => {
+        const fallback = defaultStatsSectionData.excellence.cards?.[index] || {};
+
+        return {
+          ...card,
+          title: requiredText(card?.title, fallback.title || "Excellence"),
+          description: requiredText(
+            card?.description,
+            fallback.description || "Academic excellence information."
+          ),
+        };
+      })
+    : defaultStatsSectionData.excellence.cards;
+
+  return {
+    ...merged,
+    hero: {
+      ...merged.hero,
+      badge: requiredText(merged.hero?.badge, defaultHeroData.badge),
+      titleLine1: requiredText(
+        merged.hero?.titleLine1,
+        defaultHeroData.titleLine1
+      ),
+      titleLine2: requiredText(
+        merged.hero?.titleLine2,
+        defaultHeroData.titleLine2
+      ),
+      titleLine3: requiredText(
+        merged.hero?.titleLine3,
+        defaultHeroData.titleLine3
+      ),
+      description: requiredText(
+        merged.hero?.description,
+        defaultHeroData.description
+      ),
+      primaryButtonText: requiredText(
+        merged.hero?.primaryButtonText,
+        defaultHeroData.primaryButtonText
+      ),
+      primaryButtonLink: requiredText(
+        merged.hero?.primaryButtonLink,
+        defaultHeroData.primaryButtonLink
+      ),
+      secondaryButtonText: requiredText(
+        merged.hero?.secondaryButtonText,
+        defaultHeroData.secondaryButtonText
+      ),
+      secondaryButtonLink: requiredText(
+        merged.hero?.secondaryButtonLink,
+        defaultHeroData.secondaryButtonLink
+      ),
+      imageBottomTitle: requiredText(
+        merged.hero?.imageBottomTitle,
+        defaultHeroData.imageBottomTitle
+      ),
+      imageBottomDescription: requiredText(
+        merged.hero?.imageBottomDescription,
+        defaultHeroData.imageBottomDescription
+      ),
+      motto: requiredText(merged.hero?.motto, defaultHeroData.motto),
+      stat1Value: requiredText(
+        merged.hero?.stat1Value,
+        defaultHeroData.stat1Value
+      ),
+      stat1Label: requiredText(
+        merged.hero?.stat1Label,
+        defaultHeroData.stat1Label
+      ),
+      stat2Value: requiredText(
+        merged.hero?.stat2Value,
+        defaultHeroData.stat2Value
+      ),
+      stat2Label: requiredText(
+        merged.hero?.stat2Label,
+        defaultHeroData.stat2Label
+      ),
+      stat3Value: requiredText(
+        merged.hero?.stat3Value,
+        defaultHeroData.stat3Value
+      ),
+      stat3Label: requiredText(
+        merged.hero?.stat3Label,
+        defaultHeroData.stat3Label
+      ),
+      floating1Title: requiredText(
+        merged.hero?.floating1Title,
+        defaultHeroData.floating1Title
+      ),
+      floating1Subtitle: requiredText(
+        merged.hero?.floating1Subtitle,
+        defaultHeroData.floating1Subtitle
+      ),
+      floating2Title: requiredText(
+        merged.hero?.floating2Title,
+        defaultHeroData.floating2Title
+      ),
+      floating2Subtitle: requiredText(
+        merged.hero?.floating2Subtitle,
+        defaultHeroData.floating2Subtitle
+      ),
+      floating3Title: requiredText(
+        merged.hero?.floating3Title,
+        defaultHeroData.floating3Title
+      ),
+      floating3Subtitle: requiredText(
+        merged.hero?.floating3Subtitle,
+        defaultHeroData.floating3Subtitle
+      ),
+      floating4Title: requiredText(
+        merged.hero?.floating4Title,
+        defaultHeroData.floating4Title
+      ),
+      floating4Subtitle: requiredText(
+        merged.hero?.floating4Subtitle,
+        defaultHeroData.floating4Subtitle
+      ),
+    },
+    statsSection: {
+      ...merged.statsSection,
+      eyebrow: requiredText(
+        merged.statsSection?.eyebrow,
+        defaultStatsSectionData.eyebrow
+      ),
+      title: requiredText(
+        merged.statsSection?.title,
+        defaultStatsSectionData.title
+      ),
+      description: requiredText(
+        merged.statsSection?.description,
+        defaultStatsSectionData.description
+      ),
+      stats: repairedStats,
+      story: {
+        ...merged.statsSection?.story,
+        image: requiredText(
+          merged.statsSection?.story?.image,
+          defaultStatsSectionData.story.image
+        ),
+        imageTopTitle: requiredText(
+          merged.statsSection?.story?.imageTopTitle,
+          defaultStatsSectionData.story.imageTopTitle
+        ),
+        imageTopSubtitle: requiredText(
+          merged.statsSection?.story?.imageTopSubtitle,
+          defaultStatsSectionData.story.imageTopSubtitle
+        ),
+        imageBottomTitle: requiredText(
+          merged.statsSection?.story?.imageBottomTitle,
+          defaultStatsSectionData.story.imageBottomTitle
+        ),
+        imageBottomDescription: requiredText(
+          merged.statsSection?.story?.imageBottomDescription,
+          defaultStatsSectionData.story.imageBottomDescription
+        ),
+        badge: requiredText(
+          merged.statsSection?.story?.badge,
+          defaultStatsSectionData.story.badge
+        ),
+        title: requiredText(
+          merged.statsSection?.story?.title,
+          defaultStatsSectionData.story.title
+        ),
+        paragraphs: [
+          requiredText(
+            merged.statsSection?.story?.paragraphs?.[0],
+            defaultStatsSectionData.story.paragraphs?.[0]
+          ),
+          requiredText(
+            merged.statsSection?.story?.paragraphs?.[1],
+            defaultStatsSectionData.story.paragraphs?.[1]
+          ),
+        ],
+        buttonText: requiredText(
+          merged.statsSection?.story?.buttonText,
+          defaultStatsSectionData.story.buttonText
+        ),
+        buttonLink: requiredText(
+          merged.statsSection?.story?.buttonLink,
+          defaultStatsSectionData.story.buttonLink
+        ),
+      },
+      excellence: {
+        ...merged.statsSection?.excellence,
+        title: requiredText(
+          merged.statsSection?.excellence?.title,
+          defaultStatsSectionData.excellence.title
+        ),
+        description: requiredText(
+          merged.statsSection?.excellence?.description,
+          defaultStatsSectionData.excellence.description
+        ),
+        cards: repairedExcellenceCards,
+      },
+    },
+  };
+}
+
 function Field({ label, value, onChange, placeholder = "", textarea = false }) {
   return (
     <div>
@@ -607,7 +826,7 @@ export default function AdminHome() {
           timeout: 12000,
         });
         const savedContent = res.data?.data?.content || {};
-        setForm(mergeHomeContent(savedContent));
+        setForm(repairLoadedHomeContent(savedContent));
       } catch (err) {
         console.error("Load home content error:", err);
         setError("Could not load saved home content. Default content shown.");
@@ -633,32 +852,32 @@ export default function AdminHome() {
     setEditingTarget(target);
 
     if (target.type === "heroBadge") {
-      setModalForm({ badge: form.hero.badge || "" });
+      setModalForm({ badge: form.hero.badge ?? "" });
       return;
     }
 
     if (target.type === "heroTitle") {
       setModalForm({
-        titleLine1: form.hero.titleLine1 || "",
-        titleLine2: form.hero.titleLine2 || "",
-        titleLine3: form.hero.titleLine3 || "",
+        titleLine1: form.hero.titleLine1 ?? "",
+        titleLine2: form.hero.titleLine2 ?? "",
+        titleLine3: form.hero.titleLine3 ?? "",
       });
       return;
     }
 
     if (target.type === "heroDescription") {
       setModalForm({
-        description: form.hero.description || "",
+        description: form.hero.description ?? "",
       });
       return;
     }
 
     if (target.type === "heroButtons") {
       setModalForm({
-        primaryButtonText: form.hero.primaryButtonText || "",
-        primaryButtonLink: form.hero.primaryButtonLink || "/admissions",
-        secondaryButtonText: form.hero.secondaryButtonText || "",
-        secondaryButtonLink: form.hero.secondaryButtonLink || "/facilities",
+        primaryButtonText: form.hero.primaryButtonText ?? "",
+        primaryButtonLink: form.hero.primaryButtonLink ?? "",
+        secondaryButtonText: form.hero.secondaryButtonText ?? "",
+        secondaryButtonLink: form.hero.secondaryButtonLink ?? "",
       });
       return;
     }
@@ -688,17 +907,15 @@ export default function AdminHome() {
 
     if (target.type === "heroImageText") {
       setModalForm({
-        imageBottomTitle: form.hero.imageBottomTitle || "",
-        imageBottomDescription: form.hero.imageBottomDescription || "",
+        imageBottomTitle: form.hero.imageBottomTitle ?? "",
+        imageBottomDescription: form.hero.imageBottomDescription ?? "",
       });
       return;
     }
 
     if (target.type === "heroMotto") {
       setModalForm({
-        motto:
-          form.hero.motto ||
-          "Our motto is to provide quality education.",
+        motto: form.hero.motto ?? "",
       });
       return;
     }
@@ -713,8 +930,8 @@ export default function AdminHome() {
       const [valueKey, labelKey] = pairs[target.index];
 
       setModalForm({
-        value: form.hero[valueKey] || "",
-        label: form.hero[labelKey] || "",
+        value: form.hero[valueKey] ?? "",
+        label: form.hero[labelKey] ?? "",
       });
       return;
     }
@@ -723,17 +940,17 @@ export default function AdminHome() {
       const [titleKey, subtitleKey] = heroFloatingMap[target.index];
 
       setModalForm({
-        title: form.hero[titleKey] || "",
-        subtitle: form.hero[subtitleKey] || "",
+        title: form.hero[titleKey] ?? "",
+        subtitle: form.hero[subtitleKey] ?? "",
       });
       return;
     }
 
     if (target.type === "statsHeader") {
       setModalForm({
-        eyebrow: form.statsSection.eyebrow || "",
-        title: form.statsSection.title || "",
-        description: form.statsSection.description || "",
+        eyebrow: form.statsSection.eyebrow ?? "",
+        title: form.statsSection.title ?? "",
+        description: form.statsSection.description ?? "",
       });
       return;
     }
@@ -742,17 +959,17 @@ export default function AdminHome() {
       const stat = form.statsSection.stats[target.index];
 
       setModalForm({
-        value: stat?.value || "",
-        suffix: stat?.suffix || "",
-        label: stat?.label || "",
-        note: stat?.note || "",
+        value: stat?.value ?? "",
+        suffix: stat?.suffix ?? "",
+        label: stat?.label ?? "",
+        note: stat?.note ?? "",
       });
       return;
     }
 
     if (target.type === "storyImage") {
       setModalForm({
-        image: form.statsSection.story.image || "",
+        image: form.statsSection.story.image ?? "",
         imageZoom: clampImageZoom(form.statsSection.story.imageZoom),
         imageOffsetX: clampImageOffset(form.statsSection.story.imageOffsetX),
         imageOffsetY: clampImageOffset(form.statsSection.story.imageOffsetY),
@@ -762,37 +979,37 @@ export default function AdminHome() {
 
     if (target.type === "storyImageText") {
       setModalForm({
-        imageTopTitle: form.statsSection.story.imageTopTitle || "",
-        imageTopSubtitle: form.statsSection.story.imageTopSubtitle || "",
-        imageBottomTitle: form.statsSection.story.imageBottomTitle || "",
+        imageTopTitle: form.statsSection.story.imageTopTitle ?? "",
+        imageTopSubtitle: form.statsSection.story.imageTopSubtitle ?? "",
+        imageBottomTitle: form.statsSection.story.imageBottomTitle ?? "",
         imageBottomDescription:
-          form.statsSection.story.imageBottomDescription || "",
+          form.statsSection.story.imageBottomDescription ?? "",
       });
       return;
     }
 
     if (target.type === "storyText") {
       setModalForm({
-        badge: form.statsSection.story.badge || "",
-        title: form.statsSection.story.title || "",
-        paragraph1: form.statsSection.story.paragraphs?.[0] || "",
-        paragraph2: form.statsSection.story.paragraphs?.[1] || "",
+        badge: form.statsSection.story.badge ?? "",
+        title: form.statsSection.story.title ?? "",
+        paragraph1: form.statsSection.story.paragraphs?.[0] ?? "",
+        paragraph2: form.statsSection.story.paragraphs?.[1] ?? "",
       });
       return;
     }
 
     if (target.type === "storyButton") {
       setModalForm({
-        buttonText: form.statsSection.story.buttonText || "",
-        buttonLink: form.statsSection.story.buttonLink || "/about",
+        buttonText: form.statsSection.story.buttonText ?? "",
+        buttonLink: form.statsSection.story.buttonLink ?? "",
       });
       return;
     }
 
     if (target.type === "excellenceHeader") {
       setModalForm({
-        title: form.statsSection.excellence.title || "",
-        description: form.statsSection.excellence.description || "",
+        title: form.statsSection.excellence.title ?? "",
+        description: form.statsSection.excellence.description ?? "",
       });
       return;
     }
@@ -801,8 +1018,8 @@ export default function AdminHome() {
       const card = form.statsSection.excellence.cards[target.index];
 
       setModalForm({
-        title: card?.title || "",
-        description: card?.description || "",
+        title: card?.title ?? "",
+        description: card?.description ?? "",
       });
     }
   };
@@ -1219,6 +1436,131 @@ export default function AdminHome() {
     return "";
   };
 
+  const validateWholeHomeContent = (contentToValidate) => {
+    const hero = contentToValidate?.hero || {};
+    const statsSection = contentToValidate?.statsSection || {};
+    const story = statsSection?.story || {};
+    const excellence = statsSection?.excellence || {};
+
+    const requiredFields = [
+      { label: "the hero badge text", value: hero.badge },
+      { label: "hero title line 1", value: hero.titleLine1 },
+      { label: "hero title line 2", value: hero.titleLine2 },
+      { label: "hero title line 3", value: hero.titleLine3 },
+      { label: "the hero description", value: hero.description },
+      { label: "the primary button text", value: hero.primaryButtonText },
+      { label: "the primary button link", value: hero.primaryButtonLink },
+      { label: "the secondary button text", value: hero.secondaryButtonText },
+      { label: "the secondary button link", value: hero.secondaryButtonLink },
+      { label: "the hero image bottom title", value: hero.imageBottomTitle },
+      {
+        label: "the hero image bottom description",
+        value: hero.imageBottomDescription,
+      },
+      { label: "the school motto", value: hero.motto },
+      { label: "hero stat 1 value", value: hero.stat1Value },
+      { label: "hero stat 1 label", value: hero.stat1Label },
+      { label: "hero stat 2 value", value: hero.stat2Value },
+      { label: "hero stat 2 label", value: hero.stat2Label },
+      { label: "hero stat 3 value", value: hero.stat3Value },
+      { label: "hero stat 3 label", value: hero.stat3Label },
+      { label: "floating label 1 title", value: hero.floating1Title },
+      { label: "floating label 1 subtitle", value: hero.floating1Subtitle },
+      { label: "floating label 2 title", value: hero.floating2Title },
+      { label: "floating label 2 subtitle", value: hero.floating2Subtitle },
+      { label: "floating label 3 title", value: hero.floating3Title },
+      { label: "floating label 3 subtitle", value: hero.floating3Subtitle },
+      { label: "floating label 4 title", value: hero.floating4Title },
+      { label: "floating label 4 subtitle", value: hero.floating4Subtitle },
+      { label: "the School Highlights eyebrow", value: statsSection.eyebrow },
+      { label: "the School Highlights title", value: statsSection.title },
+      {
+        label: "the School Highlights description",
+        value: statsSection.description,
+      },
+      { label: "the story image", value: story.image },
+      { label: "the story image top title", value: story.imageTopTitle },
+      { label: "the story image top subtitle", value: story.imageTopSubtitle },
+      { label: "the story image bottom title", value: story.imageBottomTitle },
+      {
+        label: "the story image bottom description",
+        value: story.imageBottomDescription,
+      },
+      { label: "the story badge", value: story.badge },
+      { label: "the story title", value: story.title },
+      { label: "story paragraph 1", value: story.paragraphs?.[0] },
+      { label: "story paragraph 2", value: story.paragraphs?.[1] },
+      { label: "the story button text", value: story.buttonText },
+      { label: "the story button link", value: story.buttonLink },
+      { label: "the Academic Excellence title", value: excellence.title },
+      {
+        label: "the Academic Excellence description",
+        value: excellence.description,
+      },
+    ];
+
+    const missingField = requiredFields.find(
+      ({ value }) => !cleanRequiredText(value)
+    );
+
+    if (missingField) {
+      return `Please write ${missingField.label} before saving. No homepage changes were saved.`;
+    }
+
+    const heroImages = normalizeImageList(hero.images, hero.image);
+
+    if (heroImages.length === 0) {
+      return "Please upload or enter at least one hero image before saving. No homepage changes were saved.";
+    }
+
+    const highlightStats = Array.isArray(statsSection.stats)
+      ? statsSection.stats
+      : [];
+
+    if (highlightStats.length === 0) {
+      return "At least one School Highlights number card is required before saving.";
+    }
+
+    for (let index = 0; index < highlightStats.length; index += 1) {
+      const item = highlightStats[index] || {};
+      const missingStatField = [
+        { label: `number card ${index + 1} value`, value: item.value },
+        { label: `number card ${index + 1} suffix`, value: item.suffix },
+        { label: `number card ${index + 1} label`, value: item.label },
+        { label: `number card ${index + 1} note`, value: item.note },
+      ].find(({ value }) => !cleanRequiredText(value));
+
+      if (missingStatField) {
+        return `Please write ${missingStatField.label} before saving. No homepage changes were saved.`;
+      }
+    }
+
+    const excellenceCards = Array.isArray(excellence.cards)
+      ? excellence.cards
+      : [];
+
+    if (excellenceCards.length === 0) {
+      return "At least one Academic Excellence card is required before saving.";
+    }
+
+    for (let index = 0; index < excellenceCards.length; index += 1) {
+      const card = excellenceCards[index] || {};
+      const missingCardField = [
+        { label: `Academic Excellence card ${index + 1} title`, value: card.title },
+        {
+          label: `Academic Excellence card ${index + 1} description`,
+          value: card.description,
+        },
+      ].find(({ value }) => !cleanRequiredText(value));
+
+      if (missingCardField) {
+        return `Please write ${missingCardField.label} before saving. No homepage changes were saved.`;
+      }
+    }
+
+    return "";
+  };
+
   const saveSelectedPart = async () => {
     if (!editingTarget) return;
 
@@ -1448,6 +1790,13 @@ export default function AdminHome() {
             ),
           },
         };
+      }
+
+      const wholePageValidationError = validateWholeHomeContent(nextForm);
+
+      if (wholePageValidationError) {
+        setValidationPopup(wholePageValidationError);
+        return;
       }
 
       const cleanContent = mergeHomeContent(nextForm);

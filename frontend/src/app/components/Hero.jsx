@@ -124,8 +124,82 @@ export function mergeHeroData(saved = {}) {
     return acc;
   }, {});
 
+  const requiredText = (value, fallback) =>
+    String(value ?? "").trim() ? value : fallback;
+
   return {
     ...merged,
+    badge: requiredText(merged.badge, defaultHeroData.badge),
+    titleLine1: requiredText(merged.titleLine1, defaultHeroData.titleLine1),
+    titleLine2: requiredText(merged.titleLine2, defaultHeroData.titleLine2),
+    titleLine3: requiredText(merged.titleLine3, defaultHeroData.titleLine3),
+    description: requiredText(
+      merged.description,
+      defaultHeroData.description
+    ),
+    primaryButtonText: requiredText(
+      merged.primaryButtonText,
+      defaultHeroData.primaryButtonText
+    ),
+    primaryButtonLink: requiredText(
+      merged.primaryButtonLink,
+      defaultHeroData.primaryButtonLink
+    ),
+    secondaryButtonText: requiredText(
+      merged.secondaryButtonText,
+      defaultHeroData.secondaryButtonText
+    ),
+    secondaryButtonLink: requiredText(
+      merged.secondaryButtonLink,
+      defaultHeroData.secondaryButtonLink
+    ),
+    stat1Value: requiredText(merged.stat1Value, defaultHeroData.stat1Value),
+    stat1Label: requiredText(merged.stat1Label, defaultHeroData.stat1Label),
+    stat2Value: requiredText(merged.stat2Value, defaultHeroData.stat2Value),
+    stat2Label: requiredText(merged.stat2Label, defaultHeroData.stat2Label),
+    stat3Value: requiredText(merged.stat3Value, defaultHeroData.stat3Value),
+    stat3Label: requiredText(merged.stat3Label, defaultHeroData.stat3Label),
+    imageBottomTitle: requiredText(
+      merged.imageBottomTitle,
+      defaultHeroData.imageBottomTitle
+    ),
+    imageBottomDescription: requiredText(
+      merged.imageBottomDescription,
+      defaultHeroData.imageBottomDescription
+    ),
+    motto: requiredText(merged.motto, defaultHeroData.motto),
+    floating1Title: requiredText(
+      merged.floating1Title,
+      defaultHeroData.floating1Title
+    ),
+    floating1Subtitle: requiredText(
+      merged.floating1Subtitle,
+      defaultHeroData.floating1Subtitle
+    ),
+    floating2Title: requiredText(
+      merged.floating2Title,
+      defaultHeroData.floating2Title
+    ),
+    floating2Subtitle: requiredText(
+      merged.floating2Subtitle,
+      defaultHeroData.floating2Subtitle
+    ),
+    floating3Title: requiredText(
+      merged.floating3Title,
+      defaultHeroData.floating3Title
+    ),
+    floating3Subtitle: requiredText(
+      merged.floating3Subtitle,
+      defaultHeroData.floating3Subtitle
+    ),
+    floating4Title: requiredText(
+      merged.floating4Title,
+      defaultHeroData.floating4Title
+    ),
+    floating4Subtitle: requiredText(
+      merged.floating4Subtitle,
+      defaultHeroData.floating4Subtitle
+    ),
     image: images[0] || "",
     images,
     imageAdjustments,
