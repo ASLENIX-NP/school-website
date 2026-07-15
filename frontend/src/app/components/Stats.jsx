@@ -1066,7 +1066,7 @@ function Stats({
                                       border: "1px solid rgba(15,23,42,0.10)",
                                     }}
                                   >
-                                    PDF Attached
+                                   
                                   </span>
                                 )}
                               </div>
