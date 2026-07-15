@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import PdfNoticePreview from "../app/components/PdfNoticePreview";
+import { formatBsNoticeDate } from "../app/components/BsNoticeDatePicker";
 import {
   X,
   Megaphone,
@@ -57,7 +58,10 @@ export const defaultNoticeSettings = {
   sidebar_button_link: "/contact",
 };
 
-export const formatNoticeDate = (dateValue) => {
+export const formatNoticeDate = (dateValue) =>
+  formatBsNoticeDate(dateValue);
+
+function formatAnnouncementDate(dateValue) {
   if (!dateValue) return "No date";
 
   const date = new Date(dateValue);
@@ -68,7 +72,7 @@ export const formatNoticeDate = (dateValue) => {
     month: "short",
     day: "numeric",
   });
-};
+}
 
 export function normalizeNotice(notice = {}) {
   return {
@@ -525,7 +529,7 @@ function AnnouncementCard({ announcement, index, onClick }) {
 
           <div className="mt-2 text-base font-black text-slate-900">
             {announcement.created_at
-              ? formatNoticeDate(announcement.created_at)
+              ? formatAnnouncementDate(announcement.created_at)
               : "No date"}
           </div>
 
@@ -1253,5 +1257,7 @@ export default function Notices({
     </>
   );
 }
+
+
 
 

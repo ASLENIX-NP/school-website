@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import PdfNoticePreview from "../app/components/PdfNoticePreview";
+import { formatBsNoticeDate } from "../app/components/BsNoticeDatePicker";
 
 const API_URL = "https://school-website-backend-ixx2.onrender.com";
 const REQUEST_TIMEOUT_MS = 12000;
@@ -23,19 +24,6 @@ async function fetchJsonWithTimeout(url, options = {}) {
   } finally {
     window.clearTimeout(timeoutId);
   }
-}
-
-function formatNoticeDate(dateValue) {
-  if (!dateValue) return "No date";
-
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return dateValue;
-
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 }
 
 export default function NoticeDetail() {
@@ -235,7 +223,7 @@ export default function NoticeDetail() {
               </span>
 
               <span className="text-sm font-bold text-slate-400">
-                {formatNoticeDate(notice.notice_date || notice.date)}
+                {formatBsNoticeDate(notice.notice_date || notice.date)}
               </span>
             </div>
 
@@ -294,5 +282,7 @@ export default function NoticeDetail() {
     </section>
   );
 }
+
+
 
 

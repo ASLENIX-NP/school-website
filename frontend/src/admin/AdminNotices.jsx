@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
+import BsNoticeDatePicker, {
+  getTodayAdDateKey,
+} from "../app/components/BsNoticeDatePicker";
 
 import {
   AlertCircle,
@@ -262,7 +265,7 @@ export default function AdminNotices() {
       setModalForm({
         title: "",
         category: "General",
-        notice_date: new Date().toISOString().slice(0, 10),
+        notice_date: getTodayAdDateKey(),
         description: "",
         pdf_url: "",
         pinned: false,
@@ -867,11 +870,13 @@ export default function AdminNotices() {
                           onChange={(value) => updateModalField("category", value)}
                           placeholder="Exam / Holiday / Admission"
                         />
-                        <Field
-                          label="Notice Date"
-                          type="date"
+                        <BsNoticeDatePicker
+                          label="Notice Date (BS)"
                           value={modalForm.notice_date}
-                          onChange={(value) => updateModalField("notice_date", value)}
+                          onChange={(value) =>
+                            updateModalField("notice_date", value)
+                          }
+                          disabled={saving || uploading}
                         />
                       </div>
                       <TextArea
@@ -1260,6 +1265,8 @@ export default function AdminNotices() {
     </div>
   );
 }
+
+
 
 
 

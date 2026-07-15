@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { ArrowRight, Camera, Pencil, X } from "lucide-react";
 import PdfNoticePreview from "./PdfNoticePreview";
 import HomeAnnouncementPopup from "./HomeAnnouncementPopup";
+import { formatBsNoticeDate } from "./BsNoticeDatePicker";
 
 const palette = {
   cyan: "#38BDF8",
@@ -292,18 +293,32 @@ function Counter({ target, suffix, editMode = false }) {
   );
 }
 
-const formatNoticeDate = (dateValue) => {
-  if (!dateValue) return "No date";
+const formatNoticeDate = (dateValue) =>
+  formatBsNoticeDate(dateValue);
 
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return dateValue;
+function getNoticeTime(value) {
+  const time = new Date(value || 0).getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
 
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+function sortHomeNoticesNewestFirst(noticeList = []) {
+  return [...noticeList].sort((a, b) => {
+    const pinnedA = a?.pinned ? 1 : 0;
+    const pinnedB = b?.pinned ? 1 : 0;
+
+    if (pinnedA !== pinnedB) return pinnedB - pinnedA;
+
+    const createdA = getNoticeTime(a?.created_at || a?.createdAt);
+    const createdB = getNoticeTime(b?.created_at || b?.createdAt);
+
+    if (createdA !== createdB) return createdB - createdA;
+
+    return (
+      getNoticeTime(b?.notice_date || b?.date) -
+      getNoticeTime(a?.notice_date || a?.date)
+    );
   });
-};
+}
 
 const getNoticeExcerpt = (notice) => {
   const text =
@@ -365,13 +380,20 @@ function Stats({
 
     let alive = true;
 
-    fetch(`${API_URL}/api/notices`)
+    fetch(`${API_URL}/api/notices`, {
+      cache: "no-store",
+    })
       .then((res) => res.json())
       .then((data) => {
         if (!alive) return;
 
-        const noticeList = Array.isArray(data) ? data : data?.data || [];
-        setNotices(noticeList.slice(0, 3));
+        const noticeList = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+          ? data.data
+          : [];
+
+        setNotices(sortHomeNoticesNewestFirst(noticeList).slice(0, 3));
       })
       .catch((err) => console.log(err));
 
@@ -1195,3 +1217,5 @@ function Stats({
 
 export { Stats };
 export default Stats;
+
+

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
+import BsNoticeDatePicker, {
+  getTodayAdDateKey,
+} from "../app/components/BsNoticeDatePicker";
 
 import {
   ArrowLeft,
@@ -96,7 +99,7 @@ export default function AdminAddNotice() {
   const [form, setForm] = useState({
     title: "",
     category: "General",
-    notice_date: new Date().toISOString().slice(0, 10),
+    notice_date: getTodayAdDateKey(),
     description: "",
     pdf_url: "",
     pinned: false,
@@ -347,11 +350,11 @@ export default function AdminAddNotice() {
                 placeholder="Exam / Holiday / Admission"
               />
 
-              <Field
-                label="Notice Date"
-                type="date"
+              <BsNoticeDatePicker
+                label="Notice Date (BS)"
                 value={form.notice_date}
                 onChange={(value) => updateField("notice_date", value)}
+                disabled={saving || uploading}
               />
             </div>
 
@@ -462,6 +465,8 @@ export default function AdminAddNotice() {
     </section>
   );
 }
+
+
 
 
 
