@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import defaultSchoolLogo from "../assets/school-logo.jpeg";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
-import { Lock, Mail, ShieldCheck, ArrowRight } from "lucide-react";
+import { Lock, Mail, ArrowRight } from "lucide-react";
 
 const colors = {
   red: "#D71920",
@@ -23,6 +24,36 @@ export default function AdminLogin() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [schoolLogo, setSchoolLogo] = useState(defaultSchoolLogo);
+
+  useEffect(() => {
+    let alive = true;
+
+    const loadSchoolLogo = async () => {
+      try {
+        const response = await axios.get(
+          "https://school-website-backend-ixx2.onrender.com/api/site-content/navbar",
+          { timeout: 12000 }
+        );
+
+        const savedLogo = String(
+          response.data?.data?.content?.logoUrl || ""
+        ).trim();
+
+        if (alive && savedLogo) {
+          setSchoolLogo(savedLogo);
+        }
+      } catch (logoError) {
+        console.error("Load admin login school logo error:", logoError);
+      }
+    };
+
+    loadSchoolLogo();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const handleChange = (e) => {
     setForm((prev) => ({
@@ -106,13 +137,23 @@ export default function AdminLogin() {
       >
         <div className="text-center mb-8">
           <div
-            className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-5"
+            className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-5 overflow-hidden"
             style={{
-              background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-              boxShadow: "0 20px 48px rgba(56,189,248,0.26)",
+              background: "rgba(255,255,255,0.96)",
+              border: "1px solid rgba(255,255,255,0.34)",
+              boxShadow: "0 20px 48px rgba(0,0,0,0.26)",
             }}
           >
-            <ShieldCheck className="w-8 h-8 text-slate-950" />
+            <img
+              src={schoolLogo}
+              alt="Baljagriti School logo"
+              className="w-full h-full object-contain p-2"
+              onError={(event) => {
+                if (event.currentTarget.src !== defaultSchoolLogo) {
+                  event.currentTarget.src = defaultSchoolLogo;
+                }
+              }}
+            />
           </div>
 
           <h1

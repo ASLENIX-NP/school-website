@@ -1116,18 +1116,30 @@ export function Contact({
               }`}
               style={{
                 ...glassStyle,
-                background: "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.72))",
-                border: editMode ? undefined : "1px solid rgba(255,255,255,0.76)",
-                boxShadow: "0 24px 70px rgba(11,16,32,0.12), inset 0 1px 0 rgba(255,255,255,0.92)",
-                backdropFilter: "blur(16px)",
-                WebkitBackdropFilter: "blur(16px)",
+                background: `
+                  linear-gradient(
+                    145deg,
+                    rgba(75,46,131,0.15) 0%,
+                    rgba(255,255,255,0.94) 34%,
+                    rgba(255,255,255,0.82) 58%,
+                    rgba(56,189,248,0.13) 82%,
+                    rgba(215,25,32,0.07) 100%
+                  )
+                `,
+                border: editMode
+                  ? undefined
+                  : "1px solid rgba(75,46,131,0.20)",
+                boxShadow:
+                  "0 28px 80px rgba(11,16,32,0.13), 0 14px 38px rgba(75,46,131,0.10), inset 0 1px 0 rgba(255,255,255,0.94)",
+                backdropFilter: "blur(22px)",
+                WebkitBackdropFilter: "blur(22px)",
               }}
             >
               <div
                 className="absolute -right-24 -top-24 w-72 h-72 rounded-full pointer-events-none"
                 style={{
                   background:
-                    "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
+                    "radial-gradient(circle, rgba(75,46,131,0.20), transparent 70%)",
                 }}
               />
 
@@ -1135,7 +1147,7 @@ export function Contact({
                 className="absolute -left-24 bottom-0 w-72 h-72 rounded-full pointer-events-none"
                 style={{
                   background:
-                    "radial-gradient(circle, rgba(56,189,248,0.12), transparent 70%)",
+                    "radial-gradient(circle, rgba(56,189,248,0.18), transparent 70%)",
                 }}
               />
 

@@ -567,24 +567,28 @@ export function Facilities({
                 className="group relative rounded-[2rem] overflow-hidden transition-all duration-300 cursor-pointer"
                 style={{
                   minHeight: "760px",
-                  background:
-                    "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.82))",
+                  background: `linear-gradient(
+                    145deg,
+                    ${facilityColor}18 0%,
+                    rgba(255,255,255,0.95) 35%,
+                    rgba(255,255,255,0.82) 68%,
+                    ${facilityColor}0D 100%
+                  )`,
                   border: editMode
                     ? "2px dashed rgba(56,189,248,0.55)"
-                    : `1px solid ${facilityColor}24`,
-                  boxShadow:
-                    "0 22px 54px rgba(15,23,42,0.09), inset 0 1px 0 rgba(255,255,255,0.82)",
-                  backdropFilter: "blur(16px)",
+                    : `1px solid ${facilityColor}32`,
+                  boxShadow: `0 24px 60px rgba(15,23,42,0.10), 0 12px 34px ${facilityColor}14, inset 0 1px 0 rgba(255,255,255,0.90)`,
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-10px)";
-                  e.currentTarget.style.boxShadow = `0 30px 72px rgba(15,23,42,0.16), 0 0 0 1px ${facilityColor}22`;
+                  e.currentTarget.style.boxShadow = `0 32px 78px rgba(15,23,42,0.16), 0 16px 40px ${facilityColor}20, 0 0 0 1px ${facilityColor}28`;
                   if (!editMode) e.currentTarget.style.borderColor = `${facilityColor}55`;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow =
-                    "0 22px 54px rgba(15,23,42,0.09), inset 0 1px 0 rgba(255,255,255,0.82)";
+                  e.currentTarget.style.boxShadow = `0 24px 60px rgba(15,23,42,0.10), 0 12px 34px ${facilityColor}14, inset 0 1px 0 rgba(255,255,255,0.90)`;
                   if (!editMode) e.currentTarget.style.borderColor = `${facilityColor}24`;
                 }}
               >

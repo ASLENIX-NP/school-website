@@ -505,15 +505,45 @@ function GalleryCategoryCard({ album, index, onClick }) {
     return () => window.clearInterval(interval);
   }, [photoUrls.join("|")]);
 
+  const cardStyles = [
+    {
+      background:
+        "linear-gradient(145deg, rgba(75,46,131,0.14), rgba(255,255,255,0.94) 38%, rgba(255,255,255,0.80) 72%, rgba(56,189,248,0.10))",
+      border: "rgba(75,46,131,0.20)",
+      shadow: "rgba(75,46,131,0.10)",
+    },
+    {
+      background:
+        "linear-gradient(145deg, rgba(22,138,58,0.13), rgba(255,255,255,0.94) 38%, rgba(255,255,255,0.80) 72%, rgba(250,204,21,0.10))",
+      border: "rgba(22,138,58,0.20)",
+      shadow: "rgba(22,138,58,0.10)",
+    },
+    {
+      background:
+        "linear-gradient(145deg, rgba(215,25,32,0.11), rgba(255,255,255,0.94) 38%, rgba(255,255,255,0.80) 72%, rgba(75,46,131,0.10))",
+      border: "rgba(215,25,32,0.19)",
+      shadow: "rgba(215,25,32,0.09)",
+    },
+  ];
+
+  const cardStyle = cardStyles[index % cardStyles.length];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className={`grid lg:grid-cols-2 gap-12 items-center ${
+      className={`relative grid lg:grid-cols-2 gap-8 lg:gap-12 items-center overflow-hidden rounded-[36px] p-5 sm:p-6 lg:p-8 ${
         index % 2 !== 0 ? "lg:[&>*:first-child]:order-2" : ""
       }`}
+      style={{
+        background: cardStyle.background,
+        border: `1px solid ${cardStyle.border}`,
+        boxShadow: `0 28px 80px rgba(11,16,32,0.11), 0 14px 38px ${cardStyle.shadow}, inset 0 1px 0 rgba(255,255,255,0.94)`,
+        backdropFilter: "blur(22px)",
+        WebkitBackdropFilter: "blur(22px)",
+      }}
     >
       <div className="overflow-hidden rounded-[32px] shadow-2xl bg-white">
         {currentImageUrl ? (
@@ -1195,8 +1225,3 @@ function Gallery() {
 
 export { Gallery };
 export default Gallery;
-
-
-
-
-

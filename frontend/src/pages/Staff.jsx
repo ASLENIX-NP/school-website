@@ -723,13 +723,21 @@ export function Staff({
                   initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.45, delay: index * 0.08 }}
-                  className="rounded-3xl p-8 text-center bg-white/90 backdrop-blur-xl"
+                  className="rounded-3xl p-8 text-center backdrop-blur-xl"
                   style={{
+                    background: `linear-gradient(
+                      145deg,
+                      ${(stat.color || colors.green)}18 0%,
+                      rgba(255,255,255,0.95) 42%,
+                      rgba(255,255,255,0.80) 76%,
+                      ${(stat.color || colors.green)}0D 100%
+                    )`,
                     border: editMode
                       ? "2px dashed rgba(56,189,248,0.55)"
-                      : "1px solid rgba(15,23,42,0.08)",
-                    boxShadow:
-                      "0 22px 54px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.85)",
+                      : `1px solid ${(stat.color || colors.green)}30`,
+                    boxShadow: `0 22px 56px rgba(15,23,42,0.10), 0 12px 32px ${(stat.color || colors.green)}14, inset 0 1px 0 rgba(255,255,255,0.90)`,
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
                   }}
                 >
                   <Icon
@@ -757,6 +765,7 @@ export function Staff({
               const realIndex = content.staff.findIndex(
                 (member) => member.id === staff.id
               );
+              const staffColor = statColors[index % statColors.length];
 
               return (
                 <motion.div
@@ -768,13 +777,21 @@ export function Staff({
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.25 }}
                   transition={{ duration: 0.45, delay: index * 0.05 }}
-                  className="group relative bg-white rounded-[2rem] overflow-hidden transition-all duration-300 hover:-translate-y-2 cursor-pointer"
+                  className="group relative rounded-[2rem] overflow-hidden transition-all duration-300 hover:-translate-y-2 cursor-pointer"
                   style={{
+                    background: `linear-gradient(
+                      145deg,
+                      ${staffColor}16 0%,
+                      rgba(255,255,255,0.95) 38%,
+                      rgba(255,255,255,0.82) 72%,
+                      ${staffColor}0D 100%
+                    )`,
                     border: editMode
                       ? "2px dashed rgba(56,189,248,0.55)"
-                      : "1px solid rgba(15,23,42,0.08)",
-                    boxShadow:
-                      "0 22px 54px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.85)",
+                      : `1px solid ${staffColor}30`,
+                    boxShadow: `0 24px 60px rgba(15,23,42,0.10), 0 12px 34px ${staffColor}14, inset 0 1px 0 rgba(255,255,255,0.90)`,
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
                   }}
                 >
                   <ActionButtons
@@ -861,6 +878,3 @@ export function Staff({
 }
 
 export default Staff;
-
-
-

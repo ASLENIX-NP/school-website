@@ -14,6 +14,21 @@ const palette = {
   violet: "#8B5CF6",
 };
 
+function hexToRgba(hex, alpha) {
+  const clean = String(hex || "").replace("#", "");
+  if (!/^[0-9a-fA-F]{6}$/.test(clean)) return `rgba(56,189,248,${alpha})`;
+
+  const red = Number.parseInt(clean.slice(0, 2), 16);
+  const green = Number.parseInt(clean.slice(2, 4), 16);
+  const blue = Number.parseInt(clean.slice(4, 6), 16);
+
+  return `rgba(${red},${green},${blue},${alpha})`;
+}
+
+function colorfulGlassBackground(color, strength = 0.16) {
+  return `linear-gradient(145deg, ${hexToRgba(color, strength)} 0%, rgba(255,255,255,0.84) 48%, ${hexToRgba(color, strength * 0.48)} 100%)`;
+}
+
 const API_URL = "https://school-website-backend-ixx2.onrender.com";
 
 export const defaultStatsSectionData = {
@@ -497,14 +512,14 @@ function Stats({
                   transition={{ duration: 0.5, delay: i * 0.08 }}
                   className="group rounded-[1.6rem] p-6 transition-all duration-300 hover:-translate-y-2"
                   style={{
-                    background:
-                      "linear-gradient(145deg, rgba(255,255,255,0.94), rgba(255,255,255,0.74))",
+                    background: colorfulGlassBackground(stat.color, 0.18),
                     border: editMode
                       ? "1px dashed rgba(56,189,248,0.55)"
-                      : "1px solid rgba(15,23,42,0.08)",
+                      : `1px solid ${stat.color}52`,
                     boxShadow:
-                      "0 20px 58px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
-                    backdropFilter: "blur(18px)",
+                      "0 18px 46px rgba(15,23,42,0.075), inset 0 1px 0 rgba(255,255,255,0.94)",
+                    backdropFilter: "blur(22px) saturate(110%)",
+                    WebkitBackdropFilter: "blur(22px) saturate(110%)",
                   }}
                 >
                   <div
@@ -602,44 +617,27 @@ function Stats({
                   <div
                     className="absolute top-6 left-6 rounded-2xl px-4 py-3"
                     style={{
-                      background: "rgba(255,255,255,0.14)",
-                      border: "1px solid rgba(255,255,255,0.18)",
-                      backdropFilter: "blur(18px)",
+                      background:
+                        "linear-gradient(145deg, rgba(255,255,255,0.82), rgba(255,255,255,0.62))",
+                      border: "1px solid rgba(255,255,255,0.48)",
+                      boxShadow:
+                        "0 14px 36px rgba(15,23,42,0.16), inset 0 1px 0 rgba(255,255,255,0.94)",
+                      backdropFilter: "blur(22px) saturate(110%)",
+                      WebkitBackdropFilter: "blur(22px) saturate(110%)",
                     }}
                   >
-                    <div className="text-white text-sm font-bold">
+                    <div className="text-slate-950 text-sm font-bold">
                       {statsData.story.imageTopTitle}
                     </div>
 
                     <div
                       className="text-xs"
-                      style={{ color: "rgba(255,255,255,0.68)" }}
+                      style={{ color: "rgba(15,23,42,0.62)" }}
                     >
                       {statsData.story.imageTopSubtitle}
                     </div>
                   </div>
 
-                  <div
-                    className="absolute bottom-6 left-6 right-6 rounded-3xl p-5"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07))",
-                      border: "1px solid rgba(255,255,255,0.18)",
-                      backdropFilter: "blur(20px)",
-                      boxShadow: "0 22px 60px rgba(0,0,0,0.3)",
-                    }}
-                  >
-                    <div className="text-white text-lg font-bold mb-1">
-                      {statsData.story.imageBottomTitle}
-                    </div>
-
-                    <div
-                      className="text-sm"
-                      style={{ color: "rgba(255,255,255,0.68)" }}
-                    >
-                      {statsData.story.imageBottomDescription}
-                    </div>
-                  </div>
                 </EditableWrap>
               </div>
             </EditableWrap>
@@ -721,11 +719,15 @@ function Stats({
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 hover:gap-3 hover:-translate-y-0.5"
                   style={{
                     color: "#0F172A",
-                    background: "#FFFFFF",
+                    background:
+                      "linear-gradient(145deg, rgba(255,255,255,0.82), rgba(255,255,255,0.60))",
                     border: editMode
                       ? "1px dashed rgba(56,189,248,0.65)"
-                      : "1px solid rgba(15,23,42,0.12)",
-                    boxShadow: "0 10px 28px rgba(15,23,42,0.08)",
+                      : "1px solid rgba(148,163,184,0.26)",
+                    boxShadow:
+                      "0 16px 40px rgba(15,23,42,0.07), inset 0 1px 0 rgba(255,255,255,0.94)",
+                    backdropFilter: "blur(22px) saturate(110%)",
+                    WebkitBackdropFilter: "blur(22px) saturate(110%)",
                   }}
                 >
                   {statsData.story.buttonText}
@@ -797,17 +799,17 @@ function Stats({
                 const accents = [
                   {
                     color: "#4B2E83",
-                    bg: "linear-gradient(145deg, rgba(75,46,131,0.075), rgba(255,255,255,0.88))",
+                    bg: "linear-gradient(145deg, rgba(75,46,131,0.14), rgba(255,255,255,0.84) 52%, rgba(75,46,131,0.07))",
                     border: "rgba(75,46,131,0.22)",
                   },
                   {
                     color: "#168A3A",
-                    bg: "linear-gradient(145deg, rgba(22,138,58,0.075), rgba(255,255,255,0.88))",
+                    bg: "linear-gradient(145deg, rgba(22,138,58,0.14), rgba(255,255,255,0.84) 52%, rgba(22,138,58,0.07))",
                     border: "rgba(22,138,58,0.22)",
                   },
                   {
                     color: "#D71920",
-                    bg: "linear-gradient(145deg, rgba(215,25,32,0.06), rgba(255,255,255,0.88))",
+                    bg: "linear-gradient(145deg, rgba(215,25,32,0.12), rgba(255,255,255,0.84) 52%, rgba(215,25,32,0.06))",
                     border: "rgba(215,25,32,0.20)",
                   },
                 ];
@@ -834,14 +836,15 @@ function Stats({
                           ? "1px dashed rgba(56,189,248,0.55)"
                           : `1px solid ${accent.border}`,
                         boxShadow:
-                          "0 22px 58px rgba(15,23,42,0.085), inset 0 1px 0 rgba(255,255,255,0.9)",
-                        backdropFilter: "blur(16px)",
+                          "0 20px 50px rgba(15,23,42,0.075), inset 0 1px 0 rgba(255,255,255,0.94)",
+                        backdropFilter: "blur(24px) saturate(110%)",
+                        WebkitBackdropFilter: "blur(24px) saturate(110%)",
                       }}
                     >
                       <div
                         className="absolute -right-16 -top-16 w-44 h-44 rounded-full opacity-60 transition-all duration-500 group-hover:scale-125"
                         style={{
-                          background: `radial-gradient(circle, ${accent.color}22, transparent 68%)`,
+                          background: `radial-gradient(circle, ${accent.color}12, transparent 68%)`,
                         }}
                       />
 
@@ -920,9 +923,13 @@ function Stats({
                   className="hidden md:inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-black transition-all duration-300 hover:gap-3 hover:-translate-y-0.5"
                   style={{
                     color: "#0F172A",
-                    background: "#FFFFFF",
-                    border: "1px solid rgba(15,23,42,0.10)",
-                    boxShadow: "0 10px 26px rgba(15,23,42,0.07)",
+                    background:
+                      "linear-gradient(145deg, rgba(255,255,255,0.82), rgba(255,255,255,0.60))",
+                    border: "1px solid rgba(148,163,184,0.26)",
+                    boxShadow:
+                      "0 16px 40px rgba(15,23,42,0.07), inset 0 1px 0 rgba(255,255,255,0.94)",
+                    backdropFilter: "blur(22px) saturate(110%)",
+                    WebkitBackdropFilter: "blur(22px) saturate(110%)",
                   }}
                 >
                   View All <ArrowRight className="w-4 h-4" />
@@ -934,9 +941,12 @@ function Stats({
                   className="rounded-[28px] p-10 text-center"
                   style={{
                     background:
-                      "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(248,250,252,0.9))",
-                    border: "1px dashed rgba(15,23,42,0.16)",
-                    boxShadow: "0 16px 42px rgba(15,23,42,0.06)",
+                      "linear-gradient(145deg, rgba(255,255,255,0.84), rgba(255,255,255,0.62))",
+                    border: "1px dashed rgba(148,163,184,0.34)",
+                    boxShadow:
+                      "0 18px 44px rgba(15,23,42,0.07), inset 0 1px 0 rgba(255,255,255,0.94)",
+                    backdropFilter: "blur(22px) saturate(110%)",
+                    WebkitBackdropFilter: "blur(22px) saturate(110%)",
                   }}
                 >
                   <div
@@ -999,11 +1009,12 @@ function Stats({
                           onClick={() => setSelectedNotice(notice)}
                           className="group relative block w-full overflow-hidden rounded-[32px] text-left transition-all duration-300 hover:-translate-y-1"
                           style={{
-                            background:
-                              "linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.92))",
+                            background: colorfulGlassBackground(accent.color, 0.14),
                             border: `1px solid ${accent.border}`,
                             boxShadow:
-                              "0 18px 48px rgba(15,23,42,0.075), inset 0 1px 0 rgba(255,255,255,0.92)",
+                              "0 20px 50px rgba(15,23,42,0.075), inset 0 1px 0 rgba(255,255,255,0.94)",
+                            backdropFilter: "blur(24px) saturate(110%)",
+                            WebkitBackdropFilter: "blur(24px) saturate(110%)",
                           }}
                         >
                           <div
@@ -1017,11 +1028,12 @@ function Stats({
                             <div
                               className="rounded-3xl p-5"
                               style={{
-                                background:
-                                  "linear-gradient(145deg, rgba(255,255,255,0.9), rgba(248,250,252,0.72))",
-                                border: "1px solid rgba(15,23,42,0.08)",
+                                background: colorfulGlassBackground(accent.color, 0.18),
+                                border: `1px solid ${accent.border}`,
                                 boxShadow:
-                                  "0 10px 26px rgba(15,23,42,0.045)",
+                                  "0 12px 30px rgba(15,23,42,0.05), inset 0 1px 0 rgba(255,255,255,0.92)",
+                                backdropFilter: "blur(20px) saturate(110%)",
+                                WebkitBackdropFilter: "blur(20px) saturate(110%)",
                               }}
                             >
                               <div
@@ -1217,5 +1229,3 @@ function Stats({
 
 export { Stats };
 export default Stats;
-
-

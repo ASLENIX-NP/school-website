@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { BookOpen, ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react";
 
 const colors = {
   red: "#D71920",
@@ -23,6 +23,57 @@ const ACCENT_SEQUENCE = [
 ];
 
 const gradeAccent = (index) => ACCENT_SEQUENCE[index % ACCENT_SEQUENCE.length];
+
+function colorToRgba(color, alpha = 1) {
+  const raw = String(color || "").trim();
+
+  if (/^#[0-9A-Fa-f]{3}$/.test(raw)) {
+    const [r, g, b] = raw
+      .slice(1)
+      .split("")
+      .map((char) => Number.parseInt(char + char, 16));
+
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  if (/^#[0-9A-Fa-f]{6}$/.test(raw)) {
+    const r = Number.parseInt(raw.slice(1, 3), 16);
+    const g = Number.parseInt(raw.slice(3, 5), 16);
+    const b = Number.parseInt(raw.slice(5, 7), 16);
+
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  return raw || `rgba(75, 46, 131, ${alpha})`;
+}
+
+function getColorfulGlassStyle(color, options = {}) {
+  const accent = color || colors.purple;
+  const {
+    tint = 0.11,
+    edgeTint = 0.055,
+    borderAlpha = 0.24,
+    shadowAlpha = 0.075,
+    blur = 18,
+  } = options;
+
+  return {
+    background: `linear-gradient(145deg, ${colorToRgba(
+      accent,
+      tint
+    )} 0%, rgba(255,255,255,0.94) 48%, ${colorToRgba(
+      accent,
+      edgeTint
+    )} 100%)`,
+    border: `1px solid ${colorToRgba(accent, borderAlpha)}`,
+    boxShadow: `0 22px 58px rgba(15,23,42,0.085), 0 12px 34px ${colorToRgba(
+      accent,
+      shadowAlpha
+    )}, inset 0 1px 0 rgba(255,255,255,0.92)`,
+    backdropFilter: `blur(${blur}px)`,
+    WebkitBackdropFilter: `blur(${blur}px)`,
+  };
+}
 
 export const defaultAcademicsContent = {
   heroBadge: "Nurturing Excellence",
@@ -1055,27 +1106,58 @@ export function Academics({
                 >
                   <motion.div
                   key={prog.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View classes and curriculum for ${prog.level}`}
                   onClick={() => setSelectedProgram(prog.level)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setSelectedProgram(prog.level);
+                    }
+                  }}
+                  whileTap={{ scale: 0.99 }}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="group p-6 rounded-3xl flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:-translate-y-2 cursor-pointer"
+                  className="group p-6 rounded-3xl flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:-translate-y-2 cursor-pointer focus:outline-none focus-visible:ring-4"
                   style={{
-                    border: `1px solid ${cardColor}24`,
-                    background:
-                      "linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,250,252,0.9))",
-                    boxShadow: "0 18px 42px rgba(11,16,32,0.08)",
-                    backdropFilter: "blur(18px)",
+                    ...getColorfulGlassStyle(cardColor, {
+                      tint: 0.13,
+                      edgeTint: 0.06,
+                      borderAlpha: 0.27,
+                      shadowAlpha: 0.09,
+                    }),
+                    border: editMode
+                      ? "1px dashed rgba(56,189,248,0.62)"
+                      : `1px solid ${colorToRgba(cardColor, 0.27)}`,
+                    "--tw-ring-color": colorToRgba(cardColor, 0.2),
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = `0 26px 64px rgba(11,16,32,0.14), 0 0 0 1px ${cardColor}22`;
-                    e.currentTarget.style.borderColor = `${cardColor}55`;
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.boxShadow = `0 30px 72px rgba(11,16,32,0.14), 0 14px 36px ${colorToRgba(
+                      cardColor,
+                      0.12
+                    )}, inset 0 1px 0 rgba(255,255,255,0.94)`;
+                    event.currentTarget.style.borderColor = colorToRgba(
+                      cardColor,
+                      0.44
+                    );
                   }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow =
-                      "0 18px 42px rgba(11,16,32,0.08)";
-                    e.currentTarget.style.borderColor = `${cardColor}24`;
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.boxShadow = getColorfulGlassStyle(
+                      cardColor,
+                      {
+                        tint: 0.13,
+                        edgeTint: 0.06,
+                        borderAlpha: 0.27,
+                        shadowAlpha: 0.09,
+                      }
+                    ).boxShadow;
+                    event.currentTarget.style.borderColor = colorToRgba(
+                      cardColor,
+                      0.27
+                    );
                   }}
                 >
                   <div
@@ -1120,7 +1202,10 @@ export function Academics({
                       {prog.highlight}
                     </p>
 
-                    <div className="space-y-2.5 border-t pt-5 border-slate-100">
+                    <div
+                      className="space-y-2.5 border-t pt-5"
+                      style={{ borderColor: colorToRgba(cardColor, 0.12) }}
+                    >
                       <span className="text-xs font-bold text-slate-400 block uppercase tracking-[0.16em]">
                         Course Structure
                       </span>
@@ -1138,6 +1223,41 @@ export function Academics({
                           <span>{item}</span>
                         </div>
                       ))}
+                    </div>
+
+                    <div
+                      className="mt-6 flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition-all duration-300 group-hover:translate-x-1"
+                      style={{
+                        background: `linear-gradient(135deg, ${colorToRgba(
+                          cardColor,
+                          0.1
+                        )}, rgba(255,255,255,0.68))`,
+                        border: `1px solid ${colorToRgba(cardColor, 0.2)}`,
+                        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.82)`,
+                      }}
+                    >
+                      <span
+                        className="flex items-center gap-2 text-xs font-black"
+                        style={{ color: cardColor }}
+                      >
+                        <BookOpen className="h-4 w-4 shrink-0" />
+                        <span className="hidden sm:inline">
+                          Click to view class-wise curriculum
+                        </span>
+                        <span className="sm:hidden">
+                          Tap to view classes & books
+                        </span>
+                      </span>
+
+                      <span
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-transform duration-300 group-hover:translate-x-1"
+                        style={{
+                          background: colorToRgba(cardColor, 0.13),
+                          color: cardColor,
+                        }}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </span>
                     </div>
                   </div>
                   </motion.div>
@@ -1215,31 +1335,6 @@ export function Academics({
           (item) => item.id === feat.id
         );
 
-        const cardStyles = [
-          {
-            bg: "linear-gradient(145deg, rgba(75,46,131,0.105), rgba(255,255,255,0.82))",
-            border: "rgba(75,46,131,0.24)",
-            glow: "rgba(75,46,131,0.14)",
-          },
-          {
-            bg: "linear-gradient(145deg, rgba(22,138,58,0.105), rgba(255,255,255,0.82))",
-            border: "rgba(22,138,58,0.24)",
-            glow: "rgba(22,138,58,0.14)",
-          },
-          {
-            bg: "linear-gradient(145deg, rgba(215,25,32,0.085), rgba(255,255,255,0.84))",
-            border: "rgba(215,25,32,0.22)",
-            glow: "rgba(215,25,32,0.13)",
-          },
-          {
-            bg: "linear-gradient(145deg, rgba(124,92,196,0.11), rgba(255,255,255,0.82))",
-            border: "rgba(124,92,196,0.24)",
-            glow: "rgba(124,92,196,0.14)",
-          },
-        ];
-
-        const styleSet = cardStyles[i % cardStyles.length];
-
         return (
           <EditableWrap
             key={feat.id}
@@ -1256,17 +1351,22 @@ export function Academics({
             transition={{ duration: 0.45, delay: i * 0.07 }}
             className="group relative overflow-hidden rounded-[2rem] p-8 md:p-10 transition-all duration-300 hover:-translate-y-2"
             style={{
-              background: styleSet.bg,
-              border: `1px solid ${styleSet.border}`,
-              boxShadow:
-                "0 22px 58px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+              ...getColorfulGlassStyle(featureColor, {
+                tint: 0.125,
+                edgeTint: 0.055,
+                borderAlpha: 0.25,
+                shadowAlpha: 0.08,
+              }),
+              border: editMode
+                ? "1px dashed rgba(56,189,248,0.62)"
+                : `1px solid ${colorToRgba(featureColor, 0.25)}`,
               minHeight: "260px",
             }}
           >
             <div
               className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-80 transition-all duration-500 group-hover:scale-125"
               style={{
-                background: styleSet.glow,
+                background: colorToRgba(featureColor, 0.14),
                 filter: "blur(38px)",
               }}
             />
@@ -1363,19 +1463,40 @@ export function Academics({
                   transition={{ duration: 0.5, delay: i * 0.1 }}
                   className="group relative overflow-hidden p-8 rounded-[32px] transition-all duration-300 hover:-translate-y-2 cursor-default"
                   style={{
-                    background:
-                      "linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,250,252,0.9))",
-                    border: `1px solid ${statColor}24`,
-                    boxShadow: "0 16px 42px rgba(11,16,32,0.08)",
+                    ...getColorfulGlassStyle(statColor, {
+                      tint: 0.13,
+                      edgeTint: 0.06,
+                      borderAlpha: 0.26,
+                      shadowAlpha: 0.085,
+                    }),
+                    border: editMode
+                      ? "1px dashed rgba(56,189,248,0.62)"
+                      : `1px solid ${colorToRgba(statColor, 0.26)}`,
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = `0 24px 58px rgba(11,16,32,0.13), 0 0 0 1px ${statColor}22`;
-                    e.currentTarget.style.borderColor = `${statColor}55`;
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.boxShadow = `0 28px 66px rgba(11,16,32,0.13), 0 12px 32px ${colorToRgba(
+                      statColor,
+                      0.11
+                    )}, inset 0 1px 0 rgba(255,255,255,0.94)`;
+                    event.currentTarget.style.borderColor = colorToRgba(
+                      statColor,
+                      0.42
+                    );
                   }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow =
-                      "0 16px 42px rgba(11,16,32,0.08)";
-                    e.currentTarget.style.borderColor = `${statColor}24`;
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.boxShadow = getColorfulGlassStyle(
+                      statColor,
+                      {
+                        tint: 0.13,
+                        edgeTint: 0.06,
+                        borderAlpha: 0.26,
+                        shadowAlpha: 0.085,
+                      }
+                    ).boxShadow;
+                    event.currentTarget.style.borderColor = colorToRgba(
+                      statColor,
+                      0.26
+                    );
                   }}
                 >
                   <div
@@ -1488,15 +1609,15 @@ export function Academics({
                 transition={{ delay: index * 0.06 }}
                 className="group relative overflow-hidden rounded-[2rem] p-7 transition-all duration-300 hover:-translate-y-1"
                 style={{
-                  background:
-                    index === 0
-                      ? "linear-gradient(145deg, rgba(215,25,32,0.075), rgba(255,255,255,0.92))"
-                      : index === 1
-                      ? "linear-gradient(145deg, rgba(22,138,58,0.08), rgba(255,255,255,0.92))"
-                      : "linear-gradient(145deg, rgba(75,46,131,0.085), rgba(255,255,255,0.92))",
-                  border: `1px solid ${termColor}24`,
-                  boxShadow:
-                    "0 18px 48px rgba(15,23,42,0.07), inset 0 1px 0 rgba(255,255,255,0.9)",
+                  ...getColorfulGlassStyle(termColor, {
+                    tint: 0.12,
+                    edgeTint: 0.055,
+                    borderAlpha: 0.25,
+                    shadowAlpha: 0.08,
+                  }),
+                  border: editMode
+                    ? "1px dashed rgba(56,189,248,0.62)"
+                    : `1px solid ${colorToRgba(termColor, 0.25)}`,
                 }}
               >
                 <div
@@ -1559,17 +1680,26 @@ export function Academics({
           scale: 1.01,
         }}
         style={{
-          background:
-            "radial-gradient(circle at top right, rgba(124,92,196,0.42), transparent 42%), linear-gradient(145deg, rgba(11,16,32,0.98), rgba(75,46,131,0.94))",
-          border: "1px solid rgba(255,255,255,0.16)",
+          background: `linear-gradient(145deg, ${colorToRgba(
+            colors.purple,
+            0.15
+          )} 0%, rgba(255,255,255,0.94) 48%, ${colorToRgba(
+            colors.green,
+            0.075
+          )} 100%)`,
+          border: editMode
+            ? "1px dashed rgba(56,189,248,0.62)"
+            : `1px solid ${colorToRgba(colors.purple, 0.26)}`,
           boxShadow:
-            "0 28px 74px rgba(11,16,32,0.22), inset 0 1px 0 rgba(255,255,255,0.14)",
+            "0 26px 70px rgba(15,23,42,0.1), 0 12px 34px rgba(75,46,131,0.08), inset 0 1px 0 rgba(255,255,255,0.92)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
         }}
       >
         <div
           className="absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-70"
           style={{
-            background: "rgba(124,92,196,0.24)",
+            background: colorToRgba(colors.purple, 0.16),
             filter: "blur(42px)",
           }}
         />
@@ -1577,7 +1707,7 @@ export function Academics({
         <div
           className="absolute -left-20 bottom-0 h-56 w-56 rounded-full opacity-50"
           style={{
-            background: "rgba(22,138,58,0.14)",
+            background: colorToRgba(colors.green, 0.1),
             filter: "blur(44px)",
           }}
         />
@@ -1592,7 +1722,7 @@ export function Academics({
           />
 
           <h3
-            className="font-black text-3xl md:text-4xl text-white leading-tight mb-6"
+            className="font-black text-3xl md:text-4xl text-slate-950 leading-tight mb-6"
             style={{
               fontFamily: "var(--font-display)",
               letterSpacing: "-0.045em",
@@ -1603,7 +1733,7 @@ export function Academics({
 
           <p
             className="text-base leading-relaxed max-w-md"
-            style={{ color: "rgba(255,255,255,0.72)" }}
+            style={{ color: "rgba(15,23,42,0.66)" }}
           >
             {content.continuousDescription}
           </p>
@@ -1615,11 +1745,17 @@ export function Academics({
               key={`${item}-${assessmentIndex}`}
               className="rounded-2xl p-4 text-center font-black text-sm transition-all duration-300 hover:-translate-y-1"
               style={{
-                background:
-                  "linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08))",
-                border: "1px solid rgba(255,255,255,0.16)",
-                color: "rgba(255,255,255,0.9)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12)",
+                ...getColorfulGlassStyle(
+                  ACCENT_SEQUENCE[assessmentIndex % ACCENT_SEQUENCE.length],
+                  {
+                    tint: 0.12,
+                    edgeTint: 0.05,
+                    borderAlpha: 0.22,
+                    shadowAlpha: 0.055,
+                    blur: 14,
+                  }
+                ),
+                color: colors.dark,
               }}
             >
               {item}
@@ -1647,21 +1783,36 @@ export function Academics({
             scale: 1.01,
           }}
           style={{
-            background:
-              "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
-            border: "1px solid rgba(15,23,42,0.08)",
-            boxShadow: "0 24px 70px rgba(11,16,32,0.09)",
-            backdropFilter: "blur(16px)",
+            background: `linear-gradient(145deg, ${colorToRgba(
+              colors.green,
+              0.12
+            )} 0%, rgba(255,255,255,0.94) 48%, ${colorToRgba(
+              colors.purple,
+              0.065
+            )} 100%)`,
+            border: editMode
+              ? "1px dashed rgba(56,189,248,0.62)"
+              : `1px solid ${colorToRgba(colors.green, 0.24)}`,
+            boxShadow:
+              "0 24px 70px rgba(11,16,32,0.09), 0 12px 34px rgba(22,138,58,0.07), inset 0 1px 0 rgba(255,255,255,0.92)",
+            backdropFilter: "blur(18px)",
+            WebkitBackdropFilter: "blur(18px)",
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow =
-              "0 34px 86px rgba(11,16,32,0.15), 0 0 0 1px rgba(22,138,58,0.12)";
-            e.currentTarget.style.borderColor = "rgba(22,138,58,0.2)";
+          onMouseEnter={(event) => {
+            event.currentTarget.style.boxShadow =
+              "0 34px 86px rgba(11,16,32,0.15), 0 14px 38px rgba(22,138,58,0.11), inset 0 1px 0 rgba(255,255,255,0.94)";
+            event.currentTarget.style.borderColor = colorToRgba(
+              colors.green,
+              0.4
+            );
           }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow =
-              "0 24px 70px rgba(11,16,32,0.09)";
-            e.currentTarget.style.borderColor = "rgba(15,23,42,0.08)";
+          onMouseLeave={(event) => {
+            event.currentTarget.style.boxShadow =
+              "0 24px 70px rgba(11,16,32,0.09), 0 12px 34px rgba(22,138,58,0.07), inset 0 1px 0 rgba(255,255,255,0.92)";
+            event.currentTarget.style.borderColor = colorToRgba(
+              colors.green,
+              0.24
+            );
           }}
         >
           <div

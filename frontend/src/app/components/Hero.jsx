@@ -19,6 +19,21 @@ const palette = {
   cream: "#FFF8EE",
 };
 
+function hexToRgba(hex, alpha) {
+  const clean = String(hex || "").replace("#", "");
+  if (!/^[0-9a-fA-F]{6}$/.test(clean)) return `rgba(56,189,248,${alpha})`;
+
+  const red = Number.parseInt(clean.slice(0, 2), 16);
+  const green = Number.parseInt(clean.slice(2, 4), 16);
+  const blue = Number.parseInt(clean.slice(4, 6), 16);
+
+  return `rgba(${red},${green},${blue},${alpha})`;
+}
+
+function colorfulGlassBackground(color, strength = 0.16) {
+  return `linear-gradient(145deg, ${hexToRgba(color, strength)} 0%, rgba(255,255,255,0.84) 48%, ${hexToRgba(color, strength * 0.48)} 100%)`;
+}
+
 const API_URL = "https://school-website-backend-ixx2.onrender.com";
 
 const HARDCODED_HERO_IMAGE_URLS = [
@@ -328,14 +343,14 @@ function GlassStat({
         transition={{ delay, duration: 0.55 }}
         className="group min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl px-4 py-4 sm:p-5 cursor-pointer transition-all duration-300 hover:-translate-y-2"
         style={{
-          background:
-            "linear-gradient(145deg, rgba(255,255,255,0.82), rgba(255,255,255,0.50))",
+          background: colorfulGlassBackground(color, 0.18),
           border: editMode
             ? "1px dashed rgba(56,189,248,0.55)"
-            : "1px solid rgba(15,23,42,0.10)",
+            : `1px solid ${color}52`,
           boxShadow:
-            "0 20px 46px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.75)",
-          backdropFilter: "blur(18px)",
+            "0 18px 44px rgba(15,23,42,0.075), inset 0 1px 0 rgba(255,255,255,0.92)",
+          backdropFilter: "blur(22px) saturate(110%)",
+          WebkitBackdropFilter: "blur(22px) saturate(110%)",
         }}
       >
         <div
@@ -410,13 +425,13 @@ function FloatingTextTag({
         }}
         className="rounded-3xl px-4 py-3 xl:px-5 xl:py-4 cursor-pointer transition-all duration-300"
         style={{
-          background:
-            "linear-gradient(145deg, rgba(255,255,255,0.92), rgba(255,255,255,0.62))",
+          background: colorfulGlassBackground(color, 0.17),
           border: editMode
             ? "1px dashed rgba(56,189,248,0.75)"
-            : `1px solid ${color}55`,
-          boxShadow: "0 22px 52px rgba(15,23,42,0.12)",
-          backdropFilter: "blur(20px)",
+            : `1px solid ${color}50`,
+          boxShadow: "0 18px 44px rgba(15,23,42,0.075), inset 0 1px 0 rgba(255,255,255,0.92)",
+          backdropFilter: "blur(22px) saturate(110%)",
+          WebkitBackdropFilter: "blur(22px) saturate(110%)",
           maxWidth: editMode ? "190px" : "none",
         }}
       >
@@ -615,7 +630,12 @@ function HeroImageStage({ heroData, editMode, onEditTarget }) {
           />
 
           {heroImages.length > 1 && (
-            <div className="absolute left-5 top-5 z-30 flex items-center gap-2 rounded-full bg-white/86 px-3 py-2 shadow-xl backdrop-blur-md">
+            <div className="absolute left-5 top-5 z-30 flex items-center gap-2 rounded-full px-3 py-2 shadow-xl backdrop-blur-md"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(56,189,248,0.20), rgba(255,255,255,0.84), rgba(250,204,21,0.14))",
+                border: "1px solid rgba(56,189,248,0.28)",
+              }}>
               <span className="text-xs font-black text-slate-800">
                 {activeImageIndex + 1}/{heroImages.length}
               </span>
@@ -662,13 +682,14 @@ animate={{ opacity: 1, y: 56 }}
           className="flex items-center justify-center gap-3 rounded-2xl px-5 py-4 text-center"
           style={{
             background:
-              "linear-gradient(135deg, rgba(250,204,21,0.16), rgba(56,189,248,0.16), rgba(34,197,94,0.12))",
+              "linear-gradient(135deg, rgba(250,204,21,0.20) 0%, rgba(255,255,255,0.84) 42%, rgba(56,189,248,0.16) 72%, rgba(34,197,94,0.12) 100%)",
             border: editMode
               ? "1px dashed rgba(56,189,248,0.72)"
-              : "1px solid rgba(15,23,42,0.09)",
+              : "1px solid rgba(56,189,248,0.30)",
             boxShadow:
-              "0 18px 46px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.80)",
-            backdropFilter: "blur(18px)",
+              "0 18px 44px rgba(15,23,42,0.075), inset 0 1px 0 rgba(255,255,255,0.92)",
+            backdropFilter: "blur(22px) saturate(110%)",
+            WebkitBackdropFilter: "blur(22px) saturate(110%)",
           }}
         >
           <p
@@ -852,13 +873,14 @@ function Hero({
               className="inline-flex items-center gap-2 rounded-full px-5 py-2 mb-6"
               style={{
                 background:
-                  "linear-gradient(145deg, rgba(255,255,255,0.86), rgba(255,255,255,0.55))",
+                  "linear-gradient(145deg, rgba(255,255,255,0.82), rgba(255,255,255,0.60))",
                 border: editMode
                   ? "1px dashed rgba(56,189,248,0.65)"
                   : "1px solid rgba(15,23,42,0.08)",
                 boxShadow:
-                  "0 18px 42px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.70)",
-                backdropFilter: "blur(18px)",
+                  "0 16px 40px rgba(15,23,42,0.07), inset 0 1px 0 rgba(255,255,255,0.92)",
+                backdropFilter: "blur(22px) saturate(110%)",
+                WebkitBackdropFilter: "blur(22px) saturate(110%)",
                 color: palette.navy,
               }}
             >
@@ -1021,11 +1043,12 @@ function Hero({
                 style={{
                   color: palette.navy,
                   background:
-                    "linear-gradient(145deg, rgba(255,255,255,0.86), rgba(255,255,255,0.55))",
+                    "linear-gradient(145deg, rgba(255,255,255,0.82), rgba(255,255,255,0.60))",
                   border: "1px solid rgba(15,23,42,0.10)",
                   boxShadow:
-                    "0 18px 42px rgba(15,23,42,0.08)",
-                  backdropFilter: "blur(18px)",
+                    "0 16px 40px rgba(15,23,42,0.07), inset 0 1px 0 rgba(255,255,255,0.92)",
+                  backdropFilter: "blur(22px) saturate(110%)",
+                WebkitBackdropFilter: "blur(22px) saturate(110%)",
                 }}
               >
                 {heroData.secondaryButtonText}

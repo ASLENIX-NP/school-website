@@ -26,6 +26,57 @@ const colors = {
   orange: "#F97316",
 };
 
+function colorToRgba(color, alpha = 1) {
+  const raw = String(color || "").trim();
+
+  if (/^#[0-9A-Fa-f]{3}$/.test(raw)) {
+    const [r, g, b] = raw
+      .slice(1)
+      .split("")
+      .map((char) => Number.parseInt(char + char, 16));
+
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  if (/^#[0-9A-Fa-f]{6}$/.test(raw)) {
+    const r = Number.parseInt(raw.slice(1, 3), 16);
+    const g = Number.parseInt(raw.slice(3, 5), 16);
+    const b = Number.parseInt(raw.slice(5, 7), 16);
+
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  return raw || `rgba(75, 46, 131, ${alpha})`;
+}
+
+function getColorfulGlassStyle(color, options = {}) {
+  const accent = color || colors.purple;
+  const {
+    tint = 0.11,
+    edgeTint = 0.055,
+    borderAlpha = 0.24,
+    shadowAlpha = 0.075,
+    blur = 18,
+  } = options;
+
+  return {
+    background: `linear-gradient(145deg, ${colorToRgba(
+      accent,
+      tint
+    )} 0%, rgba(255,255,255,0.94) 48%, ${colorToRgba(
+      accent,
+      edgeTint
+    )} 100%)`,
+    border: `1px solid ${colorToRgba(accent, borderAlpha)}`,
+    boxShadow: `0 22px 58px rgba(15,23,42,0.085), 0 12px 34px ${colorToRgba(
+      accent,
+      shadowAlpha
+    )}, inset 0 1px 0 rgba(255,255,255,0.92)`,
+    backdropFilter: `blur(${blur}px)`,
+    WebkitBackdropFilter: `blur(${blur}px)`,
+  };
+}
+
 export const defaultAboutContent = {
   pageTitle: "About Us",
   pageSubtitle:
@@ -353,13 +404,22 @@ function AboutImage({ src, alt, imageData = {} }) {
 }
 
 function LeadershipImagePanel({ person, index, editMode, onEditTarget }) {
+  const panelColor = [
+    colors.purple,
+    colors.green,
+    colors.red,
+    colors.orange,
+  ][index % 4];
+
   return (
     <div
       className="w-full md:w-[320px] lg:w-[360px] flex-shrink-0 relative"
       style={{
-        background:
-          "linear-gradient(145deg, rgba(255,248,238,0.96), rgba(241,236,255,0.82))",
-        borderRight: "1px solid rgba(11,16,32,0.08)",
+        background: `linear-gradient(145deg, ${colorToRgba(
+          panelColor,
+          0.13
+        )}, rgba(255,255,255,0.86))`,
+        borderRight: `1px solid ${colorToRgba(panelColor, 0.18)}`,
       }}
     >
       <EditableWrap
@@ -458,12 +518,11 @@ function LeadershipMessageDetailPage({ person }) {
           transition={{ duration: 0.6 }}
           className="rounded-[34px] overflow-hidden"
           style={{
-            background:
-              "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,255,255,0.84))",
-            border: "1px solid rgba(11,16,32,0.08)",
-            boxShadow:
-              "0 28px 80px rgba(11,16,32,0.10), inset 0 1px 0 rgba(255,255,255,0.85)",
-            backdropFilter: "blur(18px)",
+            ...getColorfulGlassStyle(colors.purple, {
+              tint: 0.13,
+              edgeTint: 0.065,
+              shadowAlpha: 0.09,
+            }),
           }}
         >
           <div className="relative p-6 md:p-8 lg:p-10">
@@ -532,8 +591,13 @@ function LeadershipMessageDetailPage({ person }) {
             <div
               className="about-long-text whitespace-pre-line mt-8 rounded-[28px] p-5 text-base leading-[1.9] text-slate-600 md:p-7 md:text-lg"
               style={{
-                background: "rgba(248,250,252,0.78)",
-                border: "1px solid rgba(15,23,42,0.06)",
+                background: `linear-gradient(145deg, ${colorToRgba(
+                  colors.purple,
+                  0.07
+                )}, rgba(255,255,255,0.72))`,
+                border: `1px solid ${colorToRgba(colors.purple, 0.14)}`,
+                backdropFilter: "blur(14px)",
+                WebkitBackdropFilter: "blur(14px)",
               }}
             >
               {person.message}
@@ -554,6 +618,12 @@ function MessageCard({
 }) {
   const messageText = String(person.message || "").trim();
   const isLongMessage = shouldShowReadMore(messageText);
+  const messageColor = [
+    colors.purple,
+    colors.green,
+    colors.red,
+    colors.orange,
+  ][index % 4];
 
   return (
     <EditableWrap
@@ -571,14 +641,14 @@ function MessageCard({
         transition={{ duration: 0.6, delay: index * 0.12 }}
         className="rounded-3xl overflow-hidden flex flex-col md:flex-row"
         style={{
-          background:
-            "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+          ...getColorfulGlassStyle(messageColor, {
+            tint: 0.12,
+            edgeTint: 0.055,
+            shadowAlpha: 0.085,
+          }),
           border: editMode
             ? "1px dashed rgba(56,189,248,0.65)"
-            : "1px solid rgba(11,16,32,0.08)",
-          boxShadow:
-            "0 22px 62px rgba(11,16,32,0.08), inset 0 1px 0 rgba(255,255,255,0.85)",
-          backdropFilter: "blur(18px)",
+            : `1px solid ${colorToRgba(messageColor, 0.24)}`,
         }}
       >
         <LeadershipImagePanel
@@ -922,11 +992,20 @@ export function About({
                 <div
                   className="rounded-2xl p-5"
                   style={{
-                    background: "rgba(255,255,255,0.15)",
-                    backdropFilter: "blur(18px)",
+                    background: `linear-gradient(145deg, ${colorToRgba(
+                      colors.purple,
+                      0.26
+                    )}, rgba(255,255,255,0.16), ${colorToRgba(
+                      colors.green,
+                      0.12
+                    )})`,
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
                     border: editMode
                       ? "1px dashed rgba(255,255,255,0.8)"
-                      : "1px solid rgba(255,255,255,0.25)",
+                      : "1px solid rgba(255,255,255,0.32)",
+                    boxShadow:
+                      "0 22px 54px rgba(11,16,32,0.2), inset 0 1px 0 rgba(255,255,255,0.22)",
                   }}
                 >
                   <div
@@ -1033,13 +1112,15 @@ export function About({
                     transition={{ duration: 0.5, delay: index * 0.1 }}
                     className="group p-8 rounded-3xl transition-all duration-300 hover:-translate-y-3 cursor-default"
                     style={{
-                      background:
-                        "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.82))",
+                      ...getColorfulGlassStyle(cardColor, {
+                        tint: 0.13,
+                        edgeTint: 0.06,
+                        borderAlpha: 0.26,
+                        shadowAlpha: 0.085,
+                      }),
                       border: editMode
                         ? "2px dashed rgba(56,189,248,0.55)"
-                        : `2px solid ${cardColor}22`,
-                      boxShadow: "0 16px 42px rgba(11,16,32,0.08)",
-                      backdropFilter: "blur(14px)",
+                        : `1px solid ${colorToRgba(cardColor, 0.26)}`,
                     }}
                   >
                     <div
@@ -1164,11 +1245,6 @@ export function About({
               (mv) => mv.id === item.id
             );
             const mvColor = item.color || colors.green;
-            const gradientColors =
-              index === 0
-                ? `linear-gradient(135deg, ${colors.purple}15, ${colors.softPurple}08)`
-                : `linear-gradient(135deg, ${colors.green}15, ${colors.lightGreen}08)`;
-            const borderColors = index === 0 ? colors.purple : colors.green;
 
             return (
               <EditableWrap
@@ -1187,11 +1263,15 @@ export function About({
                   transition={{ duration: 0.65, delay: index * 0.1 }}
                   className="group rounded-3xl p-8 transition-all duration-300 hover:-translate-y-2 cursor-default"
                   style={{
-                    background: gradientColors,
+                    ...getColorfulGlassStyle(mvColor, {
+                      tint: 0.14,
+                      edgeTint: 0.065,
+                      borderAlpha: 0.27,
+                      shadowAlpha: 0.09,
+                    }),
                     border: editMode
                       ? "2px dashed rgba(56,189,248,0.55)"
-                      : `2px solid ${borderColors}22`,
-                    boxShadow: "0 18px 48px rgba(11,16,32,0.06)",
+                      : `1px solid ${colorToRgba(mvColor, 0.27)}`,
                   }}
                 >
                   <div
@@ -1342,12 +1422,15 @@ export function About({
                       <div
                         className="rounded-3xl p-6 md:p-8 transition-all duration-300 hover:-translate-y-1"
                         style={{
-                          background:
-                            "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78))",
+                          ...getColorfulGlassStyle(journeyColor, {
+                            tint: 0.115,
+                            edgeTint: 0.055,
+                            borderAlpha: 0.24,
+                            shadowAlpha: 0.075,
+                          }),
                           border: editMode
                             ? "2px dashed rgba(56,189,248,0.55)"
-                            : `2px solid ${journeyColor}15`,
-                          boxShadow: "0 16px 42px rgba(11,16,32,0.06)",
+                            : `1px solid ${colorToRgba(journeyColor, 0.24)}`,
                         }}
                       >
                         <div
