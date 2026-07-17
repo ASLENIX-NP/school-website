@@ -81,6 +81,58 @@ router.get("/latest/top3", async (req, res) => {
   }
 });
 
+
+/* ==========================================
+   RECORD ONE PUBLIC NOTICE VIEW
+========================================== */
+router.post("/:id/view", async (req, res) => {
+  try {
+    const { data: currentNotice, error: readError } = await supabase
+      .from("notices")
+      .select("id, view_count")
+      .eq("id", req.params.id)
+      .single();
+
+    if (readError || !currentNotice) {
+      return res.status(404).json({
+        success: false,
+        message: "Notice not found",
+      });
+    }
+
+    const nextViewCount =
+      Math.max(0, Number(currentNotice.view_count) || 0) + 1;
+
+    const { data, error } = await supabase
+      .from("notices")
+      .update({
+        view_count: nextViewCount,
+      })
+      .eq("id", req.params.id)
+      .select("id, view_count")
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    console.error("Record notice view error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to record notice view",
+    });
+  }
+});
+
 /* ==========================================
    GET SINGLE NOTICE
 ========================================== */

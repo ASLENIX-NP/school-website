@@ -92,6 +92,56 @@ router.patch("/popup-order", async (req, res) => {
   }
 });
 
+
+/* RECORD ONE PUBLIC ANNOUNCEMENT VIEW */
+router.post("/:id/view", async (req, res) => {
+  try {
+    const { data: currentAnnouncement, error: readError } = await supabase
+      .from("announcements")
+      .select("id, view_count")
+      .eq("id", req.params.id)
+      .single();
+
+    if (readError || !currentAnnouncement) {
+      return res.status(404).json({
+        success: false,
+        message: "Announcement not found",
+      });
+    }
+
+    const nextViewCount =
+      Math.max(0, Number(currentAnnouncement.view_count) || 0) + 1;
+
+    const { data, error } = await supabase
+      .from("announcements")
+      .update({
+        view_count: nextViewCount,
+      })
+      .eq("id", req.params.id)
+      .select("id, view_count")
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    console.error("Record announcement view error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to record announcement view",
+    });
+  }
+});
+
 /* UPDATE */
 router.put("/:id", async (req, res) => {
   try {
