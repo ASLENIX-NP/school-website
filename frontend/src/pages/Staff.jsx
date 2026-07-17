@@ -251,7 +251,7 @@ function ActionButtons({
   if (!editMode) return null;
 
   return (
-    <div className="absolute -top-3 -right-3 z-[120] flex items-center gap-2 opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200">
+    <div className="absolute top-3 right-3 z-[120] flex items-center gap-2 opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200">
       <button
         type="button"
         onClick={(event) => {

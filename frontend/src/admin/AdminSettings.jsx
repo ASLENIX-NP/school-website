@@ -3,15 +3,19 @@ import {
   ArrowLeft,
   User,
   Shield,
-  Mail,
   Lock,
   Image as ImageIcon,
   Save,
   Key,
+  LogOut,
+  Eye,
+  EyeOff,
+  X,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function AdminSettings() {
+  const navigate = useNavigate();
   const [settings, setSettings] = useState({
     admin_name: "Admin",
     admin_email: "",
@@ -19,7 +23,7 @@ export default function AdminSettings() {
     role: "Administrator",
     profile_photo: "",
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   
@@ -28,9 +32,11 @@ export default function AdminSettings() {
   const [twoFactor, setTwoFactor] = useState(false);
   const [sessionTimeout, setSessionTimeout] = useState("30");
   const [maxAttempts, setMaxAttempts] = useState("5");
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [newEmail, setNewEmail] = useState("");
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -184,51 +190,22 @@ export default function AdminSettings() {
     }
   };
 
-  const handleUpdateEmail = async () => {
-    try {
-      const res = await fetch(
-        "https://school-website-backend-ixx2.onrender.com/api/admin-settings/email",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: newEmail,
-          }),
-        }
-      );
-  
-      const data = await res.json();
-  
-      if (data.success) {
-        showNotification(
-            "Email updated successfully"
-          );
-  
-        setSettings({
-          ...settings,
-          admin_email: newEmail,
-        });
-  
-        setShowEmailModal(false);
-      } else {
-        showNotification(
-            "Failed to update email",
-            "error"
-          );
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const handlePasswordChange = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      showNotification("Complete all password fields.", "error");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      showNotification(
+        "New password must contain at least 8 characters.",
+        "error"
+      );
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
-        showNotification(
-            "Passwords do not match",
-            "error"
-          );
+      showNotification("Passwords do not match", "error");
       return;
     }
   
@@ -239,6 +216,11 @@ export default function AdminSettings() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            ...(localStorage.getItem("adminToken")
+              ? {
+                  Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                }
+              : {}),
           },
           body: JSON.stringify({
             currentPassword,
@@ -264,6 +246,30 @@ export default function AdminSettings() {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const logout = async () => {
+    const token = localStorage.getItem("adminToken");
+
+    try {
+      if (token) {
+        await fetch(
+          "https://school-website-backend-ixx2.onrender.com/api/admin/auth/logout",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      }
+    } catch (error) {
+      console.error("Admin logout error:", error);
+    } finally {
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
+      navigate("/admin/login");
     }
   };
 
@@ -301,20 +307,29 @@ export default function AdminSettings() {
       <span>Back to Dashboard</span>
     </Link>
 
-    <button
-      onClick={handleSaveChanges}
-      disabled={saving}
-      className="inline-flex w-fit items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-black shadow-lg transition-all hover:scale-105 disabled:opacity-70"
-      style={{
-        color: "#020617",
-        background: "linear-gradient(135deg, #FACC15, #38BDF8)",
-        boxShadow:
-          "0 18px 42px rgba(56,189,248,0.24), inset 0 1px 0 rgba(255,255,255,0.45)",
-      }}
-    >
-      <Save size={16} />
-      <span>{saving ? "Saving..." : saved ? "Saved ✓" : "Save Changes"}</span>
-    </button>
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        onClick={handleSaveChanges}
+        disabled={saving}
+        className="inline-flex w-fit items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black shadow-sm transition-all hover:scale-[1.02] disabled:opacity-70"
+        style={{
+          color: "#020617",
+          background: "linear-gradient(135deg, #FACC15, #38BDF8)",
+        }}
+      >
+        <Save size={16} />
+        <span>{saving ? "Saving..." : saved ? "Saved ✓" : "Save Security"}</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setShowLogoutConfirm(true)}
+        className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-black text-red-600"
+      >
+        <LogOut size={16} />
+        Logout
+      </button>
+    </div>
   </div>
 </div>
 
@@ -356,8 +371,8 @@ export default function AdminSettings() {
               <User className="text-purple-700" size={24} />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-slate-800">Admin Account</h2>
-              <p className="text-slate-500">Manage your administrator account info.</p>
+              <h2 className="text-3xl font-bold text-slate-800">Admin Profile</h2>
+              <p className="text-slate-500">Manage the administrator profile, password, and security.</p>
             </div>
           </div>
 
@@ -418,22 +433,6 @@ export default function AdminSettings() {
                 </div>
               </div>
 
-              <div
-                onClick={() => {
-                  setNewEmail(settings?.admin_email || "");
-                  setShowEmailModal(true);
-                }}
-                className="group border border-slate-150 rounded-3xl p-5 flex items-start gap-4 hover:bg-slate-50 hover:shadow-md cursor-pointer transition-all duration-200"
-              >
-                <div className="p-3 bg-slate-100 rounded-2xl text-slate-700 group-hover:bg-purple-100 group-hover:text-purple-700 transition-colors">
-                  <Mail size={20} />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-800">Change Email</h4>
-                  <p className="text-slate-500 text-sm mt-0.5">Update primary contact and system alert email address.</p>
-                </div>
-              </div>
-
               <div 
                onClick={() => {
                 console.log("CARD CLICKED");
@@ -461,7 +460,7 @@ export default function AdminSettings() {
         </div>
 
         {/* SECURITY SETTINGS SECTION */}
-        <div className="bg-white rounded-[40px] p-8 shadow-sm border border-slate-100">
+        <div className="bg-white rounded-[40px] p-8 shadow-sm border border-slate-100 max-h-[640px] overflow-y-auto overscroll-contain">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-14 h-14 rounded-2xl bg-purple-100 flex items-center justify-center">
               <Shield className="text-purple-700" size={24} />
@@ -601,78 +600,115 @@ export default function AdminSettings() {
         </div>
       </div>
 
-      {/* EMAIL MODAL */}
-      {showEmailModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-3xl p-8 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-6">Change Email</h2>
-            <label className="block text-sm font-medium mb-2">New Email</label>
-            <input
-              type="email"
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-              className="w-full border rounded-xl p-3"
-            />
-            <div className="flex justify-end gap-3 mt-6">
+      {/* PASSWORD MODAL */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-black text-slate-950">
+                  Change Password
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Enter the current password, then create a new password.
+                </p>
+              </div>
+
               <button
-                onClick={() => setShowEmailModal(false)}
-                className="px-4 py-2 rounded-xl border"
+                type="button"
+                onClick={() => setShowPasswordModal(false)}
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="relative">
+                <input
+                  type={showCurrentPassword ? "text" : "password"}
+                  placeholder="Current Password"
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                  className="w-full rounded-xl border border-slate-200 p-3 pr-12 outline-none focus:border-purple-400"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowCurrentPassword((visible) => !visible)
+                  }
+                  className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                >
+                  {showCurrentPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+
+              <div className="relative">
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  placeholder="New Password"
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                  className="w-full rounded-xl border border-slate-200 p-3 pr-12 outline-none focus:border-purple-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword((visible) => !visible)}
+                  className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                >
+                  {showNewPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm New Password"
+                  value={confirmPassword}
+                  onChange={(event) =>
+                    setConfirmPassword(event.target.value)
+                  }
+                  className="w-full rounded-xl border border-slate-200 p-3 pr-12 outline-none focus:border-purple-400"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowConfirmPassword((visible) => !visible)
+                  }
+                  className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPasswordModal(false)}
+                className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-black text-slate-600"
               >
                 Cancel
               </button>
               <button
-                onClick={handleUpdateEmail}
-                className="px-4 py-2 rounded-xl bg-purple-600 text-white"
+                type="button"
+                onClick={handlePasswordChange}
+                className="flex-1 rounded-xl bg-purple-700 py-3 text-sm font-black text-white"
               >
-                Update Email
+                Update Password
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* PASSWORD MODAL */}
-      {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl p-8 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-6">Change Password</h2>
-            <div className="space-y-4">
-              <input
-                type="password"
-                placeholder="Current Password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full border rounded-xl p-3"
-              />
-              <input
-                type="password"
-                placeholder="New Password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full border rounded-xl p-3"
-              />
-              <input
-                type="password"
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full border rounded-xl p-3"
-              />
-              <div className="flex gap-3 pt-3">
-                <button
-                  onClick={() => setShowPasswordModal(false)}
-                  className="flex-1 border rounded-xl py-3"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handlePasswordChange}
-                  className="flex-1 bg-purple-600 text-white rounded-xl py-3"
-                >
-                  Update
-                </button>
-              </div>
-              
             </div>
           </div>
         </div>
@@ -730,6 +766,41 @@ export default function AdminSettings() {
           ))
         )}
 
+      </div>
+    </div>
+  </div>
+)}
+{showLogoutConfirm && (
+  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
+    <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-600">
+        <LogOut className="h-5 w-5" />
+      </div>
+
+      <h2 className="text-xl font-black text-slate-950">
+        Log out of the admin panel?
+      </h2>
+
+      <p className="mt-2 text-sm leading-relaxed text-slate-500">
+        You will need to sign in again before editing the website.
+      </p>
+
+      <div className="mt-6 flex gap-3">
+        <button
+          type="button"
+          onClick={() => setShowLogoutConfirm(false)}
+          className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-black text-slate-600"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          onClick={logout}
+          className="flex-1 rounded-xl bg-red-600 py-3 text-sm font-black text-white"
+        >
+          Logout
+        </button>
       </div>
     </div>
   </div>

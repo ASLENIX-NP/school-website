@@ -26,6 +26,45 @@ async function fetchJsonWithTimeout(url, options = {}) {
   }
 }
 
+
+async function recordNoticeView(id) {
+  if (!id) return;
+
+  const storageKey = `baljagriti-notice-view-${id}`;
+
+  try {
+    if (sessionStorage.getItem(storageKey)) return;
+  } catch {
+    // Continue when browser storage is unavailable.
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/api/notices/${id}/view`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+      keepalive: true,
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(
+        message || `View request failed with status ${response.status}`
+      );
+    }
+
+    try {
+      sessionStorage.setItem(storageKey, "1");
+    } catch {
+      // The view was saved even when session storage is unavailable.
+    }
+  } catch (error) {
+    console.error("Could not record notice view:", error);
+  }
+}
+
 export default function NoticeDetail() {
   const { id } = useParams();
 
@@ -54,6 +93,10 @@ export default function NoticeDetail() {
         if (!alive) return;
 
         setNotice(loadedNotice);
+
+        if (loadedNotice) {
+          recordNoticeView(id);
+        }
       } catch (error) {
         if (!alive) return;
 
@@ -282,7 +325,3 @@ export default function NoticeDetail() {
     </section>
   );
 }
-
-
-
-

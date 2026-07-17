@@ -31,6 +31,50 @@ function colorfulGlassBackground(color, strength = 0.16) {
 
 const API_URL = "https://school-website-backend-ixx2.onrender.com";
 
+
+async function recordPublicView(type, id) {
+  if (!id || !["notice", "announcement"].includes(type)) return;
+
+  const storageKey = `baljagriti-${type}-view-${id}`;
+
+  try {
+    if (sessionStorage.getItem(storageKey)) return;
+  } catch {
+    // Continue when browser storage is unavailable.
+  }
+
+  const endpoint =
+    type === "notice"
+      ? `${API_URL}/api/notices/${id}/view`
+      : `${API_URL}/api/announcements/${id}/view`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+      keepalive: true,
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(
+        message || `View request failed with status ${response.status}`
+      );
+    }
+
+    try {
+      sessionStorage.setItem(storageKey, "1");
+    } catch {
+      // The view was saved even when session storage is unavailable.
+    }
+  } catch (error) {
+    console.error(`Could not record ${type} view:`, error);
+  }
+}
+
 export const defaultStatsSectionData = {
   eyebrow: "School Highlights",
   title: "Numbers that reflect our journey.",
@@ -1006,7 +1050,13 @@ function Stats({
                       >
                         <button
                           type="button"
-                          onClick={() => setSelectedNotice(notice)}
+                          onClick={() => {
+                            recordPublicView(
+                              "notice",
+                              notice.id || notice._id
+                            );
+                            setSelectedNotice(notice);
+                          }}
                           className="group relative block w-full overflow-hidden rounded-[32px] text-left transition-all duration-300 hover:-translate-y-1"
                           style={{
                             background: colorfulGlassBackground(accent.color, 0.14),

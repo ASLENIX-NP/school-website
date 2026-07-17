@@ -46,6 +46,50 @@ async function fetchJsonWithTimeout(url, options = {}) {
   }
 }
 
+
+async function recordPublicView(type, id) {
+  if (!id || !["notice", "announcement"].includes(type)) return;
+
+  const storageKey = `baljagriti-${type}-view-${id}`;
+
+  try {
+    if (sessionStorage.getItem(storageKey)) return;
+  } catch {
+    // Continue when browser storage is unavailable.
+  }
+
+  const endpoint =
+    type === "notice"
+      ? `${API_URL}/api/notices/${id}/view`
+      : `${API_URL}/api/announcements/${id}/view`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+      keepalive: true,
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(
+        message || `View request failed with status ${response.status}`
+      );
+    }
+
+    try {
+      sessionStorage.setItem(storageKey, "1");
+    } catch {
+      // The view was saved even when session storage is unavailable.
+    }
+  } catch (error) {
+    console.error(`Could not record ${type} view:`, error);
+  }
+}
+
 export const defaultNoticeSettings = {
   page_badge: "School Updates",
   page_title: "School Notices",
@@ -215,39 +259,6 @@ function AddNoticeButton({ editMode, onAddNotice }) {
   );
 }
 
-function ReactionButton({ type, emoji, count, isActive, onClick }) {
-  return (
-    <motion.button
-      whileHover={{ scale: 1.15 }}
-      whileTap={{ scale: 0.85 }}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick(type);
-      }}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200 text-sm"
-      style={{
-        background: isActive
-          ? "rgba(24,119,242,0.08)"
-          : "rgba(15,23,42,0.04)",
-        border: isActive
-          ? "1px solid rgba(24,119,242,0.25)"
-          : "1px solid transparent",
-        color: isActive ? colors.blue : "#64748B",
-      }}
-    >
-      <span className="text-base">{emoji}</span>
-      {count > 0 && (
-        <span
-          className="text-xs font-bold"
-          style={{ color: isActive ? colors.blue : "#64748B" }}
-        >
-          {count}
-        </span>
-      )}
-    </motion.button>
-  );
-}
-
 function NoticeCard({
   notice,
   index,
@@ -259,86 +270,6 @@ function NoticeCard({
   const isPinned = notice.pinned === true;
   const accentColor = isPinned ? colors.red : colors.green;
   const fileUrl = notice.pdf_url || notice.file_url;
-  const noticeId = notice.id || `notice-${index}`;
-
-  const reactionTypes = [
-    { type: "like", emoji: "👍", label: "Like" },
-    { type: "heart", emoji: "❤️", label: "Love" },
-    { type: "laugh", emoji: "😂", label: "Haha" },
-    { type: "sad", emoji: "😢", label: "Sad" },
-    { type: "fire", emoji: "🔥", label: "Fire" },
-  ];
-
-  const [reactions, setReactions] = useState({
-    like: 0,
-    heart: 0,
-    laugh: 0,
-    sad: 0,
-    fire: 0,
-  });
-
-  const [userReaction, setUserReaction] = useState(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(`notice_reactions_${noticeId}`);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setReactions(
-          parsed.counts || { like: 0, heart: 0, laugh: 0, sad: 0, fire: 0 }
-        );
-        setUserReaction(parsed.user || null);
-      } catch (error) {
-        console.error("Error loading reactions:", error);
-      }
-    }
-  }, [noticeId]);
-
-  const handleReaction = (type) => {
-    if (editMode) return;
-
-    const newReactions = { ...reactions };
-
-    if (userReaction === type) {
-      newReactions[type] = Math.max(0, newReactions[type] - 1);
-      setUserReaction(null);
-    } else {
-      if (userReaction) {
-        newReactions[userReaction] = Math.max(
-          0,
-          newReactions[userReaction] - 1
-        );
-      }
-
-      newReactions[type] = (newReactions[type] || 0) + 1;
-      setUserReaction(type);
-    }
-
-    setReactions(newReactions);
-
-    localStorage.setItem(
-      `notice_reactions_${noticeId}`,
-      JSON.stringify({
-        counts: newReactions,
-        user: userReaction === type ? null : type,
-      })
-    );
-  };
-
-  const totalReactions = Object.values(reactions).reduce((a, b) => a + b, 0);
-
-  const getTopReaction = () => {
-    const sorted = Object.entries(reactions).sort((a, b) => b[1] - a[1]);
-    const top = sorted.find(([, count]) => count > 0);
-
-    if (top) {
-      return reactionTypes.find((item) => item.type === top[0])?.emoji || "";
-    }
-
-    return null;
-  };
-
-  const topEmoji = getTopReaction();
 
   const handleDownload = async (e) => {
     e.stopPropagation();
@@ -447,27 +378,6 @@ function NoticeCard({
               {notice.description || "Please open this notice for more details."}
             </p>
 
-            {!editMode && (
-              <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                {reactionTypes.map(({ type, emoji }) => (
-                  <ReactionButton
-                    key={type}
-                    type={type}
-                    emoji={emoji}
-                    count={reactions[type] || 0}
-                    isActive={userReaction === type}
-                    onClick={handleReaction}
-                  />
-                ))}
-
-                {totalReactions > 0 && (
-                  <div className="flex items-center gap-1 ml-1 text-xs text-slate-400">
-                    <span className="text-sm">{topEmoji}</span>
-                    <span className="font-medium">{totalReactions}</span>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </motion.article>
@@ -937,7 +847,7 @@ export default function Notices({
                   }}
                 />
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div
                     className="rounded-3xl p-4 text-center"
                     style={{
@@ -970,21 +880,6 @@ export default function Notices({
                     </p>
                   </div>
 
-                  <div
-                    className="rounded-3xl p-4 text-center"
-                    style={{
-                      background: "#fff",
-                      border: "1px solid rgba(15,23,42,0.08)",
-                    }}
-                  >
-                    <h3 className="text-4xl font-black text-slate-950">
-                      {announcements.length}
-                    </h3>
-
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-2">
-                      Announcements
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -996,19 +891,22 @@ export default function Notices({
                 className="rounded-[28px] px-6 py-5"
                 style={{
                   background:
-                    "linear-gradient(145deg, rgba(15,23,42,0.97), rgba(30,41,59,0.94))",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  boxShadow: "0 18px 46px rgba(15,23,42,0.18)",
+                    "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,245,255,0.94), rgba(240,253,247,0.92))",
+                  border: "1px solid rgba(75,46,131,0.14)",
+                  boxShadow:
+                    "0 18px 46px rgba(75,46,131,0.09), inset 0 1px 0 rgba(255,255,255,0.95)",
+                  backdropFilter: "blur(18px)",
+                  WebkitBackdropFilter: "blur(18px)",
                 }}
               >
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <div className="text-sm font-black uppercase tracking-[0.18em] text-white/45">
+                    <div className="text-sm font-black uppercase tracking-[0.18em] text-purple-500">
                       Notice Board
                     </div>
 
                     <h2
-                      className="mt-1 text-2xl text-white"
+                      className="mt-1 text-2xl text-slate-950"
                       style={{
                         fontFamily: "var(--font-display)",
                         fontWeight: 850,
@@ -1020,7 +918,7 @@ export default function Notices({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
-                    <div className="text-sm font-semibold text-white/55">
+                    <div className="text-sm font-semibold text-slate-500">
                       Newest appears first
                     </div>
                     <AddNoticeButton editMode={editMode} onAddNotice={onAddNotice} />
@@ -1065,7 +963,13 @@ export default function Notices({
                           key={announcement.id || index}
                           announcement={announcement}
                           index={index}
-                          onClick={() => setSelectedAnnouncement(announcement)}
+                          onClick={() => {
+                            recordPublicView(
+                              "announcement",
+                              announcement.id
+                            );
+                            setSelectedAnnouncement(announcement);
+                          }}
                         />
                       ))}
                     </div>
@@ -1103,7 +1007,13 @@ export default function Notices({
                           editMode={editMode}
                           onEditTarget={onEditTarget}
                           onDeleteTarget={onDeleteTarget}
-                          onClick={() => setSelectedNotice(notice)}
+                          onClick={() => {
+                            recordPublicView(
+                              "notice",
+                              notice.id || notice._id
+                            );
+                            setSelectedNotice(notice);
+                          }}
                         />
                       ))}
 
@@ -1257,7 +1167,3 @@ export default function Notices({
     </>
   );
 }
-
-
-
-

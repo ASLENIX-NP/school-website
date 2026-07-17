@@ -3,7 +3,7 @@ import defaultSchoolLogo from "../assets/school-logo.jpeg";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
-import { Lock, Mail, ArrowRight } from "lucide-react";
+import { Lock, Mail, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 const colors = {
   red: "#D71920",
@@ -25,6 +25,7 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [schoolLogo, setSchoolLogo] = useState(defaultSchoolLogo);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -223,7 +224,7 @@ export default function AdminLogin() {
                 autoComplete="off"
                 inputMode="email"
                 spellCheck="false"
-                className="w-full pl-12 pr-4 py-4 rounded-2xl outline-none text-white"
+                className="w-full pl-12 pr-12 py-4 rounded-2xl outline-none text-white"
                 style={{
                   background: "rgba(255,255,255,0.08)",
                   border: "1px solid rgba(255,255,255,0.14)",
@@ -242,7 +243,7 @@ export default function AdminLogin() {
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/42" />
               <input
                 name="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={form.password}
                 onChange={handleChange}
                 required
@@ -255,6 +256,20 @@ export default function AdminLogin() {
                   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
                 }}
               />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/55 transition-colors hover:text-white"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
             </div>
           </div>
 

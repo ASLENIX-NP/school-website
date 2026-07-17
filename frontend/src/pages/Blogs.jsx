@@ -181,7 +181,6 @@ function BlogCard({ post, index }) {
 export default function Blogs() {
   const [content, setContent] = useState(() => mergeBlogContent(defaultBlogContent));
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All");
 
   useEffect(() => {
     let alive = true;
@@ -216,13 +215,12 @@ export default function Blogs() {
         if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
         return String(b.date || "").localeCompare(String(a.date || ""));
       })
-      .filter((post) => category === "All" || post.category === category)
       .filter((post) => {
         if (!searchText) return true;
         const haystack = `${post.title} ${post.category} ${post.excerpt} ${post.content}`.toLowerCase();
         return haystack.includes(searchText);
       });
-  }, [content.posts, category, query]);
+  }, [content.posts, query]);
 
   const featuredPosts = visiblePosts.slice(0, 3);
 
@@ -242,7 +240,7 @@ export default function Blogs() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55 }}
-          className="mb-10 grid gap-8 lg:grid-cols-[1fr_360px] lg:items-end"
+          className="mb-10 grid gap-8 lg:grid-cols-[1fr_330px] lg:items-center"
         >
           <div>
             <span
@@ -275,7 +273,7 @@ export default function Blogs() {
           </div>
 
           <div
-            className="rounded-[28px] bg-white/80 p-5 shadow-xl"
+            className="self-center rounded-[24px] bg-white/88 p-4 shadow-xl"
             style={{ border: "1px solid rgba(15,23,42,0.08)", backdropFilter: "blur(18px)" }}
           >
             <label className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-slate-400">
@@ -293,20 +291,6 @@ export default function Blogs() {
               </div>
             </div>
 
-            <label className="mb-2 mt-4 block text-xs font-black uppercase tracking-[0.14em] text-slate-400">
-              Category
-            </label>
-            <select
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 outline-none"
-            >
-              {(content.categories || ["All"]).map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
           </div>
         </motion.div>
 

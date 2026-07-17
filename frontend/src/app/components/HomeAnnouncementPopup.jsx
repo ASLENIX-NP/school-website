@@ -4,6 +4,50 @@ import { motion, AnimatePresence } from "motion/react";
 
 const API_URL = "https://school-website-backend-ixx2.onrender.com";
 
+
+async function recordPublicView(type, id) {
+  if (!id || !["notice", "announcement"].includes(type)) return;
+
+  const storageKey = `baljagriti-${type}-view-${id}`;
+
+  try {
+    if (sessionStorage.getItem(storageKey)) return;
+  } catch {
+    // Continue when browser storage is unavailable.
+  }
+
+  const endpoint =
+    type === "notice"
+      ? `${API_URL}/api/notices/${id}/view`
+      : `${API_URL}/api/announcements/${id}/view`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+      keepalive: true,
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(
+        message || `View request failed with status ${response.status}`
+      );
+    }
+
+    try {
+      sessionStorage.setItem(storageKey, "1");
+    } catch {
+      // The view was saved even when session storage is unavailable.
+    }
+  } catch (error) {
+    console.error(`Could not record ${type} view:`, error);
+  }
+}
+
 function getImageUrl(item) {
   return item?.image_url || item?.imageUrl || item?.image || "";
 }
@@ -81,6 +125,16 @@ export default function HomeAnnouncementPopup() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const visibleAnnouncement = announcements[currentIndex];
+
+    if (visibleAnnouncement?.id) {
+      recordPublicView("announcement", visibleAnnouncement.id);
+    }
+  }, [open, currentIndex, announcements]);
 
   useEffect(() => {
     if (!open) return;

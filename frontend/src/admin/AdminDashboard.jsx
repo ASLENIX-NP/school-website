@@ -1,5 +1,5 @@
 import defaultSchoolLogo from "../assets/school-logo.jpeg";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
@@ -13,20 +13,20 @@ import {
   Users,
   Phone,
   Footprints,
-  LogOut,
   Settings,
   School,
   Newspaper,
   Inbox,
-  Mail,
   Menu,
   X,
-  FileText,
   Megaphone,
   Clock,
   ChevronRight,
   Globe,
   Navigation,
+  Eye,
+  ArrowUp,
+  Mail,
 } from "lucide-react";
 
 import AdminHome from "./AdminHome";
@@ -46,6 +46,7 @@ import AdminFooter from "./AdminFooter";
 import AdminSettings from "./AdminSettings";
 
 const API_BASE = "https://school-website-backend-ixx2.onrender.com";
+const SIDEBAR_SCROLL_KEY = "baljagriti-admin-sidebar-scroll";
 
 const colors = {
   green: "#168A3A",
@@ -54,7 +55,6 @@ const colors = {
   dark: "#0F172A",
   cyan: "#0284C7",
   orange: "#EA580C",
-  indigo: "#4F46E5",
 };
 
 const navigationItems = [
@@ -77,43 +77,35 @@ const navigationItems = [
   { title: "Manage Gallery", icon: Images, editorKey: "gallery" },
   { title: "Manage Contact", icon: Phone, editorKey: "contact" },
   { title: "Manage Footer", icon: Footprints, editorKey: "footer" },
-  { title: "Website Settings", icon: Settings, editorKey: "settings" },
 ];
 
-const editorLabels = Object.fromEntries(
-  navigationItems.map((item) => [item.editorKey, item.title])
-);
+const editorLabels = {
+  navbar: "Manage Navbar",
+  home: "Manage Home",
+  about: "Manage About",
+  academics: "Manage Academics",
+  admissions: "Manage Admissions",
+  notices: "Manage Notices",
+  calendar: "Manage Calendar",
+  blogs: "Manage Blog",
+  announcements: "Manage Announcements",
+  staff: "Manage Staff",
+  facilities: "Manage Facilities",
+  gallery: "Manage Gallery",
+  contact: "Manage Contact",
+  footer: "Manage Footer",
+  settings: "Admin Profile",
+};
 
 const ui = {
   page: "#F5F6F8",
   sidebar: "#FFFFFF",
-  card: "#FFFFFF",
   header: "rgba(255,255,255,0.96)",
   border: "#E5E7EB",
   borderSoft: "#EEF0F3",
   text: "#111827",
   muted: "#6B7280",
-  subtle: "#9CA3AF",
 };
-
-function formatDate(value) {
-  if (!value) return "Recently";
-
-  try {
-    return new Date(value).toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  } catch {
-    return "Recently";
-  }
-}
-
-function getSourceLabel(source) {
-  return source === "admission" ? "Admissions" : "Contact";
-}
 
 function getCurrentTime() {
   return new Date().toLocaleString("en-US", {
@@ -128,18 +120,103 @@ function getInitial(value = "") {
   return String(value || "A").trim().charAt(0).toUpperCase() || "A";
 }
 
+function getItemViews(item) {
+  return Math.max(0, Number(item?.view_count) || 0);
+}
+
+function sumViews(items = []) {
+  return items.reduce((total, item) => total + getItemViews(item), 0);
+}
+
+function sortByViews(items = []) {
+  return [...items].sort((first, second) => {
+    const viewDifference = getItemViews(second) - getItemViews(first);
+
+    if (viewDifference !== 0) return viewDifference;
+
+    const firstTime = new Date(first?.created_at || first?.notice_date || 0).getTime();
+    const secondTime = new Date(
+      second?.created_at || second?.notice_date || 0
+    ).getTime();
+
+    return secondTime - firstTime;
+  });
+}
+
+function AnalyticsRow({
+  title,
+  subtitle,
+  views,
+  color,
+  badge,
+}) {
+  return (
+    <div
+      className="flex items-center justify-between gap-4 rounded-xl px-4 py-3"
+      style={{
+        background: "#FFFFFF",
+        border: `1px solid ${ui.borderSoft}`,
+      }}
+    >
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            className="h-2 w-2 flex-shrink-0 rounded-full"
+            style={{ background: color }}
+          />
+          <h4 className="truncate text-sm font-bold text-slate-900">
+            {title || "Untitled item"}
+          </h4>
+        </div>
+
+        <div className="mt-1 flex flex-wrap items-center gap-2 pl-4 text-[11px] text-slate-400">
+          {subtitle && <span>{subtitle}</span>}
+          {badge && (
+            <span
+              className="rounded-full px-2 py-0.5 font-semibold"
+              style={{
+                background: `${color}10`,
+                color,
+              }}
+            >
+              {badge}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div
+        className="flex flex-shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold"
+        style={{
+          background: `${color}0D`,
+          color,
+        }}
+      >
+        <Eye className="h-3.5 w-3.5" />
+        {views}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const desktopNavRef = useRef(null);
+  const mobileNavRef = useRef(null);
+  const contentScrollRef = useRef(null);
+  const sidebarScrollPositionRef = useRef(
+    typeof window !== "undefined"
+      ? Number(sessionStorage.getItem(SIDEBAR_SCROLL_KEY) || 0)
+      : 0
+  );
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [notices, setNotices] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
-  const [staff, setStaff] = useState([]);
-  const [messagesLoading, setMessagesLoading] = useState(true);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [currentTime] = useState(getCurrentTime());
   const [activeEditor, setActiveEditor] = useState(null);
+  const [showGoTop, setShowGoTop] = useState(false);
   const [schoolBrand, setSchoolBrand] = useState({
     schoolName: "Baljagriti",
     schoolSubtitle: "Secondary English School",
@@ -158,154 +235,154 @@ export default function AdminDashboard() {
     let alive = true;
 
     const loadData = async () => {
-      setMessagesLoading(true);
-
       const requestOptions = { timeout: 12000 };
 
-      try {
-        const [msgRes, noticeRes, annRes, staffRes, navbarRes] =
-          await Promise.allSettled([
-            axios.get(`${API_BASE}/api/contact-messages`, requestOptions),
-            axios.get(`${API_BASE}/api/notices`, requestOptions),
-            axios.get(`${API_BASE}/api/announcements`, requestOptions),
-            axios.get(`${API_BASE}/api/site-content/staff`, requestOptions),
-            axios.get(`${API_BASE}/api/site-content/navbar`, requestOptions),
-          ]);
+      const [messageResponse, noticeResponse, announcementResponse, navbarResponse] =
+        await Promise.allSettled([
+          axios.get(`${API_BASE}/api/contact-messages`, requestOptions),
+          axios.get(`${API_BASE}/api/notices`, requestOptions),
+          axios.get(`${API_BASE}/api/announcements`, requestOptions),
+          axios.get(`${API_BASE}/api/site-content/navbar`, requestOptions),
+        ]);
 
-        if (!alive) return;
+      if (!alive) return;
 
-        if (msgRes.status === "fulfilled") {
-          setMessages(
-            Array.isArray(msgRes.value.data?.data)
-              ? msgRes.value.data.data
-              : []
-          );
-        }
-
-        if (noticeRes.status === "fulfilled") {
-          setNotices(
-            Array.isArray(noticeRes.value.data?.data)
-              ? noticeRes.value.data.data
-              : []
-          );
-        }
-
-        if (annRes.status === "fulfilled") {
-          setAnnouncements(
-            Array.isArray(annRes.value.data?.data)
-              ? annRes.value.data.data
-              : []
-          );
-        }
-
-        if (staffRes.status === "fulfilled") {
-          const staffContent = staffRes.value.data?.data?.content;
-
-          setStaff(
-            Array.isArray(staffContent?.staff) ? staffContent.staff : []
-          );
-        }
-
-        if (navbarRes.status === "fulfilled") {
-          const navbarContent =
-            navbarRes.value.data?.data?.content || {};
-
-          setSchoolBrand((previous) => ({
-            schoolName:
-              String(navbarContent.schoolName || "").trim() ||
-              previous.schoolName,
-            schoolSubtitle:
-              String(navbarContent.schoolSubtitle || "").trim() ||
-              previous.schoolSubtitle,
-            logoUrl: String(navbarContent.logoUrl || "").trim(),
-          }));
-        }
-
-        [msgRes, noticeRes, annRes, staffRes, navbarRes].forEach(
-          (result) => {
-            if (result.status === "rejected") {
-              console.error(
-                "Dashboard data load error:",
-                result.reason
-              );
-            }
-          }
+      if (messageResponse.status === "fulfilled") {
+        setMessages(
+          Array.isArray(messageResponse.value.data?.data)
+            ? messageResponse.value.data.data
+            : []
         );
-      } finally {
-        if (alive) setMessagesLoading(false);
       }
+
+      if (noticeResponse.status === "fulfilled") {
+        setNotices(
+          Array.isArray(noticeResponse.value.data?.data)
+            ? noticeResponse.value.data.data
+            : []
+        );
+      }
+
+      if (announcementResponse.status === "fulfilled") {
+        setAnnouncements(
+          Array.isArray(announcementResponse.value.data?.data)
+            ? announcementResponse.value.data.data
+            : []
+        );
+      }
+
+      if (navbarResponse.status === "fulfilled") {
+        const navbarContent =
+          navbarResponse.value.data?.data?.content || {};
+
+        setSchoolBrand((previous) => ({
+          schoolName:
+            String(navbarContent.schoolName || "").trim() ||
+            previous.schoolName,
+          schoolSubtitle:
+            String(navbarContent.schoolSubtitle || "").trim() ||
+            previous.schoolSubtitle,
+          logoUrl: String(navbarContent.logoUrl || "").trim(),
+        }));
+      }
+
+      [
+        messageResponse,
+        noticeResponse,
+        announcementResponse,
+        navbarResponse,
+      ].forEach((result) => {
+        if (result.status === "rejected") {
+          console.error("Dashboard data load error:", result.reason);
+        }
+      });
+    };
+
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") {
+        loadData();
+      }
+    };
+
+    const refreshWhenFocused = () => {
+      loadData();
     };
 
     loadData();
 
+    window.addEventListener("focus", refreshWhenFocused);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
     return () => {
       alive = false;
+      window.removeEventListener("focus", refreshWhenFocused);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, []);
 
-  const logout = async () => {
-    const token = localStorage.getItem("adminToken");
+  useEffect(() => {
+    const restoreSidebarScroll = () => {
+      const savedPosition = sidebarScrollPositionRef.current;
 
-    try {
-      if (token) {
-        await axios.post(
-          `${API_BASE}/api/admin/auth/logout`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+      if (desktopNavRef.current) {
+        desktopNavRef.current.scrollTop = savedPosition;
       }
-    } catch (error) {
-      console.error("Admin logout error:", error);
-    } finally {
-      localStorage.removeItem("adminToken");
-      localStorage.removeItem("adminUser");
-      setShowLogoutConfirm(false);
-      navigate("/admin/login");
-    }
+
+      if (mobileNavRef.current) {
+        mobileNavRef.current.scrollTop = savedPosition;
+      }
+    };
+
+    const frame = window.requestAnimationFrame(restoreSidebarScroll);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [activeEditor, sidebarOpen]);
+
+  const saveSidebarScroll = (event) => {
+    const nextPosition = event.currentTarget.scrollTop;
+
+    sidebarScrollPositionRef.current = nextPosition;
+    sessionStorage.setItem(SIDEBAR_SCROLL_KEY, String(nextPosition));
   };
 
-  const latestMessages = messages.slice(0, 4);
-  const unreadCount = messages.filter((message) => !message.is_read).length;
-  const noticeCount = notices.length;
-  const announcementCount = announcements.length;
-  const pinnedCount = notices.filter((notice) => notice.pinned).length;
+  const openEditor = (editorKey, navElement = null) => {
+    if (navElement) {
+      const navigation = navElement.closest("nav");
 
-  const stats = [
-    {
-      icon: FileText,
-      label: "Total Notices",
-      value: noticeCount,
-      sub: `${pinnedCount} pinned`,
-      color: colors.red,
-    },
-    {
-      icon: Megaphone,
-      label: "Announcements",
-      value: announcementCount,
-      sub: `${
-        announcements.filter((item) => item.active !== false).length
-      } active`,
-      color: colors.orange,
-    },
-    {
-      icon: Inbox,
-      label: "Messages",
-      value: messages.length,
-      sub: `${unreadCount} unread`,
-      color: colors.purple,
-    },
-    {
-      icon: Users,
-      label: "Staff Members",
-      value: staff.length,
-      sub: "Published profiles",
-      color: colors.cyan,
-    },
-  ];
+      if (navigation) {
+        sidebarScrollPositionRef.current = navigation.scrollTop;
+        sessionStorage.setItem(
+          SIDEBAR_SCROLL_KEY,
+          String(navigation.scrollTop)
+        );
+      }
+    }
+
+    setActiveEditor(editorKey);
+    setSidebarOpen(false);
+
+    window.requestAnimationFrame(() => {
+      contentScrollRef.current?.scrollTo({
+        top: 0,
+        behavior: "auto",
+      });
+    });
+  };
+
+  const unreadCount = messages.filter((message) => !message.is_read).length;
+  const admissionMessageCount = messages.filter(
+    (message) => message.source === "admission"
+  ).length;
+  const contactMessageCount = messages.length - admissionMessageCount;
+
+  const totalNoticeViews = sumViews(notices);
+  const totalAnnouncementViews = sumViews(announcements);
+  const totalContentViews = totalNoticeViews + totalAnnouncementViews;
+
+  const noticeAnalytics = sortByViews(notices);
+  const announcementAnalytics = sortByViews(announcements);
 
   const currentEditorTitle =
     activeEditor === null
@@ -315,7 +392,7 @@ export default function AdminDashboard() {
           activeEditor.charAt(0).toUpperCase() + activeEditor.slice(1)
         }`;
 
-  const SidebarContent = () => (
+  const SidebarContent = ({ navRef }) => (
     <>
       <div
         className="flex-shrink-0 px-4 pb-4 pt-5"
@@ -350,33 +427,13 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-
-        <div
-          className="mt-4 flex items-center gap-3 rounded-xl px-3 py-3"
-          style={{
-            background: "#F8F9FB",
-            border: `1px solid ${ui.border}`,
-          }}
-        >
-          <div
-            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-            style={{ background: colors.purple }}
-          >
-            {getInitial(adminUser.name || adminUser.email)}
-          </div>
-
-          <div className="min-w-0">
-            <div className="truncate text-xs font-bold text-slate-900">
-              {adminUser.name || "Administrator"}
-            </div>
-            <div className="mt-0.5 truncate text-[10px] text-slate-500">
-              {adminUser.email || "admin@baljagriti.com"}
-            </div>
-          </div>
-        </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav
+        ref={navRef}
+        onScroll={saveSidebarScroll}
+        className="flex-1 overflow-y-auto px-3 py-4"
+      >
         <div className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
           Website
         </div>
@@ -393,10 +450,9 @@ export default function AdminDashboard() {
                 key={item.title}
                 type="button"
                 aria-current={isActive ? "page" : undefined}
-                onClick={() => {
-                  setSidebarOpen(false);
-                  setActiveEditor(item.editorKey);
-                }}
+                onClick={(event) =>
+                  openEditor(item.editorKey, event.currentTarget)
+                }
                 className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors"
                 style={{
                   background: isActive ? "#F1F3F6" : "transparent",
@@ -428,45 +484,45 @@ export default function AdminDashboard() {
                   strokeWidth={isActive ? 2.2 : 1.8}
                 />
 
-                <span className="truncate text-[13px]">
-                  {item.title}
-                </span>
+                <span className="truncate text-[13px]">{item.title}</span>
               </button>
             );
           })}
         </div>
       </nav>
 
-      <div className="flex-shrink-0 px-3 pb-4">
-        <div
-          className="mb-3 h-px"
-          style={{ background: ui.border }}
-        />
+      <div className="flex-shrink-0 px-3 pb-4 pt-2">
+        <div className="mb-3 h-px" style={{ background: ui.border }} />
 
-        <button
-          type="button"
-          onClick={() => setShowLogoutConfirm(true)}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[13px] font-semibold transition-colors"
-          style={{ color: colors.red }}
-          onMouseEnter={(event) => {
-            event.currentTarget.style.background = "#FEF2F2";
-          }}
-          onMouseLeave={(event) => {
-            event.currentTarget.style.background = "transparent";
+        <div
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-3"
+          style={{
+            background: "#F8F9FB",
+            border: `1px solid ${ui.border}`,
           }}
         >
-          <LogOut className="h-[17px] w-[17px] flex-shrink-0" />
-          Logout
-        </button>
+          <div
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+            style={{ background: colors.purple }}
+          >
+            {getInitial(adminUser.name || adminUser.email)}
+          </div>
+
+          <div className="min-w-0">
+            <div className="truncate text-xs font-bold text-slate-900">
+              {adminUser.name || "Administrator"}
+            </div>
+            <div className="mt-0.5 truncate text-[10px] text-slate-500">
+              {adminUser.email || "admin@baljagriti.com"}
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );
 
   return (
-    <div
-      className="flex min-h-screen"
-      style={{ background: ui.page }}
-    >
+    <div className="flex min-h-screen" style={{ background: ui.page }}>
       <AnimatePresence>
         {sidebarOpen && (
           <motion.button
@@ -495,7 +551,7 @@ export default function AdminDashboard() {
           boxShadow: "12px 0 40px rgba(15,23,42,0.10)",
         }}
       >
-        <SidebarContent />
+        <SidebarContent navRef={mobileNavRef} />
       </motion.aside>
 
       <aside
@@ -507,7 +563,7 @@ export default function AdminDashboard() {
           top: 0,
         }}
       >
-        <SidebarContent />
+        <SidebarContent navRef={desktopNavRef} />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -572,7 +628,7 @@ export default function AdminDashboard() {
                 href="/"
                 target="_blank"
                 rel="noreferrer"
-                className="flex h-9 items-center gap-2 rounded-lg px-2.5 text-xs font-semibold text-slate-600 transition-colors sm:px-3"
+                className="flex h-9 items-center gap-2 rounded-lg px-2.5 text-xs font-semibold text-slate-600 sm:px-3"
                 style={{
                   background: "#FFFFFF",
                   border: `1px solid ${ui.border}`,
@@ -585,8 +641,8 @@ export default function AdminDashboard() {
               {activeEditor && (
                 <button
                   type="button"
-                  onClick={() => setActiveEditor(null)}
-                  className="flex h-9 items-center gap-2 rounded-lg px-2.5 text-xs font-semibold text-slate-600 transition-colors sm:px-3"
+                  onClick={() => openEditor(null)}
+                  className="flex h-9 items-center gap-2 rounded-lg px-2.5 text-xs font-semibold text-slate-600 sm:px-3"
                   style={{
                     background: "#FFFFFF",
                     border: `1px solid ${ui.border}`,
@@ -599,22 +655,45 @@ export default function AdminDashboard() {
 
               <button
                 type="button"
-                onClick={() => setShowLogoutConfirm(true)}
-                className="flex h-9 items-center gap-2 rounded-lg px-2.5 text-xs font-semibold sm:px-3"
+                onClick={() => openEditor("settings")}
+                className="flex h-10 items-center gap-2 rounded-xl px-2 text-left sm:px-2.5"
                 style={{
-                  background: "#FFF7F7",
-                  border: "1px solid #FECACA",
-                  color: colors.red,
+                  background:
+                    activeEditor === "settings" ? "#F3F0FA" : "#FFFFFF",
+                  border:
+                    activeEditor === "settings"
+                      ? "1px solid rgba(75,46,131,0.24)"
+                      : `1px solid ${ui.border}`,
                 }}
+                title="Open admin profile"
               >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden md:inline">Logout</span>
+                <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg bg-white">
+                  <img
+                    src={schoolBrand.logoUrl || defaultSchoolLogo}
+                    alt="Admin profile"
+                    className="h-full w-full object-contain p-0.5"
+                    onError={(event) => {
+                      if (event.currentTarget.src !== defaultSchoolLogo) {
+                        event.currentTarget.src = defaultSchoolLogo;
+                      }
+                    }}
+                  />
+                </span>
+                <span className="hidden text-xs font-bold text-slate-800 md:block">
+                  Profile
+                </span>
               </button>
             </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto">
+        <div
+          ref={contentScrollRef}
+          onScroll={(event) =>
+            setShowGoTop(event.currentTarget.scrollTop > 420)
+          }
+          className="flex-1 overflow-y-auto"
+        >
           <div className="max-w-full px-3 py-4 sm:px-5 sm:py-5">
             {!activeEditor ? (
               <div className="space-y-5">
@@ -622,7 +701,7 @@ export default function AdminDashboard() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="relative overflow-hidden rounded-2xl bg-white p-5 sm:p-7"
+                  className="relative flex min-h-[156px] overflow-hidden rounded-2xl bg-white p-5 sm:p-7"
                   style={{
                     border: `1px solid ${ui.border}`,
                     boxShadow: "0 2px 12px rgba(15,23,42,0.04)",
@@ -633,7 +712,7 @@ export default function AdminDashboard() {
                     style={{ background: colors.red }}
                   />
 
-                  <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+                  <div className="flex w-full flex-col justify-between gap-5 sm:flex-row sm:items-center">
                     <div>
                       <div className="mb-2 text-xs font-semibold text-slate-500">
                         School website dashboard
@@ -644,15 +723,15 @@ export default function AdminDashboard() {
                       </h2>
 
                       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
-                        Review website activity and open a section from the
-                        sidebar to update its content.
+                        Open messages, review per-item public views, or use the
+                        sidebar to edit website content.
                       </p>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => setActiveEditor("notices")}
+                        onClick={() => openEditor("notices")}
                         className="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold text-white"
                         style={{ background: colors.red }}
                       >
@@ -662,9 +741,7 @@ export default function AdminDashboard() {
 
                       <button
                         type="button"
-                        onClick={() =>
-                          setActiveEditor("announcements")
-                        }
+                        onClick={() => openEditor("announcements")}
                         className="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold text-slate-700"
                         style={{
                           background: "#FFFFFF",
@@ -678,58 +755,84 @@ export default function AdminDashboard() {
                   </div>
                 </motion.section>
 
-                <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                  {stats.map((stat, index) => {
-                    const Icon = stat.icon;
+                <motion.button
+                  type="button"
+                  onClick={() => navigate("/admin/contact-messages")}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.05 }}
+                  className="relative flex min-h-[156px] w-full overflow-hidden rounded-2xl bg-white p-5 text-left transition-all hover:-translate-y-0.5 sm:p-7"
+                  style={{
+                    border: `1px solid ${ui.border}`,
+                    boxShadow: "0 2px 12px rgba(15,23,42,0.04)",
+                  }}
+                >
+                  <span
+                    className="absolute bottom-0 left-0 top-0 w-1"
+                    style={{ background: colors.purple }}
+                  />
 
-                    return (
-                      <motion.div
-                        key={stat.label}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{
-                          duration: 0.28,
-                          delay: index * 0.04,
-                        }}
-                        className="rounded-xl bg-white p-4 sm:p-5"
+                  <div className="flex w-full flex-col justify-between gap-5 sm:flex-row sm:items-center">
+                    <div className="flex min-w-0 items-start gap-4">
+                      <div
+                        className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl"
                         style={{
-                          border: `1px solid ${ui.border}`,
-                          boxShadow:
-                            "0 2px 10px rgba(15,23,42,0.035)",
+                          background: "#F5F3FF",
+                          color: colors.purple,
                         }}
                       >
-                        <div className="mb-5 flex items-start justify-between gap-3">
-                          <div
-                            className="flex h-9 w-9 items-center justify-center rounded-lg"
-                            style={{
-                              background: `${stat.color}0D`,
-                              color: stat.color,
-                            }}
-                          >
-                            <Icon className="h-4 w-4" />
+                        <Mail className="h-5 w-5" />
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-purple-700">
+                          Message Center
+                        </div>
+
+                        <h3 className="text-xl font-extrabold text-slate-950 sm:text-2xl">
+                          Open Contact & Admission Inquiries
+                        </h3>
+
+                        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
+                          Click this card to read messages, mark them as read,
+                          and manage contact or admission inquiries.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-shrink-0 flex-wrap items-center gap-3 sm:justify-end">
+                      {[
+                        ["Total", messages.length],
+                        ["Unread", unreadCount],
+                        ["Contact", contactMessageCount],
+                        ["Admission", admissionMessageCount],
+                      ].map(([label, value]) => (
+                        <div
+                          key={label}
+                          className="min-w-[78px] rounded-xl px-3 py-2.5 text-center"
+                          style={{
+                            background: "#FAFAFC",
+                            border: `1px solid ${ui.border}`,
+                          }}
+                        >
+                          <div className="text-lg font-extrabold text-slate-950">
+                            {value}
                           </div>
+                          <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                            {label}
+                          </div>
+                        </div>
+                      ))}
 
-                          <span
-                            className="mt-1 h-1.5 w-8 rounded-full"
-                            style={{ background: stat.color }}
-                          />
-                        </div>
+                      <ChevronRight className="h-5 w-5 text-slate-400" />
+                    </div>
+                  </div>
+                </motion.button>
 
-                        <div className="text-2xl font-extrabold text-slate-950">
-                          {stat.value}
-                        </div>
-                        <div className="mt-1 text-xs font-bold text-slate-600 sm:text-sm">
-                          {stat.label}
-                        </div>
-                        <div className="mt-1 text-[11px] text-slate-400">
-                          {stat.sub}
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </section>
-
-                <section
+                <motion.section
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
                   className="overflow-hidden rounded-2xl bg-white"
                   style={{
                     border: `1px solid ${ui.border}`,
@@ -737,123 +840,167 @@ export default function AdminDashboard() {
                   }}
                 >
                   <div
-                    className="flex items-center justify-between gap-3 px-4 py-4 sm:px-5"
+                    className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6"
                     style={{ borderBottom: `1px solid ${ui.borderSoft}` }}
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="flex h-9 w-9 items-center justify-center rounded-lg"
-                        style={{
-                          background: "#F5F3FF",
-                          color: colors.purple,
-                        }}
-                      >
-                        <Mail className="h-4 w-4" />
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                        Public Content Analytics
                       </div>
-
-                      <div>
-                        <h3 className="text-sm font-extrabold text-slate-950">
-                          Recent messages
-                        </h3>
-                        <p className="mt-0.5 text-[11px] text-slate-500">
-                          Latest contact and admission inquiries
-                        </p>
-                      </div>
+                      <h3 className="mt-1 text-xl font-extrabold text-slate-950">
+                        Notice and Announcement Views
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Total views and the view count for every individual
+                        notice and announcement.
+                      </p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate("/admin/contact-messages")
-                      }
-                      className="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-950"
-                    >
-                      View all
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      <div className="rounded-xl bg-slate-50 px-4 py-3 text-center ring-1 ring-slate-100">
+                        <div className="text-xl font-extrabold text-slate-950">
+                          {totalContentViews}
+                        </div>
+                        <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                          Total Views
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl bg-red-50 px-4 py-3 text-center ring-1 ring-red-100">
+                        <div className="text-xl font-extrabold text-red-700">
+                          {totalNoticeViews}
+                        </div>
+                        <div className="text-[10px] font-bold uppercase tracking-wide text-red-400">
+                          Notice Views
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl bg-orange-50 px-4 py-3 text-center ring-1 ring-orange-100">
+                        <div className="text-xl font-extrabold text-orange-700">
+                          {totalAnnouncementViews}
+                        </div>
+                        <div className="text-[10px] font-bold uppercase tracking-wide text-orange-400">
+                          Announcement Views
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="space-y-2 p-3 sm:p-4">
-                    {messagesLoading ? (
-                      <div className="py-10 text-center text-sm text-slate-400">
-                        Loading messages...
-                      </div>
-                    ) : latestMessages.length === 0 ? (
-                      <div className="py-10 text-center">
-                        <Mail className="mx-auto mb-2 h-8 w-8 text-slate-200" />
-                        <p className="text-sm text-slate-400">
-                          No messages yet
-                        </p>
-                      </div>
-                    ) : (
-                      latestMessages.map((message) => (
-                        <button
-                          type="button"
-                          key={message.id}
-                          onClick={() =>
-                            navigate("/admin/contact-messages")
-                          }
-                          className="block w-full rounded-xl px-4 py-3 text-left transition-colors"
-                          style={{
-                            background: message.is_read
-                              ? "#FFFFFF"
-                              : "#FAF8FF",
-                            border: message.is_read
-                              ? `1px solid ${ui.borderSoft}`
-                              : "1px solid #EDE9FE",
-                          }}
-                          onMouseEnter={(event) => {
-                            event.currentTarget.style.background =
-                              "#F8F9FB";
-                          }}
-                          onMouseLeave={(event) => {
-                            event.currentTarget.style.background =
-                              message.is_read ? "#FFFFFF" : "#FAF8FF";
-                          }}
-                        >
-                          <div className="mb-1.5 flex items-start justify-between gap-3">
-                            <div className="flex min-w-0 items-center gap-2">
-                              {!message.is_read && (
-                                <span
-                                  className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
-                                  style={{ background: colors.green }}
-                                />
-                              )}
-
-                              <span className="truncate text-sm font-bold text-slate-900">
-                                {message.name || "Unknown sender"}
-                              </span>
+                  <div
+                    className="max-h-[430px] overflow-y-auto overscroll-contain p-4 sm:p-5"
+                    style={{
+                      scrollbarWidth: "thin",
+                      scrollbarColor: "rgba(75,46,131,0.35) transparent",
+                    }}
+                  >
+                    <div className="grid gap-6 xl:grid-cols-2">
+                      <section>
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-600">
+                              <Bell className="h-4 w-4" />
                             </div>
-
-                            <span
-                              className="flex-shrink-0 rounded-md px-2 py-1 text-[10px] font-bold"
-                              style={{
-                                background:
-                                  message.source === "admission"
-                                    ? "#F5F3FF"
-                                    : "#FEF2F2",
-                                color:
-                                  message.source === "admission"
-                                    ? colors.purple
-                                    : colors.red,
-                              }}
-                            >
-                              {getSourceLabel(message.source)}
-                            </span>
+                            <div>
+                              <h4 className="text-sm font-extrabold text-slate-950">
+                                Per Notice Views
+                              </h4>
+                              <p className="text-[11px] text-slate-400">
+                                {notices.length} notice
+                                {notices.length === 1 ? "" : "s"}
+                              </p>
+                            </div>
                           </div>
 
-                          <p className="line-clamp-2 text-xs leading-relaxed text-slate-500 sm:text-sm">
-                            {message.message || "No message text."}
-                          </p>
+                          <button
+                            type="button"
+                            onClick={() => openEditor("notices")}
+                            className="text-xs font-semibold text-slate-500 hover:text-slate-950"
+                          >
+                            Manage
+                          </button>
+                        </div>
 
-                          <p className="mt-2 text-[10px] text-slate-400">
-                            {formatDate(message.created_at)}
-                          </p>
-                        </button>
-                      ))
-                    )}
+                        <div className="space-y-2">
+                          {noticeAnalytics.length === 0 ? (
+                            <div className="rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-400">
+                              No notices available.
+                            </div>
+                          ) : (
+                            noticeAnalytics.map((notice, index) => (
+                              <AnalyticsRow
+                                key={notice.id || notice._id || `notice-${index}`}
+                                title={notice.title}
+                                subtitle={notice.category || "Notice"}
+                                badge={notice.pinned ? "Important" : ""}
+                                views={getItemViews(notice)}
+                                color={colors.red}
+                              />
+                            ))
+                          )}
+                        </div>
+                      </section>
+
+                      <section>
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
+                              <Megaphone className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-extrabold text-slate-950">
+                                Per Announcement Views
+                              </h4>
+                              <p className="text-[11px] text-slate-400">
+                                {announcements.length} announcement
+                                {announcements.length === 1 ? "" : "s"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => openEditor("announcements")}
+                            className="text-xs font-semibold text-slate-500 hover:text-slate-950"
+                          >
+                            Manage
+                          </button>
+                        </div>
+
+                        <div className="space-y-2">
+                          {announcementAnalytics.length === 0 ? (
+                            <div className="rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-400">
+                              No announcements available.
+                            </div>
+                          ) : (
+                            announcementAnalytics.map(
+                              (announcement, index) => (
+                                <AnalyticsRow
+                                  key={
+                                    announcement.id ||
+                                    `announcement-${index}`
+                                  }
+                                  title={announcement.title}
+                                  subtitle={
+                                    announcement.show_on_homepage
+                                      ? "Homepage popup"
+                                      : "Announcement"
+                                  }
+                                  badge={
+                                    announcement.active === false
+                                      ? "Inactive"
+                                      : "Active"
+                                  }
+                                  views={getItemViews(announcement)}
+                                  color={colors.orange}
+                                />
+                              )
+                            )
+                          )}
+                        </div>
+                      </section>
+                    </div>
                   </div>
-                </section>
+                </motion.section>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -881,70 +1028,24 @@ export default function AdminDashboard() {
       </div>
 
       <AnimatePresence>
-        {showLogoutConfirm && (
-          <motion.div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-            style={{
-              background: "rgba(15,23,42,0.48)",
-              backdropFilter: "blur(5px)",
-            }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowLogoutConfirm(false)}
+        {showGoTop && (
+          <motion.button
+            type="button"
+            aria-label="Go to top"
+            title="Go to top"
+            onClick={() =>
+              contentScrollRef.current?.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              })
+            }
+            className="fixed bottom-5 right-5 z-[90] flex h-11 w-11 items-center justify-center rounded-full bg-slate-950 text-white shadow-2xl"
+            initial={{ opacity: 0, y: 12, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.9 }}
           >
-            <motion.div
-              initial={{ y: 12, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 8, opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              className="w-full max-w-sm rounded-2xl bg-white p-6"
-              style={{
-                border: `1px solid ${ui.border}`,
-                boxShadow: "0 24px 60px rgba(15,23,42,0.18)",
-              }}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div
-                className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl"
-                style={{ background: "#FEF2F2", color: colors.red }}
-              >
-                <LogOut className="h-5 w-5" />
-              </div>
-
-              <h3 className="text-lg font-extrabold text-slate-950">
-                Log out of the admin panel?
-              </h3>
-
-              <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                You will need to sign in again before making website
-                changes.
-              </p>
-
-              <div className="mt-6 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowLogoutConfirm(false)}
-                  className="flex-1 rounded-lg py-2.5 text-sm font-bold text-slate-600"
-                  style={{
-                    background: "#FFFFFF",
-                    border: `1px solid ${ui.border}`,
-                  }}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  onClick={logout}
-                  className="flex-1 rounded-lg py-2.5 text-sm font-bold text-white"
-                  style={{ background: colors.red }}
-                >
-                  Logout
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
+            <ArrowUp className="h-5 w-5" />
+          </motion.button>
         )}
       </AnimatePresence>
     </div>

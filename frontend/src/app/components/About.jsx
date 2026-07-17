@@ -518,11 +518,13 @@ function LeadershipMessageDetailPage({ person }) {
           transition={{ duration: 0.6 }}
           className="rounded-[34px] overflow-hidden"
           style={{
-            ...getColorfulGlassStyle(colors.purple, {
-              tint: 0.13,
-              edgeTint: 0.065,
-              shadowAlpha: 0.09,
-            }),
+            background:
+              "linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,245,255,0.97))",
+            border: "1px solid rgba(75,46,131,0.22)",
+            boxShadow:
+              "0 30px 76px rgba(75,46,131,0.16), 0 10px 26px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.98)",
+            backdropFilter: "blur(18px)",
+            WebkitBackdropFilter: "blur(18px)",
           }}
         >
           <div className="relative p-6 md:p-8 lg:p-10">
@@ -591,11 +593,12 @@ function LeadershipMessageDetailPage({ person }) {
             <div
               className="about-long-text whitespace-pre-line mt-8 rounded-[28px] p-5 text-base leading-[1.9] text-slate-600 md:p-7 md:text-lg"
               style={{
-                background: `linear-gradient(145deg, ${colorToRgba(
-                  colors.purple,
-                  0.07
-                )}, rgba(255,255,255,0.72))`,
-                border: `1px solid ${colorToRgba(colors.purple, 0.14)}`,
+                background:
+                  "linear-gradient(145deg, rgba(75,46,131,0.10), rgba(255,255,255,0.98))",
+                border: "1px solid rgba(75,46,131,0.20)",
+                borderLeft: `5px solid ${colors.purple}`,
+                boxShadow:
+                  "0 16px 38px rgba(75,46,131,0.08), inset 0 1px 0 rgba(255,255,255,0.96)",
                 backdropFilter: "blur(14px)",
                 WebkitBackdropFilter: "blur(14px)",
               }}
@@ -807,10 +810,38 @@ export function About({
           hyphens: auto;
         }
 
+        .about-journey-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(75,46,131,0.34) rgba(15,23,42,0.05);
+        }
+
+        .about-journey-scroll::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .about-journey-scroll::-webkit-scrollbar-track {
+          background: rgba(15,23,42,0.05);
+          border-radius: 999px;
+        }
+
+        .about-journey-scroll::-webkit-scrollbar-thumb {
+          background: linear-gradient(
+            180deg,
+            rgba(215,25,32,0.72),
+            rgba(250,204,21,0.76),
+            rgba(75,46,131,0.72)
+          );
+          border-radius: 999px;
+        }
+
         @media (max-width: 640px) {
           .about-long-text {
             text-align: left;
             hyphens: none;
+          }
+
+          .about-journey-scroll {
+            max-height: 620px !important;
           }
         }
       `}</style>
@@ -1039,7 +1070,7 @@ export function About({
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-center mb-8 rounded-3xl"
+              className="text-center mb-7 rounded-3xl"
               style={{
                 outline: editMode
                   ? "1px dashed rgba(56,189,248,0.5)"
@@ -1307,7 +1338,18 @@ export function About({
           })}
         </div>
 
-        <div>
+        <div
+          className="rounded-[34px] p-5 sm:p-7 md:p-9"
+          style={{
+            background:
+              "linear-gradient(145deg, rgba(255,255,255,0.97), rgba(249,246,255,0.94), rgba(244,253,248,0.92))",
+            border: "1px solid rgba(75,46,131,0.16)",
+            boxShadow:
+              "0 28px 72px rgba(75,46,131,0.12), 0 10px 28px rgba(15,23,42,0.07), inset 0 1px 0 rgba(255,255,255,0.98)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+          }}
+        >
           <EditableWrap
             editMode={editMode}
             target={{ type: "journeyHeader" }}
@@ -1368,9 +1410,16 @@ export function About({
             />
           </div>
 
-          <div className="relative max-w-5xl mx-auto">
-            <div
-              className="hidden md:block absolute left-8 top-0 bottom-0 w-1"
+          <div
+            className="about-journey-scroll overflow-y-auto overscroll-contain rounded-[28px] pr-2 sm:pr-3"
+            style={{
+              maxHeight: "720px",
+              scrollBehavior: "smooth",
+            }}
+          >
+            <div className="relative max-w-5xl mx-auto px-1 py-1">
+              <div
+                className="hidden md:block absolute left-8 top-0 bottom-0 w-1"
               style={{
                 background: `linear-gradient(180deg, ${colors.red}, ${colors.gold}, ${colors.green}, ${colors.purple})`,
                 borderRadius: "4px",
@@ -1460,6 +1509,7 @@ export function About({
                   </EditableWrap>
                 );
               })}
+            </div>
             </div>
           </div>
         </div>
