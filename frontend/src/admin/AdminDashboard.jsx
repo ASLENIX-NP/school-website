@@ -27,6 +27,7 @@ import {
   Eye,
   ArrowUp,
   Mail,
+  LogOut,
 } from "lucide-react";
 
 import AdminHome from "./AdminHome";
@@ -371,6 +372,30 @@ export default function AdminDashboard() {
     });
   };
 
+  const logout = async () => {
+    const token = localStorage.getItem("adminToken");
+
+    try {
+      if (token) {
+        await fetch(
+          "https://school-website-backend-ixx2.onrender.com/api/admin/auth/logout",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      }
+    } catch (error) {
+      console.error("Admin logout error:", error);
+    } finally {
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
+      navigate("/admin/login");
+    }
+  };
+
   const unreadCount = messages.filter((message) => !message.is_read).length;
   const admissionMessageCount = messages.filter(
     (message) => message.source === "admission"
@@ -517,6 +542,23 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={logout}
+          className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors"
+          style={{
+            color: colors.red,
+            background: "#FFF7F7",
+            border: "1px solid #FECACA",
+          }}
+        >
+          <LogOut
+            className="h-[17px] w-[17px] flex-shrink-0"
+            strokeWidth={1.9}
+          />
+          <span className="text-[13px] font-semibold">Logout</span>
+        </button>
       </div>
     </>
   );

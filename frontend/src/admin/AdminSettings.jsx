@@ -321,14 +321,6 @@ export default function AdminSettings() {
         <span>{saving ? "Saving..." : saved ? "Saved ✓" : "Save Security"}</span>
       </button>
 
-      <button
-        type="button"
-        onClick={() => setShowLogoutConfirm(true)}
-        className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-black text-red-600"
-      >
-        <LogOut size={16} />
-        Logout
-      </button>
     </div>
   </div>
 </div>
