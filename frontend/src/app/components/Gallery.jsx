@@ -215,9 +215,15 @@ function HighlightedTitle({ title, highlightedText }) {
   return (
     <>
       {before}
-      <span className="italic" style={{ color: colors.red }}>
-        {highlightedText}
-      </span>
+      <span
+  className="not-italic"
+  style={{
+    color: colors.red,
+    fontStyle: "normal",
+  }}
+>
+  {highlightedText}
+</span>
       {after}
     </>
   );

@@ -163,13 +163,15 @@ function HighlightedTitle({ title, highlightedText }) {
   return (
     <>
       {before}
-      <span className="relative inline-block italic" style={{ color: colors.purple }}>
-        {highlightedText}
-        <span
-          className="absolute left-0 right-0 -bottom-1 h-2 rounded-full -z-10"
-          style={{ background: "rgba(250,204,21,0.58)" }}
-        />
-      </span>
+      <span
+  className="relative inline-block not-italic"
+  style={{
+    color: colors.purple,
+    fontStyle: "normal",
+  }}
+>
+  {highlightedText}
+</span>
       {after}
     </>
   );
