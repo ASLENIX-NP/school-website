@@ -1,268 +1,492 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
 import {
-  ArrowRight,
   Camera,
-  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight,
   Pencil,
-  Sparkles,
+  ArrowRight,
+  Image as ImageIcon,
 } from "lucide-react";
 
-const palette = {
-  cyan: "#38BDF8",
-  gold: "#FACC15",
-  green: "#22C55E",
-  purple: "#8B5CF6",
-  navy: "#0B1020",
-  cream: "#FFF8EE",
+/* =========================================================
+   BALJAGRITI SCHOOL
+   Simple RAI-inspired homepage structure
+
+   Structure:
+   1. Hero slideshow
+   2. About section
+   ========================================================= */
+
+const API_URL =
+  "https://school-website-backend-ixx2.onrender.com";
+
+const IMAGE_SLIDE_MS = 2000;
+
+const COLORS = {
+  green: "#168A3A",
+  greenDark: "#0F6B2D",
+  gold: "#D9A514",
+  navy: "#101B2D",
+  navyDark: "#08111F",
+  text: "#222222",
+  muted: "#666666",
+  light: "#F7F7F7",
+  white: "#FFFFFF",
 };
 
-function hexToRgba(hex, alpha) {
-  const clean = String(hex || "").replace("#", "");
-  if (!/^[0-9a-fA-F]{6}$/.test(clean)) return `rgba(56,189,248,${alpha})`;
+/* =========================================================
+   FONT
+   ========================================================= */
 
-  const red = Number.parseInt(clean.slice(0, 2), 16);
-  const green = Number.parseInt(clean.slice(2, 4), 16);
-  const blue = Number.parseInt(clean.slice(4, 6), 16);
+const DISPLAY_FONT =
+  "'Playfair Display', Georgia, 'Times New Roman', serif";
 
-  return `rgba(${red},${green},${blue},${alpha})`;
-}
-
-function colorfulGlassBackground(color, strength = 0.16) {
-  return `linear-gradient(145deg, ${hexToRgba(color, strength)} 0%, rgba(255,255,255,0.84) 48%, ${hexToRgba(color, strength * 0.48)} 100%)`;
-}
-
-const API_URL = "https://school-website-backend-ixx2.onrender.com";
+/* =========================================================
+   HARDCODED OLD IMAGE
+   Do not use this old Unsplash image.
+   ========================================================= */
 
 const HARDCODED_HERO_IMAGE_URLS = [
   "https://images.unsplash.com/photo-1509062522246-3755977927d7",
 ];
 
+/* =========================================================
+   DEFAULT HERO DATA
+   ========================================================= */
+
+export const defaultHeroData = {
+  badge: "",
+
+  titleLine1: "Baljagriti School",
+
+  titleLine2: "",
+
+  titleLine3: "",
+
+  description: "",
+
+  image: "",
+
+  images: [],
+
+  media: [],
+
+  imageAdjustments: {},
+
+  primaryButtonText: "",
+
+  primaryButtonLink: "/admissions",
+
+  secondaryButtonText: "",
+
+  secondaryButtonLink: "/about",
+
+  stat1Value: "",
+
+  stat1Label: "",
+
+  stat2Value: "",
+
+  stat2Label: "",
+
+  stat3Value: "",
+
+  stat3Label: "",
+
+  motto:
+    "Our motto is to provide quality education.",
+
+  quickLinks: [],
+};
+
+/* =========================================================
+   DEFAULT ABOUT DATA
+
+   This is based on the existing About/story structure
+   already used by the project.
+   ========================================================= */
+
+export const defaultAboutData = {
+  badge: "About Baljagriti",
+
+  title:
+    "Building Tomorrow's Leaders Today",
+
+  paragraphs: [
+    "Established with a vision to provide quality education in Makawanpur, Baljagriti Secondary English Boarding School has grown as one of Hetauda's respected academic institutions.",
+
+    "With students from Play Group to Grade 10, the school focuses on academic discipline, values, creativity, digital learning, and holistic student development.",
+  ],
+
+  buttonText:
+    "Learn More",
+
+  buttonLink:
+    "/about",
+
+  image: "",
+
+  imageZoom: 1,
+
+  imageOffsetX: 0,
+
+  imageOffsetY: 0,
+
+  imageTopTitle:
+    "Baljagriti School",
+
+  imageTopSubtitle:
+    "Hetauda-2, Makwanpur",
+
+  imageBottomTitle:
+    "Quality Education Since 2046 BS",
+
+  imageBottomDescription:
+    "Building knowledge, character, confidence, and a brighter future.",
+};
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
 function isHardcodedHeroImageUrl(value = "") {
   const clean = String(value || "").trim();
 
-  return HARDCODED_HERO_IMAGE_URLS.some((url) => clean.startsWith(url));
+  return HARDCODED_HERO_IMAGE_URLS.some(
+    (url) => clean.startsWith(url)
+  );
 }
 
-export const defaultHeroData = {
-  badge: "Admissions Open for New Academic Session",
-  titleLine1: "Baljagriti Secondary",
-  titleLine2: "English School",
-  titleLine3: "Basudev Marga,Hetauda-2",
-  description:
-    "Baljagriti English Secondary School blends academic discipline, digital learning, creativity, sports, and values for students from Play Group to Grade 10.",
-  image: "",
-  images: [],
-  imageAdjustments: {},
+function isVideoUrl(url = "") {
+  const clean = String(url || "")
+    .toLowerCase()
+    .split("?")[0];
 
-  primaryButtonText: "Start Admission",
-  primaryButtonLink: "/admissions",
-  secondaryButtonText: "Explore Facilities",
-  secondaryButtonLink: "/facilities",
+  return (
+    clean.endsWith(".mp4") ||
+    clean.endsWith(".webm") ||
+    clean.endsWith(".ogg") ||
+    clean.endsWith(".mov") ||
+    clean.endsWith(".m4v")
+  );
+}
 
-  stat1Value: "2046 BS",
-  stat1Label: "Established",
-  stat2Value: "PG-10",
-  stat2Label: "Classes",
-  stat3Value: "Hetauda",
-  stat3Label: "Makwanpur",
+function getMediaType(item) {
+  if (!item) {
+    return "image";
+  }
 
-  imageLocation: "Hetauda-2, Makwanpur",
-  imageBottomTitle: "Basudev Marga, Hetauda-2",
-  imageBottomDescription:
-    "A learning environment built for academics, values, creativity, and student growth.",
+  if (typeof item === "object") {
+    if (item.type === "video") {
+      return "video";
+    }
 
-  motto: "Our motto is to provide quality education.",
+    if (item.type === "image") {
+      return "image";
+    }
 
-  floating1Title: "Quality Education",
-  floating1Subtitle: "Academics + Values",
-  floating2Title: "Computer Lab",
-  floating2Subtitle: "Digital Facility",
-  floating3Title: "Science Lab",
-  floating3Subtitle: "Practical Learning",
-  floating4Title: "E-Library",
-  floating4Subtitle: "Learning Resources",
-};
+    return isVideoUrl(
+      item.url || item.src
+    )
+      ? "video"
+      : "image";
+  }
+
+  return isVideoUrl(item)
+    ? "video"
+    : "image";
+}
+
+function getMediaUrl(item) {
+  if (!item) {
+    return "";
+  }
+
+  if (typeof item === "string") {
+    return item.trim();
+  }
+
+  return String(
+    item.url ||
+      item.src ||
+      item.image ||
+      item.video ||
+      ""
+  ).trim();
+}
+
+function normalizeMediaList(list) {
+  if (!Array.isArray(list)) {
+    return [];
+  }
+
+  return list
+    .map((item) => {
+      const url = getMediaUrl(item);
+
+      if (!url) {
+        return null;
+      }
+
+      if (isHardcodedHeroImageUrl(url)) {
+        return null;
+      }
+
+      return {
+        type: getMediaType(item),
+        url,
+      };
+    })
+    .filter(Boolean);
+}
+
+/* =========================================================
+   HERO DATA NORMALIZATION
+   ========================================================= */
 
 export function mergeHeroData(saved = {}) {
-  const merged = {
-    ...defaultHeroData,
-    ...(saved || {}),
-  };
+  const source = saved || {};
 
-  const savedImages = Array.isArray(saved?.images)
-    ? saved.images
-    : Array.isArray(merged.images)
-      ? merged.images
-      : [];
-
-  const cleanImages = Array.from(
-    new Set(
-      savedImages
-        .map((item) => String(item || "").trim())
-        .filter((item) => item && !isHardcodedHeroImageUrl(item))
-    )
+  let media = normalizeMediaList(
+    source.media
   );
 
-  const fallbackImage = String(
-    saved?.image || merged.image || defaultHeroData.image || ""
-  ).trim();
+  /*
+   * Support alternative backend names.
+   */
 
-  const cleanFallbackImage =
-    fallbackImage && !isHardcodedHeroImageUrl(fallbackImage)
-      ? fallbackImage
-      : "";
+  if (media.length === 0) {
+    media = normalizeMediaList(
+      source.slides
+    );
+  }
 
-  const images =
-    cleanImages.length > 0
-      ? cleanImages
-      : cleanFallbackImage
-        ? [cleanFallbackImage]
-        : [];
+  if (media.length === 0) {
+    media = normalizeMediaList(
+      source.heroMedia
+    );
+  }
 
-  const rawAdjustments =
-    saved?.imageAdjustments && typeof saved.imageAdjustments === "object"
-      ? saved.imageAdjustments
-      : {};
+  if (media.length === 0) {
+    media = normalizeMediaList(
+      source.heroImages
+    );
+  }
 
-  const imageAdjustments = images.reduce((acc, imageUrl) => {
-    const adjustment = rawAdjustments?.[imageUrl] || {};
+  if (media.length === 0) {
+    media = normalizeMediaList(
+      source.images
+    );
+  }
 
-    acc[imageUrl] = {
-      imageZoom: clampHeroImageZoom(adjustment.imageZoom),
-      imageOffsetX: clampHeroImageOffset(adjustment.imageOffsetX),
-      imageOffsetY: clampHeroImageOffset(adjustment.imageOffsetY),
-    };
+  if (
+    media.length === 0 &&
+    source.image
+  ) {
+    media = normalizeMediaList([
+      source.image,
+    ]);
+  }
 
-    return acc;
-  }, {});
+  if (
+    media.length === 0 &&
+    source.heroImage
+  ) {
+    media = normalizeMediaList([
+      source.heroImage,
+    ]);
+  }
 
-  const requiredText = (value, fallback) =>
-    String(value ?? "").trim() ? value : fallback;
+  if (
+    media.length === 0 &&
+    source.backgroundImage
+  ) {
+    media = normalizeMediaList([
+      source.backgroundImage,
+    ]);
+  }
 
   return {
-    ...merged,
-    badge: requiredText(merged.badge, defaultHeroData.badge),
-    titleLine1: requiredText(merged.titleLine1, defaultHeroData.titleLine1),
-    titleLine2: requiredText(merged.titleLine2, defaultHeroData.titleLine2),
-    titleLine3: requiredText(merged.titleLine3, defaultHeroData.titleLine3),
-    description: requiredText(
-      merged.description,
-      defaultHeroData.description
+    ...defaultHeroData,
+    ...source,
+
+    titleLine1:
+      String(
+        source.titleLine1 ||
+          "Baljagriti School"
+      ).trim(),
+
+    motto:
+      String(
+        source.motto ||
+          "Our motto is to provide quality education."
+      ).trim(),
+
+    media,
+
+    images: media.map(
+      (item) => item.url
     ),
-    primaryButtonText: requiredText(
-      merged.primaryButtonText,
-      defaultHeroData.primaryButtonText
-    ),
-    primaryButtonLink: requiredText(
-      merged.primaryButtonLink,
-      defaultHeroData.primaryButtonLink
-    ),
-    secondaryButtonText: requiredText(
-      merged.secondaryButtonText,
-      defaultHeroData.secondaryButtonText
-    ),
-    secondaryButtonLink: requiredText(
-      merged.secondaryButtonLink,
-      defaultHeroData.secondaryButtonLink
-    ),
-    stat1Value: requiredText(merged.stat1Value, defaultHeroData.stat1Value),
-    stat1Label: requiredText(merged.stat1Label, defaultHeroData.stat1Label),
-    stat2Value: requiredText(merged.stat2Value, defaultHeroData.stat2Value),
-    stat2Label: requiredText(merged.stat2Label, defaultHeroData.stat2Label),
-    stat3Value: requiredText(merged.stat3Value, defaultHeroData.stat3Value),
-    stat3Label: requiredText(merged.stat3Label, defaultHeroData.stat3Label),
-    imageBottomTitle: requiredText(
-      merged.imageBottomTitle,
-      defaultHeroData.imageBottomTitle
-    ),
-    imageBottomDescription: requiredText(
-      merged.imageBottomDescription,
-      defaultHeroData.imageBottomDescription
-    ),
-    motto: requiredText(merged.motto, defaultHeroData.motto),
-    floating1Title: requiredText(
-      merged.floating1Title,
-      defaultHeroData.floating1Title
-    ),
-    floating1Subtitle: requiredText(
-      merged.floating1Subtitle,
-      defaultHeroData.floating1Subtitle
-    ),
-    floating2Title: requiredText(
-      merged.floating2Title,
-      defaultHeroData.floating2Title
-    ),
-    floating2Subtitle: requiredText(
-      merged.floating2Subtitle,
-      defaultHeroData.floating2Subtitle
-    ),
-    floating3Title: requiredText(
-      merged.floating3Title,
-      defaultHeroData.floating3Title
-    ),
-    floating3Subtitle: requiredText(
-      merged.floating3Subtitle,
-      defaultHeroData.floating3Subtitle
-    ),
-    floating4Title: requiredText(
-      merged.floating4Title,
-      defaultHeroData.floating4Title
-    ),
-    floating4Subtitle: requiredText(
-      merged.floating4Subtitle,
-      defaultHeroData.floating4Subtitle
-    ),
-    image: images[0] || "",
-    images,
-    imageAdjustments,
+
+    image:
+      media[0]?.url || "",
+
+    imageAdjustments:
+      source.imageAdjustments &&
+      typeof source.imageAdjustments ===
+        "object"
+        ? source.imageAdjustments
+        : {},
   };
 }
 
-function clampHeroImageOffset(value) {
-  const numberValue = Number(value);
+/* =========================================================
+   ABOUT DATA NORMALIZATION
+   ========================================================= */
 
-  if (!Number.isFinite(numberValue)) return 0;
+export function mergeAboutData(
+  saved = {}
+) {
+  const source = saved || {};
 
-  return Math.min(60, Math.max(-60, numberValue));
+  return {
+    ...defaultAboutData,
+    ...source,
+
+    paragraphs:
+      Array.isArray(
+        source.paragraphs
+      ) &&
+      source.paragraphs.length > 0
+        ? [
+            source.paragraphs[0] ||
+              defaultAboutData
+                .paragraphs[0],
+
+            source.paragraphs[1] ||
+              defaultAboutData
+                .paragraphs[1],
+          ]
+        : defaultAboutData.paragraphs,
+
+    buttonText:
+      source.buttonText ||
+      defaultAboutData.buttonText,
+
+    buttonLink:
+      source.buttonLink ||
+      defaultAboutData.buttonLink,
+  };
 }
 
-function clampHeroImageZoom(value) {
-  const numberValue = Number(value);
+/* =========================================================
+   IMAGE CROP HELPERS
+   ========================================================= */
 
-  if (!Number.isFinite(numberValue)) return 1;
+function clampOffset(value) {
+  const numberValue =
+    Number(value);
 
-  return Math.min(3, Math.max(1, numberValue));
+  if (
+    !Number.isFinite(
+      numberValue
+    )
+  ) {
+    return 0;
+  }
+
+  return Math.min(
+    60,
+    Math.max(-60, numberValue)
+  );
 }
 
-function getHeroImageCropStyle(heroData = {}, imageUrl = "") {
-  const adjustment = heroData.imageAdjustments?.[imageUrl] || {};
-  const zoom = clampHeroImageZoom(adjustment.imageZoom);
-  const x = clampHeroImageOffset(adjustment.imageOffsetX);
-  const y = clampHeroImageOffset(adjustment.imageOffsetY);
+function clampZoom(value) {
+  const numberValue =
+    Number(value);
 
-  const objectX = Math.min(100, Math.max(0, 50 - x));
-  const objectY = Math.min(100, Math.max(0, 50 - y));
+  if (
+    !Number.isFinite(
+      numberValue
+    )
+  ) {
+    return 1;
+  }
+
+  return Math.min(
+    3,
+    Math.max(1, numberValue)
+  );
+}
+
+function getHeroImageStyle(
+  heroData,
+  mediaUrl
+) {
+  const adjustment =
+    heroData.imageAdjustments?.[
+      mediaUrl
+    ] || {};
+
+  const zoom = clampZoom(
+    adjustment.imageZoom
+  );
+
+  const x = clampOffset(
+    adjustment.imageOffsetX
+  );
+
+  const y = clampOffset(
+    adjustment.imageOffsetY
+  );
 
   return {
     width: "100%",
     height: "100%",
     objectFit: "cover",
-    objectPosition: `${objectX}% ${objectY}%`,
-    transform: `scale(${zoom})`,
-    transformOrigin: "center center",
-    transition:
-      "transform 240ms ease-out, object-position 240ms ease-out, opacity 320ms ease-out",
+    objectPosition:
+      `${50 - x}% ${50 - y}%`,
+    transform:
+      `scale(${zoom})`,
+    transformOrigin:
+      "center center",
   };
 }
 
-function safeLink(link, fallback) {
-  const clean = String(link || "").trim();
+function getAboutImageStyle(
+  aboutData
+) {
+  const zoom = clampZoom(
+    aboutData.imageZoom
+  );
 
-  return clean.startsWith("/") ? clean : fallback;
+  const x = clampOffset(
+    aboutData.imageOffsetX
+  );
+
+  const y = clampOffset(
+    aboutData.imageOffsetY
+  );
+
+  return {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition:
+      `${50 - x}% ${50 - y}%`,
+    transform:
+      `scale(${zoom})`,
+    transformOrigin:
+      "center center",
+  };
 }
+
+/* =========================================================
+   EDIT BUTTON
+   ========================================================= */
 
 function EditIconButton({
   editMode,
@@ -270,9 +494,10 @@ function EditIconButton({
   onEditTarget,
   icon: Icon = Pencil,
   label = "Edit",
-  className = "",
 }) {
-  if (!editMode) return null;
+  if (!editMode) {
+    return null;
+  }
 
   return (
     <button
@@ -280,833 +505,1052 @@ function EditIconButton({
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
+
         onEditTarget(target);
       }}
-      className={`absolute -top-3 -right-3 z-[80] opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 rounded-full w-9 h-9 flex items-center justify-center shadow-xl ${className}`}
+      className="
+        absolute
+        top-5
+        right-5
+        z-[100]
+        w-10
+        h-10
+        rounded-full
+        flex
+        items-center
+        justify-center
+        shadow-lg
+        transition-all
+        duration-200
+        hover:scale-110
+      "
       style={{
-        background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
-        color: "#020617",
-        border: "1px solid rgba(255,255,255,0.84)",
+        background:
+          COLORS.gold,
+        color:
+          COLORS.navyDark,
+        border:
+          "2px solid white",
       }}
       title={label}
+      aria-label={label}
     >
       <Icon className="w-4 h-4" />
     </button>
   );
 }
 
-function EditableWrap({
-  editMode,
-  target,
-  onEditTarget,
-  icon = Pencil,
-  label = "Edit",
-  className = "",
-  children,
-}) {
-  if (!editMode) return children;
+/* =========================================================
+   HERO MEDIA
+   ========================================================= */
 
-  return (
-    <div className={`relative group ${className}`}>
-      {children}
-
-      <EditIconButton
-        editMode={editMode}
-        target={target}
-        onEditTarget={onEditTarget}
-        icon={icon}
-        label={label}
-      />
-    </div>
-  );
-}
-
-function GlassStat({
-  value,
-  label,
-  color,
-  delay,
+function HeroMedia({
+  heroData,
   editMode,
   onEditTarget,
-  index,
 }) {
+  const mediaItems =
+    useMemo(() => {
+      return Array.isArray(
+        heroData.media
+      )
+        ? heroData.media.filter(
+            (item) => item?.url
+          )
+        : [];
+    }, [heroData.media]);
+
+  const [
+    activeIndex,
+    setActiveIndex,
+  ] = useState(0);
+
+  const videoRef =
+    useRef(null);
+
+  const activeMedia =
+    mediaItems[
+      activeIndex
+    ] || null;
+
+  /*
+   * Reset slide when media
+   * changes from admin.
+   */
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [
+    mediaItems
+      .map(
+        (item) => item.url
+      )
+      .join("|"),
+  ]);
+
+  /*
+   * Every photo AND video
+   * changes after 2 seconds.
+   */
+
+  useEffect(() => {
+    if (
+      editMode ||
+      mediaItems.length <= 1
+    ) {
+      return undefined;
+    }
+
+    const timer =
+      window.setTimeout(() => {
+        setActiveIndex(
+          (current) =>
+            (current + 1) %
+            mediaItems.length
+        );
+      }, IMAGE_SLIDE_MS);
+
+    return () => {
+      window.clearTimeout(
+        timer
+      );
+    };
+  }, [
+    activeIndex,
+    editMode,
+    mediaItems.length,
+  ]);
+
+  /*
+   * Autoplay video.
+   */
+
+  useEffect(() => {
+    if (
+      !videoRef.current ||
+      !activeMedia ||
+      activeMedia.type !==
+        "video"
+    ) {
+      return;
+    }
+
+    const video =
+      videoRef.current;
+
+    video.currentTime = 0;
+    video.muted = true;
+
+    const promise =
+      video.play();
+
+    if (
+      promise &&
+      typeof promise.catch ===
+        "function"
+    ) {
+      promise.catch(() => {});
+    }
+  }, [
+    activeMedia?.url,
+  ]);
+
+  const goNext = () => {
+    if (
+      mediaItems.length <= 1
+    ) {
+      return;
+    }
+
+    setActiveIndex(
+      (current) =>
+        (current + 1) %
+        mediaItems.length
+    );
+  };
+
+  const goPrevious = () => {
+    if (
+      mediaItems.length <= 1
+    ) {
+      return;
+    }
+
+    setActiveIndex(
+      (current) =>
+        (current -
+          1 +
+          mediaItems.length) %
+        mediaItems.length
+    );
+  };
+
   return (
-    <EditableWrap
-      editMode={editMode}
-      target={{ type: "heroStat", index }}
-      onEditTarget={onEditTarget}
-      label="Edit stat"
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay, duration: 0.55 }}
-        className="group min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl px-4 py-4 sm:p-5 cursor-pointer transition-all duration-300 hover:-translate-y-2"
-        style={{
-          background: colorfulGlassBackground(color, 0.18),
-          border: editMode
-            ? "1px dashed rgba(56,189,248,0.55)"
-            : `1px solid ${color}52`,
-          boxShadow:
-            "0 18px 44px rgba(15,23,42,0.075), inset 0 1px 0 rgba(255,255,255,0.92)",
-          backdropFilter: "blur(22px) saturate(110%)",
-          WebkitBackdropFilter: "blur(22px) saturate(110%)",
-        }}
-      >
-        <div
-          className="w-8 sm:w-11 h-1 rounded-full mb-3 sm:mb-4 transition-all duration-200 ease-out group-hover:w-14 sm:group-hover:w-20"
-          style={{ background: color }}
-        />
+    <div className="absolute inset-0">
+      {/* =================================================
+          MEDIA
+          ================================================= */}
 
-        <div
-          className="max-w-full text-[17px] min-[390px]:text-[18px] sm:text-2xl font-black leading-[1.05] break-words"
-          style={{
-            color: palette.navy,
-            fontFamily: "var(--font-display)",
-            letterSpacing: "-0.035em",
-            overflowWrap: "anywhere",
-          }}
-        >
-          {value}
-        </div>
-
-        <div
-          className="text-[9px] sm:text-xs mt-1 font-bold leading-tight break-words"
-          style={{ color: "rgba(15,23,42,0.58)" }}
-        >
-          {label}
-        </div>
-      </motion.div>
-    </EditableWrap>
-  );
-}
-
-function FloatingTextTag({
-  className,
-  title,
-  subtitle,
-  color,
-  delay,
-  editMode,
-  onEditTarget,
-  index,
-}) {
-  const adminPositions = [
-    "absolute left-[9%] top-20 z-20 hidden xl:block",
-    "absolute right-[9%] top-24 z-20 hidden xl:block",
-    "absolute left-[13%] bottom-28 z-20 hidden xl:block",
-    "absolute right-[13%] bottom-24 z-20 hidden xl:block",
-  ];
-
-  const positionClass = editMode
-    ? adminPositions[index] || className
-    : className;
-
-  return (
-    <div className={`${positionClass} group`}>
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{
-          opacity: 1,
-          y: editMode ? 0 : [0, 9, 0],
-        }}
-        whileHover={{
-          y: -8,
-          scale: 1.03,
-        }}
-        transition={{
-          opacity: { duration: 0.55, delay },
-          y: {
-            duration: 7,
-            repeat: editMode ? 0 : Infinity,
-            ease: "easeInOut",
-            delay,
-          },
-        }}
-        className="rounded-3xl px-4 py-3 xl:px-5 xl:py-4 cursor-pointer transition-all duration-300"
-        style={{
-          background: colorfulGlassBackground(color, 0.17),
-          border: editMode
-            ? "1px dashed rgba(56,189,248,0.75)"
-            : `1px solid ${color}50`,
-          boxShadow: "0 18px 44px rgba(15,23,42,0.075), inset 0 1px 0 rgba(255,255,255,0.92)",
-          backdropFilter: "blur(22px) saturate(110%)",
-          WebkitBackdropFilter: "blur(22px) saturate(110%)",
-          maxWidth: editMode ? "190px" : "none",
-        }}
-      >
-        <div
-          className="w-12 h-1 rounded-full mb-3 transition-all duration-150 ease-out group-hover:w-20"
-          style={{ background: color }}
-        />
-
-        <div className="text-slate-950 text-sm font-black whitespace-nowrap">
-          {title}
-        </div>
-
-        <div
-          className="text-xs mt-1 font-semibold whitespace-nowrap"
-          style={{ color: "rgba(15,23,42,0.58)" }}
-        >
-          {subtitle}
-        </div>
-      </motion.div>
-
-      <EditIconButton
-        editMode={editMode}
-        target={{ type: "heroFloating", index }}
-        onEditTarget={onEditTarget}
-        label="Edit floating label"
-      />
-    </div>
-  );
-}
-
-function Premium3DBackground({ editMode = false }) {
-  return (
-    <div
-      className={`${
-        editMode ? "absolute" : "fixed"
-      } inset-0 pointer-events-none z-[1] overflow-hidden`}
-    >
-      <motion.div
-        animate={
-          editMode
-            ? false
-            : {
-                x: [0, 42, -16, 0],
-                y: [0, -28, 22, 0],
-                scale: [1, 1.08, 0.98, 1],
+      <div className="absolute inset-0 overflow-hidden bg-slate-100">
+        {activeMedia ? (
+          <AnimatePresence
+            mode="wait"
+          >
+            <motion.div
+              key={
+                activeMedia.url
               }
-        }
-        transition={{
-          duration: 18,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="absolute left-[-8%] top-[18%] hidden lg:block w-[420px] h-[420px] rounded-full"
-        style={{
-          opacity: 0.18,
-          background:
-            "radial-gradient(circle at 35% 35%, rgba(56,189,248,0.52), rgba(255,255,255,0.22) 38%, transparent 72%)",
-          filter: "blur(6px)",
-        }}
-      />
+              className="absolute inset-0"
+              initial={{
+                opacity: 0,
+              }}
+              animate={{
+                opacity: 1,
+              }}
+              exit={{
+                opacity: 0,
+              }}
+              transition={{
+                duration: 0.45,
+                ease: "easeInOut",
+              }}
+            >
+              {activeMedia.type ===
+              "video" ? (
+                <video
+                  ref={videoRef}
+                  src={
+                    activeMedia.url
+                  }
+                  className="
+                    absolute
+                    inset-0
+                    w-full
+                    h-full
+                  "
+                  style={getHeroImageStyle(
+                    heroData,
+                    activeMedia.url
+                  )}
+                  muted
+                  autoPlay
+                  playsInline
+                  preload="auto"
+                />
+              ) : (
+                <img
+                  src={
+                    activeMedia.url
+                  }
+                  alt="Baljagriti School"
+                  className="
+                    absolute
+                    inset-0
+                    w-full
+                    h-full
+                  "
+                  style={getHeroImageStyle(
+                    heroData,
+                    activeMedia.url
+                  )}
+                  draggable={false}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          <div
+            className="
+              absolute
+              inset-0
+              flex
+              items-center
+              justify-center
+            "
+            style={{
+              background:
+                "#F1F5F9",
+            }}
+          >
+            <ImageIcon
+              className="w-14 h-14 text-slate-300"
+            />
+          </div>
+        )}
+      </div>
 
-      <motion.div
-        animate={
-          editMode
-            ? false
-            : {
-                x: [0, -36, 24, 0],
-                y: [0, 30, -20, 0],
-                scale: [1, 1.05, 0.96, 1],
-              }
-        }
-        transition={{
-          duration: 22,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="absolute right-[-10%] top-[12%] hidden lg:block w-[520px] h-[520px] rounded-full"
-        style={{
-          opacity: 0.2,
-          background:
-            "radial-gradient(circle at 45% 35%, rgba(250,204,21,0.48), rgba(255,255,255,0.20) 40%, transparent 72%)",
-          filter: "blur(8px)",
-        }}
-      />
+      {/* =================================================
+          VERY LIGHT OVERLAY
+          Keeps image bright.
+          ================================================= */}
 
       <div
-        className="absolute inset-0 hidden lg:block"
+        className="
+          absolute
+          inset-0
+          pointer-events-none
+        "
         style={{
-          opacity: 0.09,
-          backgroundImage:
-            "linear-gradient(rgba(75,46,131,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(75,46,131,0.18) 1px, transparent 1px)",
-          backgroundSize: "140px 140px",
-          maskImage:
-            "radial-gradient(circle at 50% 45%, black 0%, black 38%, transparent 76%)",
-          WebkitMaskImage:
-            "radial-gradient(circle at 50% 45%, black 0%, black 38%, transparent 76%)",
-          transform: "perspective(800px) rotateX(62deg) translateY(240px)",
-          transformOrigin: "center bottom",
+          background:
+            "linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.04) 45%, rgba(0,0,0,0.28) 100%)",
+        }}
+      />
+
+      {/* =================================================
+          CENTER TEXT
+          ================================================= */}
+
+      <div
+        className="
+          absolute
+          inset-0
+          z-20
+          flex
+          items-center
+          justify-center
+          text-center
+          px-6
+          pointer-events-none
+        "
+      >
+        <div className="max-w-4xl">
+          <motion.h1
+            initial={{
+              opacity: 0,
+              y: 24,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.8,
+            }}
+            className="
+              text-white
+              font-bold
+              tracking-tight
+            "
+            style={{
+              fontFamily:
+                DISPLAY_FONT,
+              fontSize:
+                "clamp(3rem, 7vw, 6.5rem)",
+              lineHeight: 1.05,
+              textShadow:
+                "0 3px 24px rgba(0,0,0,0.45)",
+            }}
+          >
+            Baljagriti School
+          </motion.h1>
+
+          <motion.p
+            initial={{
+              opacity: 0,
+              y: 16,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.7,
+              delay: 0.18,
+            }}
+            className="
+              mt-5
+              text-white
+              text-base
+              sm:text-lg
+              md:text-xl
+              font-medium
+            "
+            style={{
+              textShadow:
+                "0 2px 14px rgba(0,0,0,0.45)",
+            }}
+          >
+            Our motto is to provide
+            quality education.
+          </motion.p>
+        </div>
+      </div>
+
+      {/* =================================================
+          ADMIN EDIT BUTTON
+          ================================================= */}
+
+      <EditIconButton
+        editMode={editMode}
+        target={{
+          type: "heroImage",
+        }}
+        onEditTarget={
+          onEditTarget
+        }
+        icon={Camera}
+        label="Change hero images or videos"
+      />
+
+      {/* =================================================
+          PREVIOUS
+          ================================================= */}
+
+      {mediaItems.length >
+        1 && (
+        <button
+          type="button"
+          onClick={goPrevious}
+          className="
+            absolute
+            left-5
+            top-1/2
+            -translate-y-1/2
+            z-40
+            w-11
+            h-11
+            rounded-full
+            flex
+            items-center
+            justify-center
+            transition-all
+            hover:scale-110
+          "
+          style={{
+            background:
+              "rgba(255,255,255,0.85)",
+            color:
+              COLORS.navyDark,
+            boxShadow:
+              "0 5px 20px rgba(0,0,0,0.12)",
+          }}
+          aria-label="Previous slide"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+      )}
+
+      {/* =================================================
+          NEXT
+          ================================================= */}
+
+      {mediaItems.length >
+        1 && (
+        <button
+          type="button"
+          onClick={goNext}
+          className="
+            absolute
+            right-5
+            top-1/2
+            -translate-y-1/2
+            z-40
+            w-11
+            h-11
+            rounded-full
+            flex
+            items-center
+            justify-center
+            transition-all
+            hover:scale-110
+          "
+          style={{
+            background:
+              "rgba(255,255,255,0.85)",
+            color:
+              COLORS.navyDark,
+            boxShadow:
+              "0 5px 20px rgba(0,0,0,0.12)",
+          }}
+          aria-label="Next slide"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      )}
+
+      {/* =================================================
+          SLIDE INDICATORS
+          ================================================= */}
+
+      {mediaItems.length >
+        1 && (
+        <div
+          className="
+            absolute
+            bottom-7
+            left-1/2
+            -translate-x-1/2
+            z-40
+            flex
+            gap-2
+          "
+        >
+          {mediaItems.map(
+            (item, index) => (
+              <button
+                key={`${item.url}-${index}`}
+                type="button"
+                onClick={() =>
+                  setActiveIndex(
+                    index
+                  )
+                }
+                className="
+                  h-1
+                  rounded-full
+                  transition-all
+                  duration-300
+                "
+                style={{
+                  width:
+                    index ===
+                    activeIndex
+                      ? "36px"
+                      : "12px",
+
+                  background:
+                    index ===
+                    activeIndex
+                      ? COLORS.green
+                      : "rgba(255,255,255,0.75)",
+                }}
+                aria-label={`Show slide ${
+                  index + 1
+                }`}
+              />
+            )
+          )}
+        </div>
+      )}
+
+      {/* =================================================
+          GREEN BOTTOM LINE
+          ================================================= */}
+
+      <div
+        className="
+          absolute
+          bottom-0
+          left-0
+          right-0
+          h-1
+          z-50
+        "
+        style={{
+          background:
+            COLORS.green,
         }}
       />
     </div>
   );
 }
 
-function HeroImageStage({ heroData, editMode, onEditTarget }) {
-  const heroImages =
-    Array.isArray(heroData.images) &&
-    heroData.images.filter(Boolean).length > 0
-      ? heroData.images
-          .filter(Boolean)
-          .filter((image) => !isHardcodedHeroImageUrl(image))
-      : heroData.image && !isHardcodedHeroImageUrl(heroData.image)
-        ? [heroData.image]
-        : [];
+/* =========================================================
+   ABOUT SECTION
+   ========================================================= */
 
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
-
-  useEffect(() => {
-    setActiveImageIndex(0);
-  }, [heroImages.join("|")]);
-
-  useEffect(() => {
-    if (editMode || heroImages.length <= 1) return undefined;
-
-    const timer = window.setInterval(() => {
-      setActiveImageIndex(
-        (current) => (current + 1) % heroImages.length
-      );
-    }, 4500);
-
-    return () => window.clearInterval(timer);
-  }, [editMode, heroImages.length]);
-
-  const activeImage =
-    heroImages[activeImageIndex] || heroImages[0] || "";
+function AboutSection({
+  aboutData,
+  editMode,
+  onEditTarget,
+}) {
+  const imageUrl =
+    String(
+      aboutData.image || ""
+    ).trim();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.96, y: 24 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.85, delay: 0.18 }}
-      className="relative mt-8 min-h-[350px] sm:min-h-[430px] lg:mt-0 lg:min-h-[535px] xl:min-h-[585px] flex flex-col items-center justify-center lg:translate-y-3 xl:translate-y-5"
+    <section
+      id="about"
+      className="
+        relative
+        bg-white
+        py-16
+        sm:py-20
+        lg:py-24
+      "
     >
-      <EditableWrap
-        editMode={editMode}
-        target={{ type: "heroImage" }}
-        onEditTarget={onEditTarget}
-        icon={Camera}
-        label="Change hero images"
-        className="relative z-10 w-full flex justify-center"
+      <div
+        className="
+          max-w-[1200px]
+          mx-auto
+          px-6
+          sm:px-8
+          lg:px-10
+        "
       >
-        <motion.div
-          animate={{
-            y: editMode ? 0 : [0, -7, 0],
-          }}
-          transition={{
-            duration: 7,
-            repeat: editMode ? 0 : Infinity,
-            ease: "easeInOut",
-          }}
-          className="relative w-full sm:w-[94%] h-[255px] sm:h-[330px] lg:h-[395px] rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-slate-900"
-          style={{
-            boxShadow:
-              "0 38px 92px rgba(15,23,42,0.20), 0 0 60px rgba(56,189,248,0.12)",
-            border: editMode
-              ? "1px dashed rgba(56,189,248,0.65)"
-              : "1px solid rgba(255,255,255,0.76)",
-          }}
+        <div
+          className="
+            grid
+            lg:grid-cols-[0.9fr_1.1fr]
+            gap-10
+            lg:gap-16
+            items-center
+          "
         >
-          {activeImage ? (
-            <img
-              key={activeImage}
-              src={activeImage}
-              alt="Baljagriti school students"
-              draggable={false}
-              className="absolute inset-0"
-              style={getHeroImageCropStyle(heroData, activeImage)}
-            />
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-100 text-slate-400">
-              <ImageIcon className="w-16 h-16 mb-3" />
+          {/* =================================================
+              SCHOOL PHOTO
+              ================================================= */}
 
-              <div className="text-sm font-black uppercase tracking-[0.16em]">
-                Add Hero Image
+          <div className="relative">
+            <EditIconButton
+              editMode={
+                editMode
+              }
+              target={{
+                type: "storyImage",
+              }}
+              onEditTarget={
+                onEditTarget
+              }
+              icon={Camera}
+              label="Change school photo"
+            />
+
+            <div
+              className="
+                relative
+                overflow-hidden
+                bg-slate-100
+                aspect-[4/5]
+                lg:aspect-[4/5]
+              "
+            >
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt="Baljagriti School"
+                  className="
+                    absolute
+                    inset-0
+                    w-full
+                    h-full
+                  "
+                  style={getAboutImageStyle(
+                    aboutData
+                  )}
+                  draggable={false}
+                />
+              ) : (
+                <div
+                  className="
+                    absolute
+                    inset-0
+                    flex
+                    items-center
+                    justify-center
+                    bg-slate-100
+                  "
+                >
+                  <div className="text-center">
+                    <ImageIcon className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+
+                    <p className="text-sm text-slate-400">
+                      Add school photo
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Small clean image label */}
+
+              <div
+                className="
+                  absolute
+                  left-5
+                  bottom-5
+                  bg-white
+                  px-5
+                  py-4
+                  shadow-lg
+                "
+              >
+                <div
+                  className="
+                    text-sm
+                    font-semibold
+                    text-slate-900
+                  "
+                >
+                  {aboutData.imageTopTitle ||
+                    "Baljagriti School"}
+                </div>
+
+                <div
+                  className="
+                    text-xs
+                    text-slate-500
+                    mt-1
+                  "
+                >
+                  {aboutData.imageTopSubtitle ||
+                    "Hetauda-2, Makwanpur"}
+                </div>
               </div>
             </div>
-          )}
+          </div>
 
-          <div
-            className="absolute inset-0"
-            style={{
-              background: activeImage
-                ? "linear-gradient(to top, rgba(15,23,42,0.58) 0%, rgba(15,23,42,0.10) 52%, transparent 100%)"
-                : "linear-gradient(to top, rgba(15,23,42,0.18) 0%, rgba(15,23,42,0.04) 52%, transparent 100%)",
-            }}
-          />
+          {/* =================================================
+              ABOUT CONTENT
+              ================================================= */}
 
-          {heroImages.length > 1 && (
-            <div className="absolute left-5 top-5 z-30 flex items-center gap-2 rounded-full px-3 py-2 shadow-xl backdrop-blur-md"
+          <div>
+            {/* Small heading */}
+
+            <EditIconButton
+              editMode={
+                editMode
+              }
+              target={{
+                type: "storyText",
+              }}
+              onEditTarget={
+                onEditTarget
+              }
+              label="Edit about section"
+            />
+
+            <div
+              className="
+                inline-flex
+                items-center
+                gap-3
+                mb-5
+              "
+            >
+              <span
+                className="
+                  block
+                  w-12
+                  h-[2px]
+                "
+                style={{
+                  background:
+                    COLORS.green,
+                }}
+              />
+
+              <span
+                className="
+                  text-sm
+                  font-semibold
+                  uppercase
+                  tracking-[0.18em]
+                  text-slate-500
+                "
+              >
+                {aboutData.badge}
+              </span>
+            </div>
+
+            {/* Title */}
+
+            <h2
+              className="
+                text-3xl
+                sm:text-4xl
+                lg:text-5xl
+                font-bold
+                text-slate-900
+                leading-tight
+                tracking-tight
+              "
+              style={{
+                fontFamily:
+                  DISPLAY_FONT,
+              }}
+            >
+              {aboutData.title}
+            </h2>
+
+            {/* Green underline */}
+
+            <div
+              className="
+                w-16
+                h-[3px]
+                mt-6
+                mb-7
+              "
               style={{
                 background:
-                  "linear-gradient(135deg, rgba(56,189,248,0.20), rgba(255,255,255,0.84), rgba(250,204,21,0.14))",
-                border: "1px solid rgba(56,189,248,0.28)",
-              }}>
-              <span className="text-xs font-black text-slate-800">
-                {activeImageIndex + 1}/{heroImages.length}
-              </span>
+                  COLORS.green,
+              }}
+            />
 
-              <div className="flex items-center gap-1.5">
-                {heroImages.map((image, index) => (
-                  <button
-                    key={`${image}-${index}`}
-                    type="button"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      setActiveImageIndex(index);
-                    }}
-                    className="h-2.5 rounded-full transition-all"
-                    style={{
-                      width:
-                        activeImageIndex === index ? "18px" : "10px",
-                      background:
-                        activeImageIndex === index
-                          ? palette.cyan
-                          : "rgba(15,23,42,0.28)",
-                    }}
-                    aria-label={`Show hero image ${index + 1}`}
-                  />
-                ))}
-              </div>
+            {/* Paragraphs */}
+
+            <div
+              className="
+                space-y-5
+                text-[15px]
+                sm:text-base
+                leading-7
+                text-slate-600
+              "
+            >
+              {aboutData.paragraphs.map(
+                (paragraph, index) => (
+                  <p
+                    key={index}
+                  >
+                    {paragraph}
+                  </p>
+                )
+              )}
             </div>
-          )}
-        </motion.div>
-      </EditableWrap>
 
-      <EditableWrap
-        editMode={editMode}
-        target={{ type: "heroMotto" }}
-        onEditTarget={onEditTarget}
-        label="Edit school motto"
-        className="relative z-30 mt-5 w-full sm:w-[88%]"
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 56 }}
-animate={{ opacity: 1, y: 56 }}
-          transition={{ duration: 0.65, delay: 0.34 }}
-          className="flex items-center justify-center gap-3 rounded-2xl px-5 py-4 text-center"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(250,204,21,0.20) 0%, rgba(255,255,255,0.84) 42%, rgba(56,189,248,0.16) 72%, rgba(34,197,94,0.12) 100%)",
-            border: editMode
-              ? "1px dashed rgba(56,189,248,0.72)"
-              : "1px solid rgba(56,189,248,0.30)",
-            boxShadow:
-              "0 18px 44px rgba(15,23,42,0.075), inset 0 1px 0 rgba(255,255,255,0.92)",
-            backdropFilter: "blur(22px) saturate(110%)",
-            WebkitBackdropFilter: "blur(22px) saturate(110%)",
-          }}
-        >
-          <p
-  className="text-sm sm:text-base font-black leading-relaxed"
-  style={{
-    color: palette.navy,
-    fontFamily: "var(--font-display)",
-    letterSpacing: "-0.015em",
-  }}
->
-  “{heroData.motto}”
-</p>
-        </motion.div>
-      </EditableWrap>
+            {/* Learn more */}
 
-      <FloatingTextTag
-        className="absolute left-[7%] top-16 z-20 hidden xl:block"
-        title={heroData.floating1Title}
-        subtitle={heroData.floating1Subtitle}
-        color={palette.gold}
-        delay={0.3}
-        editMode={editMode}
-        onEditTarget={onEditTarget}
-        index={0}
-      />
+            <div className="mt-8">
+              <Link
+                to={
+                  aboutData.buttonLink ||
+                  "/about"
+                }
+                className="
+                  inline-flex
+                  items-center
+                  gap-3
+                  px-6
+                  py-3.5
+                  border
+                  border-slate-800
+                  text-slate-800
+                  text-sm
+                  font-bold
+                  uppercase
+                  tracking-wide
+                  transition-all
+                  duration-200
+                  hover:bg-slate-900
+                  hover:text-white
+                "
+              >
+                {aboutData.buttonText ||
+                  "Learn More"}
 
-      <FloatingTextTag
-        className="absolute right-[6%] top-12 z-20 hidden xl:block"
-        title={heroData.floating2Title}
-        subtitle={heroData.floating2Subtitle}
-        color={palette.cyan}
-        delay={0.45}
-        editMode={editMode}
-        onEditTarget={onEditTarget}
-        index={1}
-      />
-
-      <FloatingTextTag
-        className="absolute left-[12%] bottom-28 z-20 hidden xl:block"
-        title={heroData.floating3Title}
-        subtitle={heroData.floating3Subtitle}
-        color={palette.purple}
-        delay={0.6}
-        editMode={editMode}
-        onEditTarget={onEditTarget}
-        index={2}
-      />
-
-      <FloatingTextTag
-        className="absolute right-[12%] bottom-24 z-20 hidden xl:block"
-        title={heroData.floating4Title}
-        subtitle={heroData.floating4Subtitle}
-        color={palette.green}
-        delay={0.75}
-        editMode={editMode}
-        onEditTarget={onEditTarget}
-        index={3}
-      />
-    </motion.div>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
+
+/* =========================================================
+   HERO COMPONENT
+   ========================================================= */
 
 function Hero({
   editMode = false,
   contentOverride = null,
   onEditTarget = () => {},
 }) {
-  const [heroData, setHeroData] = useState(() =>
-    mergeHeroData(contentOverride || defaultHeroData)
+  const [
+    heroData,
+    setHeroData,
+  ] = useState(() =>
+    mergeHeroData(
+      contentOverride ||
+        defaultHeroData
+    )
   );
 
-  useEffect(() => {
-    if (editMode) return;
+  const [
+    aboutData,
+    setAboutData,
+  ] = useState(
+    defaultAboutData
+  );
 
-    fetch(`${API_URL}/api/health`).catch(() => {});
-  }, [editMode]);
+  /* =======================================================
+     LOAD GOOGLE FONT
+     ======================================================= */
+
+  useEffect(() => {
+    if (
+      document.getElementById(
+        "baljagriti-playfair-font"
+      )
+    ) {
+      return;
+    }
+
+    const link =
+      document.createElement(
+        "link"
+      );
+
+    link.id =
+      "baljagriti-playfair-font";
+
+    link.rel = "stylesheet";
+
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&display=swap";
+
+    document.head.appendChild(
+      link
+    );
+  }, []);
+
+  /* =======================================================
+     LOAD HOME CONTENT
+     ======================================================= */
 
   useEffect(() => {
     if (contentOverride) {
-      setHeroData(mergeHeroData(contentOverride));
+      setHeroData(
+        mergeHeroData(
+          contentOverride
+        )
+      );
+
       return;
     }
 
     let alive = true;
 
-    const loadHeroContent = async () => {
-      try {
-        const res = await axios.get(
-          `${API_URL}/api/site-content/home`,
-          {
-            timeout: 10000,
+    const loadHomeContent =
+      async () => {
+        try {
+          const response =
+            await axios.get(
+              `${API_URL}/api/site-content/home`,
+              {
+                timeout: 12000,
+              }
+            );
+
+          if (!alive) {
+            return;
           }
-        );
 
-        if (!alive) return;
+          const content =
+            response.data
+              ?.data?.content;
 
-        const savedHero = res.data?.data?.content?.hero;
-        setHeroData(mergeHeroData(savedHero || defaultHeroData));
-      } catch (error) {
-        console.error("Hero content load error:", error);
+          /* ------------------------------
+             HERO
+             ------------------------------ */
 
-        if (alive) {
-          setHeroData(mergeHeroData(defaultHeroData));
+          const savedHero =
+            content?.hero;
+
+          setHeroData(
+            mergeHeroData(
+              savedHero ||
+                defaultHeroData
+            )
+          );
+
+          /* ------------------------------
+             ABOUT / STORY
+             ------------------------------ */
+
+          const savedStats =
+            content?.statsSection;
+
+          const savedStory =
+            savedStats?.story;
+
+          if (savedStory) {
+            setAboutData(
+              mergeAboutData(
+                savedStory
+              )
+            );
+          } else {
+            setAboutData(
+              mergeAboutData(
+                defaultAboutData
+              )
+            );
+          }
+        } catch (error) {
+          console.error(
+            "Homepage content loading error:",
+            error
+          );
+
+          if (alive) {
+            setHeroData(
+              mergeHeroData(
+                defaultHeroData
+              )
+            );
+
+            setAboutData(
+              mergeAboutData(
+                defaultAboutData
+              )
+            );
+          }
         }
-      }
-    };
+      };
 
-    loadHeroContent();
+    loadHomeContent();
 
     return () => {
       alive = false;
     };
-  }, [contentOverride]);
+  }, [
+    contentOverride,
+  ]);
+
+  /* =======================================================
+     RENDER
+     ======================================================= */
 
   return (
-    <section
-      id="home"
-      className="relative overflow-hidden pt-20 pb-8 sm:pb-14 lg:pb-14"
-      style={{
-        background:
-          "radial-gradient(circle at 9% 18%, rgba(56,189,248,0.30), transparent 32%), radial-gradient(circle at 86% 14%, rgba(250,204,21,0.28), transparent 31%), radial-gradient(circle at 58% 78%, rgba(139,92,246,0.16), transparent 38%), linear-gradient(135deg, #F8FCFF 0%, #FFF8EE 45%, #F1F7FF 100%)",
-      }}
-    >
-      <style>{`
-        @keyframes beamMove {
-          0% { transform: translateX(-120%) rotate(18deg); }
-          100% { transform: translateX(140%) rotate(18deg); }
-        }
+    <main className="w-full bg-white">
+      {/* ===================================================
+          HERO
+          =================================================== */}
 
-        .home-long-text {
-          text-align: justify;
-          text-justify: inter-word;
-          overflow-wrap: break-word;
-          word-break: normal;
-          hyphens: auto;
-        }
-
-        @media (max-width: 640px) {
-          .home-long-text {
-            text-align: left;
-            hyphens: none;
-          }
-        }
-      `}</style>
-
-      <Premium3DBackground editMode={editMode} />
-
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-[2]">
-        <div
-          className="absolute -top-40 -left-32 w-[620px] h-[620px] rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(56,189,248,0.28), transparent 68%)",
-            filter: "blur(18px)",
-          }}
-        />
-
-        <div
-          className="absolute -top-32 -right-32 w-[560px] h-[560px] rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(250,204,21,0.30), transparent 68%)",
-            filter: "blur(18px)",
-          }}
-        />
-      </div>
-
-      <div className="max-w-[1450px] mx-auto px-5 sm:px-8 py-6 sm:py-8 lg:py-6 grid lg:grid-cols-[0.95fr_1.05fr] gap-6 lg:gap-8 items-center relative z-10">
-        <div>
-          <EditableWrap
-            editMode={editMode}
-            target={{ type: "heroBadge" }}
-            onEditTarget={onEditTarget}
-            label="Edit badge"
-            className="inline-block"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65 }}
-              className="inline-flex items-center gap-2 rounded-full px-5 py-2 mb-6"
-              style={{
-                background:
-                  "linear-gradient(145deg, rgba(255,255,255,0.82), rgba(255,255,255,0.60))",
-                border: editMode
-                  ? "1px dashed rgba(56,189,248,0.65)"
-                  : "1px solid rgba(15,23,42,0.08)",
-                boxShadow:
-                  "0 16px 40px rgba(15,23,42,0.07), inset 0 1px 0 rgba(255,255,255,0.92)",
-                backdropFilter: "blur(22px) saturate(110%)",
-                WebkitBackdropFilter: "blur(22px) saturate(110%)",
-                color: palette.navy,
-              }}
-            >
-              <Sparkles className="w-4 h-4" color={palette.gold} />
-
-              <span className="text-sm font-black">
-                {heroData.badge}
-              </span>
-            </motion.div>
-          </EditableWrap>
-
-          <EditableWrap
-            editMode={editMode}
-            target={{ type: "heroTitle" }}
-            onEditTarget={onEditTarget}
-            label="Edit title"
-          >
-            <motion.h1
-              initial={{ opacity: 0, y: 36 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.75, delay: 0.08 }}
-              className="text-4xl md:text-5xl xl:text-6xl leading-[1.02] mb-5"
-              style={{
-                color: palette.navy,
-                fontFamily: "var(--font-display)",
-                fontWeight: 900,
-                letterSpacing: "-0.06em",
-                textShadow: "0 14px 38px rgba(255,255,255,0.65)",
-                outline: editMode
-                  ? "1px dashed rgba(56,189,248,0.45)"
-                  : "none",
-                outlineOffset: editMode ? "8px" : "0",
-                borderRadius: editMode ? "18px" : "0",
-              }}
-            >
-              <span>{heroData.titleLine1}</span>
-              <br />
-
-              <span
-                style={{
-                  display: "inline-block",
-                  background:
-                    "linear-gradient(135deg, #168A3A 0%, #FACC15 50%, #4B2E83 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  textShadow: "none",
-                }}
-              >
-                {heroData.titleLine2}
-              </span>
-              <br />
-
-              <span
-                style={{
-                  display: "inline-block",
-                  fontSize: "0.72em",
-                  lineHeight: 1.04,
-                  letterSpacing: "-0.055em",
-                  marginTop: "0.08em",
-                }}
-              >
-                {String(heroData.titleLine3 || "")
-                  .split(",")
-                  .map((part, index) => (
-                    <span
-                      key={`${part}-${index}`}
-                      style={{ display: "block" }}
-                    >
-                      {part.trim()}
-                    </span>
-                  ))}
-              </span>
-            </motion.h1>
-          </EditableWrap>
-
-          <EditableWrap
-            editMode={editMode}
-            target={{ type: "heroDescription" }}
-            onEditTarget={onEditTarget}
-            label="Edit description"
-          >
-            <motion.p
-              initial={{ opacity: 0, y: 26 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.16 }}
-              className="home-long-text text-lg md:text-xl max-w-xl leading-[1.85] mb-7 rounded-2xl"
-              style={{
-                color: "rgba(15,23,42,0.68)",
-                outline: editMode
-                  ? "1px dashed rgba(56,189,248,0.45)"
-                  : "none",
-                outlineOffset: editMode ? "6px" : "0",
-              }}
-            >
-              {heroData.description}
-            </motion.p>
-          </EditableWrap>
-
-          <EditableWrap
-            editMode={editMode}
-            target={{ type: "heroButtons" }}
-            onEditTarget={onEditTarget}
-            label="Edit buttons"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 22 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65, delay: 0.24 }}
-              className="flex flex-wrap gap-4 mb-8 rounded-2xl"
-              style={{
-                outline: editMode
-                  ? "1px dashed rgba(56,189,248,0.45)"
-                  : "none",
-                outlineOffset: editMode ? "8px" : "0",
-              }}
-            >
-              <Link
-                to={safeLink(
-                  heroData.primaryButtonLink,
-                  "/admissions"
-                )}
-                onClick={(event) => {
-                  if (editMode) event.preventDefault();
-                }}
-                className="relative overflow-hidden px-8 py-4 rounded-2xl font-black text-slate-950 transition-all duration-300 hover:scale-105"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #FACC15 0%, #38BDF8 100%)",
-                  boxShadow:
-                    "0 20px 48px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.55)",
-                }}
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  {heroData.primaryButtonText}
-                  <ArrowRight className="w-4 h-4" />
-                </span>
-
-                <span
-                  className="absolute top-0 bottom-0 w-24 opacity-50"
-                  style={{
-                    left: 0,
-                    background:
-                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.85), transparent)",
-                    animation: editMode
-                      ? "none"
-                      : "beamMove 2.8s ease-in-out infinite",
-                  }}
-                />
-              </Link>
-
-              <Link
-                to={safeLink(
-                  heroData.secondaryButtonLink,
-                  "/facilities"
-                )}
-                onClick={(event) => {
-                  if (editMode) event.preventDefault();
-                }}
-                className="px-8 py-4 rounded-2xl font-black flex items-center gap-2 transition-all duration-300 hover:scale-105"
-                style={{
-                  color: palette.navy,
-                  background:
-                    "linear-gradient(145deg, rgba(255,255,255,0.82), rgba(255,255,255,0.60))",
-                  border: "1px solid rgba(15,23,42,0.10)",
-                  boxShadow:
-                    "0 16px 40px rgba(15,23,42,0.07), inset 0 1px 0 rgba(255,255,255,0.92)",
-                  backdropFilter: "blur(22px) saturate(110%)",
-                WebkitBackdropFilter: "blur(22px) saturate(110%)",
-                }}
-              >
-                {heroData.secondaryButtonText}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </motion.div>
-          </EditableWrap>
-
-          <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-3 max-w-xl">
-            <GlassStat
-              value={heroData.stat1Value}
-              label={heroData.stat1Label}
-              color={palette.gold}
-              delay={0.3}
-              editMode={editMode}
-              onEditTarget={onEditTarget}
-              index={0}
-            />
-
-            <GlassStat
-              value={heroData.stat2Value}
-              label={heroData.stat2Label}
-              color={palette.cyan}
-              delay={0.38}
-              editMode={editMode}
-              onEditTarget={onEditTarget}
-              index={1}
-            />
-
-            <GlassStat
-              value={heroData.stat3Value}
-              label={heroData.stat3Label}
-              color={palette.green}
-              delay={0.46}
-              editMode={editMode}
-              onEditTarget={onEditTarget}
-              index={2}
-            />
-          </div>
-        </div>
-
-        <HeroImageStage
+      <section
+        id="home"
+        className="
+          relative
+          w-full
+          h-[calc(100svh-80px)]
+          min-h-[580px]
+          max-h-[900px]
+          overflow-hidden
+          bg-slate-100
+        "
+      >
+        <HeroMedia
           heroData={heroData}
           editMode={editMode}
-          onEditTarget={onEditTarget}
+          onEditTarget={
+            onEditTarget
+          }
         />
-      </div>
+      </section>
 
-      <div
-        className="absolute bottom-0 left-0 right-0 h-16"
-        style={{
-          background:
-            "linear-gradient(180deg, transparent 0%, rgba(255,248,238,1) 100%)",
-        }}
+      {/* ===================================================
+          ABOUT
+          =================================================== */}
+
+      <AboutSection
+        aboutData={aboutData}
+        editMode={editMode}
+        onEditTarget={
+          onEditTarget
+        }
       />
-    </section>
+    </main>
   );
 }
 
+/* =========================================================
+   EXPORT
+   ========================================================= */
+
 export { Hero };
+
 export default Hero;

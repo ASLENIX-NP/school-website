@@ -1,585 +1,1109 @@
 import defaultSchoolLogo from "../../assets/school-logo.jpeg";
+
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, Pencil, X } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+
+import {
+  Link,
+  useLocation,
+} from "react-router-dom";
+
+import {
+  Menu,
+  Pencil,
+  X,
+} from "lucide-react";
+
+import {
+  motion,
+  AnimatePresence,
+} from "motion/react";
+
+/* =========================================================
+   BALJAGRITI SCHOOL NAVBAR
+
+   Design:
+   - Simple white navbar
+   - Sticky while scrolling
+   - Green admission button
+   - Gold active underline
+   - No dark/blue colors
+   - Clean institutional school design
+   ========================================================= */
+
+const API_URL =
+  "https://school-website-backend-ixx2.onrender.com";
+
+/* =========================================================
+   DEFAULT NAVBAR CONTENT
+   ========================================================= */
 
 export const defaultNavbarContent = {
   logoUrl: "",
+
   schoolName: "Baljagriti",
-  schoolSubtitle: "Secondary English School",
-  admissionButtonText: "Admission Open",
-  admissionButtonLink: "/admissions",
+
+  schoolSubtitle:
+    "English Secondary School",
+
+  admissionButtonText:
+    "Admission Open",
+
+  admissionButtonLink:
+    "/admissions",
+
   showAdmissionButton: true,
+
   links: [
-    { id: "home", label: "Home", href: "/", visible: true },
-    { id: "about", label: "About", href: "/about", visible: true },
-    { id: "academics", label: "Academics", href: "/academics", visible: true },
-    { id: "notices", label: "Notices", href: "/notices", visible: true },
-    { id: "calendar", label: "Calendar", href: "/calendar", visible: true },
-    { id: "blogs", label: "Blog", href: "/blogs", visible: true },
-    { id: "facilities", label: "Facilities", href: "/facilities", visible: true },
-    { id: "staff", label: "Staff", href: "/staff", visible: true },
-    { id: "gallery", label: "Gallery", href: "/gallery", visible: true },
-    { id: "contact", label: "Contact", href: "/contact", visible: true },
+    {
+      id: "home",
+      label: "Home",
+      href: "/",
+      visible: true,
+    },
+
+    {
+      id: "about",
+      label: "About",
+      href: "/about",
+      visible: true,
+    },
+
+    {
+      id: "academics",
+      label: "Academics",
+      href: "/academics",
+      visible: true,
+    },
+
+    {
+      id: "notices",
+      label: "Notices",
+      href: "/notices",
+      visible: true,
+    },
+
+    {
+      id: "calendar",
+      label: "Calendar",
+      href: "/calendar",
+      visible: true,
+    },
+
+    {
+      id: "blogs",
+      label: "Blog",
+      href: "/blogs",
+      visible: true,
+    },
+
+    {
+      id: "facilities",
+      label: "Facilities",
+      href: "/facilities",
+      visible: true,
+    },
+
+    {
+      id: "staff",
+      label: "Staff",
+      href: "/staff",
+      visible: true,
+    },
+
+    {
+      id: "gallery",
+      label: "Gallery",
+      href: "/gallery",
+      visible: true,
+    },
+
+    {
+      id: "contact",
+      label: "Contact",
+      href: "/contact",
+      visible: true,
+    },
   ],
 };
 
+/* =========================================================
+   COLORS
+   ========================================================= */
+
 const palette = {
-  navy: "#020617",
-  cyan: "#38BDF8",
-  gold: "#FACC15",
-  green: "#22C55E",
+  green: "#168A3A",
+  greenDark: "#0F6B2D",
+
+  gold: "#D9A514",
+
+  text: "#222222",
+  muted: "#666666",
+
+  border: "#E5E7EB",
+
+  white: "#FFFFFF",
+
+  light: "#F8F8F8",
 };
 
-function makeSafeId(value, fallback, usedIds) {
+/* =========================================================
+   SAFE ID
+   ========================================================= */
+
+function makeSafeId(
+  value,
+  fallback,
+  usedIds
+) {
   const raw =
-    String(value || fallback || "menu-item")
+    String(
+      value ||
+        fallback ||
+        "menu-item"
+    )
       .trim()
       .toLowerCase()
-      .replace(/[^a-z0-9-_]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "menu-item";
+      .replace(
+        /[^a-z0-9-_]+/g,
+        "-"
+      )
+      .replace(
+        /^-+|-+$/g,
+        "") ||
+    "menu-item";
 
   let nextId = raw;
+
   let counter = 2;
 
   while (usedIds.has(nextId)) {
-    nextId = `${raw}-${counter}`;
+    nextId =
+      `${raw}-${counter}`;
+
     counter += 1;
   }
 
   usedIds.add(nextId);
+
   return nextId;
 }
 
-export function mergeNavbarContent(saved = {}) {
-  const hasSavedLinks = Array.isArray(saved.links);
-  const sourceLinks = hasSavedLinks
-    ? saved.links
-    : defaultNavbarContent.links;
+/* =========================================================
+   MERGE NAVBAR CONTENT
+   ========================================================= */
+
+export function mergeNavbarContent(
+  saved = {}
+) {
+  const hasSavedLinks =
+    Array.isArray(
+      saved.links
+    );
+
+  const sourceLinks =
+    hasSavedLinks
+      ? saved.links
+      : defaultNavbarContent.links;
 
   const usedIds = new Set();
 
   const links = sourceLinks
-    .filter((link) => link && typeof link === "object")
-    .map((link, index) => {
-      const matchingDefault = defaultNavbarContent.links.find(
-        (defaultLink) => defaultLink.id === link.id
-      );
+    .filter(
+      (link) =>
+        link &&
+        typeof link === "object"
+    )
+    .map(
+      (link, index) => {
+        const matchingDefault =
+          defaultNavbarContent.links.find(
+            (defaultLink) =>
+              defaultLink.id ===
+              link.id
+          );
 
-      return {
-        ...(matchingDefault || {}),
-        ...link,
-        id: makeSafeId(
-          link.id,
-          matchingDefault?.id || `menu-${index + 1}`,
-          usedIds
-        ),
-        label: String(link.label ?? matchingDefault?.label ?? "").trim(),
-        href: String(link.href ?? matchingDefault?.href ?? "/").trim() || "/",
-        visible: link.visible !== false,
-      };
-    });
+        return {
+          ...(matchingDefault ||
+            {}),
+          ...link,
+
+          id: makeSafeId(
+            link.id,
+            matchingDefault?.id ||
+              `menu-${index + 1}`,
+            usedIds
+          ),
+
+          label: String(
+            link.label ??
+              matchingDefault?.label ??
+              ""
+          ).trim(),
+
+          href:
+            String(
+              link.href ??
+                matchingDefault?.href ??
+                "/"
+            ).trim() || "/",
+
+          visible:
+            link.visible !==
+            false,
+        };
+      }
+    );
 
   return {
     ...defaultNavbarContent,
+
     ...saved,
-    logoUrl: String(saved.logoUrl ?? defaultNavbarContent.logoUrl).trim(),
+
+    logoUrl: String(
+      saved.logoUrl ??
+        defaultNavbarContent.logoUrl
+    ).trim(),
+
     schoolName: String(
-      saved.schoolName ?? defaultNavbarContent.schoolName
+      saved.schoolName ??
+        defaultNavbarContent.schoolName
     ).trim(),
+
     schoolSubtitle: String(
-      saved.schoolSubtitle ?? defaultNavbarContent.schoolSubtitle
+      saved.schoolSubtitle ??
+        defaultNavbarContent.schoolSubtitle
     ).trim(),
-    admissionButtonText: String(
-      saved.admissionButtonText ?? defaultNavbarContent.admissionButtonText
-    ).trim(),
+
+    admissionButtonText:
+      String(
+        saved.admissionButtonText ??
+          defaultNavbarContent.admissionButtonText
+      ).trim(),
+
     admissionButtonLink:
       String(
         saved.admissionButtonLink ??
           defaultNavbarContent.admissionButtonLink
-      ).trim() || "/admissions",
-    showAdmissionButton: saved.showAdmissionButton !== false,
+      ).trim() ||
+      "/admissions",
+
+    showAdmissionButton:
+      saved.showAdmissionButton !==
+      false,
+
     links,
   };
 }
 
-function HoverEditIcon({ label = "Edit" }) {
+/* =========================================================
+   ADMIN EDIT ICON
+   ========================================================= */
+
+function HoverEditIcon({
+  label = "Edit",
+}) {
   return (
     <span
-      className="admin-navbar-edit-indicator pointer-events-none absolute -top-3 -right-3 z-[90] opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 rounded-full w-8 h-8 flex items-center justify-center shadow-xl"
+      className="
+        pointer-events-none
+        absolute
+        -top-3
+        -right-3
+        z-[120]
+        opacity-0
+        scale-90
+        group-hover:opacity-100
+        group-hover:scale-100
+        transition-all
+        duration-200
+        rounded-full
+        w-7
+        h-7
+        flex
+        items-center
+        justify-center
+        shadow-lg
+      "
       style={{
-        background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
-        color: palette.navy,
-        border: "1px solid rgba(255,255,255,0.8)",
+        background:
+          palette.green,
+
+        color:
+          "#FFFFFF",
+
+        border:
+          "2px solid #FFFFFF",
       }}
       title={label}
     >
-      <Pencil className="w-4 h-4" />
+      <Pencil className="w-3.5 h-3.5" />
     </span>
   );
 }
 
+/* =========================================================
+   NAVBAR
+   ========================================================= */
+
 export function Navbar({
   editMode = false,
+
   contentOverride = null,
+
   onEditTarget = () => {},
 }) {
-  const [navbarContent, setNavbarContent] = useState(
-    mergeNavbarContent(contentOverride || defaultNavbarContent)
+  const [
+    navbarContent,
+    setNavbarContent,
+  ] = useState(
+    mergeNavbarContent(
+      contentOverride ||
+        defaultNavbarContent
+    )
   );
-  const [scrolled, setScrolled] = useState(editMode);
-  const [open, setOpen] = useState(false);
-  const location = useLocation();
+
+  const [
+    open,
+    setOpen,
+  ] = useState(false);
+
+  const location =
+    useLocation();
+
+  /* =======================================================
+     LOAD NAVBAR CONTENT
+     ======================================================= */
 
   useEffect(() => {
     if (contentOverride) {
-      setNavbarContent(mergeNavbarContent(contentOverride));
+      setNavbarContent(
+        mergeNavbarContent(
+          contentOverride
+        )
+      );
+
       return;
     }
 
-    const loadNavbarContent = async () => {
-      try {
-        const res = await axios.get(
-          "https://school-website-backend-ixx2.onrender.com/api/site-content/navbar"
-        );
+    let alive = true;
 
-        const savedContent = res.data?.data?.content || {};
-        setNavbarContent(mergeNavbarContent(savedContent));
-      } catch (error) {
-        console.error("Navbar content load error:", error);
-      }
-    };
+    const loadNavbarContent =
+      async () => {
+        try {
+          const response =
+            await axios.get(
+              `${API_URL}/api/site-content/navbar`,
+              {
+                timeout: 10000,
+              }
+            );
+
+          if (!alive) {
+            return;
+          }
+
+          const savedContent =
+            response.data?.data
+              ?.content || {};
+
+          setNavbarContent(
+            mergeNavbarContent(
+              savedContent
+            )
+          );
+        } catch (error) {
+          console.error(
+            "Navbar content load error:",
+            error
+          );
+        }
+      };
 
     loadNavbarContent();
-  }, [contentOverride]);
+
+    return () => {
+      alive = false;
+    };
+  }, [
+    contentOverride,
+  ]);
+
+  /* =======================================================
+     CLOSE MOBILE MENU WHEN PAGE CHANGES
+     ======================================================= */
 
   useEffect(() => {
+    setOpen(false);
+  }, [
+    location.pathname,
+  ]);
+
+  /* =======================================================
+     ACTIVE LINK
+     ======================================================= */
+
+  const isActive = (
+    href
+  ) => {
     if (editMode) {
-      setScrolled(true);
+      return false;
+    }
+
+    if (href === "/") {
+      return (
+        location.pathname ===
+          "/" ||
+        location.pathname ===
+          "/home"
+      );
+    }
+
+    return (
+      location.pathname ===
+      href
+    );
+  };
+
+  /* =======================================================
+     EDIT HANDLER
+     ======================================================= */
+
+  const selectEditTarget = (
+    event,
+    target
+  ) => {
+    if (!editMode) {
       return;
     }
 
-    const onScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [editMode]);
-
-  const isActive = (href) => {
-    if (editMode) return false;
-    if (href === "/") return location.pathname === "/";
-    return location.pathname === href;
-  };
-
-  const selectEditTarget = (event, target) => {
-    if (!editMode) return;
-
     event.preventDefault();
+
     event.stopPropagation();
+
     onEditTarget(target);
   };
 
-  const visibleLinks = navbarContent.links.filter(
-    (link) => link.visible !== false
-  );
-  const logoSrc = navbarContent.logoUrl || defaultSchoolLogo;
+  /* =======================================================
+     VISIBLE LINKS
+     ======================================================= */
 
-  const quickLinks = ["home", "academics", "notices"]
-    .map((id) => navbarContent.links.find((link) => link.id === id))
-    .filter(Boolean)
-    .filter((link) => link.visible !== false);
+  const visibleLinks =
+    navbarContent.links.filter(
+      (link) =>
+        link.visible !==
+        false
+    );
+
+  /* =======================================================
+     LOGO
+     ======================================================= */
+
+  const logoSrc =
+    navbarContent.logoUrl ||
+    defaultSchoolLogo;
+
+  /* =======================================================
+     RENDER
+     ======================================================= */
 
   return (
     <>
-      <motion.header
-        initial={editMode ? false : { y: -80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.55, ease: "easeOut" }}
-        className={
-          editMode
-            ? "relative z-50 w-full px-0 pt-0"
-            : "fixed top-0 left-0 right-0 z-50 px-4 pt-3"
-        }
+      {/* ===================================================
+          STICKY NAVBAR
+
+          IMPORTANT:
+          sticky + top-0 keeps this navbar visible
+          while the page is being scrolled.
+
+          It is NOT a floating pill.
+          It is NOT dark.
+          It is NOT blue.
+          =================================================== */}
+
+      <header
+        className="
+          sticky
+          top-0
+          z-[100]
+          w-full
+          bg-white
+          border-b
+          border-slate-200
+        "
       >
         <nav
-          className="max-w-[1450px] mx-auto h-[68px] md:h-[76px] px-3 md:px-6 flex items-center justify-between rounded-[1.7rem] transition-all duration-300"
-          style={{
-            background: scrolled
-              ? "linear-gradient(145deg, rgba(2,6,23,0.95), rgba(15,23,42,0.88))"
-              : "linear-gradient(145deg, rgba(2,6,23,0.9), rgba(15,23,42,0.78))",
-            border: editMode
-              ? "2px solid rgba(56,189,248,0.45)"
-              : "1px solid rgba(255,255,255,0.14)",
-            boxShadow: scrolled
-              ? "0 24px 70px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.12)"
-              : "0 18px 52px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.1)",
-            backdropFilter: "blur(24px)",
-          }}
+          className="
+            max-w-[1280px]
+            mx-auto
+            min-h-[82px]
+            px-5
+            sm:px-8
+            lg:px-10
+            flex
+            items-center
+            justify-between
+            gap-8
+          "
         >
+          {/* =================================================
+              SCHOOL BRAND
+              ================================================= */}
+
           <Link
             to="/"
             onClick={(event) => {
               if (editMode) {
-                selectEditTarget(event, { type: "branding" });
+                selectEditTarget(
+                  event,
+                  {
+                    type:
+                      "branding",
+                  }
+                );
+
                 return;
               }
 
               window.scrollTo({
                 top: 0,
-                behavior: "smooth",
+                behavior:
+                  "smooth",
               });
             }}
-            className={
+            className="
+              relative
+              group
+              flex
+              items-center
+              gap-3
+              flex-shrink-0
+            "
+            title={
               editMode
-                ? "relative group flex items-center gap-3 flex-shrink-0 rounded-2xl cursor-pointer"
-                : "flex items-center gap-3 flex-shrink-0"
+                ? "Edit school logo and name"
+                : ""
             }
-            title={editMode ? "Edit school logo and name" : ""}
           >
+            {/* Logo */}
+
             <div
-              className="rounded-2xl overflow-hidden bg-white flex items-center justify-center transition-all duration-300 group-hover:scale-105"
-              style={{
-                width: "46px",
-                height: "46px",
-                border: "1px solid rgba(255,255,255,0.7)",
-                boxShadow:
-                  "0 0 0 3px rgba(34,197,94,0.2), 0 14px 34px rgba(34,197,94,0.22)",
-              }}
+              className="
+                w-[58px]
+                h-[58px]
+                flex
+                items-center
+                justify-center
+                bg-white
+                overflow-hidden
+              "
             >
               <img
                 src={logoSrc}
                 alt={`${navbarContent.schoolName || "School"} Logo`}
-                className="w-full h-full object-contain p-1"
+                className="
+                  w-full
+                  h-full
+                  object-contain
+                "
               />
             </div>
 
+            {/* School name */}
+
             <div className="hidden sm:block">
               <div
-                className="font-bold text-lg leading-tight"
-                style={{
-                  color: "#FFFFFF",
-                  fontFamily: "var(--font-display)",
-                  letterSpacing: "-0.02em",
-                }}
+                className="
+                  text-[17px]
+                  font-bold
+                  leading-tight
+                  text-slate-900
+                "
               >
-                {navbarContent.schoolName || "School Name"}
+                {
+                  navbarContent.schoolName
+                }
               </div>
 
               <div
-                className="text-xs leading-tight"
-                style={{ color: palette.green }}
+                className="
+                  mt-0.5
+                  text-[11px]
+                  font-medium
+                  leading-tight
+                "
+                style={{
+                  color:
+                    palette.green,
+                }}
               >
-                {navbarContent.schoolSubtitle || "School Subtitle"}
+                {
+                  navbarContent.schoolSubtitle
+                }
               </div>
             </div>
 
-            {editMode && <HoverEditIcon label="Edit School Branding" />}
+            {editMode && (
+              <HoverEditIcon
+                label="Edit School Branding"
+              />
+            )}
           </Link>
+
+          {/* =================================================
+              DESKTOP NAVIGATION
+              ================================================= */}
 
           <div
             onClick={(event) => {
               if (editMode) {
-                selectEditTarget(event, { type: "menu" });
+                selectEditTarget(
+                  event,
+                  {
+                    type:
+                      "menu",
+                  }
+                );
               }
             }}
-            className={
-              editMode
-                ? "relative group hidden xl:flex items-center gap-1 px-2 py-2 rounded-2xl cursor-pointer min-h-[52px]"
-                : "hidden xl:flex items-center gap-1 px-2 py-2 rounded-2xl"
-            }
-            title={editMode ? "Edit all menu items" : ""}
-            style={{
-              background: "rgba(255,255,255,0.055)",
-              border: editMode
-                ? "1px dashed rgba(56,189,248,0.42)"
-                : "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
-            }}
+            className={`
+              relative
+              group
+              hidden
+              lg:flex
+              items-center
+              justify-center
+              flex-1
+              ${
+                editMode
+                  ? "cursor-pointer"
+                  : ""
+              }
+            `}
           >
-            {visibleLinks.length > 0 ? (
-              visibleLinks.map((link) => {
-                const active = isActive(link.href);
+            <div
+              className="
+                flex
+                items-center
+                justify-center
+                gap-1
+              "
+            >
+              {visibleLinks.map(
+                (link) => {
+                  const active =
+                    isActive(
+                      link.href
+                    );
 
-                return (
-                  <Link
-                    key={link.id}
-                    to={link.href || "/"}
-                    onClick={(event) => {
-                      if (editMode) {
-                        selectEditTarget(event, { type: "menu" });
+                  return (
+                    <Link
+                      key={
+                        link.id
                       }
-                    }}
-                    className="relative px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
-                    style={{
-                      color: active ? palette.navy : "rgba(255,255,255,0.84)",
-                      background: active
-                        ? `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`
-                        : "transparent",
-                      boxShadow: active
-                        ? "0 12px 28px rgba(56,189,248,0.22)"
-                        : "none",
-                    }}
-                  >
-                    {link.label}
-                  </Link>
-                );
-              })
-            ) : editMode ? (
-              <span className="px-5 py-2 text-sm font-bold text-white/70">
-                No visible menu items — click to manage
-              </span>
-            ) : null}
-
-            {editMode && <HoverEditIcon label="Manage All Menu Items" />}
-          </div>
-
-          {(navbarContent.showAdmissionButton || editMode) && (
-            <div className="hidden xl:flex items-center gap-3 flex-shrink-0">
-              {navbarContent.showAdmissionButton ? (
-                <Link
-                  to={navbarContent.admissionButtonLink || "/admissions"}
-                  onClick={(event) => {
-                    if (editMode) {
-                      selectEditTarget(event, { type: "admission" });
-                    }
-                  }}
-                  className={
-                    editMode
-                      ? "relative group overflow-visible px-6 py-3 rounded-2xl text-sm font-bold text-slate-950 transition-all duration-300 hover:scale-105 cursor-pointer"
-                      : "relative overflow-hidden px-6 py-3 rounded-2xl text-sm font-bold text-slate-950 transition-all duration-300 hover:scale-105"
-                  }
-                  title={editMode ? "Edit admission button" : ""}
-                  style={{
-                    background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
-                    boxShadow:
-                      "0 18px 42px rgba(56,189,248,0.28), inset 0 1px 0 rgba(255,255,255,0.42)",
-                  }}
-                >
-                  <span className="relative z-10">
-                    {navbarContent.admissionButtonText || "Admission Open"} →
-                  </span>
-
-                  {editMode && <HoverEditIcon label="Edit Admission Button" />}
-
-                  {!editMode && (
-                    <span
-                      className="absolute top-0 bottom-0 w-16 opacity-40"
-                      style={{
-                        left: 0,
-                        background:
-                          "linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent)",
-                        animation: "navShine 2.8s ease-in-out infinite",
+                      to={
+                        link.href ||
+                        "/"
+                      }
+                      onClick={(
+                        event
+                      ) => {
+                        if (
+                          editMode
+                        ) {
+                          selectEditTarget(
+                            event,
+                            {
+                              type:
+                                "menu",
+                            }
+                          );
+                        }
                       }}
-                    />
-                  )}
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  onClick={(event) =>
-                    selectEditTarget(event, { type: "admission" })
-                  }
-                  className="relative group px-5 py-3 rounded-2xl text-sm font-black text-white/80 cursor-pointer"
-                  style={{
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px dashed rgba(250,204,21,0.55)",
-                  }}
-                >
-                  Admission button hidden — Edit
-                  <HoverEditIcon label="Restore Admission Button" />
-                </button>
+                      className="
+                        relative
+                        px-3
+                        py-4
+                        text-[14px]
+                        font-medium
+                        text-slate-700
+                        transition-colors
+                        duration-200
+                        hover:text-slate-950
+                      "
+                    >
+                      {
+                        link.label
+                      }
+
+                      {/* Active gold underline */}
+
+                      <span
+                        className="
+                          absolute
+                          left-3
+                          right-3
+                          bottom-0
+                          h-[2px]
+                          transition-all
+                          duration-200
+                        "
+                        style={{
+                          background:
+                            active
+                              ? palette.gold
+                              : "transparent",
+                        }}
+                      />
+                    </Link>
+                  );
+                }
               )}
             </div>
-          )}
-
-          <div className="xl:hidden flex items-center gap-1.5 ml-auto mr-2">
-            {quickLinks.map((link) => (
-              <Link
-                key={link.id}
-                to={link.href || "/"}
-                onClick={(event) => {
-                  if (editMode) {
-                    selectEditTarget(event, { type: "menu" });
-                  } else {
-                    setOpen(false);
-                  }
-                }}
-                className="px-2.5 py-2 rounded-xl text-[11px] font-black leading-none transition-all"
-                style={{
-                  color: isActive(link.href)
-                    ? palette.navy
-                    : "rgba(255,255,255,0.9)",
-                  background: isActive(link.href)
-                    ? `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`
-                    : "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                }}
-              >
-                {link.label}
-              </Link>
-            ))}
 
             {editMode && (
-              <button
-                type="button"
-                onClick={(event) =>
-                  selectEditTarget(event, { type: "menu" })
-                }
-                className="p-2 rounded-xl"
-                style={{
-                  color: palette.navy,
-                  background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
-                }}
-                aria-label="Edit all menu items"
-                title="Edit all menu items"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
+              <HoverEditIcon
+                label="Manage All Menu Items"
+              />
             )}
           </div>
 
+          {/* =================================================
+              GREEN ADMISSION BUTTON
+              ================================================= */}
+
+          <div
+            className="
+              hidden
+              lg:flex
+              items-center
+              flex-shrink-0
+            "
+          >
+            {navbarContent.showAdmissionButton ? (
+              <Link
+                to={
+                  navbarContent.admissionButtonLink ||
+                  "/admissions"
+                }
+                onClick={(
+                  event
+                ) => {
+                  if (
+                    editMode
+                  ) {
+                    selectEditTarget(
+                      event,
+                      {
+                        type:
+                          "admission",
+                      }
+                    );
+                  }
+                }}
+                className="
+                  relative
+                  group
+                  inline-flex
+                  items-center
+                  gap-2
+                  px-5
+                  py-3
+                  bg-[#168A3A]
+                  border
+                  border-[#168A3A]
+                  text-white
+                  text-[13px]
+                  font-bold
+                  transition-all
+                  duration-200
+                  hover:bg-[#0F6B2D]
+                  hover:border-[#0F6B2D]
+                "
+                title={
+                  editMode
+                    ? "Edit admission button"
+                    : ""
+                }
+              >
+                {
+                  navbarContent.admissionButtonText
+                }
+
+                <span
+                  className="
+                    text-base
+                    leading-none
+                    transition-transform
+                    duration-200
+                    group-hover:translate-x-1
+                  "
+                >
+                  →
+                </span>
+
+                {editMode && (
+                  <HoverEditIcon
+                    label="Edit Admission Button"
+                  />
+                )}
+              </Link>
+            ) : editMode ? (
+              <button
+                type="button"
+                onClick={(event) =>
+                  selectEditTarget(
+                    event,
+                    {
+                      type:
+                        "admission",
+                    }
+                  )
+                }
+                className="
+                  px-4
+                  py-2
+                  border
+                  border-dashed
+                  border-slate-400
+                  text-xs
+                  font-bold
+                  text-slate-500
+                "
+              >
+                Admission button hidden
+              </button>
+            ) : null}
+          </div>
+
+          {/* =================================================
+              MOBILE MENU BUTTON
+              ================================================= */}
+
           <button
             type="button"
-            onClick={() => setOpen((value) => !value)}
-            className="xl:hidden p-2 rounded-xl transition-colors"
-            style={{
-              color: "#FFFFFF",
-              background: "rgba(255,255,255,0.08)",
-              border: "1px solid rgba(255,255,255,0.12)",
-            }}
+            onClick={() =>
+              setOpen(
+                (value) =>
+                  !value
+              )
+            }
+            className="
+              lg:hidden
+              w-10
+              h-10
+              flex
+              items-center
+              justify-center
+              border
+              border-slate-300
+              text-slate-800
+              bg-white
+              transition-colors
+              hover:bg-slate-50
+            "
             aria-label="Toggle navigation menu"
           >
-            {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {open ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
           </button>
         </nav>
-      </motion.header>
+      </header>
 
-      <style>{`
-        @keyframes navShine {
-          0% { transform: translateX(-130%) rotate(18deg); }
-          100% { transform: translateX(190%) rotate(18deg); }
-        }
-      `}</style>
+      {/* ===================================================
+          MOBILE MENU
+          =================================================== */}
 
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -18, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -18, scale: 0.96 }}
-            transition={{ duration: 0.25 }}
-            className={
-              editMode
-                ? "absolute top-[96px] left-4 right-4 z-40 xl:hidden rounded-[1.7rem] overflow-hidden"
-                : "fixed top-[96px] left-4 right-4 z-40 xl:hidden rounded-[1.7rem] overflow-hidden"
-            }
-            style={{
-              background:
-                "linear-gradient(145deg, rgba(2,6,23,0.97), rgba(15,23,42,0.9))",
-              border: "1px solid rgba(255,255,255,0.14)",
-              boxShadow: "0 28px 80px rgba(0,0,0,0.36)",
-              backdropFilter: "blur(24px)",
+            initial={{
+              opacity: 0,
+              y: -10,
             }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            exit={{
+              opacity: 0,
+              y: -10,
+            }}
+            transition={{
+              duration: 0.2,
+            }}
+            className="
+              lg:hidden
+              sticky
+              top-[82px]
+              z-[90]
+              w-full
+              bg-white
+              border-b
+              border-slate-200
+              shadow-sm
+            "
           >
-            <div className="p-4 grid gap-1">
-              {visibleLinks.length > 0 ? (
-                visibleLinks.map((link) => {
-                  const active = isActive(link.href);
+            <div
+              className="
+                max-w-[1280px]
+                mx-auto
+                px-5
+                py-3
+              "
+            >
+              {/* Mobile links */}
 
-                  return (
-                    <Link
-                      key={link.id}
-                      to={link.href || "/"}
-                      onClick={(event) => {
-                        if (editMode) {
-                          selectEditTarget(event, { type: "menu" });
-                        } else {
-                          setOpen(false);
+              <div
+                className="
+                  flex
+                  flex-col
+                "
+              >
+                {visibleLinks.map(
+                  (link) => {
+                    const active =
+                      isActive(
+                        link.href
+                      );
+
+                    return (
+                      <Link
+                        key={
+                          link.id
                         }
-                      }}
-                      className="px-4 py-3 rounded-xl text-sm font-medium transition-all"
-                      style={{
-                        color: active
-                          ? palette.navy
-                          : "rgba(255,255,255,0.86)",
-                        background: active
-                          ? `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`
-                          : "transparent",
-                      }}
-                    >
-                      {link.label}
-                    </Link>
-                  );
-                })
-              ) : editMode ? (
-                <button
-                  type="button"
-                  onClick={(event) =>
-                    selectEditTarget(event, { type: "menu" })
-                  }
-                  className="px-4 py-4 rounded-xl text-sm font-black text-white/80 text-left"
-                  style={{
-                    border: "1px dashed rgba(56,189,248,0.5)",
-                  }}
-                >
-                  No visible menu items — click to manage
-                </button>
-              ) : null}
+                        to={
+                          link.href ||
+                          "/"
+                        }
+                        onClick={(
+                          event
+                        ) => {
+                          if (
+                            editMode
+                          ) {
+                            selectEditTarget(
+                              event,
+                              {
+                                type:
+                                  "menu",
+                              }
+                            );
+                          } else {
+                            setOpen(
+                              false
+                            );
+                          }
+                        }}
+                        className="
+                          relative
+                          py-3.5
+                          px-2
+                          border-b
+                          border-slate-100
+                          text-sm
+                          font-medium
+                          transition-colors
+                        "
+                        style={{
+                          color:
+                            active
+                              ? palette.green
+                              : palette.text,
 
-              {editMode && (
-                <button
-                  type="button"
-                  onClick={(event) =>
-                    selectEditTarget(event, { type: "menu" })
-                  }
-                  className="mt-2 px-4 py-3 rounded-xl text-sm font-black text-slate-950"
-                  style={{
-                    background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
-                  }}
-                >
-                  Manage All Menu Items
-                </button>
-              )}
+                          fontWeight:
+                            active
+                              ? 700
+                              : 500,
+                        }}
+                      >
+                        {
+                          link.label
+                        }
 
-              {navbarContent.showAdmissionButton ? (
+                        {active && (
+                          <span
+                            className="
+                              absolute
+                              left-0
+                              bottom-0
+                              w-8
+                              h-[2px]
+                            "
+                            style={{
+                              background:
+                                palette.gold,
+                            }}
+                          />
+                        )}
+                      </Link>
+                    );
+                  }
+                )}
+              </div>
+
+              {/* =================================================
+                  MOBILE GREEN ADMISSION BUTTON
+                  ================================================= */}
+
+              {navbarContent.showAdmissionButton && (
                 <Link
-                  to={navbarContent.admissionButtonLink || "/admissions"}
-                  onClick={(event) => {
-                    if (editMode) {
-                      selectEditTarget(event, { type: "admission" });
+                  to={
+                    navbarContent.admissionButtonLink ||
+                    "/admissions"
+                  }
+                  onClick={(
+                    event
+                  ) => {
+                    if (
+                      editMode
+                    ) {
+                      selectEditTarget(
+                        event,
+                        {
+                          type:
+                            "admission",
+                        }
+                      );
                     } else {
-                      setOpen(false);
+                      setOpen(
+                        false
+                      );
                     }
                   }}
-                  className="mt-3 px-5 py-3 rounded-xl text-sm font-bold text-center text-slate-950"
-                  style={{
-                    background: `linear-gradient(135deg, ${palette.gold}, ${palette.cyan})`,
-                    boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
-                  }}
+                  className="
+                    mt-4
+                    mb-2
+                    flex
+                    items-center
+                    justify-center
+                    gap-2
+                    w-full
+                    px-5
+                    py-3
+                    bg-[#168A3A]
+                    border
+                    border-[#168A3A]
+                    text-white
+                    text-sm
+                    font-bold
+                    transition-colors
+                    hover:bg-[#0F6B2D]
+                    hover:border-[#0F6B2D]
+                  "
                 >
-                  {navbarContent.admissionButtonText || "Admission Open"} →
-                </Link>
-              ) : editMode ? (
-                <button
-                  type="button"
-                  onClick={(event) =>
-                    selectEditTarget(event, { type: "admission" })
+                  {
+                    navbarContent.admissionButtonText
                   }
-                  className="mt-3 px-5 py-3 rounded-xl text-sm font-bold text-center text-white/80"
-                  style={{
-                    border: "1px dashed rgba(250,204,21,0.55)",
-                    background: "rgba(255,255,255,0.05)",
-                  }}
-                >
-                  Admission button hidden — Edit
-                </button>
-              ) : null}
+
+                  <span>
+                    →
+                  </span>
+                </Link>
+              )}
             </div>
           </motion.div>
         )}
