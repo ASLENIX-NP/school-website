@@ -969,22 +969,15 @@ import {
  
  
     media,
- 
- 
- 
-    images:
- 
-      media.map(
- 
-        (item) => item.url
- 
-      ),
- 
- 
- 
+
+    images: media
+      .filter((item) => item.type === "image")
+      .map((item) => item.url),
+
+
+
     image:
- 
-      media[0]?.url || "",
+      media.find((item) => item.type === "image")?.url || "",
  
  
  

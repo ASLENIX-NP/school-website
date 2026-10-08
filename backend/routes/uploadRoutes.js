@@ -7,7 +7,7 @@ const router = express.Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 6 * 1024 * 1024,
+    fileSize: 25 * 1024 * 1024,
   },
 });
 
@@ -56,7 +56,7 @@ router.post("/", upload.single("file"), async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: error.message || "Image upload failed.",
+      message: error.message || "Media upload failed.",
     });
   }
 });

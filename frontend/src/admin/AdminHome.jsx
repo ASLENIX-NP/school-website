@@ -363,16 +363,40 @@ function cleanRequiredText(value) {
   return String(value ?? "").trim();
 }
 
-function normalizeImageList(images = [], fallbackImage = "") {
-  const source = Array.isArray(images) ? images : [];
+function getHeroMediaType(url, type = "") {
+  if (type === "video" || type === "image") return type;
 
-  const cleanImages = source
-    .map((item) => String(item || "").trim())
+  const cleanUrl = String(url || "")
+    .toLowerCase()
+    .split("?")[0]
+    .split("#")[0];
+
+  return /\.(mp4|webm|ogg|mov|m4v)$/.test(cleanUrl) ? "video" : "image";
+}
+
+function normalizeHeroMedia(media = [], fallbackImage = "") {
+  const source = Array.isArray(media) ? media : [];
+  const items = source
+    .map((item) => {
+      const url = String(
+        typeof item === "string" ? item : item?.url || item?.src || ""
+      ).trim();
+
+      return url
+        ? { url, type: getHeroMediaType(url, item?.type) }
+        : null;
+    })
     .filter(Boolean);
 
-  const fallback = String(fallbackImage || "").trim();
+  if (items.length === 0 && String(fallbackImage || "").trim()) {
+    const url = String(fallbackImage).trim();
+    items.push({ url, type: getHeroMediaType(url) });
+  }
 
-  return Array.from(new Set(fallback ? [fallback, ...cleanImages] : cleanImages));
+  return items.filter(
+    (item, index) =>
+      items.findIndex((candidate) => candidate.url === item.url) === index
+  );
 }
 
 function clampImageOffset(value) {
@@ -883,9 +907,12 @@ export default function AdminHome() {
     }
 
     if (target.type === "heroImage") {
-      const heroImages = normalizeImageList(form.hero.images, form.hero.image);
+      const heroMedia = normalizeHeroMedia(form.hero.media, form.hero.image);
 
-      const imageAdjustments = heroImages.reduce((acc, imageUrl) => {
+      const imageAdjustments = heroMedia
+        .filter((item) => item.type === "image")
+        .reduce((acc, item) => {
+        const imageUrl = item.url;
         const savedAdjustment = form.hero.imageAdjustments?.[imageUrl] || {};
 
         acc[imageUrl] = {
@@ -898,8 +925,8 @@ export default function AdminHome() {
       }, {});
 
       setModalForm({
-        image: heroImages[0] || form.hero.image || "",
-        images: heroImages,
+        image: heroMedia[0]?.url || form.hero.image || "",
+        media: heroMedia,
         imageAdjustments,
       });
       return;
@@ -1045,18 +1072,43 @@ export default function AdminHome() {
 
     if (selectedFiles.length === 0) return;
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    const maxSize = 6 * 1024 * 1024;
+    const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedVideoTypes = [
+      "video/mp4",
+      "video/webm",
+      "video/ogg",
+      "video/quicktime",
+      "video/x-m4v",
+    ];
+    const isVideoFile = (file) =>
+      allowedVideoTypes.includes(file.type) ||
+      /\.(mp4|webm|ogg|mov|m4v)$/i.test(file.name);
 
-    const invalidType = selectedFiles.find((file) => !allowedTypes.includes(file.type));
+    const invalidType = selectedFiles.find(
+      (file) =>
+        !allowedImageTypes.includes(file.type) &&
+        !(editingTarget?.type === "heroImage" && isVideoFile(file))
+    );
     if (invalidType) {
-      setError("Please upload only PNG, JPG, or WebP image.");
+      setError(
+        editingTarget?.type === "heroImage"
+          ? "Please upload PNG, JPG, WebP, MP4, WebM, OGG, MOV, or M4V files."
+          : "Please upload only PNG, JPG, or WebP image."
+      );
       return;
     }
 
-    const oversizedFile = selectedFiles.find((file) => file.size > maxSize);
+    const oversizedFile = selectedFiles.find(
+      (file) =>
+        file.size >
+        (isVideoFile(file) ? 25 * 1024 * 1024 : 6 * 1024 * 1024)
+    );
     if (oversizedFile) {
-      setError("Image must be less than 6 MB.");
+      setError(
+        isVideoFile(oversizedFile)
+          ? "Video must be 25 MB or smaller."
+          : "Image must be 6 MB or smaller."
+      );
       return;
     }
 
@@ -1088,48 +1140,53 @@ export default function AdminHome() {
         const uploadedUrl = getUploadUrl(res.data);
 
         if (!uploadedUrl) {
-          throw new Error("Image uploaded but backend did not return image URL.");
+          throw new Error("Media uploaded but backend did not return a file URL.");
         }
 
-        uploadedUrls.push(uploadedUrl);
+        uploadedUrls.push({
+          url: uploadedUrl,
+          type: isVideoFile(file) ? "video" : "image",
+        });
       }
 
       if (editingTarget?.type === "heroImage") {
         setModalForm((prev) => {
-          const nextImages = normalizeImageList(
-            [...(Array.isArray(prev.images) ? prev.images : []), ...uploadedUrls],
+          const nextMedia = normalizeHeroMedia(
+            [...(Array.isArray(prev.media) ? prev.media : []), ...uploadedUrls],
             prev.image
           );
 
           const nextAdjustments = { ...(prev.imageAdjustments || {}) };
 
-          nextImages.forEach((imageUrl) => {
-            if (!nextAdjustments[imageUrl]) {
-              nextAdjustments[imageUrl] = {
-                imageZoom: 1,
-                imageOffsetX: 0,
-                imageOffsetY: 0,
-              };
-            }
-          });
+          nextMedia
+            .filter((item) => item.type === "image")
+            .forEach(({ url }) => {
+              if (!nextAdjustments[url]) {
+                nextAdjustments[url] = {
+                  imageZoom: 1,
+                  imageOffsetX: 0,
+                  imageOffsetY: 0,
+                };
+              }
+            });
 
           return {
             ...prev,
-            image: nextImages[0] || "",
-            images: nextImages,
+            image: nextMedia[0]?.url || "",
+            media: nextMedia,
             imageAdjustments: nextAdjustments,
           };
         });
 
         setSuccess(
-          `${uploadedUrls.length} hero image${
+          `${uploadedUrls.length} hero media file${
             uploadedUrls.length === 1 ? "" : "s"
-          } uploaded. Click Save Hero Images to publish.`
+          } uploaded. Click Save Hero Media to publish.`
         );
       } else {
         setModalForm((prev) => ({
           ...prev,
-          image: uploadedUrls[0] || prev.image || "",
+          image: uploadedUrls[0]?.url || prev.image || "",
           imageZoom: clampImageZoom(prev.imageZoom),
           imageOffsetX: clampImageOffset(prev.imageOffsetX),
           imageOffsetY: clampImageOffset(prev.imageOffsetY),
@@ -1138,11 +1195,11 @@ export default function AdminHome() {
         setSuccess("Image uploaded. Click Save to publish this selected item.");
       }
     } catch (err) {
-      console.error("Image upload error:", err);
+      console.error("Media upload error:", err);
       setError(
         err.response?.data?.message ||
           err.message ||
-          "Image upload failed."
+          "Media upload failed."
       );
     } finally {
       setUploadingImage(false);
@@ -1151,20 +1208,20 @@ export default function AdminHome() {
 
   const removeHeroImageFromModal = (indexToRemove) => {
     setModalForm((prev) => {
-      const nextImages = normalizeImageList(prev.images, prev.image).filter(
+      const nextMedia = normalizeHeroMedia(prev.media, prev.image).filter(
         (_, index) => index !== indexToRemove
       );
 
       const nextAdjustments = Object.fromEntries(
         Object.entries(prev.imageAdjustments || {}).filter(([imageUrl]) =>
-          nextImages.includes(imageUrl)
+          nextMedia.some((item) => item.url === imageUrl && item.type === "image")
         )
       );
 
       return {
         ...prev,
-        image: nextImages[0] || "",
-        images: nextImages,
+        image: nextMedia[0]?.url || "",
+        media: nextMedia,
         imageAdjustments: nextAdjustments,
       };
     });
@@ -1172,20 +1229,20 @@ export default function AdminHome() {
 
   const makeHeroImageMainInModal = (indexToMove) => {
     setModalForm((prev) => {
-      const currentImages = normalizeImageList(prev.images, prev.image);
-      const selectedImage = currentImages[indexToMove];
+      const currentMedia = normalizeHeroMedia(prev.media, prev.image);
+      const selectedMedia = currentMedia[indexToMove];
 
-      if (!selectedImage) return prev;
+      if (!selectedMedia) return prev;
 
-      const nextImages = [
-        selectedImage,
-        ...currentImages.filter((_, index) => index !== indexToMove),
+      const nextMedia = [
+        selectedMedia,
+        ...currentMedia.filter((_, index) => index !== indexToMove),
       ];
 
       return {
         ...prev,
-        image: selectedImage,
-        images: nextImages,
+        image: selectedMedia.url,
+        media: nextMedia,
         imageAdjustments: prev.imageAdjustments || {},
       };
     });
@@ -1195,7 +1252,7 @@ export default function AdminHome() {
     setModalForm((prev) => ({
       ...prev,
       image: "",
-      images: [],
+      media: [],
       imageAdjustments: {},
     }));
   };
@@ -1244,8 +1301,10 @@ export default function AdminHome() {
     if (!imageAdjustTarget) return null;
 
     if (imageAdjustTarget.type === "heroImage") {
-      const images = normalizeImageList(modalForm.images, modalForm.image);
-      const imageUrl = images[imageAdjustTarget.index] || imageAdjustTarget.imageUrl || "";
+      const images = normalizeHeroMedia(modalForm.media, modalForm.image).filter(
+        (item) => item.type === "image"
+      );
+      const imageUrl = images[imageAdjustTarget.index]?.url || imageAdjustTarget.imageUrl || "";
       const adjustment = getHeroImageAdjustmentFromModal(imageUrl);
 
       return {
@@ -1325,10 +1384,10 @@ export default function AdminHome() {
     }
 
     if (editingTarget.type === "heroImage") {
-      const images = normalizeImageList(modalForm.images, modalForm.image);
+      const media = normalizeHeroMedia(modalForm.media, modalForm.image);
 
-      return images.length === 0
-        ? "Please upload or enter at least one hero image before saving."
+      return media.length === 0
+        ? "Please upload or enter at least one hero image or video before saving."
         : "";
     }
 
@@ -1507,10 +1566,10 @@ export default function AdminHome() {
       return `Please write ${missingField.label} before saving. No homepage changes were saved.`;
     }
 
-    const heroImages = normalizeImageList(hero.images, hero.image);
+    const heroMedia = normalizeHeroMedia(hero.media, hero.image);
 
-    if (heroImages.length === 0) {
-      return "Please upload or enter at least one hero image before saving. No homepage changes were saved.";
+    if (heroMedia.length === 0) {
+      return "Please upload or enter at least one hero image or video before saving. No homepage changes were saved.";
     }
 
     const highlightStats = Array.isArray(statsSection.stats)
@@ -1622,24 +1681,30 @@ export default function AdminHome() {
       }
 
       if (editingTarget.type === "heroImage") {
-        const heroImages = normalizeImageList(modalForm.images, modalForm.image);
+        const heroMedia = normalizeHeroMedia(modalForm.media, modalForm.image);
 
-        const imageAdjustments = heroImages.reduce((acc, imageUrl) => {
-          const adjustment = modalForm.imageAdjustments?.[imageUrl] || {};
+        const imageAdjustments = heroMedia
+          .filter((item) => item.type === "image")
+          .reduce((acc, item) => {
+            const imageUrl = item.url;
+            const adjustment = modalForm.imageAdjustments?.[imageUrl] || {};
 
-          acc[imageUrl] = {
-            imageZoom: clampImageZoom(adjustment.imageZoom),
-            imageOffsetX: clampImageOffset(adjustment.imageOffsetX),
-            imageOffsetY: clampImageOffset(adjustment.imageOffsetY),
-          };
+            acc[imageUrl] = {
+              imageZoom: clampImageZoom(adjustment.imageZoom),
+              imageOffsetX: clampImageOffset(adjustment.imageOffsetX),
+              imageOffsetY: clampImageOffset(adjustment.imageOffsetY),
+            };
 
-          return acc;
-        }, {});
+            return acc;
+          }, {});
 
         nextForm.hero = {
           ...nextForm.hero,
-          image: heroImages[0] || "",
-          images: heroImages,
+          image: heroMedia.find((item) => item.type === "image")?.url || "",
+          images: heroMedia
+            .filter((item) => item.type === "image")
+            .map((item) => item.url),
+          media: heroMedia,
           imageAdjustments,
         };
       }
@@ -1834,6 +1899,8 @@ export default function AdminHome() {
     }
   };
 
+  const modalHeroMedia = normalizeHeroMedia(modalForm.media, modalForm.image);
+
   const modalTitle = useMemo(() => {
     if (!editingTarget) return "";
 
@@ -1842,7 +1909,7 @@ export default function AdminHome() {
       heroTitle: "Edit Hero Title",
       heroDescription: "Edit Hero Description",
       heroButtons: "Edit Hero Buttons",
-      heroImage: "Change Hero Image",
+      heroImage: "Change Hero Media",
       heroImageText: "Edit Hero Image Text",
       heroMotto: "Edit School Motto",
       heroStat: "Edit Hero Stat",
@@ -1878,7 +1945,7 @@ export default function AdminHome() {
   const saveButtonText = useMemo(() => {
     if (!editingTarget) return "Save";
 
-    if (editingTarget.type === "heroImage") return "Save Hero Images";
+    if (editingTarget.type === "heroImage") return "Save Hero Media";
     if (editingTarget.type === "storyImage") return "Save Story Image";
     if (editingTarget.type === "heroTitle") return "Save Hero Title";
     if (editingTarget.type === "heroButtons") return "Save Buttons";
@@ -2144,12 +2211,22 @@ export default function AdminHome() {
                       >
                         <div className="flex items-start gap-4">
                           <div className="w-32 h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center shrink-0">
-                            {modalForm.image ? (
-                              <img
-                                src={modalForm.image}
-                                alt="Hero preview"
-                                className="w-full h-full object-cover"
-                              />
+                            {modalHeroMedia[0] ? (
+                              modalHeroMedia[0].type === "video" ? (
+                                <video
+                                  src={modalHeroMedia[0].url}
+                                  muted
+                                  playsInline
+                                  preload="metadata"
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <img
+                                  src={modalHeroMedia[0].url}
+                                  alt="Hero preview"
+                                  className="w-full h-full object-cover"
+                                />
+                              )
                             ) : (
                               <ImageIcon className="w-8 h-8 text-slate-300" />
                             )}
@@ -2157,14 +2234,14 @@ export default function AdminHome() {
 
                           <div className="min-w-0">
                             <div className="text-white font-black">
-                              Hero Images
+                              Hero Images and Videos
                             </div>
                             <div className="text-white/55 text-sm mt-1 leading-relaxed">
-                              You can keep one image or multiple images. The first image is shown first.
+                              Add images and videos in the order you want them to appear.
                             </div>
                             <div className="mt-2 text-xs font-black uppercase tracking-[0.16em] text-white/45">
-                              {normalizeImageList(modalForm.images, modalForm.image).length} image
-                              {normalizeImageList(modalForm.images, modalForm.image).length === 1 ? "" : "s"} saved here
+                              {modalHeroMedia.length} media file
+                              {modalHeroMedia.length === 1 ? "" : "s"} saved here
                             </div>
                           </div>
                         </div>
@@ -2177,10 +2254,10 @@ export default function AdminHome() {
                           }}
                         >
                           <UploadCloud className="w-4 h-4" />
-                          {uploadingImage ? "Uploading..." : "Upload One or Many Images"}
+                          {uploadingImage ? "Uploading..." : "Upload Images or Videos"}
                           <input
                             type="file"
-                            accept="image/*"
+                            accept="image/*,video/mp4,video/webm,video/ogg,video/quicktime,video/x-m4v,.m4v"
                             multiple
                             disabled={uploadingImage}
                             onChange={(e) => {
@@ -2191,7 +2268,7 @@ export default function AdminHome() {
                           />
                         </label>
 
-                        {normalizeImageList(modalForm.images, modalForm.image).length > 0 && (
+                        {modalHeroMedia.length > 0 && (
                           <button
                             type="button"
                             onClick={deleteAllHeroImagesFromModal}
@@ -2204,74 +2281,101 @@ export default function AdminHome() {
                             }}
                           >
                             <Trash2 className="w-4 h-4" />
-                            Delete All Hero Images
+                            Delete All Hero Media
                           </button>
                         )}
                       </div>
 
                       <Field
-                        label="Main Image URL"
+                        label="Main Media URL"
                         value={modalForm.image}
                         onChange={(value) => {
-                          setModalForm((prev) => ({
-                            ...prev,
-                            image: value,
-                            images: normalizeImageList(prev.images, value),
-                          }));
+                          setModalForm((prev) => {
+                            const currentMedia = normalizeHeroMedia(prev.media, prev.image);
+                            const cleanUrl = value.trim();
+                            const nextMedia = cleanUrl
+                              ? [
+                                  {
+                                    url: cleanUrl,
+                                    type: getHeroMediaType(cleanUrl),
+                                  },
+                                  ...currentMedia.slice(1),
+                                ]
+                              : currentMedia.slice(1);
+
+                            return {
+                              ...prev,
+                              image: nextMedia[0]?.url || "",
+                              media: nextMedia,
+                            };
+                          });
                           setValidationPopup("");
                         }}
-                        placeholder="First image URL appears here after upload"
+                        placeholder="First image or video URL appears here after upload"
                       />
 
                       <div className="grid gap-3">
-                        {normalizeImageList(modalForm.images, modalForm.image).map(
-                          (imageUrl, index) => (
+                        {modalHeroMedia.map((item, index) => (
                             <div
-                              key={`${imageUrl}-${index}`}
+                              key={`${item.type}:${item.url}-${index}`}
                               className="rounded-2xl border border-slate-100 bg-slate-50 p-3"
                             >
                               <div className="flex items-center gap-3">
                                 <div className="h-16 w-20 shrink-0 overflow-hidden rounded-xl bg-white">
-                                  <img
-                                    src={imageUrl}
-                                    alt={`Hero ${index + 1}`}
-                                    draggable={false}
-                                    className="h-full w-full object-cover"
-                                    style={getCropImageStyle(
-                                      getHeroImageAdjustmentFromModal(imageUrl)
-                                    )}
-                                  />
+                                  {item.type === "video" ? (
+                                    <video
+                                      src={item.url}
+                                      muted
+                                      playsInline
+                                      preload="metadata"
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <img
+                                      src={item.url}
+                                      alt={`Hero ${index + 1}`}
+                                      draggable={false}
+                                      className="h-full w-full object-cover"
+                                      style={getCropImageStyle(
+                                        getHeroImageAdjustmentFromModal(item.url)
+                                      )}
+                                    />
+                                  )}
                                 </div>
 
                                 <div className="min-w-0 flex-1">
                                   <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-                                    {index === 0 ? "Main Image" : `Image ${index + 1}`}
+                                    {index === 0
+                                      ? `Main ${item.type}`
+                                      : `${item.type} ${index + 1}`}
                                   </div>
                                   <div className="truncate text-sm font-semibold text-slate-600">
-                                    {imageUrl}
+                                    {item.url}
                                   </div>
                                 </div>
                               </div>
 
                               <div className="mt-3 flex flex-wrap gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setImageAdjustTarget({
-                                      type: "heroImage",
-                                      index,
-                                      imageUrl,
-                                    })
-                                  }
-                                  className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black"
-                                  style={{
-                                    background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                                    color: colors.dark,
-                                  }}
-                                >
-                                  <Camera className="w-3.5 h-3.5" />
-                                  Adjust Image
-                                </button>
+                                {item.type === "image" && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setImageAdjustTarget({
+                                        type: "heroImage",
+                                        index,
+                                        imageUrl: item.url,
+                                      })
+                                    }
+                                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black"
+                                    style={{
+                                      background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                                      color: colors.dark,
+                                    }}
+                                  >
+                                    <Camera className="w-3.5 h-3.5" />
+                                    Adjust Image
+                                  </button>
+                                )}
 
                                 {index !== 0 && (
                                   <button
@@ -2301,12 +2405,11 @@ export default function AdminHome() {
                                 </button>
                               </div>
                             </div>
-                          )
-                        )}
+                        ))}
 
-                        {normalizeImageList(modalForm.images, modalForm.image).length === 0 && (
+                        {modalHeroMedia.length === 0 && (
                           <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-center text-sm font-semibold text-slate-400">
-                            No hero images added yet. Upload at least one image.
+                            No hero media added yet. Upload at least one image or video.
                           </div>
                         )}
                       </div>
