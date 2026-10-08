@@ -19,11 +19,11 @@ import {
   X,
 } from "lucide-react";
 
+import { Navbar } from "../app/components/Navbar";
 import {
-  Navbar,
   defaultNavbarContent,
   mergeNavbarContent,
-} from "../app/components/Navbar";
+} from "../app/components/navbarContent";
 
 const API_BASE = "https://school-website-backend-ixx2.onrender.com";
 
