@@ -22,6 +22,9 @@ const facilityColors = [
   "#14B8A6",
 ];
 
+const facilityAnchor = (title = "") =>
+  String(title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
 export const defaultFacilitiesContent = {
   badgeText: "School Facilities",
   title: "Learning Beyond Classrooms",
@@ -556,6 +559,7 @@ export function Facilities({
 
             return (
               <motion.div
+                id={facilityAnchor(facility.title)}
                 key={facility.id || facility.title}
                 onClick={() => {
                   if (!editMode) setSelectedFacility(facility);
@@ -564,7 +568,7 @@ export function Facilities({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.25 }}
                 transition={{ duration: 0.45, delay: index * 0.06 }}
-                className="group relative rounded-[2rem] overflow-hidden transition-all duration-300 cursor-pointer"
+                className="group relative rounded-[2rem] overflow-hidden transition-all duration-300 cursor-pointer scroll-mt-32"
                 style={{
                   minHeight: "760px",
                   background: `linear-gradient(

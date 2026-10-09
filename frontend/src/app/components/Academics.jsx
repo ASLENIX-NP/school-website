@@ -1268,7 +1268,7 @@ export function Academics({
         </div>
       </section>
 
-     <section className="py-24 relative z-10">
+     <section id="academic-strengths" className="py-24 relative z-10 scroll-mt-32">
   <div className="max-w-7xl mx-auto px-6">
     <EditableWrap
       editMode={editMode}
@@ -1526,7 +1526,7 @@ export function Academics({
         </div>
       </section>
 
-     <section className="pb-24 relative z-10">
+     <section id="examination-system" className="pb-24 relative z-10 scroll-mt-32">
   <div className="max-w-7xl mx-auto px-6">
     <EditableWrap
       editMode={editMode}

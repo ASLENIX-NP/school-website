@@ -923,7 +923,7 @@ export function About({
           </motion.div>
         </EditableWrap>
 
-        <div className="grid lg:grid-cols-2 gap-16 items-center mb-24">
+        <div id="our-story" className="grid lg:grid-cols-2 gap-16 items-center mb-24 scroll-mt-32">
           <EditableWrap
             editMode={editMode}
             target={{ type: "storyText" }}
@@ -1059,7 +1059,7 @@ export function About({
           </EditableWrap>
         </div>
 
-        <div className="mb-24">
+        <div id="core-values" className="mb-24 scroll-mt-32">
           <EditableWrap
             editMode={editMode}
             target={{ type: "pillarHeader" }}
@@ -1183,7 +1183,7 @@ export function About({
           </div>
         </div>
 
-        <div className="mb-24">
+        <div id="leadership" className="mb-24 scroll-mt-32">
           <EditableWrap
             editMode={editMode}
             target={{ type: "leadershipHeader" }}
@@ -1339,6 +1339,7 @@ export function About({
         </div>
 
         <div
+          id="timeline"
           className="rounded-[34px] p-5 sm:p-7 md:p-9"
           style={{
             background:
