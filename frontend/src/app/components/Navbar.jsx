@@ -474,25 +474,26 @@ export function Navbar({
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
         title={editMode ? "Edit school logo and name" : navbarContent.schoolName}
-        className={`absolute left-4 top-3 z-20 flex h-[52px] w-[52px] items-center justify-center overflow-hidden rounded-xl bg-white shadow-md xl:left-[max(16px,calc((100vw-1490px)/2))] xl:top-[13px] xl:h-[235px] xl:w-[200px] xl:flex-col xl:rounded-b-[30px] xl:rounded-t-none xl:pt-5 ${
+        style={{ left: "max(16px, calc((100vw - 1120px) / 2))" }}
+        className={`absolute left-4 top-3 z-20 flex h-[52px] w-[52px] items-center justify-center overflow-hidden rounded-xl bg-white shadow-md xl:top-[13px] xl:h-[190px] xl:w-[170px] xl:flex-col xl:rounded-b-[26px] xl:rounded-t-none xl:pt-3 ${
           editMode ? "group rounded-2xl ring-2 ring-amber-400" : ""
         }`}
       >
         <img
           src={logoSrc}
           alt={`${navbarContent.schoolName || "School"} Logo`}
-          className="h-full w-full object-contain p-1 xl:h-[145px] xl:w-[160px] xl:p-0"
+          className="h-full w-full object-contain p-1 xl:h-[118px] xl:w-[135px] xl:p-0"
         />
-        <span className="hidden max-w-full px-2 text-center font-extrabold leading-tight text-[#17145e] xl:block xl:text-[19px]">
+        <span className="hidden max-w-full px-2 text-center font-extrabold leading-tight text-[#17145e] xl:block xl:text-[17px]">
           {navbarContent.schoolName || "School"}
         </span>
-        <span className="hidden max-w-full px-2 pb-5 text-center text-[12px] leading-tight text-[#d88e00] xl:block">
+        <span className="hidden max-w-full px-2 pb-3 text-center text-[10px] leading-tight text-[#d88e00] xl:block">
           {navbarContent.schoolSubtitle || "Secondary English School"}
         </span>
         {renderEditIndicator("Edit School Branding")}
       </Link>
 
-      <div className="mx-auto flex h-full max-w-[1490px] flex-col xl:pl-[220px]">
+      <div className="mx-auto flex h-full max-w-[1120px] flex-col xl:pl-[190px]">
         <div className="hidden h-[46px] items-center justify-end gap-5 pr-4 text-[14px] xl:flex">
           <div className="flex items-center gap-2 whitespace-nowrap">
             <span className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-white text-[#666]">
