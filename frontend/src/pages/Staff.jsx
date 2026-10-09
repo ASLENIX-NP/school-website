@@ -648,17 +648,9 @@ export function Staff({
     <section
       className="min-h-screen pt-32 pb-24 relative overflow-hidden"
       style={{
-        background: `
-          radial-gradient(circle at top left, rgba(75,46,131,0.12), transparent 34%),
-          radial-gradient(circle at top right, rgba(22,138,58,0.10), transparent 36%),
-          radial-gradient(circle at bottom right, rgba(250,204,21,0.10), transparent 34%),
-          linear-gradient(180deg, #FFF8EE 0%, #F8FAFC 100%)
-        `,
+        background: "#fff",
       }}
     >
-      <div className="absolute top-24 left-10 w-40 h-40 bg-green-500/10 rounded-full blur-3xl" />
-      <div className="absolute top-72 right-16 w-52 h-52 bg-purple-500/10 rounded-full blur-3xl" />
-
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <EditableWrap
           editMode={editMode}

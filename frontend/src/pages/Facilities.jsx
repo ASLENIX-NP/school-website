@@ -490,16 +490,9 @@ export function Facilities({
     <div
       className="min-h-screen pt-32 pb-24 relative overflow-hidden"
       style={{
-        background: `
-          radial-gradient(circle at top left, rgba(75,46,131,0.12), transparent 34%),
-          radial-gradient(circle at bottom right, rgba(22,138,58,0.10), transparent 34%),
-          linear-gradient(180deg,#FFF8EE 0%,#F8FAFC 100%)
-        `,
+        background: "#fff",
       }}
     >
-      <div className="absolute top-20 left-8 w-48 h-48 rounded-full bg-purple-500/10 blur-3xl" />
-      <div className="absolute bottom-20 right-10 w-56 h-56 rounded-full bg-green-500/10 blur-3xl" />
-
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <EditableWrap
           editMode={editMode}

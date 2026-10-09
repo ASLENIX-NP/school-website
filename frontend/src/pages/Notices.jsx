@@ -762,31 +762,9 @@ export default function Notices({
       <section
         className="min-h-screen pt-32 pb-24 relative overflow-hidden"
         style={{
-          background: `
-            radial-gradient(circle at top right, rgba(75,46,131,0.12), transparent 34%),
-            radial-gradient(circle at bottom left, rgba(22,138,58,0.10), transparent 32%),
-            linear-gradient(180deg, #FFF8EE 0%, #F8FAFC 58%, #F1ECFF 100%)
-          `,
+          background: "#fff",
         }}
       >
-        <div
-          className="absolute top-24 right-10 h-72 w-72 rounded-full pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(75,46,131,0.10), transparent 70%)",
-            filter: "blur(10px)",
-          }}
-        />
-
-        <div
-          className="absolute bottom-16 left-8 h-72 w-72 rounded-full pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(22,138,58,0.09), transparent 70%)",
-            filter: "blur(10px)",
-          }}
-        />
-
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 26 }}

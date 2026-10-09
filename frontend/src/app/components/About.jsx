@@ -793,11 +793,7 @@ export function About({
       id="about"
       className="pt-28 pb-28 relative overflow-hidden min-h-screen"
       style={{
-        background: `
-          radial-gradient(circle at top right, rgba(124,92,196,0.18), transparent 34%),
-          radial-gradient(circle at bottom left, rgba(22,138,58,0.14), transparent 32%),
-          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
-        `,
+        background: "#fff",
       }}
     >
 
@@ -810,59 +806,14 @@ export function About({
           hyphens: auto;
         }
 
-        .about-journey-scroll {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(75,46,131,0.34) rgba(15,23,42,0.05);
-        }
-
-        .about-journey-scroll::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        .about-journey-scroll::-webkit-scrollbar-track {
-          background: rgba(15,23,42,0.05);
-          border-radius: 999px;
-        }
-
-        .about-journey-scroll::-webkit-scrollbar-thumb {
-          background: linear-gradient(
-            180deg,
-            rgba(215,25,32,0.72),
-            rgba(250,204,21,0.76),
-            rgba(75,46,131,0.72)
-          );
-          border-radius: 999px;
-        }
-
         @media (max-width: 640px) {
           .about-long-text {
             text-align: left;
             hyphens: none;
           }
 
-          .about-journey-scroll {
-            max-height: 620px !important;
-          }
         }
       `}</style>
-
-      <div
-        className="absolute top-0 right-0 w-[520px] h-[520px] rounded-full pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
-          filter: "blur(8px)",
-        }}
-      />
-
-      <div
-        className="absolute bottom-0 left-0 w-[420px] h-[420px] rounded-full pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(22,138,58,0.11), transparent 70%)",
-          filter: "blur(8px)",
-        }}
-      />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <EditableWrap
@@ -1411,13 +1362,7 @@ export function About({
             />
           </div>
 
-          <div
-            className="about-journey-scroll overflow-y-auto overscroll-contain rounded-[28px] pr-2 sm:pr-3"
-            style={{
-              maxHeight: "720px",
-              scrollBehavior: "smooth",
-            }}
-          >
+          <div className="rounded-[28px] pr-2 sm:pr-3">
             <div className="relative max-w-5xl mx-auto px-1 py-1">
               <div
                 className="hidden md:block absolute left-8 top-0 bottom-0 w-1"
