@@ -36,6 +36,19 @@ const defaultHomeContent = {
   statsSection: defaultStatsSectionData,
 };
 
+const defaultHomeStory = {
+  image: "",
+  imageTopTitle: "",
+  imageTopSubtitle: "",
+  imageBottomTitle: "",
+  imageBottomDescription: "",
+  badge: "",
+  title: "",
+  paragraphs: ["", ""],
+  buttonText: "",
+  buttonLink: "/about",
+};
+
 function mergeHomeContent(saved = {}) {
   return {
     ...defaultHomeContent,
@@ -47,6 +60,7 @@ function mergeHomeContent(saved = {}) {
 
 function repairLoadedHomeContent(saved = {}) {
   const merged = mergeHomeContent(saved);
+  const storyDefaults = defaultStatsSectionData.story || defaultHomeStory;
   const requiredText = (value, fallback) =>
     cleanRequiredText(value) ? value : fallback;
 
@@ -200,52 +214,53 @@ function repairLoadedHomeContent(saved = {}) {
       ),
       stats: repairedStats,
       story: {
+        ...defaultHomeStory,
         ...merged.statsSection?.story,
         image: requiredText(
           merged.statsSection?.story?.image,
-          defaultStatsSectionData.story.image
+          storyDefaults.image
         ),
         imageTopTitle: requiredText(
           merged.statsSection?.story?.imageTopTitle,
-          defaultStatsSectionData.story.imageTopTitle
+          storyDefaults.imageTopTitle
         ),
         imageTopSubtitle: requiredText(
           merged.statsSection?.story?.imageTopSubtitle,
-          defaultStatsSectionData.story.imageTopSubtitle
+          storyDefaults.imageTopSubtitle
         ),
         imageBottomTitle: requiredText(
           merged.statsSection?.story?.imageBottomTitle,
-          defaultStatsSectionData.story.imageBottomTitle
+          storyDefaults.imageBottomTitle
         ),
         imageBottomDescription: requiredText(
           merged.statsSection?.story?.imageBottomDescription,
-          defaultStatsSectionData.story.imageBottomDescription
+          storyDefaults.imageBottomDescription
         ),
         badge: requiredText(
           merged.statsSection?.story?.badge,
-          defaultStatsSectionData.story.badge
+          storyDefaults.badge
         ),
         title: requiredText(
           merged.statsSection?.story?.title,
-          defaultStatsSectionData.story.title
+          storyDefaults.title
         ),
         paragraphs: [
           requiredText(
             merged.statsSection?.story?.paragraphs?.[0],
-            defaultStatsSectionData.story.paragraphs?.[0]
+            storyDefaults.paragraphs?.[0]
           ),
           requiredText(
             merged.statsSection?.story?.paragraphs?.[1],
-            defaultStatsSectionData.story.paragraphs?.[1]
+            storyDefaults.paragraphs?.[1]
           ),
         ],
         buttonText: requiredText(
           merged.statsSection?.story?.buttonText,
-          defaultStatsSectionData.story.buttonText
+          storyDefaults.buttonText
         ),
         buttonLink: requiredText(
           merged.statsSection?.story?.buttonLink,
-          defaultStatsSectionData.story.buttonLink
+          storyDefaults.buttonLink
         ),
       },
       excellence: {
@@ -1073,15 +1088,8 @@ export default function AdminHome() {
     if (selectedFiles.length === 0) return;
 
     const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
-    const allowedVideoTypes = [
-      "video/mp4",
-      "video/webm",
-      "video/ogg",
-      "video/quicktime",
-      "video/x-m4v",
-    ];
     const isVideoFile = (file) =>
-      allowedVideoTypes.includes(file.type) ||
+      String(file.type || "").startsWith("video/") ||
       /\.(mp4|webm|ogg|mov|m4v)$/i.test(file.name);
 
     const invalidType = selectedFiles.find(
@@ -1101,12 +1109,12 @@ export default function AdminHome() {
     const oversizedFile = selectedFiles.find(
       (file) =>
         file.size >
-        (isVideoFile(file) ? 25 * 1024 * 1024 : 6 * 1024 * 1024)
+        (isVideoFile(file) ? 100 * 1024 * 1024 : 6 * 1024 * 1024)
     );
     if (oversizedFile) {
       setError(
         isVideoFile(oversizedFile)
-          ? "Video must be 25 MB or smaller."
+          ? "Video must be 100 MB or smaller."
           : "Image must be 6 MB or smaller."
       );
       return;
@@ -1151,8 +1159,11 @@ export default function AdminHome() {
 
       if (editingTarget?.type === "heroImage") {
         setModalForm((prev) => {
+          const existingMedia = normalizeHeroMedia(prev.media, prev.image);
+          const videos = uploadedUrls.filter((item) => item.type === "video");
+          const images = uploadedUrls.filter((item) => item.type === "image");
           const nextMedia = normalizeHeroMedia(
-            [...(Array.isArray(prev.media) ? prev.media : []), ...uploadedUrls],
+            [...videos, ...existingMedia, ...images],
             prev.image
           );
 
@@ -2237,7 +2248,7 @@ export default function AdminHome() {
                               Hero Images and Videos
                             </div>
                             <div className="text-white/55 text-sm mt-1 leading-relaxed">
-                              Add images and videos in the order you want them to appear.
+                              New videos are placed first so they appear in the hero slideshow.
                             </div>
                             <div className="mt-2 text-xs font-black uppercase tracking-[0.16em] text-white/45">
                               {modalHeroMedia.length} media file
@@ -2257,7 +2268,7 @@ export default function AdminHome() {
                           {uploadingImage ? "Uploading..." : "Upload Images or Videos"}
                           <input
                             type="file"
-                            accept="image/*,video/mp4,video/webm,video/ogg,video/quicktime,video/x-m4v,.m4v"
+                            accept="image/*,video/*,.mp4,.webm,.ogg,.mov,.m4v"
                             multiple
                             disabled={uploadingImage}
                             onChange={(e) => {
