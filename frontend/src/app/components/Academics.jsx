@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { BookOpen, ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react";
-
 const colors = {
   red: "#D71920",
   green: "#168A3A",
@@ -14,39 +13,30 @@ const colors = {
   lightGreen: "#EAF7EF",
   lightPurple: "#F1ECFF",
 };
-
 const ACCENT_SEQUENCE = [
   colors.red,
   colors.green,
   colors.purple,
   colors.softPurple,
 ];
-
 const gradeAccent = (index) => ACCENT_SEQUENCE[index % ACCENT_SEQUENCE.length];
-
 function colorToRgba(color, alpha = 1) {
   const raw = String(color || "").trim();
-
   if (/^#[0-9A-Fa-f]{3}$/.test(raw)) {
     const [r, g, b] = raw
       .slice(1)
       .split("")
       .map((char) => Number.parseInt(char + char, 16));
-
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
-
   if (/^#[0-9A-Fa-f]{6}$/.test(raw)) {
     const r = Number.parseInt(raw.slice(1, 3), 16);
     const g = Number.parseInt(raw.slice(3, 5), 16);
     const b = Number.parseInt(raw.slice(5, 7), 16);
-
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
-
   return raw || `rgba(75, 46, 131, ${alpha})`;
 }
-
 function getColorfulGlassStyle(color, options = {}) {
   const accent = color || colors.purple;
   const {
@@ -56,7 +46,6 @@ function getColorfulGlassStyle(color, options = {}) {
     shadowAlpha = 0.075,
     blur = 18,
   } = options;
-
   return {
     background: `linear-gradient(145deg, ${colorToRgba(
       accent,
@@ -74,14 +63,12 @@ function getColorfulGlassStyle(color, options = {}) {
     WebkitBackdropFilter: `blur(${blur}px)`,
   };
 }
-
 export const defaultAcademicsContent = {
   heroBadge: "Nurturing Excellence",
   heroTitle: "Academics at Baljagriti",
   heroHighlight: "Baljagriti",
   heroDescription:
     "Comprehensive education from Play Group to Grade 12 under the National NEB Curriculum. We combine academic excellence, practical learning, critical thinking, and character development to prepare students for lifelong success.",
-
   programs: [
     {
       id: 1,
@@ -148,7 +135,6 @@ export const defaultAcademicsContent = {
       visible: true,
     },
   ],
-
   featuresTitle: "Why Choose Our Academics?",
   featuresDescription:
     "We focus on building balanced learning spaces through precise methodologies, institutional depth, and proven outcomes.",
@@ -202,7 +188,6 @@ export const defaultAcademicsContent = {
       visible: true,
     },
   ],
-
   stats: [
     {
       id: 1,
@@ -237,7 +222,6 @@ export const defaultAcademicsContent = {
       visible: true,
     },
   ],
-
   examTitle: "Our Examination System",
   examDescription:
     "A comprehensive grading matrix consisting of critical terminal points combined with ongoing continuous assessment frameworks.",
@@ -270,7 +254,6 @@ export const defaultAcademicsContent = {
     "Assignments",
     "Practical Assessment",
   ],
-
   ctaTitle: "Ready to Join Baljagriti?",
   ctaDescription:
     "Secure a placement in our upcoming academic track. Contact our admissions pipeline or drop by the main campus hub directly.",
@@ -278,7 +261,6 @@ export const defaultAcademicsContent = {
   primaryButtonLink: "/admissions",
   secondaryButtonText: "Contact Administration",
   secondaryButtonLink: "/contact",
-
   curriculum: {
     "Pre-Primary Level": [
       {
@@ -441,46 +423,36 @@ export const defaultAcademicsContent = {
     ],
   },
 };
-
 function isLegacyAcademicsContent(saved = {}) {
   return Number(saved._contentVersion || 0) < 2;
 }
-
 function normalizeLegacyHeroDescription(description, shouldMigrate) {
   const text = description ?? defaultAcademicsContent.heroDescription;
-
   if (!shouldMigrate) return text;
-
   return text
     .replace("Play Group to Grade 10", "Play Group to Grade 12")
     .replace("Play Group to Class 10", "Play Group to Class 12")
     .replace("up to Grade 10", "up to Grade 12")
     .replace("up to Class 10", "up to Class 12");
 }
-
 function normalizePrograms(programs = [], shouldMigrate = false) {
   return programs.map((program) => {
     const level = String(program.level || "").toLowerCase();
-
     if (!level.includes("secondary") || !shouldMigrate) {
       return {
         ...program,
         classes: Array.isArray(program.classes) ? program.classes : [],
       };
     }
-
     const currentSpan = String(program.span || "").trim();
-
     const isOldSecondarySpan =
       currentSpan === "" ||
       currentSpan === "Grade 9 – 10" ||
       currentSpan === "Grade 9 - 10" ||
       currentSpan === "9 – 10" ||
       currentSpan === "9 - 10";
-
     const oldHighlight =
       "Rigorous academic performance pipelines optimizing for exceptional SEE results.";
-
     return {
       ...program,
       span: isOldSecondarySpan ? "Grade 9 – 12" : program.span,
@@ -494,32 +466,25 @@ function normalizePrograms(programs = [], shouldMigrate = false) {
     };
   });
 }
-
 function normalizeCurriculum(curriculum, shouldMigrate = false) {
   const hasSavedCurriculum =
     curriculum &&
     typeof curriculum === "object" &&
     !Array.isArray(curriculum);
-
   if (!hasSavedCurriculum) {
     return { ...defaultAcademicsContent.curriculum };
   }
-
   const merged = shouldMigrate
     ? { ...defaultAcademicsContent.curriculum, ...curriculum }
     : { ...curriculum };
-
   if (!shouldMigrate) {
     return merged;
   }
-
   const secondaryGrades = Array.isArray(merged["Secondary Level"])
     ? [...merged["Secondary Level"]]
     : [...defaultAcademicsContent.curriculum["Secondary Level"]];
-
   const ensureGrade = (gradeName, books) => {
     const exists = secondaryGrades.some((item) => item.grade === gradeName);
-
     if (!exists) {
       secondaryGrades.push({
         grade: gradeName,
@@ -527,7 +492,6 @@ function normalizeCurriculum(curriculum, shouldMigrate = false) {
       });
     }
   };
-
   ensureGrade(
     "Grade 11",
     defaultAcademicsContent.curriculum["Secondary Level"][2].books
@@ -536,57 +500,44 @@ function normalizeCurriculum(curriculum, shouldMigrate = false) {
     "Grade 12",
     defaultAcademicsContent.curriculum["Secondary Level"][3].books
   );
-
   return {
     ...merged,
     "Secondary Level": secondaryGrades,
   };
 }
-
 export function mergeAcademicsContent(saved = {}) {
   const shouldMigrate = isLegacyAcademicsContent(saved);
-
   return {
     ...defaultAcademicsContent,
     ...saved,
-
     heroDescription: normalizeLegacyHeroDescription(
       saved.heroDescription,
       shouldMigrate
     ),
-
     curriculum: normalizeCurriculum(saved.curriculum, shouldMigrate),
-
     programs: normalizePrograms(
       Array.isArray(saved.programs)
         ? saved.programs
         : defaultAcademicsContent.programs,
       shouldMigrate
     ),
-
     features: Array.isArray(saved.features)
       ? saved.features
       : defaultAcademicsContent.features,
-
     stats: Array.isArray(saved.stats)
       ? saved.stats
       : defaultAcademicsContent.stats,
-
     timelineTerms: Array.isArray(saved.timelineTerms)
       ? saved.timelineTerms
       : defaultAcademicsContent.timelineTerms,
-
     ongoingAssessments: Array.isArray(saved.ongoingAssessments)
       ? saved.ongoingAssessments
       : defaultAcademicsContent.ongoingAssessments,
   };
 }
-
 function HighlightedTitle({ title, highlight }) {
   if (!highlight || !title.includes(highlight)) return <>{title}</>;
-
   const [before, after] = title.split(highlight);
-
   return (
     <>
       {before}
@@ -595,9 +546,6 @@ function HighlightedTitle({ title, highlight }) {
     </>
   );
 }
-
-
-
 function ActionButtons({
   editMode,
   target,
@@ -606,7 +554,6 @@ function ActionButtons({
   canDelete = false,
 }) {
   if (!editMode) return null;
-
   return (
     <div className="absolute -top-3 -right-3 z-[120] flex items-center gap-2 opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200">
       <button
@@ -626,7 +573,6 @@ function ActionButtons({
       >
         <Pencil className="w-4 h-4" />
       </button>
-
       {canDelete && (
         <button
           type="button"
@@ -649,7 +595,6 @@ function ActionButtons({
     </div>
   );
 }
-
 function EditableWrap({
   editMode,
   target,
@@ -660,7 +605,6 @@ function EditableWrap({
   children,
 }) {
   if (!editMode) return children;
-
   return (
     <div className={`relative group ${className}`}>
       {children}
@@ -674,10 +618,8 @@ function EditableWrap({
     </div>
   );
 }
-
 function SectionAddButton({ editMode, label, type, onAddTarget }) {
   if (!editMode) return null;
-
   return (
     <button
       type="button"
@@ -698,17 +640,13 @@ function SectionAddButton({ editMode, label, type, onAddTarget }) {
     </button>
   );
 }
-
 function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
   const grades = curriculum?.[programLevel] || [];
   const [activeIndex, setActiveIndex] = useState(0);
-
   useEffect(() => {
     setActiveIndex(0);
   }, [programLevel]);
-
   const currentGrade = grades[activeIndex];
-
   return (
     <motion.div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-8"
@@ -746,7 +684,6 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
         >
           <X size={18} />
         </button>
-
         <div
           className="md:w-64 shrink-0 flex md:flex-col overflow-x-auto md:overflow-y-auto"
           style={{
@@ -760,7 +697,6 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
             >
               Curriculum Record
             </div>
-
             <h2
               className="text-[26px] font-black text-white mt-2 leading-[1.1]"
               style={{
@@ -770,7 +706,6 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
             >
               {programLevel}
             </h2>
-
             <div
               className="w-12 h-1 rounded-full mt-4"
               style={{
@@ -778,11 +713,9 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
               }}
             />
           </div>
-
           {grades.map((grade, idx) => {
             const active = idx === activeIndex;
             const tabColor = gradeAccent(idx);
-
             return (
               <button
                 key={`${grade.grade}-${idx}`}
@@ -806,7 +739,6 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
                 >
                   {String(idx + 1).padStart(2, "0")}
                 </span>
-
                 <span
                   className="font-bold text-sm whitespace-nowrap"
                   style={{
@@ -819,7 +751,6 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
             );
           })}
         </div>
-
         <div
           className="flex-1 overflow-y-auto px-7 md:px-12 py-9 relative"
           style={{
@@ -834,7 +765,6 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
             >
               Curriculum Record
             </div>
-
             <h2
               className="text-3xl font-black mt-1"
               style={{
@@ -845,7 +775,6 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
               {programLevel}
             </h2>
           </div>
-
           <AnimatePresence mode="wait">
             {currentGrade && (
               <motion.div
@@ -866,7 +795,6 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
                     >
                       Entry
                     </div>
-
                     <div
                       className="text-3xl font-black"
                       style={{
@@ -877,7 +805,6 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
                       {currentGrade.grade}
                     </div>
                   </div>
-
                   <div
                     className="text-sm font-bold text-right"
                     style={{ color: colors.purple }}
@@ -887,12 +814,10 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
                     on record
                   </div>
                 </div>
-
                 {currentGrade.books.length > 0 ? (
                   <div>
                     {currentGrade.books.map((book, i) => {
                       const rowColor = gradeAccent(i);
-
                       return (
                         <div
                           key={`${book.subject}-${i}`}
@@ -907,21 +832,17 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
                           >
                             {String(i + 1).padStart(2, "0")}
                           </span>
-
                           <span
                             className="w-2.5 h-2.5 rounded-full shrink-0"
                             style={{ background: rowColor }}
                           />
-
                           <span className="font-bold text-slate-900 text-base md:text-lg">
                             {book.subject}
                           </span>
-
                           <span
                             className="hidden md:block flex-1 border-b border-dotted self-end mb-1.5"
                             style={{ borderColor: "rgba(15,23,42,0.2)" }}
                           />
-
                           <span
                             className="ml-auto md:ml-0 text-sm font-bold text-right shrink-0"
                             style={{ color: rowColor }}
@@ -943,7 +864,6 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
                     <p className="font-bold text-slate-600">
                       Curriculum details coming soon.
                     </p>
-
                     <p className="text-sm text-slate-400 mt-1">
                       Check back closer to the academic session.
                     </p>
@@ -957,7 +877,6 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
     </motion.div>
   );
 }
-
 export function Academics({
   editMode = false,
   contentOverride = null,
@@ -969,13 +888,37 @@ export function Academics({
     mergeAcademicsContent(contentOverride || defaultAcademicsContent)
   );
   const [selectedProgram, setSelectedProgram] = useState(null);
-
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    const curriculumSlug = new URLSearchParams(location.search).get("curriculum");
+    if (!curriculumSlug) return;
+    const curriculumLevels = {
+      "pre-primary-level": "Pre-Primary Level",
+      "primary-level": "Primary Level",
+      "lower-secondary-level": "Lower Secondary Level",
+      "secondary-level": "Secondary Level",
+    };
+    const requestedLevel = curriculumLevels[curriculumSlug];
+    if (requestedLevel && content.curriculum?.[requestedLevel]?.length) {
+      setSelectedProgram(requestedLevel);
+    }
+  }, [location.search, content.curriculum]);
+  const closeCurriculumModal = () => {
+    setSelectedProgram(null);
+    const params = new URLSearchParams(location.search);
+    params.delete("curriculum");
+    navigate({
+      pathname: location.pathname,
+      search: params.toString() ? `?${params.toString()}` : "",
+      hash: location.hash,
+    }, { replace: true });
+  };
   useEffect(() => {
     if (contentOverride) {
       setContent(mergeAcademicsContent(contentOverride));
       return;
     }
-
     const loadAcademicsContent = async () => {
       try {
         const res = await axios.get(
@@ -984,7 +927,6 @@ export function Academics({
             timeout: 12000,
           }
         );
-
         const savedContent = res.data?.data?.content || {};
         setContent(mergeAcademicsContent(savedContent));
       } catch (error) {
@@ -992,15 +934,12 @@ export function Academics({
         setContent(defaultAcademicsContent);
       }
     };
-
     loadAcademicsContent();
   }, [contentOverride]);
-
   const visiblePrograms = content.programs || [];
   const visibleFeatures = content.features || [];
   const visibleStats = content.stats || [];
   const visibleTimeline = content.timelineTerms || [];
-
   return (
     <div
       className="min-h-screen relative overflow-hidden"
@@ -1032,7 +971,6 @@ export function Academics({
             >
               {content.heroBadge}
             </span>
-
             <h1
               className="text-5xl md:text-7xl font-black tracking-tight"
               style={{
@@ -1046,7 +984,6 @@ export function Academics({
                 highlight={content.heroHighlight}
               />
             </h1>
-
             <p className="text-xl md:text-2xl leading-relaxed text-slate-600 max-w-3xl mx-auto">
               {content.heroDescription}
             </p>
@@ -1054,7 +991,6 @@ export function Academics({
           </EditableWrap>
         </div>
       </section>
-
       <section className="pb-20 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex justify-end mb-6">
@@ -1065,14 +1001,12 @@ export function Academics({
               onAddTarget={onAddTarget}
             />
           </div>
-
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {visiblePrograms.map((prog, i) => {
               const cardColor = prog.badgeColor || colors.green;
               const realIndex = content.programs.findIndex(
                 (item) => item.id === prog.id
               );
-
               return (
                 <EditableWrap
                   key={prog.id}
@@ -1145,7 +1079,6 @@ export function Academics({
                       filter: "blur(60px)",
                     }}
                   />
-
                   <div className="relative z-10">
                     <div
                       className="text-sm font-black tracking-widest mb-5"
@@ -1153,19 +1086,16 @@ export function Academics({
                     >
                       {String(i + 1).padStart(2, "0")}
                     </div>
-
                     <div
                       className="w-16 h-1 rounded-full mb-6 transition-all duration-300 group-hover:w-28"
                       style={{ background: cardColor }}
                     />
-
                     <span
                       className="text-xs font-bold uppercase tracking-[0.16em] mb-4 block"
                       style={{ color: "#64748B" }}
                     >
                       {prog.span}
                     </span>
-
                     <h3
                       className="text-2xl font-black mb-4 text-slate-950 leading-tight"
                       style={{
@@ -1175,11 +1105,9 @@ export function Academics({
                     >
                       {prog.level}
                     </h3>
-
                     <p className="text-sm text-slate-500 mb-6 leading-relaxed">
                       {prog.highlight}
                     </p>
-
                     <div
                       className="space-y-2.5 border-t pt-5"
                       style={{ borderColor: colorToRgba(cardColor, 0.12) }}
@@ -1187,7 +1115,6 @@ export function Academics({
                       <span className="text-xs font-bold text-slate-400 block uppercase tracking-[0.16em]">
                         Course Structure
                       </span>
-
                       {(prog.classes || []).map((item, classIndex) => (
                         <div
                           key={`${item}-${classIndex}`}
@@ -1197,12 +1124,10 @@ export function Academics({
                             className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                             style={{ background: cardColor }}
                           />
-
                           <span>{item}</span>
                         </div>
                       ))}
                     </div>
-
                     <div
                       className="mt-6 flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition-all duration-300 group-hover:translate-x-1"
                       style={{
@@ -1226,7 +1151,6 @@ export function Academics({
                           Tap to view classes & books
                         </span>
                       </span>
-
                       <span
                         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-transform duration-300 group-hover:translate-x-1"
                         style={{
@@ -1245,7 +1169,6 @@ export function Academics({
           </div>
         </div>
       </section>
-
      <section id="academic-strengths" className="py-24 relative z-10 scroll-mt-32">
   <div className="max-w-7xl mx-auto px-6">
     <EditableWrap
@@ -1271,7 +1194,6 @@ export function Academics({
       >
         Academic Strengths
       </span>
-
       <h2
         className="text-4xl md:text-5xl font-black mb-4"
         style={{
@@ -1283,20 +1205,17 @@ export function Academics({
       >
         {content.featuresTitle}
       </h2>
-
       <div
         className="w-20 h-1.5 rounded-full mx-auto mb-5"
         style={{
           background: "linear-gradient(90deg, #D71920, #FACC15, #168A3A)",
         }}
       />
-
       <p className="text-slate-600 max-w-3xl mx-auto leading-relaxed text-base md:text-lg">
         {content.featuresDescription}
       </p>
       </motion.div>
     </EditableWrap>
-
     <div className="flex justify-end mb-6">
       <SectionAddButton
         editMode={editMode}
@@ -1305,14 +1224,12 @@ export function Academics({
         onAddTarget={onAddTarget}
       />
     </div>
-
     <div className="grid md:grid-cols-2 gap-7">
       {visibleFeatures.map((feat, i) => {
         const featureColor = feat.color || colors.green;
         const realIndex = content.features.findIndex(
           (item) => item.id === feat.id
         );
-
         return (
           <EditableWrap
             key={feat.id}
@@ -1348,14 +1265,12 @@ export function Academics({
                 filter: "blur(38px)",
               }}
             />
-
             <div
               className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
               style={{
                 background: `linear-gradient(135deg, ${featureColor}10, transparent 55%)`,
               }}
             />
-
             <div className="relative z-10">
               <div className="mb-4 flex items-center gap-3">
                 <span
@@ -1364,7 +1279,6 @@ export function Academics({
                 >
                   {String(i + 1).padStart(2, "0")}
                 </span>
-
                 <span
                   className="text-2xl"
                   role="img"
@@ -1373,12 +1287,10 @@ export function Academics({
                   {feat.emoji || "📘"}
                 </span>
               </div>
-
               <div
                 className="w-16 h-1.5 rounded-full mb-7 transition-all duration-300 group-hover:w-28"
                 style={{ background: featureColor }}
               />
-
               <h3
                 className="text-3xl md:text-4xl font-black mb-5 text-slate-950 leading-tight"
                 style={{
@@ -1388,7 +1300,6 @@ export function Academics({
               >
                 {feat.title}
               </h3>
-
               <p className="text-base md:text-lg leading-relaxed text-slate-600 max-w-xl">
                 {feat.desc}
               </p>
@@ -1400,7 +1311,6 @@ export function Academics({
     </div>
   </div>
 </section>
-
       <section
         className="py-20 relative z-10"
         style={{
@@ -1416,14 +1326,12 @@ export function Academics({
               onAddTarget={onAddTarget}
             />
           </div>
-
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
             {visibleStats.map((stat, i) => {
               const statColor = stat.color || colors.green;
               const realIndex = content.stats.findIndex(
                 (item) => item.id === stat.id
               );
-
               return (
                 <EditableWrap
                   key={stat.id}
@@ -1481,7 +1389,6 @@ export function Academics({
                     className="w-16 h-1 rounded-full mx-auto mb-6 transition-all duration-300 group-hover:w-24"
                     style={{ background: statColor }}
                   />
-
                   <div
                     className="text-4xl md:text-5xl font-black mb-3"
                     style={{
@@ -1492,7 +1399,6 @@ export function Academics({
                   >
                     {stat.value}
                   </div>
-
                   <div className="text-sm text-slate-600 font-bold tracking-wide uppercase">
                     {stat.label}
                   </div>
@@ -1503,7 +1409,6 @@ export function Academics({
           </div>
         </div>
       </section>
-
      <section id="examination-system" className="pb-24 relative z-10 scroll-mt-32">
   <div className="max-w-7xl mx-auto px-6">
     <EditableWrap
@@ -1523,7 +1428,6 @@ export function Academics({
       >
         Evaluation Framework
       </span>
-
       <h2
         className="text-4xl md:text-5xl font-black mb-4"
         style={{
@@ -1535,20 +1439,17 @@ export function Academics({
       >
         {content.examTitle}
       </h2>
-
       <div
         className="w-20 h-1.5 rounded-full mx-auto mb-5"
         style={{
           background: "linear-gradient(90deg, #D71920, #FACC15, #168A3A)",
         }}
       />
-
       <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed">
         {content.examDescription}
       </p>
       </div>
     </EditableWrap>
-
     <div className="flex justify-end mb-6">
       <SectionAddButton
         editMode={editMode}
@@ -1557,7 +1458,6 @@ export function Academics({
         onAddTarget={onAddTarget}
       />
     </div>
-
     <div className="grid lg:grid-cols-12 gap-10 items-stretch">
       <div className="lg:col-span-7 space-y-5">
         {visibleTimeline.map((t, index) => {
@@ -1570,7 +1470,6 @@ export function Academics({
                 : index === 1
                 ? colors.green
                 : colors.purple;
-
             return (
               <EditableWrap
                 key={t.id}
@@ -1605,7 +1504,6 @@ export function Academics({
                     filter: "blur(36px)",
                   }}
                 />
-
                 <div className="relative z-10 flex items-center gap-6">
                   <div
                     className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-sm font-black text-white"
@@ -1616,13 +1514,11 @@ export function Academics({
                   >
                     {String(index + 1).padStart(2, "0")}
                   </div>
-
                   <div>
                     <div
                       className="mb-4 h-1.5 w-20 rounded-full transition-all duration-300 group-hover:w-32"
                       style={{ background: termColor }}
                     />
-
                     <h4
                       className="text-2xl md:text-3xl font-black text-slate-950"
                       style={{
@@ -1632,7 +1528,6 @@ export function Academics({
                     >
                       {t.term}
                     </h4>
-
                     <p className="text-base text-slate-500 mt-2">
                       {t.timeframe}
                     </p>
@@ -1643,7 +1538,6 @@ export function Academics({
             );
           })}
       </div>
-
       <EditableWrap
         editMode={editMode}
         target={{ type: "continuous" }}
@@ -1681,7 +1575,6 @@ export function Academics({
             filter: "blur(42px)",
           }}
         />
-
         <div
           className="absolute -left-20 bottom-0 h-56 w-56 rounded-full opacity-50"
           style={{
@@ -1689,7 +1582,6 @@ export function Academics({
             filter: "blur(44px)",
           }}
         />
-
         <div className="relative z-10">
           <div
             className="w-24 h-1.5 rounded-full mb-8 transition-all duration-300 group-hover:w-40"
@@ -1698,7 +1590,6 @@ export function Academics({
                 "linear-gradient(90deg, #D71920 0%, #FACC15 45%, #168A3A 100%)",
             }}
           />
-
           <h3
             className="font-black text-3xl md:text-4xl text-slate-950 leading-tight mb-6"
             style={{
@@ -1708,7 +1599,6 @@ export function Academics({
           >
             {content.continuousTitle}
           </h3>
-
           <p
             className="text-base leading-relaxed max-w-md"
             style={{ color: "rgba(15,23,42,0.66)" }}
@@ -1716,7 +1606,6 @@ export function Academics({
             {content.continuousDescription}
           </p>
         </div>
-
         <div className="relative z-10 grid grid-cols-2 gap-4 mt-8">
           {(content.ongoingAssessments || []).map((item, assessmentIndex) => (
             <div
@@ -1745,7 +1634,6 @@ export function Academics({
     </div>
   </div>
 </section>
-
       <section className="pt-10 pb-24 text-center relative z-10">
         <EditableWrap
           editMode={editMode}
@@ -1799,7 +1687,6 @@ export function Academics({
               background: "linear-gradient(90deg, #D71920 0%, #168A3A 100%)",
             }}
           />
-
           <h2
             className="text-4xl md:text-5xl font-black text-slate-900"
             style={{
@@ -1809,11 +1696,9 @@ export function Academics({
           >
             {content.ctaTitle}
           </h2>
-
           <p className="text-slate-600 max-w-xl mx-auto text-base leading-relaxed">
             {content.ctaDescription}
           </p>
-
           <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link
               to={content.primaryButtonLink || "/admissions"}
@@ -1829,7 +1714,6 @@ export function Academics({
             >
               {content.primaryButtonText}
             </Link>
-
             <Link
               to={content.secondaryButtonLink || "/contact"}
               onClick={(event) => {
@@ -1843,18 +1727,16 @@ export function Academics({
           </motion.div>
         </EditableWrap>
       </section>
-
       <AnimatePresence>
         {selectedProgram && (
           <CurriculumLedgerModal
             programLevel={selectedProgram}
             curriculum={content.curriculum}
-            onClose={() => setSelectedProgram(null)}
+            onClose={closeCurriculumModal}
           />
         )}
       </AnimatePresence>
     </div>
   );
 }
-
 export default Academics;

@@ -1,4 +1,20 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "./app/components/PdfNoticePreview.jsx";
+@source "./app/components/Academics.jsx";
+@source "./app/components/Stats.jsx";
+@source "./app/components/Footer.jsx";
+@source "./app/components/About.jsx";
+@source "./app/components/Admissions.jsx";
+@source "./app/components/HomeAnnouncementPopup.jsx";
+@source "./app/components/ScrollToTop.jsx";
+@source "./app/components/App.jsx";
+@source "./app/components/Navbar.jsx";
+@source "./app/components/Hero.jsx";
+@source "./app/components/Gallery.jsx";
+@source "./app/components/SchoolInquiryChat.jsx";
+@source "./app/components/Contact.jsx";
+@source "./app/components/Events.jsx";
+@source "./app/components/BsNoticeDatePicker.jsx";
 
 :root {
   --font-size: 16px;

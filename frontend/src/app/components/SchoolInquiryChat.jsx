@@ -1,91 +1,303 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowLeft,
   ArrowUpRight,
-  BookOpen,
-  BusFront,
-  CalendarDays,
+  Bot,
   Check,
-  ChevronRight,
-  CircleHelp,
   Copy,
-  GraduationCap,
   MessageCircle,
   Phone,
-  School,
-  Wallet,
+  RotateCcw,
+  Send,
   X,
 } from "lucide-react";
 
 const schoolPhone = "057-590144";
 
+// Your backend endpoint (see server/chat-server.js). If it is missing or
+// fails, the bot automatically falls back to the built-in answers below.
+const CHAT_API_URL = import.meta.env.VITE_CHAT_API_URL || "/api/chat";
+
+/* ------------------------------------------------------------------ */
+/* Built-in knowledge base (used when the AI backend is unavailable).   */
+/* Add or edit topics here. `keywords` drive matching.                  */
+/* ------------------------------------------------------------------ */
 const topics = [
   {
     id: "admissions",
-    label: "Admissions",
-    detail: "Joining Baljagriti",
-    icon: GraduationCap,
+    chip: "Admissions",
+    keywords: [
+      "admission", "admit", "join", "enroll", "enrol", "apply", "application",
+      "new student", "seat", "document", "form", "session", "2027", "2026",
+      "next year", "vacancy",
+    ],
     answer:
-      "Thinking about joining Baljagriti? Explore the admissions page for information about applying. For grade availability or required documents, our school team can help.",
-    links: [{ label: "Explore admissions", to: "/admissions" }],
+      "Baljagriti teaches students from Play Group to Grade 10. The admissions page explains how to apply. Seat availability for a specific year or grade, and the documents needed, are confirmed by the school office. You can call 057-590144.",
+    links: [{ label: "Admissions", to: "/admissions" }],
+    phone: true,
   },
   {
     id: "fees",
-    label: "Fees & payments",
-    detail: "Fee details and payment help",
-    icon: Wallet,
+    chip: "Fees",
+    keywords: [
+      "fee", "fees", "payment", "pay", "cost", "charge", "price", "tuition",
+      "scholarship", "discount", "installment", "how much",
+    ],
     answer:
-      "For the current fee structure, payment schedule, and applicable charges, please contact the school office so you receive the latest information.",
-    links: [{ label: "Contact the office", to: "/contact" }],
+      "Fees and payment schedules can change, so please contact the school office to get the latest and correct information.",
+    links: [{ label: "Contact", to: "/contact" }],
     phone: true,
   },
   {
     id: "academics",
-    label: "Academics",
-    detail: "Learning and examinations",
-    icon: BookOpen,
+    chip: "Academics",
+    keywords: [
+      "academic", "study", "subject", "curriculum", "exam", "examination",
+      "result", "teacher", "learning", "syllabus", "test",
+    ],
     answer:
-      "Find out about our learning approach, academic strengths, and examination system on the academics page.",
-    links: [{ label: "Explore academics", to: "/academics" }],
+      "You can read about our learning approach, academic strengths, and examination system on the academics page.",
+    links: [{ label: "Academics", to: "/academics" }],
   },
   {
     id: "facilities",
-    label: "Facilities & transport",
-    detail: "Campus, labs, and bus facility",
-    icon: BusFront,
+    chip: "Facilities",
+    keywords: [
+      "facility", "facilities", "campus", "lab", "library", "sport", "play ground",
+      "playground", "activity", "activities", "computer",
+    ],
     answer:
-      "Explore the facilities page for information about campus spaces, learning resources, activities, and the bus facility.",
-    links: [{ label: "Explore facilities", to: "/facilities" }],
+      "The facilities page covers our campus spaces, learning resources, and activities.",
+    links: [{ label: "Facilities", to: "/facilities" }],
+  },
+  {
+    id: "transport",
+    chip: "Bus & transport",
+    keywords: ["bus", "transport", "transportation", "van", "route", "pickup", "pick up", "drop"],
+    answer:
+      "Baljagriti has a bus facility. Check the facilities page for an overview, or call the office to ask about routes and availability.",
+    links: [{ label: "Facilities", to: "/facilities" }],
+    phone: true,
   },
   {
     id: "calendar",
-    label: "School dates & notices",
-    detail: "Events, holidays, and updates",
-    icon: CalendarDays,
+    chip: "Dates & notices",
+    keywords: [
+      "calendar", "date", "holiday", "event", "notice", "announcement",
+      "schedule", "vacation", "break", "when", "news", "update",
+    ],
     answer:
-      "Check the calendar for upcoming dates and the notices page for the latest school announcements.",
+      "Upcoming dates are on the calendar page, and the latest announcements are on the notices page.",
     links: [
-      { label: "View calendar", to: "/calendar" },
-      { label: "View notices", to: "/notices" },
+      { label: "Calendar", to: "/calendar" },
+      { label: "Notices", to: "/notices" },
     ],
   },
   {
-    id: "contact",
-    label: "Talk to the school",
-    detail: "Ask us something else",
-    icon: CircleHelp,
+    id: "about",
+    chip: "About the school",
+    keywords: [
+      "about", "history", "established", "founded", "since", "who are you",
+      "play group", "nursery", "grade 10", "which grades", "what grades", "levels",
+    ],
     answer:
-      "We’re happy to help. Send your question through the contact page or call the school office.",
-    links: [{ label: "Open contact page", to: "/contact" }],
+      "Baljagriti English Secondary School is in Basudev Marga, Hetauda-2. It was established in 2046 BS and teaches students from Play Group to Grade 10.",
+    links: [{ label: "Contact", to: "/contact" }],
+  },
+  {
+    id: "contact",
+    chip: "Talk to the school",
+    keywords: [
+      "contact", "call", "phone", "number", "reach", "office", "person",
+      "human", "staff", "principal", "address", "location", "where", "email",
+    ],
+    answer:
+      "The school is at Basudev Marga, Hetauda-2. You can call the office on 057-590144, 057-590145, or 057-590146, or send a question through the contact page.",
+    links: [{ label: "Contact", to: "/contact" }],
     phone: true,
   },
 ];
 
+const greetingWords = ["hi", "hello", "hey", "namaste", "good morning", "good afternoon", "good evening"];
+const thanksWords = ["thanks", "thank you", "thank u", "dhanyabad"];
+
+const quickReplies = topics.map((t) => t.chip);
+
+const welcomeMessage = () => ({
+  id: "welcome",
+  from: "bot",
+  text: "Hi, I'm the Baljagriti assistant. Ask me about admissions, fees, academics, the bus, or school dates.",
+});
+
+/* ------------------------- local matching ---------------------------- */
+function getReply(input) {
+  const text = input.toLowerCase().trim();
+
+  const chipMatch = topics.find((t) => t.chip.toLowerCase() === text);
+  if (chipMatch) return chipMatch;
+
+  if (thanksWords.some((w) => text.includes(w))) {
+    return { answer: "You're welcome! Is there anything else I can help with?" };
+  }
+
+  let best = null;
+  let bestScore = 0;
+  for (const topic of topics) {
+    const score = topic.keywords.reduce(
+      (sum, kw) => (text.includes(kw) ? sum + kw.length : sum),
+      0
+    );
+    if (score > bestScore) {
+      best = topic;
+      bestScore = score;
+    }
+  }
+  if (best) return best;
+
+  const isGreeting = greetingWords.some(
+    (w) => text === w || text.startsWith(w + " ") || text.startsWith(w + "!")
+  );
+  if (isGreeting) {
+    return { answer: "Hello! What would you like to know about Baljagriti?" };
+  }
+
+  return {
+    answer:
+      "I'm not sure about that one. Try one of the topics below, or ask the school office directly and they'll help.",
+    links: [{ label: "Contact", to: "/contact" }],
+    phone: true,
+  };
+}
+
+/* --------------------------- AI backend ------------------------------ */
+async function askAssistant(history) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 20000);
+  try {
+    const res = await fetch(CHAT_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: history }),
+      signal: controller.signal,
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return typeof data.reply === "string" && data.reply.trim()
+      ? data.reply.trim()
+      : null;
+  } catch {
+    return null; // no backend, offline, or timeout: use built-in answers
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+/* ----------------------------- component ----------------------------- */
 export default function SchoolInquiryChat() {
-  const [isOpen, setIsOpen] = useState(true);
-  const [selectedTopic, setSelectedTopic] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([welcomeMessage()]);
+  const [draft, setDraft] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
   const [phoneCopied, setPhoneCopied] = useState(false);
+  const [showTeaser, setShowTeaser] = useState(false);
+
+  const scrollRef = useRef(null);
+  const inputRef = useRef(null);
+  const copyTimer = useRef(null);
+  const idCounter = useRef(0);
+  const sessionRef = useRef(0); // bumps on reset so stale replies are ignored
+  const mountedRef = useRef(true);
+
+  const nextId = () => {
+    idCounter.current += 1;
+    return `m${idCounter.current}`;
+  };
+
+  // Greeting bubble: shows on every page load or reload.
+  useEffect(() => {
+    const showTimer = window.setTimeout(() => setShowTeaser(true), 1200);
+    const hideTimer = window.setTimeout(() => setShowTeaser(false), 16000);
+    return () => {
+      window.clearTimeout(showTimer);
+      window.clearTimeout(hideTimer);
+    };
+  }, []);
+
+  // Keep the newest message in view.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [messages, isTyping, isOpen]);
+
+  // Focus the input when the chat opens.
+  useEffect(() => {
+    if (isOpen) inputRef.current?.focus();
+  }, [isOpen]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      window.clearTimeout(copyTimer.current);
+    };
+  }, []);
+
+  const sendMessage = async (raw) => {
+    const text = raw.trim();
+    if (!text || isTyping) return;
+
+    const session = sessionRef.current;
+    const history = [
+      ...messages.filter((m) => m.id !== "welcome"),
+      { from: "user", text },
+    ]
+      .slice(-10)
+      .map((m) => ({
+        role: m.from === "user" ? "user" : "assistant",
+        content: m.text,
+      }));
+
+    setMessages((prev) => [...prev, { id: nextId(), from: "user", text }]);
+    setDraft("");
+    setIsTyping(true);
+
+    const started = Date.now();
+    const local = getReply(text);
+    const aiAnswer = await askAssistant(history);
+    await wait(Math.max(0, 600 - (Date.now() - started)));
+
+    if (!mountedRef.current || session !== sessionRef.current) return;
+
+    // AI answer: attach buttons only if a topic really matched the question.
+    const reply = aiAnswer
+      ? {
+          answer: aiAnswer,
+          links: local.id ? local.links : undefined,
+          phone: local.id ? local.phone : undefined,
+        }
+      : local;
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: nextId(),
+        from: "bot",
+        text: reply.answer,
+        links: reply.links,
+        phone: reply.phone,
+      },
+    ]);
+    setIsTyping(false);
+  };
+
+  const resetChat = () => {
+    sessionRef.current += 1;
+    setIsTyping(false);
+    setDraft("");
+    setMessages([welcomeMessage()]);
+  };
 
   const copySchoolPhone = async () => {
     try {
@@ -101,189 +313,241 @@ export default function SchoolInquiryChat() {
       document.execCommand("copy");
       input.remove();
     }
-
     setPhoneCopied(true);
-    window.setTimeout(() => setPhoneCopied(false), 1800);
+    window.clearTimeout(copyTimer.current);
+    copyTimer.current = window.setTimeout(() => setPhoneCopied(false), 1800);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    sendMessage(draft);
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-[120] flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
+    <div className="fixed bottom-4 right-4 z-[120] flex flex-col items-end gap-3 sm:bottom-5 sm:right-5">
       {isOpen && (
         <section
-          aria-label="Baljagriti school inquiry guide"
-          className="flex max-h-[590px] w-[min(390px,calc(100vw-28px))] flex-col overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(10,18,45,0.28)]"
+          aria-label="Baljagriti school assistant"
           role="dialog"
           aria-modal="false"
-          style={{ maxHeight: "min(590px, calc(100dvh - 112px))" }}
+          className="flex w-[min(330px,calc(100vw-32px))] flex-col overflow-hidden rounded-2xl border border-[#E2E5EF] bg-white shadow-[0_18px_50px_rgba(20,27,61,0.22)]"
+          style={{ height: "min(470px, calc(100dvh - 96px))" }}
         >
-          <header className="relative overflow-hidden bg-[#38BDF8] px-5 pb-5 pt-5 text-[#082F49]">
-            <div className="absolute -right-8 -top-12 h-36 w-36 rounded-full border border-white/10" />
-            <div className="absolute -right-1 -top-5 h-24 w-24 rounded-full border border-white/10" />
-            <div className="relative flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/55 text-[#075985] ring-1 ring-white/60">
-                  <School className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#075985]">
-                    Baljagriti School
-                  </p>
-                  <h2 className="mt-0.5 text-lg font-extrabold">School Guide</h2>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="rounded-full p-2 text-[#082F49]/75 transition hover:bg-white/40 hover:text-[#082F49] focus:outline-none focus:ring-2 focus:ring-white/70"
-                aria-label="Minimize school guide"
-              >
-                <X className="h-5 w-5" />
-              </button>
+          {/* Header */}
+          <header className="flex items-center gap-2.5 bg-[#1B2559] px-3.5 py-3 text-white">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F5B335] text-[#1B2559]">
+              <Bot className="h-[18px] w-[18px]" aria-hidden="true" />
             </div>
-            <div className="relative mt-4 flex items-center gap-2 text-xs text-[#082F49]/80">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
-              Quick answers from the school website
+            <div className="min-w-0 flex-1">
+              <h2 className="truncate text-sm font-bold leading-4">
+                Baljagriti Assistant
+              </h2>
+              <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/70">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Replies instantly
+              </p>
             </div>
+            <button
+              type="button"
+              onClick={resetChat}
+              className="rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#F5B335]"
+              aria-label="Start a new chat"
+              title="Start over"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#F5B335]"
+              aria-label="Minimize assistant"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </header>
 
-          <div className="min-h-0 flex-1 overflow-y-auto bg-[#F7F8FC] px-4 py-4">
-            <div className="mb-4 flex gap-2.5">
-              <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#38BDF8] text-[#082F49]">
-                <MessageCircle className="h-4 w-4" aria-hidden="true" />
-              </div>
-              <div className="max-w-[290px] rounded-2xl rounded-tl-md border border-slate-100 bg-white px-4 py-3 shadow-sm">
-                <p className="text-sm font-bold text-slate-900">Hi there! 👋</p>
-                <p className="mt-1 text-sm leading-5 text-slate-600">
-                  Welcome to Baljagriti. Is there an inquiry I can help with?
-                </p>
-              </div>
-            </div>
-
-            {selectedTopic ? (
-              <div className="ml-10 space-y-3">
-                <div className="rounded-2xl rounded-tr-md bg-[#38BDF8] px-4 py-2.5 text-sm font-semibold text-[#082F49] shadow-sm">
-                  {selectedTopic.label}
-                </div>
-                <div className="rounded-2xl rounded-tl-md border border-slate-100 bg-white px-4 py-3 shadow-sm">
-                  <p className="text-sm leading-6 text-slate-700">
-                    {selectedTopic.answer}
+          {/* Messages */}
+          <div
+            ref={scrollRef}
+            className="min-h-0 flex-1 space-y-2.5 overflow-y-auto bg-[#F4F6FB] px-3 py-3"
+            aria-live="polite"
+          >
+            {messages.map((msg) =>
+              msg.from === "user" ? (
+                <div key={msg.id} className="flex justify-end">
+                  <p className="max-w-[80%] break-words rounded-2xl rounded-br-sm bg-[#1B2559] px-3 py-2 text-[13px] leading-5 text-white">
+                    {msg.text}
                   </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {selectedTopic.links.map((link) => (
-                      <Link
-                        key={link.to}
-                        to={link.to}
-                        onClick={() => setIsOpen(false)}
-                        style={{ color: "#082F49" }}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[#38BDF8] px-3 py-2 text-xs font-bold transition hover:bg-[#7DD3FC] focus:outline-none focus:ring-2 focus:ring-[#0284C7]/40"
-                      >
-                        {link.label}
-                        <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-                      </Link>
-                    ))}
-                    {selectedTopic.phone && (
-                      <>
-                        <a
-                          href={`tel:${schoolPhone}`}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                        >
-                          <Phone className="h-3.5 w-3.5" aria-hidden="true" />
-                          Call the office
-                        </a>
-                        <button
-                          type="button"
-                          onClick={copySchoolPhone}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-sky-300 hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
-                        >
-                          {phoneCopied ? (
-                            <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                          ) : (
-                            <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-                          )}
-                          {phoneCopied ? "Number copied" : "Copy number"}
-                        </button>
-                      </>
+                </div>
+              ) : (
+                <div key={msg.id} className="flex items-end gap-2">
+                  <div className="mb-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#F5B335] text-[#1B2559]">
+                    <Bot className="h-3.5 w-3.5" aria-hidden="true" />
+                  </div>
+                  <div className="max-w-[82%] rounded-2xl rounded-bl-sm border border-[#E2E5EF] bg-white px-3 py-2 shadow-sm">
+                    <p className="whitespace-pre-line text-[13px] leading-5 text-[#2B3252]">
+                      {msg.text}
+                    </p>
+                    {(msg.links?.length > 0 || msg.phone) && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {msg.links?.map((link) => (
+                          <Link
+                            key={link.to}
+                            to={link.to}
+                            onClick={() => setIsOpen(false)}
+                            className="inline-flex items-center gap-1 rounded-full bg-[#F5B335] px-2.5 py-1.5 text-[11px] font-bold text-[#1B2559] transition hover:bg-[#FFC857] focus:outline-none focus:ring-2 focus:ring-[#1B2559]/40"
+                            style={{ color: "#1B2559" }}
+                          >
+                            {link.label}
+                            <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
+                          </Link>
+                        ))}
+                        {msg.phone && (
+                          <>
+                            <a
+                              href={`tel:${schoolPhone}`}
+                              className="inline-flex items-center gap-1 rounded-full border border-[#D5D9E8] bg-white px-2.5 py-1.5 text-[11px] font-bold text-[#2B3252] transition hover:border-[#1B2559] focus:outline-none focus:ring-2 focus:ring-[#1B2559]/30"
+                            >
+                              <Phone className="h-3 w-3" aria-hidden="true" />
+                              Call
+                            </a>
+                            <button
+                              type="button"
+                              onClick={copySchoolPhone}
+                              className="inline-flex items-center gap-1 rounded-full border border-[#D5D9E8] bg-white px-2.5 py-1.5 text-[11px] font-bold text-[#2B3252] transition hover:border-[#1B2559] focus:outline-none focus:ring-2 focus:ring-[#1B2559]/30"
+                            >
+                              {phoneCopied ? (
+                                <Check className="h-3 w-3" aria-hidden="true" />
+                              ) : (
+                                <Copy className="h-3 w-3" aria-hidden="true" />
+                              )}
+                              {phoneCopied ? "Copied" : schoolPhone}
+                            </button>
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedTopic(null)}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-[#075985] hover:text-emerald-700"
+              )
+            )}
+
+            {isTyping && (
+              <div className="flex items-end gap-2">
+                <div className="mb-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#F5B335] text-[#1B2559]">
+                  <Bot className="h-3.5 w-3.5" aria-hidden="true" />
+                </div>
+                <div
+                  className="flex items-center gap-1 rounded-2xl rounded-bl-sm border border-[#E2E5EF] bg-white px-3 py-2.5 shadow-sm"
+                  role="status"
+                  aria-label="Assistant is typing"
                 >
-                  <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-                  Browse all topics
-                </button>
-              </div>
-            ) : (
-              <div className="ml-10">
-                <p className="mb-2.5 text-[11px] font-extrabold uppercase tracking-[0.13em] text-slate-400">
-                  Choose a topic
-                </p>
-                <div className="space-y-2">
-                  {topics.map((topic) => {
-                    const Icon = topic.icon;
-                    return (
-                      <button
-                        key={topic.id}
-                        type="button"
-                        onClick={() => setSelectedTopic(topic)}
-                        className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#0284C7]/30"
-                      >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#E0F2FE] text-[#075985] transition group-hover:bg-emerald-50 group-hover:text-emerald-700">
-                          <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-bold text-slate-800">
-                            {topic.label}
-                          </span>
-                          <span className="mt-0.5 block truncate text-xs text-slate-500">
-                            {topic.detail}
-                          </span>
-                        </span>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-emerald-700" aria-hidden="true" />
-                      </button>
-                    );
-                  })}
+                  {[0, 150, 300].map((d) => (
+                    <span
+                      key={d}
+                      className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA1BD] motion-reduce:animate-none"
+                      style={{ animationDelay: `${d}ms` }}
+                    />
+                  ))}
                 </div>
               </div>
             )}
           </div>
 
-          <footer className="flex items-center justify-between gap-3 border-t border-slate-100 bg-white px-5 py-3">
-            <span className="text-[11px] font-medium text-slate-400">
-              Need a person? Call {schoolPhone}
-            </span>
-            <a
-              href={`tel:${schoolPhone}`}
-              aria-label="Call Baljagriti School"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+          {/* Quick replies */}
+          <div className="border-t border-[#E2E5EF] bg-white px-3 pt-2">
+            <div className="flex gap-1.5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {quickReplies.map((label) => (
+                <button
+                  key={label}
+                  type="button"
+                  disabled={isTyping}
+                  onClick={() => sendMessage(label)}
+                  className="shrink-0 rounded-full border border-[#D5D9E8] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#2B3252] transition hover:border-[#1B2559] hover:bg-[#F4F6FB] focus:outline-none focus:ring-2 focus:ring-[#1B2559]/30 disabled:opacity-50"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Input */}
+          <form
+            onSubmit={handleSubmit}
+            className="flex items-center gap-2 border-t border-[#E2E5EF] bg-white px-3 py-2.5"
+          >
+            <input
+              ref={inputRef}
+              type="text"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Type your question…"
+              maxLength={200}
+              aria-label="Type your question"
+              className="min-w-0 flex-1 rounded-full border border-[#D5D9E8] bg-[#F4F6FB] px-3.5 py-2 text-[13px] text-[#2B3252] placeholder:text-[#8A91AE] focus:border-[#1B2559] focus:outline-none focus:ring-2 focus:ring-[#1B2559]/20"
+            />
+            <button
+              type="submit"
+              disabled={!draft.trim() || isTyping}
+              aria-label="Send message"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1B2559] text-white transition hover:bg-[#2A3680] focus:outline-none focus:ring-2 focus:ring-[#F5B335] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <Phone className="h-4 w-4" aria-hidden="true" />
-            </a>
-          </footer>
+              <Send className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </form>
         </section>
       )}
 
+      {/* Greeting bubble */}
+      {showTeaser && !isOpen && (
+        <div
+          role="status"
+          className="relative w-[min(290px,calc(100vw-32px))] rounded-2xl rounded-br-sm border border-[#E2E5EF] bg-white px-3.5 py-3 pr-8 shadow-[0_12px_32px_rgba(20,27,61,0.2)]"
+        >
+          <button
+            type="button"
+            onClick={() => setShowTeaser(false)}
+            aria-label="Dismiss greeting"
+            className="absolute right-1.5 top-1.5 rounded-full p-1 text-[#8A91AE] transition hover:bg-[#F4F6FB] hover:text-[#2B3252] focus:outline-none focus:ring-2 focus:ring-[#1B2559]/30"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowTeaser(false);
+              setIsOpen(true);
+            }}
+            className="block w-full text-left focus:outline-none"
+          >
+            <p className="text-[13px] font-bold text-[#1B2559]">Hi there! 👋</p>
+            <p className="mt-1 text-[12.5px] leading-5 text-[#2B3252]">
+              Hi, I'm the Baljagriti assistant. Ask me about admissions, fees,
+              academics, the bus, or school dates.
+            </p>
+          </button>
+        </div>
+      )}
+
+      {/* Launcher */}
       <button
         type="button"
-        onClick={() => setIsOpen((open) => !open)}
-        aria-label={isOpen ? "Close school guide" : "Open school guide"}
+        onClick={() => {
+          setShowTeaser(false);
+          setIsOpen((open) => !open);
+        }}
+        aria-label={isOpen ? "Close school assistant" : "Open school assistant"}
         aria-expanded={isOpen}
-        className="group flex items-center gap-3 rounded-full bg-[#38BDF8] p-2 pr-5 text-[#082F49] shadow-[0_12px_30px_rgba(2,132,199,0.3)] ring-1 ring-white/70 transition hover:-translate-y-0.5 hover:bg-[#7DD3FC] focus:outline-none focus:ring-4 focus:ring-[#0284C7]/25"
+        className="relative flex h-12 w-12 items-center justify-center rounded-full bg-[#1B2559] text-white shadow-[0_8px_22px_rgba(27,37,89,0.35)] transition hover:bg-[#2A3680] focus:outline-none focus:ring-4 focus:ring-[#F5B335]/50"
       >
-          <span className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white/75 text-[#075985]">
+        {isOpen ? (
+          <X className="h-5 w-5" aria-hidden="true" />
+        ) : (
           <MessageCircle className="h-5 w-5" aria-hidden="true" />
-          {!isOpen && (
-            <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-[#38BDF8] bg-[#FACC15]" />
-          )}
-        </span>
-        <span className="text-left">
-          <span className="block text-sm font-extrabold leading-4">School Guide</span>
-          <span className="mt-1 block text-[10px] font-medium text-[#082F49]/75">
-            Ask us a question
-          </span>
-        </span>
+        )}
+        {!isOpen && (
+          <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-[#F5B335]" />
+        )}
       </button>
     </div>
   );
