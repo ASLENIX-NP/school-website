@@ -52,7 +52,28 @@ import {
  
  
  
- const IMAGE_SLIDE_MS = 3000;
+const IMAGE_SLIDE_MS = 3000;
+const HERO_CACHE_KEY = "baljagriti-home-hero-cache";
+
+function readCachedHeroData() {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const cached = window.localStorage.getItem(HERO_CACHE_KEY);
+    const parsed = cached ? JSON.parse(cached) : null;
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveCachedHeroData(heroData) {
+  try {
+    window.localStorage.setItem(HERO_CACHE_KEY, JSON.stringify(heroData));
+  } catch {
+    // The homepage continues to work when browser storage is unavailable.
+  }
+}
  
  
  
@@ -1111,7 +1132,7 @@ import {
  
  
  
- function getHeroImageStyle(
+function getHeroImageStyle(
  
   heroData,
  
@@ -1209,7 +1230,29 @@ import {
  
   };
  
- }
+}
+
+function getHeroPlaybackUrl(item) {
+  const sourceUrl = String(item?.url || "");
+  if (item?.type !== "video") return sourceUrl;
+
+  try {
+    const videoUrl = new URL(sourceUrl);
+    if (!videoUrl.hostname.endsWith("ik.imagekit.io")) return sourceUrl;
+
+    const transformations = videoUrl.searchParams.get("tr");
+    if (!String(transformations || "").split(",").includes("f-mp4")) {
+      videoUrl.searchParams.set(
+        "tr",
+        transformations ? `${transformations},f-mp4` : "f-mp4"
+      );
+    }
+
+    return videoUrl.toString();
+  } catch {
+    return sourceUrl;
+  }
+}
  
  
  
@@ -1345,10 +1388,11 @@ import {
  
  
  
- function HeroMedia({
+function HeroMedia({
    heroData,
    editMode,
    onEditTarget,
+   isLoading,
  }) {
    const mediaItems = useMemo(
      () =>
@@ -1408,51 +1452,6 @@ import {
    };
  
    /* =======================================================
-      PRELOAD ALL IMAGES
- 
-      The next image is loaded before the slideshow switches.
-      This prevents a grey/blank frame.
-      ======================================================= */
- 
-   useEffect(() => {
-     if (!mediaItems.length) {
-       return undefined;
-     }
- 
-     const imageObjects = [];
- 
-     mediaItems.forEach((item) => {
-       if (
-         item.type !== "image" ||
-         !item.url ||
-         loadedMedia.has(item.url)
-       ) {
-         return;
-       }
- 
-       const image = new Image();
-       imageObjects.push(image);
- 
-       image.onload = () => {
-         markLoaded(item.url);
-       };
- 
-       image.onerror = () => {
-         markFailed(item.url);
-       };
- 
-       image.src = item.url;
-     });
- 
-     return () => {
-       imageObjects.forEach((image) => {
-         image.onload = null;
-         image.onerror = null;
-       });
-     };
-   }, [mediaKey]);
- 
-   /* =======================================================
       AUTOMATIC SLIDESHOW
  
       Every image remains visible for 3 seconds.
@@ -1494,21 +1493,7 @@ import {
      const timer = window.setTimeout(() => {
        const nextIndex =
          (activeIndex + 1) % mediaItems.length;
- 
-       const nextMedia =
-         mediaItems[nextIndex];
- 
-       /*
-         Never switch to an image that is still loading.
-         The current image stays on screen instead.
-       */
-       if (
-         nextMedia?.type === "image" &&
-         !loadedMedia.has(nextMedia.url)
-       ) {
-         return;
-       }
- 
+
        setActiveIndex(nextIndex);
      }, IMAGE_SLIDE_MS);
  
@@ -1542,25 +1527,53 @@ import {
       EMPTY STATE
       ======================================================= */
  
-   if (!activeMedia) {
-     return (
-       <div className="absolute inset-0 overflow-hidden bg-[#08111F]">
-         {editMode && (
-           <div className="absolute inset-0 flex items-center justify-center text-white">
-             <div className="text-center">
-               <ImageIcon className="w-12 h-12 mx-auto mb-4 opacity-40" />
-               <p className="text-sm opacity-70">
-                 No hero image has been added yet
-               </p>
-             </div>
-           </div>
-         )}
-       </div>
-     );
-   }
- 
-   return (
-     <div className="absolute inset-0 overflow-hidden bg-[#08111F]">
+  if (!activeMedia) {
+    return (
+      <div className="absolute inset-0 overflow-hidden bg-[#08111F]">
+        <div className="absolute inset-0 flex items-center justify-center text-white">
+          <div className="text-center px-6">
+            {isLoading ? (
+              <div className="mx-auto mb-4 h-9 w-9 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+            ) : (
+              <ImageIcon className="w-12 h-12 mx-auto mb-4 opacity-40" />
+            )}
+            <p className="text-sm opacity-80">
+              {isLoading
+                ? "Loading Baljagriti homepage…"
+                : editMode
+                  ? "No hero image has been added yet"
+                  : heroData?.titleLine1 || "Baljagriti School"}
+            </p>
+          </div>
+        </div>
+        {editMode && (
+          <EditIconButton
+            editMode={editMode}
+            target={{ type: "heroImage" }}
+            onEditTarget={onEditTarget}
+            icon={Camera}
+            label="Change hero images or videos"
+          />
+        )}
+      </div>
+    );
+  }
+
+  const fallbackImage = mediaItems.find((item) => item.type === "image");
+
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-[#08111F]">
+      {fallbackImage && (
+        <img
+          src={fallbackImage.url}
+          alt=""
+          className="absolute inset-0 z-0 h-full w-full object-cover"
+          style={getHeroImageStyle(heroData, fallbackImage.url)}
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+        />
+      )}
        {/* =================================================
            ALL MEDIA STAYS MOUNTED
  
@@ -1572,7 +1585,7 @@ import {
          const isActive =
            index === activeIndex;
  
-         if (failedMedia.has(item.url)) {
+         if (failedMedia.has(item.url) || !isActive) {
            return null;
          }
  
@@ -1582,7 +1595,11 @@ import {
              className="absolute inset-0"
              initial={false}
              animate={{
-               opacity: isActive ? 1 : 0,
+               opacity:
+                 isActive &&
+                 (item.type !== "video" || loadedMedia.has(item.url))
+                   ? 1
+                   : 0,
              }}
              transition={{
                duration: 0.8,
@@ -1596,8 +1613,8 @@ import {
              }}
            >
              {item.type === "video" ? (
-               <video
-                 src={item.url}
+             <video
+                 src={getHeroPlaybackUrl(item)}
                  className="absolute inset-0 w-full h-full block"
                  style={getHeroImageStyle(
                    heroData,
@@ -1607,7 +1624,7 @@ import {
                  muted
                  loop={false}
                  playsInline
-                 preload="auto"
+                 preload={isActive ? "metadata" : "none"}
                  onLoadedData={() =>
                    markLoaded(item.url)
                  }
@@ -1628,6 +1645,9 @@ import {
                  src={item.url}
                  alt="Baljagriti English Secondary School"
                  className="absolute inset-0 w-full h-full block"
+                 loading={isActive ? "eager" : "lazy"}
+                 fetchPriority={isActive ? "high" : "low"}
+                 decoding="async"
                  style={getHeroImageStyle(
                    heroData,
                    item.url
@@ -2208,15 +2228,17 @@ import {
     setHeroData,
  
   ] = useState(() =>
- 
+
     mergeHeroData(
- 
-      contentOverride ||
- 
-        defaultHeroData
- 
+
+      contentOverride || readCachedHeroData() || defaultHeroData
+
     )
- 
+
+  );
+
+  const [homeLoading, setHomeLoading] = useState(
+    !contentOverride && !readCachedHeroData()
   );
  
  
@@ -2354,10 +2376,12 @@ import {
  
  
       setHeroData(
- 
+
         merged
- 
+
       );
+
+      setHomeLoading(false);
  
  
  
@@ -2391,7 +2415,7 @@ import {
  
             {
  
-              timeout: 15000,
+              timeout: 8000,
  
             }
  
@@ -2522,10 +2546,13 @@ import {
  
  
         setHeroData(
- 
+
           normalizedHero
- 
+
         );
+
+        saveCachedHeroData(normalizedHero);
+        setHomeLoading(false);
  
  
  
@@ -2601,14 +2628,10 @@ import {
  
  
  
-        setHeroData(
- 
-          mergeHeroData(
- 
-            defaultHeroData
- 
-          )
- 
+        setHeroData((current) =>
+          current?.media?.length
+            ? current
+            : mergeHeroData(defaultHeroData)
         );
  
  
@@ -2616,14 +2639,16 @@ import {
  
  
         setAboutData(
- 
+
           mergeAboutData(
- 
+
             defaultAboutData
- 
+
           )
- 
+
         );
+
+        setHomeLoading(false);
  
       }
  
@@ -2724,10 +2749,12 @@ import {
           }
  
           editMode={
- 
+
             editMode
- 
+
           }
+
+          isLoading={homeLoading}
  
           onEditTarget={
  

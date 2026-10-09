@@ -786,31 +786,9 @@ function Gallery() {
       id="gallery"
       className="min-h-screen pt-32 pb-24 relative overflow-hidden"
       style={{
-        background: `
-          radial-gradient(circle at top right, rgba(124,92,196,0.18), transparent 34%),
-          radial-gradient(circle at bottom left, rgba(22,138,58,0.14), transparent 32%),
-          linear-gradient(180deg, #FFF8EE 0%, #F1ECFF 100%)
-        `,
+        background: "#fff",
       }}
     >
-      <div
-        className="absolute top-0 right-0 w-[520px] h-[520px] rounded-full pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(75,46,131,0.12), transparent 70%)",
-          filter: "blur(8px)",
-        }}
-      />
-
-      <div
-        className="absolute bottom-0 left-0 w-[420px] h-[420px] rounded-full pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(22,138,58,0.11), transparent 70%)",
-          filter: "blur(8px)",
-        }}
-      />
-
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 28 }}

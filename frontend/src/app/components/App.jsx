@@ -71,8 +71,18 @@ function PageLoader() {
 function HomePage() {
   return (
     <>
-      <Hero />
-      <Stats />
+      <Suspense
+        fallback={
+          <div className="flex min-h-[580px] items-center justify-center bg-[#08111F] text-sm font-semibold text-white/70">
+            Loading homepage…
+          </div>
+        }
+      >
+        <Hero />
+      </Suspense>
+      <Suspense fallback={null}>
+        <Stats />
+      </Suspense>
     </>
   );
 }

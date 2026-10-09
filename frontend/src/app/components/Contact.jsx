@@ -754,42 +754,9 @@ export function Contact({
       id="contact"
       className="pt-32 pb-24 relative overflow-hidden min-h-screen"
       style={{
-        background: `
-          radial-gradient(circle at 8% 10%, rgba(250,204,21,0.2), transparent 26%),
-          radial-gradient(circle at 90% 18%, rgba(56,189,248,0.18), transparent 30%),
-          radial-gradient(circle at 12% 90%, rgba(215,25,32,0.1), transparent 28%),
-          radial-gradient(circle at 88% 86%, rgba(22,138,58,0.14), transparent 28%),
-          linear-gradient(180deg, #FFF8EE 0%, #F8F4FF 48%, #EEF7FF 100%)
-        `,
+        background: "#fff",
       }}
     >
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.23]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(75,46,131,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(75,46,131,0.08) 1px, transparent 1px)",
-          backgroundSize: "46px 46px",
-        }}
-      />
-
-      <div
-        className="absolute -top-36 -left-28 w-[430px] h-[430px] rounded-full pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(75,46,131,0.13), transparent 70%)",
-          filter: "blur(7px)",
-        }}
-      />
-
-      <div
-        className="absolute top-24 -right-32 w-[500px] h-[500px] rounded-full pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(56,189,248,0.15), transparent 70%)",
-          filter: "blur(8px)",
-        }}
-      />
-
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         {editMode && (
           <div className="mb-8 rounded-[28px] p-5 bg-slate-950 text-white border border-white/10 shadow-2xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">

@@ -228,11 +228,7 @@ export default function Blogs() {
     <section
       className="min-h-screen overflow-hidden pt-28 pb-24 relative"
       style={{
-        background: `
-          radial-gradient(circle at top right, rgba(75,46,131,0.14), transparent 34%),
-          radial-gradient(circle at bottom left, rgba(22,138,58,0.12), transparent 32%),
-          linear-gradient(180deg, #FFF8EE 0%, #F8FAFC 54%, #F1ECFF 100%)
-        `,
+        background: "#fff",
       }}
     >
       <div className="mx-auto max-w-7xl px-6 relative z-10">

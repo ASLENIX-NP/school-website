@@ -105,7 +105,7 @@ export default function BlogDetail() {
 
   if (!post) {
     return (
-      <section className="min-h-screen pt-32 pb-24" style={{ background: "linear-gradient(180deg, #FFF8EE, #F1ECFF)" }}>
+      <section className="min-h-screen pt-32 pb-24 bg-white">
         <div className="mx-auto max-w-4xl px-6 text-center">
           <h1 className="text-4xl font-black text-slate-950">Blog post not found</h1>
           <Link to="/blogs" className="mt-6 inline-flex rounded-full px-5 py-3 font-black" style={{ background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`, color: colors.dark }}>
@@ -122,11 +122,7 @@ export default function BlogDetail() {
     <section
       className="min-h-screen pt-28 pb-24"
       style={{
-        background: `
-          radial-gradient(circle at top right, rgba(75,46,131,0.13), transparent 34%),
-          radial-gradient(circle at bottom left, rgba(22,138,58,0.11), transparent 32%),
-          linear-gradient(180deg, #FFF8EE 0%, #F8FAFC 50%, #F1ECFF 100%)
-        `,
+        background: "#fff",
       }}
     >
       <div className="mx-auto max-w-6xl px-6">
