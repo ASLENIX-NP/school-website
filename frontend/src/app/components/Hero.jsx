@@ -1570,7 +1570,7 @@ function HeroMedia({
           className="absolute inset-0 z-0 h-full w-full object-cover"
           style={getHeroImageStyle(heroData, fallbackImage.url)}
           loading="eager"
-          fetchPriority="high"
+          fetchpriority="high"
           decoding="async"
         />
       )}
@@ -1646,7 +1646,7 @@ function HeroMedia({
                  alt="Baljagriti English Secondary School"
                  className="absolute inset-0 w-full h-full block"
                  loading={isActive ? "eager" : "lazy"}
-                 fetchPriority={isActive ? "high" : "low"}
+                 fetchpriority={isActive ? "high" : "low"}
                  decoding="async"
                  style={getHeroImageStyle(
                    heroData,
@@ -1699,13 +1699,13 @@ function HeroMedia({
  
  
  
- function AboutSection({
- 
-  aboutData,
- 
-  editMode,
- 
-  onEditTarget,
+function AboutSection({
+
+ aboutData,
+
+ editMode,
+
+ onEditTarget,
  
  }) {
  
@@ -1882,9 +1882,17 @@ function HeroMedia({
  
  
             )}
- 
- 
- 
+
+            <EditIconButton
+              editMode={editMode}
+              target={{ type: "storyImage" }}
+              onEditTarget={onEditTarget}
+              icon={Camera}
+              label="Change About image"
+            />
+
+
+
           </div>
  
  
@@ -2209,12 +2217,14 @@ function HeroMedia({
  
  
  
- function Hero({
- 
+function Hero({
+
   editMode = false,
- 
+
   contentOverride = null,
- 
+
+  aboutContentOverride = null,
+
   onEditTarget = () => {},
  
  }) {
@@ -2379,6 +2389,12 @@ function HeroMedia({
 
         merged
 
+      );
+
+      setAboutData(
+        mergeAboutData(
+          aboutContentOverride || defaultAboutData
+        )
       );
 
       setHomeLoading(false);
@@ -2675,9 +2691,11 @@ function HeroMedia({
  
  
   }, [
- 
+
     contentOverride,
- 
+
+    aboutContentOverride,
+
   ]);
  
  

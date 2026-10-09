@@ -1,4 +1,3 @@
-import defaultSchoolLogo from "../../assets/school-logo.jpeg";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useLocation } from "react-router-dom";
@@ -19,6 +18,7 @@ import {
 
 const schoolAddress = "Basudev Marga, Hetauda-2";
 const schoolPhoneNumbers = ["057-590144", "057-590145", "057-590146"];
+const defaultSchoolLogo = "/school-logo.jpeg";
 
 const palette = {
   navy: "#17145E",
@@ -482,6 +482,12 @@ export function Navbar({
         <img
           src={logoSrc}
           alt={`${navbarContent.schoolName || "School"} Logo`}
+          onError={(event) => {
+            const fallbackUrl = new URL(defaultSchoolLogo, window.location.href).href;
+            if (event.currentTarget.src !== fallbackUrl) {
+              event.currentTarget.src = defaultSchoolLogo;
+            }
+          }}
           className="h-full w-full object-contain p-1 xl:h-[118px] xl:w-[135px] xl:p-0"
         />
         <span className="hidden max-w-full px-2 text-center font-extrabold leading-tight text-[#17145e] xl:block xl:text-[17px]">

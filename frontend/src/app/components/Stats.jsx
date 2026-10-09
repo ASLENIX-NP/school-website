@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 
 import PdfNoticePreview from "./PdfNoticePreview";
-import HomeAnnouncementPopup from "./HomeAnnouncementPopup";
 
 import {
   formatBsNoticeDate,
@@ -667,10 +666,6 @@ function Stats({
 
   return (
     <>
-      {!editMode && (
-        <HomeAnnouncementPopup />
-      )}
-
       <section
         className="
           relative

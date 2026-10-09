@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import ScrollToTop from "./ScrollToTop";
+import SchoolInquiryChat from "./SchoolInquiryChat";
 import ProtectedAdminRoute from "../../admin/ProtectedAdminRoute";
 
 const lazyNamed = (loader, exportName) =>
@@ -362,6 +363,8 @@ function SchoolApp() {
           <Footer />
         </Suspense>
       )}
+
+      {!isAdminRoute && <SchoolInquiryChat />}
     </div>
   );
 }

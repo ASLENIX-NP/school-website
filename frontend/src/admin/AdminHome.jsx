@@ -15,7 +15,12 @@ import {
   X,
 } from "lucide-react";
 
-import { Hero, defaultHeroData, mergeHeroData } from "../app/components/Hero";
+import {
+  Hero,
+  defaultAboutData,
+  defaultHeroData,
+  mergeHeroData,
+} from "../app/components/Hero";
 import {
   Stats,
   defaultStatsSectionData,
@@ -37,16 +42,19 @@ const defaultHomeContent = {
 };
 
 const defaultHomeStory = {
-  image: "",
-  imageTopTitle: "",
-  imageTopSubtitle: "",
-  imageBottomTitle: "",
-  imageBottomDescription: "",
-  badge: "",
-  title: "",
-  paragraphs: ["", ""],
-  buttonText: "",
-  buttonLink: "/about",
+  image: defaultAboutData.image,
+  imageZoom: defaultAboutData.imageZoom,
+  imageOffsetX: defaultAboutData.imageOffsetX,
+  imageOffsetY: defaultAboutData.imageOffsetY,
+  imageTopTitle: defaultAboutData.imageTopTitle || "",
+  imageTopSubtitle: defaultAboutData.imageTopSubtitle || "",
+  imageBottomTitle: defaultAboutData.imageBottomTitle || "",
+  imageBottomDescription: defaultAboutData.imageBottomDescription || "",
+  badge: defaultAboutData.badge,
+  title: defaultAboutData.title,
+  paragraphs: defaultAboutData.paragraphs,
+  buttonText: defaultAboutData.buttonText,
+  buttonLink: defaultAboutData.buttonLink,
 };
 
 function mergeHomeContent(saved = {}) {
@@ -1010,11 +1018,12 @@ export default function AdminHome() {
     }
 
     if (target.type === "storyImage") {
+      const story = form.statsSection.story || defaultHomeStory;
       setModalForm({
-        image: form.statsSection.story.image ?? "",
-        imageZoom: clampImageZoom(form.statsSection.story.imageZoom),
-        imageOffsetX: clampImageOffset(form.statsSection.story.imageOffsetX),
-        imageOffsetY: clampImageOffset(form.statsSection.story.imageOffsetY),
+        image: story.image ?? "",
+        imageZoom: clampImageZoom(story.imageZoom),
+        imageOffsetX: clampImageOffset(story.imageOffsetX),
+        imageOffsetY: clampImageOffset(story.imageOffsetY),
       });
       return;
     }
@@ -2076,6 +2085,7 @@ export default function AdminHome() {
             <Hero
               editMode
               contentOverride={form.hero}
+              aboutContentOverride={form.statsSection.story}
               onEditTarget={openEditor}
             />
             <Stats
