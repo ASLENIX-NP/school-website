@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import axios from "axios";
 
 import { motion } from "motion/react";
 
 import { Camera, Pencil, Plus, Trash2, X, MapPin, Bus } from "lucide-react";
-
-
 
 const colors = {
 
@@ -23,8 +22,6 @@ const colors = {
   gold: "#FACC15",
 
 };
-
-
 
 const facilityColors = [
 
@@ -44,13 +41,9 @@ const facilityColors = [
 
 ];
 
-
-
 const facilityAnchor = (title = "") =>
 
   String(title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-
-
 
 export const defaultFacilitiesContent = {
 
@@ -298,25 +291,15 @@ export const defaultFacilitiesContent = {
 
 };
 
-
-
-
-
 function clampNumber(value, min, max, fallback) {
 
   const numberValue = Number(value);
 
-
-
   if (!Number.isFinite(numberValue)) return fallback;
-
-
 
   return Math.min(max, Math.max(min, numberValue));
 
 }
-
-
 
 function getFacilityImageStyle(facility = {}) {
 
@@ -329,8 +312,6 @@ function getFacilityImageStyle(facility = {}) {
   const objectX = Math.min(100, Math.max(0, 50 - x));
 
   const objectY = Math.min(100, Math.max(0, 50 - y));
-
-
 
   return {
 
@@ -348,13 +329,9 @@ function getFacilityImageStyle(facility = {}) {
 
 }
 
-
-
 function normalizeFacilities(facilities) {
 
   if (!Array.isArray(facilities)) return defaultFacilitiesContent.facilities;
-
-
 
   return facilities.map((facility, index) => ({
 
@@ -380,8 +357,6 @@ function normalizeFacilities(facilities) {
 
 }
 
-
-
 export function mergeFacilitiesContent(saved = {}) {
 
   return {
@@ -396,8 +371,6 @@ export function mergeFacilitiesContent(saved = {}) {
 
 }
 
-
-
 function HighlightedTitle({ title, highlightedText }) {
 
   if (!highlightedText || !title.includes(highlightedText)) {
@@ -406,11 +379,7 @@ function HighlightedTitle({ title, highlightedText }) {
 
   }
 
-
-
   const [before, after] = title.split(highlightedText);
-
-
 
   return (
 
@@ -427,8 +396,6 @@ function HighlightedTitle({ title, highlightedText }) {
   );
 
 }
-
-
 
 function ActionButtons({
 
@@ -449,8 +416,6 @@ function ActionButtons({
 }) {
 
   if (!editMode) return null;
-
-
 
   return (
 
@@ -489,8 +454,6 @@ function ActionButtons({
         <Icon className="w-4 h-4" />
 
       </button>
-
-
 
       {canDelete && (
 
@@ -536,8 +499,6 @@ function ActionButtons({
 
 }
 
-
-
 function EditableWrap({
 
   editMode,
@@ -561,8 +522,6 @@ function EditableWrap({
 }) {
 
   if (!editMode) return children;
-
-
 
   return (
 
@@ -594,13 +553,9 @@ function EditableWrap({
 
 }
 
-
-
 function AddFacilityButton({ editMode, onAddTarget }) {
 
   if (!editMode) return null;
-
-
 
   return (
 
@@ -642,13 +597,9 @@ function AddFacilityButton({ editMode, onAddTarget }) {
 
 }
 
-
-
 function FacilityVisual({ facility, className = "" }) {
 
   const facilityColor = facility.color || colors.green;
-
-
 
   if (facility.imageUrl) {
 
@@ -669,8 +620,6 @@ function FacilityVisual({ facility, className = "" }) {
     );
 
   }
-
-
 
   return (
 
@@ -706,8 +655,6 @@ function FacilityVisual({ facility, className = "" }) {
 
         />
 
-
-
         <div
 
           className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
@@ -719,8 +666,6 @@ function FacilityVisual({ facility, className = "" }) {
           {facility.category}
 
         </div>
-
-
 
         <div
 
@@ -748,13 +693,9 @@ function FacilityVisual({ facility, className = "" }) {
 
 }
 
-
-
 function BusRoutesDisplay({ routes }) {
 
   if (!routes || routes.length === 0) return null;
-
-
 
   return (
 
@@ -842,8 +783,6 @@ function BusRoutesDisplay({ routes }) {
 
 }
 
-
-
 export function Facilities({
 
   editMode = false,
@@ -858,6 +797,8 @@ export function Facilities({
 
 }) {
 
+  const location = useLocation();
+
   const [content, setContent] = useState(
 
     mergeFacilitiesContent(contentOverride || defaultFacilitiesContent)
@@ -865,8 +806,6 @@ export function Facilities({
   );
 
   const [selectedFacility, setSelectedFacility] = useState(null);
-
-
 
   useEffect(() => {
 
@@ -878,11 +817,7 @@ export function Facilities({
 
     }
 
-
-
     let alive = true;
-
-
 
     const loadFacilitiesContent = async () => {
 
@@ -890,17 +825,13 @@ export function Facilities({
 
         const res = await axios.get(
 
-          "https\://school-website-backend-ixx2.onrender.com/api/site-content/facilities",
+          "https\\://school-website-backend-ixx2.onrender.com/api/site-content/facilities",
 
           { timeout: 8000 }
 
         );
 
-
-
         if (!alive) return;
-
-
 
         const savedContent = res.data?.data?.content || {};
 
@@ -909,8 +840,6 @@ export function Facilities({
       } catch (error) {
 
         console.error("Facilities content load error:", error);
-
-
 
         if (alive) {
 
@@ -922,11 +851,7 @@ export function Facilities({
 
     };
 
-
-
     loadFacilitiesContent();
-
-
 
     return () => {
 
@@ -936,13 +861,9 @@ export function Facilities({
 
   }, [contentOverride]);
 
-
-
   useEffect(() => {
 
     if (editMode) return;
-
-
 
     if (selectedFacility) {
 
@@ -954,8 +875,6 @@ export function Facilities({
 
     }
 
-
-
     return () => {
 
       document.body.style.overflow = "auto";
@@ -964,15 +883,27 @@ export function Facilities({
 
   }, [selectedFacility, editMode]);
 
-
-
   const visibleFacilities = content.facilities.filter(
 
     (facility) => facility.visible !== false
 
   );
 
+  useEffect(() => {
 
+    if (editMode || !location.hash) return;
+
+    const anchor = decodeURIComponent(location.hash.slice(1));
+
+    const facility = content.facilities.find(
+
+      (item) => item.visible !== false && facilityAnchor(item.title) === anchor
+
+    );
+
+    if (facility) setSelectedFacility(facility);
+
+  }, [content.facilities, editMode, location.hash]);
 
   return (
 
@@ -1010,7 +941,7 @@ export function Facilities({
 
             transition={{ duration: 0.55 }}
 
-            className="text-center mb-20 rounded-[2rem]"
+            className="text-center mb-12 rounded-[2rem]"
 
             style={{
 
@@ -1046,8 +977,6 @@ export function Facilities({
 
             </span>
 
-
-
             <h1
 
               className="text-5xl md:text-7xl mt-6 text-slate-950 leading-tight"
@@ -1074,8 +1003,6 @@ export function Facilities({
 
             </h1>
 
-
-
             <p className="max-w-3xl mx-auto mt-6 text-lg md:text-xl text-slate-600 leading-relaxed">
 
               {content.subtitle}
@@ -1086,9 +1013,7 @@ export function Facilities({
 
         </EditableWrap>
 
-
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
 
           {visibleFacilities.map((facility, index) => {
 
@@ -1099,8 +1024,6 @@ export function Facilities({
               (item) => item.id === facility.id
 
             );
-
-
 
             return (
 
@@ -1128,8 +1051,10 @@ export function Facilities({
 
                 style={{
 
-                  minHeight: "694px",
+                  minHeight: "520px",
+
                 display: "flex",
+
                 flexDirection: "column",
 
                   background: `linear-gradient(
@@ -1198,9 +1123,7 @@ export function Facilities({
 
                 />
 
-
-
-                <div className="relative overflow-hidden bg-slate-900" style={{ height: "350px", minHeight: "350px", flex: "0 0 350px" }}>
+                <div className="relative overflow-hidden bg-slate-900" style={{ height: "250px", minHeight: "250px", flex: "0 0 250px" }}>
 
                   <FacilityVisual
 
@@ -1209,8 +1132,6 @@ export function Facilities({
                     className="transition-transform duration-500 group-hover:scale-105"
 
                   />
-
-
 
                   <button
 
@@ -1256,11 +1177,7 @@ export function Facilities({
 
                   </button>
 
-
-
                   <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
-
-
 
                   <div className="absolute bottom-5 left-5 right-5">
 
@@ -1275,8 +1192,6 @@ export function Facilities({
                       }}
 
                     />
-
-
 
                     <div
 
@@ -1302,13 +1217,11 @@ export function Facilities({
 
                 </div>
 
-
-
-                <div className="p-7 md:p-8 flex flex-col flex-1">
+                <div className="p-5 md:p-6 flex flex-col flex-1">
 
                   <h3
 
-                    className="text-[2rem] leading-tight font-black text-slate-950"
+                    className="text-2xl md:text-[1.7rem] leading-tight font-black text-slate-950"
 
                     style={{
 
@@ -1324,21 +1237,15 @@ export function Facilities({
 
                   </h3>
 
-
-
                   <p className="mt-4 text-slate-600 leading-relaxed">
 
                     {facility.description}
 
                   </p>
 
-
-
                   {/* REMOVED: Bus routes are no longer shown on the card */}
 
                   {/* Only shown in the popup/modal */}
-
-
 
                   <div
 
@@ -1362,13 +1269,9 @@ export function Facilities({
 
         </div>
 
-
-
         <AddFacilityButton editMode={editMode} onAddTarget={onAddTarget} />
 
       </div>
-
-
 
       {!editMode && selectedFacility && (
 
@@ -1422,7 +1325,7 @@ export function Facilities({
 
             }}
 
-            className="relative w-full max-w-[1800px] max-h-[95vh] overflow-y-auto rounded-[42px]"
+            className="relative w-full max-w-[1180px] max-h-[88vh] overflow-y-auto rounded-[28px]"
 
             style={{
 
@@ -1458,8 +1361,6 @@ export function Facilities({
 
             />
 
-
-
             <button
 
               type="button"
@@ -1474,11 +1375,9 @@ export function Facilities({
 
             </button>
 
+            <div className="grid grid-cols-1 md:grid-cols-[420px_1fr] relative z-10">
 
-
-            <div className="grid grid-cols-1 md:grid-cols-[700px_1fr] relative z-10">
-
-              <div className="h-[320px] sm:h-[400px] md:h-[900px] relative overflow-hidden bg-slate-900">
+              <div className="h-[220px] sm:h-[300px] md:h-[520px] relative overflow-hidden bg-slate-900">
 
                 <FacilityVisual facility={selectedFacility} />
 
@@ -1486,9 +1385,7 @@ export function Facilities({
 
               </div>
 
-
-
-              <div className="p-6 sm:p-8 md:p-16 flex flex-col justify-center">
+              <div className="p-5 sm:p-7 md:p-10 flex flex-col justify-center">
 
                 <div
 
@@ -1501,8 +1398,6 @@ export function Facilities({
                   }}
 
                 />
-
-
 
                 <span
 
@@ -1528,11 +1423,9 @@ export function Facilities({
 
                 </span>
 
-
-
                 <h2
 
-                  className="text-4xl sm:text-5xl md:text-7xl font-black mt-5 text-slate-950 leading-tight"
+                  className="text-3xl sm:text-4xl md:text-5xl font-black mt-4 text-slate-950 leading-tight"
 
                   style={{
 
@@ -1548,15 +1441,11 @@ export function Facilities({
 
                 </h2>
 
-
-
                 <p className="mt-6 text-base sm:text-lg md:text-xl text-slate-600 leading-relaxed">
 
                   {selectedFacility.description}
 
                 </p>
-
-
 
                 {/* Bus routes displayed here in the popup */}
 
@@ -1570,11 +1459,9 @@ export function Facilities({
 
                 )}
 
-
-
                 <div
 
-                  className="mt-8 md:mt-10 p-6 sm:p-8 rounded-3xl"
+                  className="mt-6 p-5 sm:p-6 rounded-2xl"
 
                   style={{
 
@@ -1595,8 +1482,6 @@ export function Facilities({
                     {content.highlightsTitle}
 
                   </h4>
-
-
 
                   <p className="text-slate-600 leading-relaxed text-sm sm:text-base">
 
@@ -1621,7 +1506,5 @@ export function Facilities({
   );
 
 }
-
-
 
 export default Facilities;
