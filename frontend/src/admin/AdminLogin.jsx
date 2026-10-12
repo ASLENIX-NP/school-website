@@ -229,6 +229,7 @@ export default function AdminLogin() {
                   background: "rgba(255,255,255,0.08)",
                   border: "1px solid rgba(255,255,255,0.14)",
                   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
+                  paddingLeft: "3.5rem",
                 }}
               />
             </div>
@@ -254,6 +255,7 @@ export default function AdminLogin() {
                   background: "rgba(255,255,255,0.08)",
                   border: "1px solid rgba(255,255,255,0.14)",
                   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
+                  paddingLeft: "3.5rem",
                 }}
               />
 

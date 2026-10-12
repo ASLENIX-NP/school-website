@@ -17,7 +17,6 @@ import {
   School,
   Newspaper,
   Inbox,
-  Menu,
   X,
   Megaphone,
   Clock,
@@ -203,7 +202,6 @@ function AnalyticsRow({
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const desktopNavRef = useRef(null);
-  const mobileNavRef = useRef(null);
   const contentScrollRef = useRef(null);
   const sidebarScrollPositionRef = useRef(
     typeof window !== "undefined"
@@ -211,7 +209,6 @@ export default function AdminDashboard() {
       : 0
   );
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [notices, setNotices] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
@@ -323,14 +320,8 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const restoreSidebarScroll = () => {
-      const savedPosition = sidebarScrollPositionRef.current;
-
       if (desktopNavRef.current) {
-        desktopNavRef.current.scrollTop = savedPosition;
-      }
-
-      if (mobileNavRef.current) {
-        mobileNavRef.current.scrollTop = savedPosition;
+        desktopNavRef.current.scrollTop = sidebarScrollPositionRef.current;
       }
     };
 
@@ -339,7 +330,7 @@ export default function AdminDashboard() {
     return () => {
       window.cancelAnimationFrame(frame);
     };
-  }, [activeEditor, sidebarOpen]);
+  }, [activeEditor]);
 
   const saveSidebarScroll = (event) => {
     const nextPosition = event.currentTarget.scrollTop;
@@ -362,7 +353,6 @@ export default function AdminDashboard() {
     }
 
     setActiveEditor(editorKey);
-    setSidebarOpen(false);
 
     window.requestAnimationFrame(() => {
       contentScrollRef.current?.scrollTo({
@@ -417,6 +407,8 @@ export default function AdminDashboard() {
           activeEditor.charAt(0).toUpperCase() + activeEditor.slice(1)
         }`;
 
+  // NOTE: this is called as a plain function (not used as <SidebarContent />)
+  // so React does not remount the sidebar on every state change.
   const SidebarContent = ({ navRef }) => (
     <>
       <div
@@ -454,10 +446,15 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Sidebar menu: scrolls on its own */}
       <nav
         ref={navRef}
         onScroll={saveSidebarScroll}
-        className="flex-1 overflow-y-auto px-3 py-4"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4"
+        style={{
+          scrollbarWidth: "thin",
+          scrollbarColor: "rgba(100,116,139,0.35) transparent",
+        }}
       >
         <div className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
           Website
@@ -516,6 +513,7 @@ export default function AdminDashboard() {
         </div>
       </nav>
 
+      {/* Profile + logout: pinned at the bottom of the sidebar */}
       <div className="flex-shrink-0 px-3 pb-4 pt-2">
         <div className="mb-3 h-px" style={{ background: ui.border }} />
 
@@ -564,53 +562,26 @@ export default function AdminDashboard() {
   );
 
   return (
-    <div className="flex min-h-screen" style={{ background: ui.page }}>
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.button
-            type="button"
-            aria-label="Close admin menu"
-            className="fixed inset-0 z-30 lg:hidden"
-            style={{
-              background: "rgba(15,23,42,0.38)",
-              backdropFilter: "blur(2px)",
-            }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      <motion.aside
-        animate={{ x: sidebarOpen ? 0 : -270 }}
-        transition={{ duration: 0.22, ease: "easeOut" }}
-        className="fixed inset-y-0 left-0 z-40 flex w-[248px] flex-col lg:hidden"
-        style={{
-          background: ui.sidebar,
-          borderRight: `1px solid ${ui.border}`,
-          boxShadow: "12px 0 40px rgba(15,23,42,0.10)",
-        }}
-      >
-        <SidebarContent navRef={mobileNavRef} />
-      </motion.aside>
-
+    // Root is locked to the viewport height so the browser window never scrolls.
+    <div
+      className="flex h-screen w-full overflow-hidden"
+      style={{ background: ui.page, height: "100dvh" }}
+    >
+      {/* LEFT: sidebar (fixed height, its own scroll inside <nav>) */}
       <aside
-        className="hidden h-screen w-[248px] flex-shrink-0 flex-col lg:flex"
+        className="flex h-full w-[248px] flex-shrink-0 flex-col overflow-hidden"
         style={{
           background: ui.sidebar,
           borderRight: `1px solid ${ui.border}`,
-          position: "sticky",
-          top: 0,
         }}
       >
-        <SidebarContent navRef={desktopNavRef} />
+        {SidebarContent({ navRef: desktopNavRef })}
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      {/* RIGHT: header + independently scrolling content */}
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header
-          className="sticky top-0 z-30 flex-shrink-0 px-3 sm:px-5"
+          className="z-30 flex-shrink-0 px-3 sm:px-5"
           style={{
             background: ui.header,
             backdropFilter: "blur(14px)",
@@ -619,23 +590,6 @@ export default function AdminDashboard() {
         >
           <div className="flex h-16 items-center justify-between gap-3">
             <div className="flex min-w-0 flex-1 items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setSidebarOpen((open) => !open)}
-                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg lg:hidden"
-                style={{
-                  background: "#F3F4F6",
-                  color: ui.muted,
-                  border: `1px solid ${ui.border}`,
-                }}
-              >
-                {sidebarOpen ? (
-                  <X className="h-4 w-4" />
-                ) : (
-                  <Menu className="h-4 w-4" />
-                )}
-              </button>
-
               <div className="min-w-0">
                 <h1 className="truncate text-sm font-extrabold text-slate-950 sm:text-base">
                   {currentEditorTitle}
@@ -729,12 +683,13 @@ export default function AdminDashboard() {
           </div>
         </header>
 
+        {/* Main content: scrolls on its own */}
         <div
           ref={contentScrollRef}
           onScroll={(event) =>
             setShowGoTop(event.currentTarget.scrollTop > 420)
           }
-          className="flex-1 overflow-y-auto"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
         >
           <div className="max-w-full px-3 py-4 sm:px-5 sm:py-5">
             {!activeEditor ? (

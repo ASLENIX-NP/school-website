@@ -2156,10 +2156,11 @@ export default function AdminHome() {
       <AnimatePresence>
         {editingTarget && (
           <motion.div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5"
+            className="fixed inset-0 z-[9999] flex items-center justify-center overscroll-contain p-3 sm:p-5"
             style={{
               background: "rgba(2,6,23,0.55)",
               backdropFilter: "blur(12px)",
+              overscrollBehavior: "contain",
             }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -2171,11 +2172,13 @@ export default function AdminHome() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 14, scale: 0.96 }}
               transition={{ type: "spring", stiffness: 130, damping: 16 }}
-              className="w-full max-w-xl rounded-[28px] overflow-hidden max-h-[92vh] overflow-y-auto"
+              className="relative flex w-full max-w-xl flex-col overflow-hidden rounded-[28px]"
               style={{
                 background: "#FFFFFF",
                 border: "1px solid rgba(255,255,255,0.75)",
                 boxShadow: "0 42px 110px rgba(0,0,0,0.28)",
+                height: "min(92dvh, 900px)",
+                maxHeight: "calc(100dvh - 24px)",
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -2186,8 +2189,8 @@ export default function AdminHome() {
                 }}
               />
 
-              <div className="p-6">
-                <div className="flex items-start justify-between gap-4 mb-6">
+              <div className="flex min-h-0 flex-1 flex-col p-6">
+                <div className="mb-6 flex shrink-0 items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div
                       className="w-12 h-12 rounded-2xl flex items-center justify-center"
@@ -2213,12 +2216,17 @@ export default function AdminHome() {
                   <button
                     type="button"
                     onClick={closeEditor}
-                    className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600"
+                    aria-label="Close editor"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
 
+                <div
+                  className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+                  style={{ overscrollBehavior: "contain", touchAction: "pan-y" }}
+                >
                 <div className="space-y-5">
                   {editingTarget.type === "heroImage" && (
                     <>
@@ -2857,7 +2865,7 @@ export default function AdminHome() {
                   )}
                 </div>
 
-                <div className="flex gap-3 mt-7">
+                <div className="mt-7 flex gap-3">
                   <button
                     type="button"
                     onClick={closeEditor}
@@ -2886,6 +2894,7 @@ export default function AdminHome() {
                     <Save className="w-4 h-4" />
                     {saving ? "Saving..." : saveButtonText}
                   </button>
+                </div>
                 </div>
               </div>
             </motion.div>
