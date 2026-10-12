@@ -46,10 +46,10 @@ const requestedMenus = {
     eyebrow: "CLASSES",
     title: "Learning at Baljagriti",
     levels: [
-      { label: "Pre-Primary Level", range: "Nursery – KG", href: "/academics?curriculum=pre-primary-level" },
-      { label: "Primary Level", range: "Grade 1 – 5", href: "/academics?curriculum=primary-level" },
-      { label: "Lower Secondary Level", range: "Grade 6 – 8", href: "/academics?curriculum=lower-secondary-level" },
-      { label: "Secondary Level", range: "Grade 9 – 12", href: "/academics?curriculum=secondary-level" },
+      { label: "Pre-Primary Level", range: "Nursery – UKG", href: "/academics?curriculum=pre-primary-level", grades: ["Nursery", "LKG", "UKG"] },
+      { label: "Primary Level", range: "Grade 1 – 5", href: "/academics?curriculum=primary-level", grades: ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"] },
+      { label: "Lower Secondary Level", range: "Grade 6 – 8", href: "/academics?curriculum=lower-secondary-level", grades: ["Grade 6", "Grade 7", "Grade 8"] },
+      { label: "Secondary Level", range: "Grade 9 – 12", href: "/academics?curriculum=secondary-level", grades: ["Grade 9", "Grade 10", "Grade 11", "Grade 12"] },
     ],
     links: [
       { label: "Academic Strengths", href: "/academics#academic-strengths" },
@@ -165,6 +165,8 @@ function HoverEditIcon({ label = "Edit" }) {
 }
 const normalizeKey = (value = "") =>
   value.toLowerCase().replace(/[^a-z0-9]/g, "");
+const getCurriculumGradeHref = (level, grade) =>
+  `${level.href}&grade=${encodeURIComponent(grade)}`;
 function getMenuConfig(link) {
   const labelKey = normalizeKey(link.label);
   const hrefKey = normalizeKey(link.href);
@@ -238,6 +240,7 @@ export function Navbar({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [activeAcademicLevel, setActiveAcademicLevel] = useState(null);
+  const [activeMobileAcademicLevel, setActiveMobileAcademicLevel] = useState(null);
   const location = useLocation();
   useEffect(() => {
     if (contentOverride) return;
@@ -303,6 +306,7 @@ export function Navbar({
     }
     setMobileOpen(false);
     setActiveDropdown(null);
+    setActiveMobileAcademicLevel(null);
   };
   const renderEditIndicator = (label = "Edit menu item") =>
     editMode ? <HoverEditIcon label={label} /> : null;
@@ -393,13 +397,16 @@ export function Navbar({
                       </button>
                       {activeAcademicLevel === index && (
                         <div className="absolute left-full top-0 z-[80] ml-0 w-[190px] rounded-xl border border-gray-100 bg-white p-2 shadow-[0_12px_35px_rgba(18,20,50,0.16)]">
-                          <Link
-                            to={level.href}
-                            onClick={(event) => handleLinkClick(event)}
-                            className="block rounded-lg px-3 py-3 text-[13px] font-medium text-[#555] transition hover:bg-[#f5f1ff] hover:text-[#5c4a87]"
-                           >
-                            {level.range}
-                          </Link>
+                          {level.grades.map((grade) => (
+                            <Link
+                              key={grade}
+                              to={getCurriculumGradeHref(level, grade)}
+                              onClick={(event) => handleLinkClick(event)}
+                              className="block rounded-lg px-3 py-2.5 text-[13px] font-medium text-[#555] transition hover:bg-[#f5f1ff] hover:text-[#5c4a87]"
+                            >
+                              {grade}
+                            </Link>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -598,15 +605,38 @@ export function Navbar({
                           className="overflow-hidden"
                          >
                           <div className="ml-4 border-l-2 border-[#e7a000] py-1 pl-3">
-                            {menu.levels?.map((level) => (
-                              <Link
-                                key={level.label}
-                                to={level.href}
-                                onClick={(event) => handleLinkClick(event)}
-                                className="block rounded-md px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-[#f7f6ff] hover:text-[#17145e]"
-                              >
-                                {level.label} <span className="text-xs text-gray-500">({level.range})</span>
-                              </Link>
+                            {menu.levels?.map((level, levelIndex) => (
+                              <div key={level.label}>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setActiveMobileAcademicLevel(
+                                      activeMobileAcademicLevel === levelIndex
+                                        ? null
+                                        : levelIndex
+                                    )
+                                  }
+                                  className="flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-[#f7f6ff] hover:text-[#17145e]"
+                                  aria-expanded={activeMobileAcademicLevel === levelIndex}
+                                >
+                                  <span>{level.label} <span className="text-xs text-gray-500">({level.range})</span></span>
+                                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${activeMobileAcademicLevel === levelIndex ? "rotate-180" : ""}`} />
+                                </button>
+                                {activeMobileAcademicLevel === levelIndex && (
+                                  <div className="ml-3 border-l border-gray-200 py-1 pl-2">
+                                    {level.grades.map((grade) => (
+                                      <Link
+                                        key={grade}
+                                        to={getCurriculumGradeHref(level, grade)}
+                                        onClick={(event) => handleLinkClick(event)}
+                                        className="block rounded-md px-3 py-2 text-sm text-gray-600 hover:bg-[#f7f6ff] hover:text-[#17145e]"
+                                      >
+                                        {grade}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                             ))}
                             {menu.links.map((item, itemIndex) => (
                               <Link
