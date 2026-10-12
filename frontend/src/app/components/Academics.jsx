@@ -640,12 +640,13 @@ function SectionAddButton({ editMode, label, type, onAddTarget }) {
     </button>
   );
 }
-function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
+function CurriculumLedgerModal({ programLevel, curriculum, selectedGrade, onClose }) {
   const grades = curriculum?.[programLevel] || [];
   const [activeIndex, setActiveIndex] = useState(0);
   useEffect(() => {
-    setActiveIndex(0);
-  }, [programLevel]);
+    const selectedIndex = grades.findIndex((grade) => grade.grade === selectedGrade);
+    setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  }, [programLevel, selectedGrade, curriculum]);
   const currentGrade = grades[activeIndex];
   return (
     <motion.div
@@ -685,7 +686,7 @@ function CurriculumLedgerModal({ programLevel, curriculum, onClose }) {
           <X size={18} />
         </button>
         <div
-          className="md:w-64 shrink-0 flex md:flex-col overflow-x-auto md:overflow-y-auto"
+          className={`md:w-64 shrink-0 flex md:flex-col overflow-x-auto md:overflow-y-auto ${selectedGrade ? "hidden" : ""}`}
           style={{
             background: `linear-gradient(180deg, ${colors.dark} 0%, #1A1733 100%)`,
           }}
@@ -888,10 +889,13 @@ export function Academics({
     mergeAcademicsContent(contentOverride || defaultAcademicsContent)
   );
   const [selectedProgram, setSelectedProgram] = useState(null);
+  const [selectedGrade, setSelectedGrade] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   useEffect(() => {
-    const curriculumSlug = new URLSearchParams(location.search).get("curriculum");
+    const params = new URLSearchParams(location.search);
+    const curriculumSlug = params.get("curriculum");
+    const gradeName = params.get("grade");
     if (!curriculumSlug) return;
     const curriculumLevels = {
       "pre-primary-level": "Pre-Primary Level",
@@ -902,12 +906,14 @@ export function Academics({
     const requestedLevel = curriculumLevels[curriculumSlug];
     if (requestedLevel && content.curriculum?.[requestedLevel]?.length) {
       setSelectedProgram(requestedLevel);
+      setSelectedGrade(gradeName);
     }
   }, [location.search, content.curriculum]);
   const closeCurriculumModal = () => {
     setSelectedProgram(null);
     const params = new URLSearchParams(location.search);
     params.delete("curriculum");
+    params.delete("grade");
     navigate({
       pathname: location.pathname,
       search: params.toString() ? `?${params.toString()}` : "",
@@ -1732,6 +1738,7 @@ export function Academics({
           <CurriculumLedgerModal
             programLevel={selectedProgram}
             curriculum={content.curriculum}
+            selectedGrade={selectedGrade}
             onClose={closeCurriculumModal}
           />
         )}
