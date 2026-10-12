@@ -1374,7 +1374,7 @@ export default function AdminAcademics() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 14, scale: 0.96 }}
               transition={{ type: "spring", stiffness: 130, damping: 16 }}
-              className="w-full max-w-3xl rounded-[28px] overflow-hidden max-h-[92vh] overflow-y-auto"
+              className="flex w-full max-w-2xl max-h-[78vh] flex-col overflow-hidden rounded-[28px]"
               style={{
                 background: "#FFFFFF",
                 border: "1px solid rgba(255,255,255,0.75)",
@@ -1389,8 +1389,8 @@ export default function AdminAcademics() {
                 }}
               />
 
-              <div className="p-6">
-                <div className="flex items-start justify-between gap-4 mb-6">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6">
+                <div className="sticky top-0 z-20 -mx-6 -mt-6 mb-6 flex items-start justify-between gap-4 bg-white px-6 pt-6">
                   <div className="flex items-center gap-3">
                     <div
                       className="w-12 h-12 rounded-2xl flex items-center justify-center"
@@ -1534,7 +1534,7 @@ export default function AdminAcademics() {
                           </button>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="max-h-[42vh] space-y-4 overflow-y-auto overscroll-contain pr-2">
                           {(modalForm.curriculumGrades || []).map((grade, gradeIndex) => (
                             <div
                               key={`modal-grade-${gradeIndex}`}

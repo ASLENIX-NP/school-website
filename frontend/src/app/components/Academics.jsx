@@ -896,7 +896,10 @@ export function Academics({
     const params = new URLSearchParams(location.search);
     const curriculumSlug = params.get("curriculum");
     const gradeName = params.get("grade");
-    if (!curriculumSlug) return;
+    if (!curriculumSlug) {
+      setSelectedGrade(null);
+      return;
+    }
     const curriculumLevels = {
       "pre-primary-level": "Pre-Primary Level",
       "primary-level": "Primary Level",
@@ -906,7 +909,7 @@ export function Academics({
     const requestedLevel = curriculumLevels[curriculumSlug];
     if (requestedLevel && content.curriculum?.[requestedLevel]?.length) {
       setSelectedProgram(requestedLevel);
-      setSelectedGrade(gradeName);
+      setSelectedGrade(gradeName || null);
     }
   }, [location.search, content.curriculum]);
   const closeCurriculumModal = () => {
@@ -1027,10 +1030,14 @@ export function Academics({
                   role="button"
                   tabIndex={0}
                   aria-label={`View classes and curriculum for ${prog.level}`}
-                  onClick={() => setSelectedProgram(prog.level)}
+                  onClick={() => {
+                    setSelectedGrade(null);
+                    setSelectedProgram(prog.level);
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
+                      setSelectedGrade(null);
                       setSelectedProgram(prog.level);
                     }
                   }}

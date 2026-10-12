@@ -33,23 +33,23 @@ const API_URL =
    ========================================================= */
 
 const palette = {
-  green: "#168A3A",
-  greenDark: "#0C682B",
+  green: "#2563EB",
+  greenDark: "#1D4ED8",
 
-  yellow: "#E7B92F",
-  yellowSoft: "#FFF4C7",
+  yellow: "#60A5FA",
+  yellowSoft: "#DBEAFE",
 
-  red: "#D43B32",
-  redSoft: "#FFE9E6",
+  red: "#0EA5E9",
+  redSoft: "#E0F2FE",
 
-  orange: "#F29B38",
+  orange: "#3B82F6",
 
   dark: "#111827",
   text: "#475569",
   muted: "#64748B",
 
   white: "#FFFFFF",
-  cream: "#FFFDF8",
+  cream: "#F8FBFF",
 };
 
 
@@ -676,32 +676,9 @@ function Stats({
         "
         style={{
           background: `
-            radial-gradient(
-              circle at 8% 8%,
-              rgba(22,138,58,0.13),
-              transparent 24%
-            ),
-            radial-gradient(
-              circle at 92% 15%,
-              rgba(231,185,47,0.16),
-              transparent 25%
-            ),
-            radial-gradient(
-              circle at 80% 68%,
-              rgba(212,59,50,0.055),
-              transparent 20%
-            ),
-            radial-gradient(
-              circle at 15% 78%,
-              rgba(231,185,47,0.08),
-              transparent 22%
-            ),
-            linear-gradient(
-              180deg,
-              #FFFDF8 0%,
-              #FFFFFF 42%,
-              #FFFDF8 100%
-            )
+            radial-gradient(circle at 8% 8%, rgba(37,99,235,0.10), transparent 24%),
+            radial-gradient(circle at 92% 15%, rgba(14,165,233,0.10), transparent 25%),
+            linear-gradient(180deg, #F8FBFF 0%, #FFFFFF 48%, #EFF6FF 100%)
           `,
         }}
       >
@@ -776,8 +753,7 @@ function Stats({
                   shadow-sm
                 "
                 style={{
-                  borderColor:
-                    "rgba(22,138,58,0.18)",
+                  borderColor: "rgba(37,99,235,0.20)",
                 }}
               >
                 <span
@@ -899,49 +875,10 @@ function Stats({
               ) => {
 
                 const cardColors = [
-                  {
-                    main:
-                      palette.green,
-
-                    soft:
-                      "rgba(22,138,58,0.09)",
-
-                    border:
-                      "rgba(22,138,58,0.20)",
-                  },
-
-                  {
-                    main:
-                      palette.yellow,
-
-                    soft:
-                      "rgba(231,185,47,0.13)",
-
-                    border:
-                      "rgba(231,185,47,0.28)",
-                  },
-
-                  {
-                    main:
-                      palette.red,
-
-                    soft:
-                      "rgba(212,59,50,0.07)",
-
-                    border:
-                      "rgba(212,59,50,0.18)",
-                  },
-
-                  {
-                    main:
-                      palette.greenDark,
-
-                    soft:
-                      "rgba(12,104,43,0.08)",
-
-                    border:
-                      "rgba(12,104,43,0.18)",
-                  },
+                  { main: "#2563EB", soft: "rgba(37,99,235,0.10)", border: "rgba(37,99,235,0.20)" },
+                  { main: "#0EA5E9", soft: "rgba(14,165,233,0.10)", border: "rgba(14,165,233,0.20)" },
+                  { main: "#3B82F6", soft: "rgba(59,130,246,0.10)", border: "rgba(59,130,246,0.20)" },
+                  { main: "#1D4ED8", soft: "rgba(29,78,216,0.10)", border: "rgba(29,78,216,0.20)" },
                 ];
 
                 const color =
@@ -1157,17 +1094,9 @@ function Stats({
               "
               style={{
                 background: `
-                  radial-gradient(
-                    circle at 10% 20%,
-                    rgba(22,138,58,0.08),
-                    transparent 25%
-                  ),
-                  radial-gradient(
-                    circle at 90% 80%,
-                    rgba(231,185,47,0.11),
-                    transparent 25%
-                  ),
-                  rgba(255,255,255,0.65)
+                  radial-gradient(circle at 10% 20%, rgba(37,99,235,0.08), transparent 25%),
+                  radial-gradient(circle at 90% 80%, rgba(14,165,233,0.08), transparent 25%),
+                  rgba(255,255,255,0.78)
                 `,
               }}
             />
@@ -1307,11 +1236,7 @@ function Stats({
                     index
                   ) => {
 
-                    const colors = [
-                      palette.green,
-                      palette.yellow,
-                      palette.red,
-                    ];
+                    const colors = ["#2563EB", "#0EA5E9", "#1D4ED8"];
 
                     const currentColor =
                       colors[
@@ -1559,7 +1484,7 @@ function Stats({
                     items-center
                     gap-2
                     font-bold
-                    text-[#168A3A]
+                    text-[#2563EB]
                     hover:gap-3
                     transition-all
                   "
@@ -1684,7 +1609,7 @@ function Stats({
                               px-5
                               sm:px-7
                               py-6
-                              hover:bg-[#FFFDF8]
+                              hover:bg-[#F0F7FF]
                               transition-colors
                               border-b
                               border-slate-100
@@ -1752,7 +1677,7 @@ function Stats({
                                     className="
                                       text-xs
                                       font-bold
-                                      text-[#168A3A]
+                                      text-[#2563EB]
                                     "
                                   >
                                     {
@@ -1781,7 +1706,7 @@ function Stats({
                                     md:text-xl
                                     font-bold
                                     text-slate-900
-                                    group-hover:text-[#168A3A]
+                                    group-hover:text-[#2563EB]
                                     transition-colors
                                   "
                                 >
@@ -1824,8 +1749,8 @@ function Stats({
                                   border
                                   border-slate-200
                                   text-slate-400
-                                  group-hover:border-[#168A3A]
-                                  group-hover:text-[#168A3A]
+                                  group-hover:border-[#2563EB]
+                                  group-hover:text-[#2563EB]
                                   transition-all
                                 "
                               >

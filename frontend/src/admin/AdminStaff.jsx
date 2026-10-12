@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
@@ -1189,250 +1190,264 @@ export default function AdminStaff() {
         </div>
       </motion.div>
 
-      <AnimatePresence>
-        {editingTarget && (
-          <motion.div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5"
-            style={{
-              background: "rgba(2,6,23,0.55)",
-              backdropFilter: "blur(12px)",
-            }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeEditor}
-          >
+      {/* Popups are rendered straight into document.body so they always
+          fit the browser window, no matter what wraps this page. */}
+      {createPortal(
+        <AnimatePresence>
+          {editingTarget && (
             <motion.div
-              initial={{ opacity: 0, y: 24, scale: 0.94 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 14, scale: 0.96 }}
-              transition={{ type: "spring", stiffness: 130, damping: 16 }}
-              className="w-full max-w-xl rounded-[28px] overflow-hidden max-h-[92vh] overflow-y-auto"
+              className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden p-3 sm:p-5"
               style={{
-                background: "#FFFFFF",
-                border: "1px solid rgba(255,255,255,0.75)",
-                boxShadow: "0 42px 110px rgba(0,0,0,0.28)",
+                background: "rgba(2,6,23,0.55)",
+                backdropFilter: "blur(12px)",
               }}
-              onClick={(event) => event.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeEditor}
             >
-              <div
-                className="h-1"
+              {/* Popup is a fixed-height column: header + footer stay put, only the body scrolls. */}
+              <motion.div
+                initial={{ opacity: 0, y: 24, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 14, scale: 0.96 }}
+                transition={{ type: "spring", stiffness: 130, damping: 16 }}
+                className="flex w-full max-w-xl flex-col overflow-hidden rounded-[28px]"
                 style={{
-                  background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan}, ${colors.green})`,
+                  maxHeight: "calc(100vh - 24px)",
+                  background: "#FFFFFF",
+                  border: "1px solid rgba(255,255,255,0.75)",
+                  boxShadow: "0 42px 110px rgba(0,0,0,0.28)",
                 }}
-              />
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div
+                  className="h-1 shrink-0"
+                  style={{
+                    background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan}, ${colors.green})`,
+                  }}
+                />
 
-              <div className="p-6">
-                <div className="flex items-start justify-between gap-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(56,189,248,0.18))",
-                        color: colors.dark,
-                      }}
-                    >
-                      <ModalIcon className="w-5 h-5" />
-                    </div>
-
-                    <div>
-                      <h3 className="text-xl font-black text-slate-950">
-                        {modalTitle}
-                      </h3>
-                      <p className="text-sm text-slate-500">
-                        Save only this selected Staff page item.
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={closeEditor}
-                    className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="space-y-5">
-                  {needsImageUpload && (
-                    <>
+                {/* Fixed header */}
+                <div className="shrink-0 px-6 pb-4 pt-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
                       <div
-                        className="rounded-3xl p-5"
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center"
                         style={{
                           background:
-                            "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))",
-                          border: "1px solid rgba(255,255,255,0.12)",
+                            "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(56,189,248,0.18))",
+                          color: colors.dark,
                         }}
                       >
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                          <StaffPhotoPreviewBox modalForm={modalForm} />
-
-                          <div className="min-w-0 flex-1">
-                            <div className="text-white font-black">Staff Photo</div>
-                            <div className="mt-1 text-sm leading-relaxed text-white/55">
-                              Open the adjustment page to drag and zoom the image properly.
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => setPhotoAdjustOpen(true)}
-                              disabled={!modalForm.imageUrl || saving || uploadingImage}
-                              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black disabled:cursor-not-allowed disabled:opacity-50"
-                              style={{
-                                background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                                color: colors.dark,
-                              }}
-                            >
-                              <Camera className="w-4 h-4" />
-                              Open Photo Adjustment
-                            </button>
-                          </div>
-                        </div>
-
-                        <label
-                          className="mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black"
-                          style={{
-                            background: "rgba(255,255,255,0.10)",
-                            color: "#FFFFFF",
-                            border: "1px solid rgba(255,255,255,0.14)",
-                          }}
-                        >
-                          <UploadCloud className="w-4 h-4" />
-                          {uploadingImage ? "Uploading..." : "Upload New Photo"}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            disabled={uploadingImage}
-                            onChange={(event) => {
-                              uploadImage(event.target.files?.[0]);
-                              event.target.value = "";
-                            }}
-                            className="hidden"
-                          />
-                        </label>
+                        <ModalIcon className="w-5 h-5" />
                       </div>
 
-                      <Field
-                        label="Image URL"
-                        value={modalForm.imageUrl}
-                        onChange={(value) => updateModalField("imageUrl", value)}
-                      />
-                    </>
-                  )}
+                      <div>
+                        <h3 className="text-xl font-black text-slate-950">
+                          {modalTitle}
+                        </h3>
+                        <p className="text-sm text-slate-500">
+                          Save only this selected Staff page item.
+                        </p>
+                      </div>
+                    </div>
 
-                  {editingTarget.type === "pageHeader" && (
-                    <>
-                      <Field
-                        label="Badge Text"
-                        value={modalForm.badgeText}
-                        onChange={(value) => updateModalField("badgeText", value)}
-                      />
-
-                      <Field
-                        label="Main Title"
-                        value={modalForm.title}
-                        onChange={(value) => updateModalField("title", value)}
-                      />
-
-                      <Field
-                        label="Green Highlight Word"
-                        value={modalForm.highlightedWord}
-                        onChange={(value) => updateModalField("highlightedWord", value)}
-                      />
-
-                      <TextArea
-                        label="Subtitle"
-                        value={modalForm.subtitle}
-                        onChange={(value) => updateModalField("subtitle", value)}
-                        rows={4}
-                      />
-                    </>
-                  )}
-
-                  {editingTarget.type === "statCard" && (
-                    <>
-                      <Field
-                        label="Number"
-                        value={modalForm.value}
-                        onChange={(value) => updateModalField("value", value)}
-                      />
-
-                      <Field
-                        label="Label"
-                        value={modalForm.label}
-                        onChange={(value) => updateModalField("label", value)}
-                      />
-
-                      <Field
-                        label="Icon Type"
-                        value={modalForm.icon}
-                        onChange={(value) => updateModalField("icon", value)}
-                        placeholder="users / graduation / award"
-                      />
-
-                      <Field
-                        label="Accent Color"
-                        type="color"
-                        value={modalForm.color}
-                        onChange={(value) => updateModalField("color", value)}
-                      />
-                    </>
-                  )}
-
-                  {(editingTarget.type === "staffCard" ||
-                    editingTarget.type === "staffImage") && (
-                    <>
-                      <Field
-                        label="Name"
-                        value={modalForm.name}
-                        onChange={(value) => updateModalField("name", value)}
-                      />
-
-                      <Field
-                        label="Position"
-                        value={modalForm.position}
-                        onChange={(value) => updateModalField("position", value)}
-                      />
-
-                      <Field
-                        label="Qualification"
-                        value={modalForm.qualification}
-                        onChange={(value) => updateModalField("qualification", value)}
-                      />
-
-                      <Field
-                        label="Phone"
-                        value={modalForm.phone}
-                        onChange={(value) => updateModalField("phone", value)}
-                        placeholder="+977-98XXXXXXXX"
-                      />
-
-                      <Field
-                        label="Email"
-                        value={modalForm.email}
-                        onChange={(value) => updateModalField("email", value)}
-                        placeholder="Optional"
-                      />
-
-                      <TextArea
-                        label="Description / About"
-                        value={modalForm.description}
-                        onChange={(value) => updateModalField("description", value)}
-                        rows={5}
-                      />
-
-                      <Toggle
-                        label="Show this staff member on website"
-                        checked={modalForm.visible !== false}
-                        onChange={(value) => updateModalField("visible", value)}
-                      />
-                    </>
-                  )}
+                    <button
+                      type="button"
+                      onClick={closeEditor}
+                      className="w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 mt-7">
+                {/* Scrollable body */}
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-5">
+                  <div className="space-y-5">
+                    {needsImageUpload && (
+                      <>
+                        <div
+                          className="rounded-3xl p-5"
+                          style={{
+                            background:
+                              "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))",
+                            border: "1px solid rgba(255,255,255,0.12)",
+                          }}
+                        >
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                            <StaffPhotoPreviewBox modalForm={modalForm} />
+
+                            <div className="min-w-0 flex-1">
+                              <div className="text-white font-black">Staff Photo</div>
+                              <div className="mt-1 text-sm leading-relaxed text-white/55">
+                                Open the adjustment page to drag and zoom the image properly.
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => setPhotoAdjustOpen(true)}
+                                disabled={!modalForm.imageUrl || saving || uploadingImage}
+                                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black disabled:cursor-not-allowed disabled:opacity-50"
+                                style={{
+                                  background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                                  color: colors.dark,
+                                }}
+                              >
+                                <Camera className="w-4 h-4" />
+                                Open Photo Adjustment
+                              </button>
+                            </div>
+                          </div>
+
+                          <label
+                            className="mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black"
+                            style={{
+                              background: "rgba(255,255,255,0.10)",
+                              color: "#FFFFFF",
+                              border: "1px solid rgba(255,255,255,0.14)",
+                            }}
+                          >
+                            <UploadCloud className="w-4 h-4" />
+                            {uploadingImage ? "Uploading..." : "Upload New Photo"}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={uploadingImage}
+                              onChange={(event) => {
+                                uploadImage(event.target.files?.[0]);
+                                event.target.value = "";
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+
+                        <Field
+                          label="Image URL"
+                          value={modalForm.imageUrl}
+                          onChange={(value) => updateModalField("imageUrl", value)}
+                        />
+                      </>
+                    )}
+
+                    {editingTarget.type === "pageHeader" && (
+                      <>
+                        <Field
+                          label="Badge Text"
+                          value={modalForm.badgeText}
+                          onChange={(value) => updateModalField("badgeText", value)}
+                        />
+
+                        <Field
+                          label="Main Title"
+                          value={modalForm.title}
+                          onChange={(value) => updateModalField("title", value)}
+                        />
+
+                        <Field
+                          label="Green Highlight Word"
+                          value={modalForm.highlightedWord}
+                          onChange={(value) => updateModalField("highlightedWord", value)}
+                        />
+
+                        <TextArea
+                          label="Subtitle"
+                          value={modalForm.subtitle}
+                          onChange={(value) => updateModalField("subtitle", value)}
+                          rows={4}
+                        />
+                      </>
+                    )}
+
+                    {editingTarget.type === "statCard" && (
+                      <>
+                        <Field
+                          label="Number"
+                          value={modalForm.value}
+                          onChange={(value) => updateModalField("value", value)}
+                        />
+
+                        <Field
+                          label="Label"
+                          value={modalForm.label}
+                          onChange={(value) => updateModalField("label", value)}
+                        />
+
+                        <Field
+                          label="Icon Type"
+                          value={modalForm.icon}
+                          onChange={(value) => updateModalField("icon", value)}
+                          placeholder="users / graduation / award"
+                        />
+
+                        <Field
+                          label="Accent Color"
+                          type="color"
+                          value={modalForm.color}
+                          onChange={(value) => updateModalField("color", value)}
+                        />
+                      </>
+                    )}
+
+                    {(editingTarget.type === "staffCard" ||
+                      editingTarget.type === "staffImage") && (
+                      <>
+                        <Field
+                          label="Name"
+                          value={modalForm.name}
+                          onChange={(value) => updateModalField("name", value)}
+                        />
+
+                        <Field
+                          label="Position"
+                          value={modalForm.position}
+                          onChange={(value) => updateModalField("position", value)}
+                        />
+
+                        <Field
+                          label="Qualification"
+                          value={modalForm.qualification}
+                          onChange={(value) => updateModalField("qualification", value)}
+                        />
+
+                        <Field
+                          label="Phone"
+                          value={modalForm.phone}
+                          onChange={(value) => updateModalField("phone", value)}
+                          placeholder="+977-98XXXXXXXX"
+                        />
+
+                        <Field
+                          label="Email"
+                          value={modalForm.email}
+                          onChange={(value) => updateModalField("email", value)}
+                          placeholder="Optional"
+                        />
+
+                        <TextArea
+                          label="Description / About"
+                          value={modalForm.description}
+                          onChange={(value) => updateModalField("description", value)}
+                          rows={5}
+                        />
+
+                        <Toggle
+                          label="Show this staff member on website"
+                          checked={modalForm.visible !== false}
+                          onChange={(value) => updateModalField("visible", value)}
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Fixed footer buttons */}
+                <div
+                  className="shrink-0 flex flex-col sm:flex-row gap-3 px-6 py-4 bg-white"
+                  style={{ borderTop: "1px solid rgba(15,23,42,0.08)" }}
+                >
                   {editingTarget.type === "staffCard" && (
                     <button
                       type="button"
@@ -1479,99 +1494,97 @@ export default function AdminStaff() {
                     {saving ? "Saving..." : "Save This Item"}
                   </button>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          )}
 
-        {photoAdjustOpen && needsImageUpload && (
-          <StaffPhotoAdjustPage
-            modalForm={modalForm}
-            setModalForm={setModalForm}
-            uploadImage={uploadImage}
-            uploadingImage={uploadingImage}
-            saving={saving}
-            onClose={() => setPhotoAdjustOpen(false)}
-            onSave={saveSelectedPart}
-          />
-        )}
+          {photoAdjustOpen && needsImageUpload && (
+            <StaffPhotoAdjustPage
+              modalForm={modalForm}
+              setModalForm={setModalForm}
+              uploadImage={uploadImage}
+              uploadingImage={uploadingImage}
+              saving={saving}
+              onClose={() => setPhotoAdjustOpen(false)}
+              onSave={saveSelectedPart}
+            />
+          )}
 
-        {deleteTarget && (
-          <motion.div
-            className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-5"
-            style={{
-              background: "rgba(2,6,23,0.62)",
-              backdropFilter: "blur(14px)",
-            }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => {
-              if (!saving) setDeleteTarget(null);
-            }}
-          >
+          {deleteTarget && (
             <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.94 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 12, scale: 0.96 }}
-              className="w-full max-w-md rounded-[28px] bg-white overflow-hidden"
+              className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-5"
               style={{
-                boxShadow: "0 42px 110px rgba(0,0,0,0.32)",
-                border: "1px solid rgba(255,255,255,0.75)",
+                background: "rgba(2,6,23,0.62)",
+                backdropFilter: "blur(14px)",
               }}
-              onClick={(event) => event.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (!saving) setDeleteTarget(null);
+              }}
             >
-              <div className="p-6">
-                <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-5">
-                  <Trash2 className="w-6 h-6" />
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 12, scale: 0.96 }}
+                className="w-full max-w-md rounded-[28px] bg-white overflow-hidden"
+                style={{
+                  boxShadow: "0 42px 110px rgba(0,0,0,0.32)",
+                  border: "1px solid rgba(255,255,255,0.75)",
+                }}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="p-6">
+                  <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-5">
+                    <Trash2 className="w-6 h-6" />
+                  </div>
+
+                  <h3 className="text-2xl font-black text-slate-950 mb-2">
+                    Are you sure?
+                  </h3>
+
+                  <p className="text-sm text-slate-500 leading-relaxed mb-6">
+                    This will permanently delete {getDeleteName(deleteTarget)} from the Staff page.
+                  </p>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => setDeleteTarget(null)}
+                      className="flex-1 py-3 rounded-2xl text-sm font-black disabled:opacity-60"
+                      style={{
+                        background: "rgba(15,23,42,0.06)",
+                        color: "rgba(15,23,42,0.68)",
+                        border: "1px solid rgba(15,23,42,0.08)",
+                      }}
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => deleteTargetItem(deleteTarget)}
+                      className="flex-1 py-3 rounded-2xl text-sm font-black disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                      style={{
+                        background: `linear-gradient(135deg, ${colors.red}, #991B1B)`,
+                        color: "#FFFFFF",
+                        boxShadow: "0 16px 38px rgba(215,25,32,0.24)",
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {saving ? "Deleting..." : "Yes, Delete"}
+                    </button>
+                  </div>
                 </div>
-
-                <h3 className="text-2xl font-black text-slate-950 mb-2">
-                  Are you sure?
-                </h3>
-
-                <p className="text-sm text-slate-500 leading-relaxed mb-6">
-                  This will permanently delete {getDeleteName(deleteTarget)} from the Staff page.
-                </p>
-
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    disabled={saving}
-                    onClick={() => setDeleteTarget(null)}
-                    className="flex-1 py-3 rounded-2xl text-sm font-black disabled:opacity-60"
-                    style={{
-                      background: "rgba(15,23,42,0.06)",
-                      color: "rgba(15,23,42,0.68)",
-                      border: "1px solid rgba(15,23,42,0.08)",
-                    }}
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={saving}
-                    onClick={() => deleteTargetItem(deleteTarget)}
-                    className="flex-1 py-3 rounded-2xl text-sm font-black disabled:opacity-60 inline-flex items-center justify-center gap-2"
-                    style={{
-                      background: `linear-gradient(135deg, ${colors.red}, #991B1B)`,
-                      color: "#FFFFFF",
-                      boxShadow: "0 16px 38px rgba(215,25,32,0.24)",
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    {saving ? "Deleting..." : "Yes, Delete"}
-                  </button>
-                </div>
-              </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }
-
-
-
