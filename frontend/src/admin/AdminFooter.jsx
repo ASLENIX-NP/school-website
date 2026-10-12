@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
@@ -1186,408 +1187,421 @@ export default function AdminFooter() {
         </div>
       </main>
 
-      <AnimatePresence>
-        {editingTarget && (
-          <motion.div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
-            style={{ background: "rgba(2,6,23,0.55)", backdropFilter: "blur(12px)" }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeEditor}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 24, scale: 0.94 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 14, scale: 0.96 }}
-              transition={{ type: "spring", stiffness: 130, damping: 16 }}
-              className="w-full max-w-2xl rounded-[28px] overflow-hidden max-h-[92vh] overflow-y-auto"
-              style={{
-                background: "#FFFFFF",
-                border: "1px solid rgba(255,255,255,0.75)",
-                boxShadow: "0 42px 110px rgba(0,0,0,0.28)",
-              }}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div
-                className="h-1"
-                style={{ background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan}, ${colors.green})` }}
-              />
+      {/* Popups are rendered straight into document.body so they always
+          fit the browser window, no matter what wraps this page. */}
+      {createPortal(
+        <>
+          <AnimatePresence>
+            {editingTarget && (
+              <motion.div
+                className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden p-3 sm:p-5"
+                style={{ background: "rgba(2,6,23,0.55)", backdropFilter: "blur(12px)" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={closeEditor}
+              >
+                {/* Popup is a fixed-height column: header + footer stay put, only the body scrolls. */}
+                <motion.div
+                  initial={{ opacity: 0, y: 24, scale: 0.94 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 14, scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 130, damping: 16 }}
+                  className="flex w-full max-w-2xl flex-col overflow-hidden rounded-[28px]"
+                  style={{
+                    maxHeight: "calc(100vh - 24px)",
+                    background: "#FFFFFF",
+                    border: "1px solid rgba(255,255,255,0.75)",
+                    boxShadow: "0 42px 110px rgba(0,0,0,0.28)",
+                  }}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div
+                    className="h-1 shrink-0"
+                    style={{ background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan}, ${colors.green})` }}
+                  />
 
-              <div className="p-6">
-                <div className="flex items-start justify-between gap-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(56,189,248,0.18))",
-                        color: colors.dark,
-                      }}
-                    >
-                      <Pencil className="w-5 h-5" />
-                    </div>
+                  {/* Fixed header */}
+                  <div className="shrink-0 px-6 pb-4 pt-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(56,189,248,0.18))",
+                            color: colors.dark,
+                          }}
+                        >
+                          <Pencil className="w-5 h-5" />
+                        </div>
 
-                    <div>
-                      <h3 className="text-xl font-black text-slate-950">{modalTitle}</h3>
-                      <p className="text-sm text-slate-500">Click Save Section to publish immediately.</p>
+                        <div>
+                          <h3 className="text-xl font-black text-slate-950">{modalTitle}</h3>
+                          <p className="text-sm text-slate-500">Click Save Section to publish immediately.</p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={closeEditor}
+                        className="w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={closeEditor}
-                    className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+                  {/* Scrollable body */}
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-5">
+                    <div className="space-y-5">
+                      {editingTarget.type === "identity" && (
+                        <>
+                          <div
+                            className="rounded-3xl p-5"
+                            style={{
+                              background:
+                                "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))",
+                              border: "1px solid rgba(255,255,255,0.12)",
+                            }}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-24 h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center">
+                                {modalForm.logoUrl ? (
+                                  <img src={modalForm.logoUrl} alt="Footer logo preview" className="w-full h-full object-contain p-2" />
+                                ) : (
+                                  <ImageIcon className="w-12 h-12 text-slate-300" />
+                                )}
+                              </div>
 
-                <div className="space-y-5">
-                  {editingTarget.type === "identity" && (
-                    <>
-                      <div
-                        className="rounded-3xl p-5"
-                        style={{
-                          background:
-                            "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))",
-                          border: "1px solid rgba(255,255,255,0.12)",
-                        }}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-24 h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center">
-                            {modalForm.logoUrl ? (
-                              <img src={modalForm.logoUrl} alt="Footer logo preview" className="w-full h-full object-contain p-2" />
-                            ) : (
-                              <ImageIcon className="w-12 h-12 text-slate-300" />
+                              <div>
+                                <div className="text-white font-black">Footer Logo Preview</div>
+                                <div className="text-white/55 text-sm mt-1 leading-relaxed">
+                                  Recommended: 512×512 square, PNG/JPG/WebP, max 6 MB.
+                                </div>
+                              </div>
+                            </div>
+
+                            <label
+                              className="mt-5 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black cursor-pointer"
+                              style={{ background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`, color: colors.dark }}
+                            >
+                              <UploadCloud className="w-4 h-4" />
+                              {uploadingLogo ? "Uploading..." : "Upload Footer Logo"}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                disabled={uploadingLogo}
+                                onChange={(event) => {
+                                  uploadLogo(event.target.files?.[0]);
+                                  event.target.value = "";
+                                }}
+                                className="hidden"
+                              />
+                            </label>
+
+                            {modalForm.logoUrl && (
+                              <button
+                                type="button"
+                                onClick={() => updateModalField("logoUrl", "")}
+                                className="mt-3 w-full px-4 py-3 rounded-2xl text-sm font-black text-white"
+                                style={{ background: "rgba(215,25,32,0.28)", border: "1px solid rgba(255,255,255,0.12)" }}
+                              >
+                                Remove Logo
+                              </button>
                             )}
                           </div>
 
-                          <div>
-                            <div className="text-white font-black">Footer Logo Preview</div>
-                            <div className="text-white/55 text-sm mt-1 leading-relaxed">
-                              Recommended: 512×512 square, PNG/JPG/WebP, max 6 MB.
-                            </div>
-                          </div>
-                        </div>
+                          <Field label="Logo URL" value={modalForm.logoUrl} onChange={(value) => updateModalField("logoUrl", value)} />
+                          <Field label="School Name" value={modalForm.schoolName} onChange={(value) => updateModalField("schoolName", value)} />
+                          <Field label="School Subtitle" value={modalForm.schoolSubtitle} onChange={(value) => updateModalField("schoolSubtitle", value)} />
+                          <Field label="Admission Badge Text" value={modalForm.admissionBadgeText} onChange={(value) => updateModalField("admissionBadgeText", value)} />
+                          <Toggle checked={modalForm.showAdmissionBadge !== false} onChange={(value) => updateModalField("showAdmissionBadge", value)} label="Show admission badge" />
+                        </>
+                      )}
 
-                        <label
-                          className="mt-5 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-black cursor-pointer"
-                          style={{ background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`, color: colors.dark }}
-                        >
-                          <UploadCloud className="w-4 h-4" />
-                          {uploadingLogo ? "Uploading..." : "Upload Footer Logo"}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            disabled={uploadingLogo}
-                            onChange={(event) => {
-                              uploadLogo(event.target.files?.[0]);
-                              event.target.value = "";
-                            }}
-                            className="hidden"
-                          />
-                        </label>
-
-                        {modalForm.logoUrl && (
-                          <button
-                            type="button"
-                            onClick={() => updateModalField("logoUrl", "")}
-                            className="mt-3 w-full px-4 py-3 rounded-2xl text-sm font-black text-white"
-                            style={{ background: "rgba(215,25,32,0.28)", border: "1px solid rgba(255,255,255,0.12)" }}
-                          >
-                            Remove Logo
-                          </button>
-                        )}
-                      </div>
-
-                      <Field label="Logo URL" value={modalForm.logoUrl} onChange={(value) => updateModalField("logoUrl", value)} />
-                      <Field label="School Name" value={modalForm.schoolName} onChange={(value) => updateModalField("schoolName", value)} />
-                      <Field label="School Subtitle" value={modalForm.schoolSubtitle} onChange={(value) => updateModalField("schoolSubtitle", value)} />
-                      <Field label="Admission Badge Text" value={modalForm.admissionBadgeText} onChange={(value) => updateModalField("admissionBadgeText", value)} />
-                      <Toggle checked={modalForm.showAdmissionBadge !== false} onChange={(value) => updateModalField("showAdmissionBadge", value)} label="Show admission badge" />
-                    </>
-                  )}
-
-                  {editingTarget.type === "navLinks" && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <div>
-                          <div className="font-black text-slate-950">Footer Links</div>
-                          <div className="text-sm text-slate-500">Manage every footer navigation link from one place.</div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={addModalNavLink}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black text-white"
-                          style={{ background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})` }}
-                        >
-                          <Plus className="w-4 h-4" />
-                          Add Link
-                        </button>
-                      </div>
-
-                      {(modalForm.navLinks || []).map((link, index) => (
-                        <div
-                          key={link.id || index}
-                          className="rounded-3xl p-5 space-y-4"
-                          style={{ background: "rgba(15,23,42,0.04)", border: "1px solid rgba(15,23,42,0.08)" }}
-                        >
+                      {editingTarget.type === "navLinks" && (
+                        <div className="space-y-4">
                           <div className="flex items-center justify-between gap-4">
                             <div>
-                              <div className="font-black text-slate-950">Link {index + 1}</div>
-                              <div className="text-sm text-slate-500">{link.label || "New Link"}</div>
+                              <div className="font-black text-slate-950">Footer Links</div>
+                              <div className="text-sm text-slate-500">Manage every footer navigation link from one place.</div>
                             </div>
 
                             <button
                               type="button"
-                              onClick={() => deleteModalNavLink(index)}
-                              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-black"
-                              style={{ background: "rgba(215,25,32,0.09)", color: colors.red, border: "1px solid rgba(215,25,32,0.18)" }}
+                              onClick={addModalNavLink}
+                              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black text-white"
+                              style={{ background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})` }}
                             >
-                              <Trash2 className="w-4 h-4" />
-                              Delete
+                              <Plus className="w-4 h-4" />
+                              Add Link
                             </button>
                           </div>
 
-                          <Toggle
-                            checked={link.visible !== false}
-                            onChange={(value) => updateModalListItem("navLinks", index, "visible", value)}
-                            label="Show this footer link"
-                          />
-
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <Field
-                              label="Label"
-                              value={link.label}
-                              onChange={(value) => updateModalListItem("navLinks", index, "label", value)}
-                              placeholder="About"
-                            />
-
-                            <Field
-                              label="Link"
-                              value={link.href}
-                              onChange={(value) => updateModalListItem("navLinks", index, "href", value)}
-                              placeholder="/about"
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {editingTarget.type === "navLink" && (
-                    <>
-                      <Toggle checked={modalForm.visible !== false} onChange={(value) => updateModalField("visible", value)} label="Show this footer link" />
-                      <Field label="Label" value={modalForm.label} onChange={(value) => updateModalField("label", value)} placeholder="About" />
-                      <Field label="Link" value={modalForm.href} onChange={(value) => updateModalField("href", value)} placeholder="/about" />
-                    </>
-                  )}
-
-                  {editingTarget.type === "socials" && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <div>
-                          <div className="font-black text-slate-950">Social Links</div>
-                          <div className="text-sm text-slate-500">Manage every social icon from one place.</div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={addModalSocial}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black text-white"
-                          style={{ background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})` }}
-                        >
-                          <Plus className="w-4 h-4" />
-                          Add Social
-                        </button>
-                      </div>
-
-                      {(modalForm.socials || []).map((social, index) => (
-                        <div
-                          key={social.id || index}
-                          className="rounded-3xl p-5 space-y-4"
-                          style={{ background: "rgba(15,23,42,0.04)", border: "1px solid rgba(15,23,42,0.08)" }}
-                        >
-                          <div className="flex items-center justify-between gap-4">
-                            <div>
-                              <div className="font-black text-slate-950">Social {index + 1}</div>
-                              <div className="text-sm text-slate-500">{social.label || "Website"}</div>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => deleteModalSocial(index)}
-                              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-black"
-                              style={{ background: "rgba(215,25,32,0.09)", color: colors.red, border: "1px solid rgba(215,25,32,0.18)" }}
+                          {(modalForm.navLinks || []).map((link, index) => (
+                            <div
+                              key={link.id || index}
+                              className="rounded-3xl p-5 space-y-4"
+                              style={{ background: "rgba(15,23,42,0.04)", border: "1px solid rgba(15,23,42,0.08)" }}
                             >
-                              <Trash2 className="w-4 h-4" />
-                              Delete
-                            </button>
-                          </div>
+                              <div className="flex items-center justify-between gap-4">
+                                <div>
+                                  <div className="font-black text-slate-950">Link {index + 1}</div>
+                                  <div className="text-sm text-slate-500">{link.label || "New Link"}</div>
+                                </div>
 
-                          <Toggle
-                            checked={social.visible !== false}
-                            onChange={(value) => updateModalListItem("socials", index, "visible", value)}
-                            label="Show this social link"
-                          />
+                                <button
+                                  type="button"
+                                  onClick={() => deleteModalNavLink(index)}
+                                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-black"
+                                  style={{ background: "rgba(215,25,32,0.09)", color: colors.red, border: "1px solid rgba(215,25,32,0.18)" }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete
+                                </button>
+                              </div>
 
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <Field
-                              label="Label"
-                              value={social.label}
-                              onChange={(value) => updateModalListItem("socials", index, "label", value)}
-                              placeholder="Facebook"
-                            />
-
-                            <SelectField
-                              label="Type"
-                              value={social.type}
-                              onChange={(value) => updateModalListItem("socials", index, "type", value)}
-                            >
-                              <option value="facebook">Facebook</option>
-                              <option value="youtube">YouTube</option>
-                              <option value="website">Website</option>
-                            </SelectField>
-                          </div>
-
-                          <Field
-                            label="URL"
-                            value={social.href}
-                            onChange={(value) => updateModalListItem("socials", index, "href", value)}
-                            placeholder="https://..."
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {editingTarget.type === "social" && (
-                    <>
-                      <Toggle checked={modalForm.visible !== false} onChange={(value) => updateModalField("visible", value)} label="Show this social link" />
-                      <Field label="Label" value={modalForm.label} onChange={(value) => updateModalField("label", value)} placeholder="Facebook" />
-                      <SelectField label="Type" value={modalForm.type} onChange={(value) => updateModalField("type", value)}>
-                        <option value="facebook">Facebook</option>
-                        <option value="youtube">YouTube</option>
-                        <option value="website">Website</option>
-                      </SelectField>
-                      <Field label="URL" value={modalForm.href} onChange={(value) => updateModalField("href", value)} placeholder="https://..." />
-                    </>
-                  )}
-
-                  {editingTarget.type === "contact" && (
-                    <>
-                      <Field label="Address" value={modalForm.address} onChange={(value) => updateModalField("address", value)} />
-                      <TextArea label="Google Map URL or Address" value={modalForm.mapUrl} onChange={(value) => updateModalField("mapUrl", value)} rows={3} />
-                      <Field label="Email" value={modalForm.email} onChange={(value) => updateModalField("email", value)} placeholder="school@email.com" />
-
-                      <div>
-                        <div className="flex items-center justify-between gap-4 mb-3">
-                          <label className="block text-sm font-black text-slate-700">Phone Numbers</label>
-                          <button
-                            type="button"
-                            onClick={addModalPhone}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black text-white"
-                            style={{ background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})` }}
-                          >
-                            <Plus className="w-4 h-4" />
-                            Add Phone
-                          </button>
-                        </div>
-
-                        <div className="space-y-3">
-                          {(modalForm.phones || []).map((phone, index) => (
-                            <div key={index} className="flex gap-3">
-                              <input
-                                value={phone}
-                                onChange={(event) => updateModalPhone(index, event.target.value)}
-                                placeholder="Phone number"
-                                className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
-                                style={{
-                                  background: "rgba(255,255,255,0.92)",
-                                  border: "1px solid rgba(75,46,131,0.16)",
-                                  color: colors.dark,
-                                }}
+                              <Toggle
+                                checked={link.visible !== false}
+                                onChange={(value) => updateModalListItem("navLinks", index, "visible", value)}
+                                label="Show this footer link"
                               />
 
-                              <button
-                                type="button"
-                                onClick={() => deleteModalPhone(index)}
-                                className="px-4 rounded-2xl"
-                                style={{ background: "rgba(215,25,32,0.09)", color: colors.red }}
-                                title="Delete phone"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                              <div className="grid md:grid-cols-2 gap-4">
+                                <Field
+                                  label="Label"
+                                  value={link.label}
+                                  onChange={(value) => updateModalListItem("navLinks", index, "label", value)}
+                                  placeholder="About"
+                                />
+
+                                <Field
+                                  label="Link"
+                                  value={link.href}
+                                  onChange={(value) => updateModalListItem("navLinks", index, "href", value)}
+                                  placeholder="/about"
+                                />
+                              </div>
                             </div>
                           ))}
                         </div>
-                      </div>
-                    </>
-                  )}
+                      )}
 
-                  {editingTarget.type === "phonePopup" && (
-                    <>
-                      <Field label="Popup Title" value={modalForm.modalTitle} onChange={(value) => updateModalField("modalTitle", value)} />
-                      <Field label="Popup Hint" value={modalForm.modalHint} onChange={(value) => updateModalField("modalHint", value)} />
-                      <Field label="Copied Text" value={modalForm.copiedText} onChange={(value) => updateModalField("copiedText", value)} />
-                      <Field label="Close Button Text" value={modalForm.closeButtonText} onChange={(value) => updateModalField("closeButtonText", value)} />
-                    </>
-                  )}
+                      {editingTarget.type === "navLink" && (
+                        <>
+                          <Toggle checked={modalForm.visible !== false} onChange={(value) => updateModalField("visible", value)} label="Show this footer link" />
+                          <Field label="Label" value={modalForm.label} onChange={(value) => updateModalField("label", value)} placeholder="About" />
+                          <Field label="Link" value={modalForm.href} onChange={(value) => updateModalField("href", value)} placeholder="/about" />
+                        </>
+                      )}
 
-                  {editingTarget.type === "copyright" && (
-                    <TextArea label="Copyright Text" value={modalForm.copyrightText} onChange={(value) => updateModalField("copyrightText", value)} rows={4} />
-                  )}
-                </div>
+                      {editingTarget.type === "socials" && (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <div className="font-black text-slate-950">Social Links</div>
+                              <div className="text-sm text-slate-500">Manage every social icon from one place.</div>
+                            </div>
 
-                <div className="flex gap-3 mt-7">
-                  <button
-                    type="button"
-                    onClick={closeEditor}
-                    disabled={saving || uploadingLogo}
-                    className="flex-1 py-3 rounded-2xl text-sm font-black disabled:opacity-60"
-                    style={{
-                      background: "rgba(15,23,42,0.06)",
-                      color: "rgba(15,23,42,0.65)",
-                      border: "1px solid rgba(15,23,42,0.08)",
-                    }}
+                            <button
+                              type="button"
+                              onClick={addModalSocial}
+                              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black text-white"
+                              style={{ background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})` }}
+                            >
+                              <Plus className="w-4 h-4" />
+                              Add Social
+                            </button>
+                          </div>
+
+                          {(modalForm.socials || []).map((social, index) => (
+                            <div
+                              key={social.id || index}
+                              className="rounded-3xl p-5 space-y-4"
+                              style={{ background: "rgba(15,23,42,0.04)", border: "1px solid rgba(15,23,42,0.08)" }}
+                            >
+                              <div className="flex items-center justify-between gap-4">
+                                <div>
+                                  <div className="font-black text-slate-950">Social {index + 1}</div>
+                                  <div className="text-sm text-slate-500">{social.label || "Website"}</div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => deleteModalSocial(index)}
+                                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-black"
+                                  style={{ background: "rgba(215,25,32,0.09)", color: colors.red, border: "1px solid rgba(215,25,32,0.18)" }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete
+                                </button>
+                              </div>
+
+                              <Toggle
+                                checked={social.visible !== false}
+                                onChange={(value) => updateModalListItem("socials", index, "visible", value)}
+                                label="Show this social link"
+                              />
+
+                              <div className="grid md:grid-cols-2 gap-4">
+                                <Field
+                                  label="Label"
+                                  value={social.label}
+                                  onChange={(value) => updateModalListItem("socials", index, "label", value)}
+                                  placeholder="Facebook"
+                                />
+
+                                <SelectField
+                                  label="Type"
+                                  value={social.type}
+                                  onChange={(value) => updateModalListItem("socials", index, "type", value)}
+                                >
+                                  <option value="facebook">Facebook</option>
+                                  <option value="youtube">YouTube</option>
+                                  <option value="website">Website</option>
+                                </SelectField>
+                              </div>
+
+                              <Field
+                                label="URL"
+                                value={social.href}
+                                onChange={(value) => updateModalListItem("socials", index, "href", value)}
+                                placeholder="https://..."
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {editingTarget.type === "social" && (
+                        <>
+                          <Toggle checked={modalForm.visible !== false} onChange={(value) => updateModalField("visible", value)} label="Show this social link" />
+                          <Field label="Label" value={modalForm.label} onChange={(value) => updateModalField("label", value)} placeholder="Facebook" />
+                          <SelectField label="Type" value={modalForm.type} onChange={(value) => updateModalField("type", value)}>
+                            <option value="facebook">Facebook</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="website">Website</option>
+                          </SelectField>
+                          <Field label="URL" value={modalForm.href} onChange={(value) => updateModalField("href", value)} placeholder="https://..." />
+                        </>
+                      )}
+
+                      {editingTarget.type === "contact" && (
+                        <>
+                          <Field label="Address" value={modalForm.address} onChange={(value) => updateModalField("address", value)} />
+                          <TextArea label="Google Map URL or Address" value={modalForm.mapUrl} onChange={(value) => updateModalField("mapUrl", value)} rows={3} />
+                          <Field label="Email" value={modalForm.email} onChange={(value) => updateModalField("email", value)} placeholder="school@email.com" />
+
+                          <div>
+                            <div className="flex items-center justify-between gap-4 mb-3">
+                              <label className="block text-sm font-black text-slate-700">Phone Numbers</label>
+                              <button
+                                type="button"
+                                onClick={addModalPhone}
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black text-white"
+                                style={{ background: `linear-gradient(135deg, ${colors.purple}, ${colors.green})` }}
+                              >
+                                <Plus className="w-4 h-4" />
+                                Add Phone
+                              </button>
+                            </div>
+
+                            <div className="space-y-3">
+                              {(modalForm.phones || []).map((phone, index) => (
+                                <div key={index} className="flex gap-3">
+                                  <input
+                                    value={phone}
+                                    onChange={(event) => updateModalPhone(index, event.target.value)}
+                                    placeholder="Phone number"
+                                    className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
+                                    style={{
+                                      background: "rgba(255,255,255,0.92)",
+                                      border: "1px solid rgba(75,46,131,0.16)",
+                                      color: colors.dark,
+                                    }}
+                                  />
+
+                                  <button
+                                    type="button"
+                                    onClick={() => deleteModalPhone(index)}
+                                    className="px-4 rounded-2xl"
+                                    style={{ background: "rgba(215,25,32,0.09)", color: colors.red }}
+                                    title="Delete phone"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {editingTarget.type === "phonePopup" && (
+                        <>
+                          <Field label="Popup Title" value={modalForm.modalTitle} onChange={(value) => updateModalField("modalTitle", value)} />
+                          <Field label="Popup Hint" value={modalForm.modalHint} onChange={(value) => updateModalField("modalHint", value)} />
+                          <Field label="Copied Text" value={modalForm.copiedText} onChange={(value) => updateModalField("copiedText", value)} />
+                          <Field label="Close Button Text" value={modalForm.closeButtonText} onChange={(value) => updateModalField("closeButtonText", value)} />
+                        </>
+                      )}
+
+                      {editingTarget.type === "copyright" && (
+                        <TextArea label="Copyright Text" value={modalForm.copyrightText} onChange={(value) => updateModalField("copyrightText", value)} rows={4} />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Fixed footer buttons */}
+                  <div
+                    className="shrink-0 flex gap-3 px-6 py-4 bg-white"
+                    style={{ borderTop: "1px solid rgba(15,23,42,0.08)" }}
                   >
-                    Cancel
-                  </button>
+                    <button
+                      type="button"
+                      onClick={closeEditor}
+                      disabled={saving || uploadingLogo}
+                      className="flex-1 py-3 rounded-2xl text-sm font-black disabled:opacity-60"
+                      style={{
+                        background: "rgba(15,23,42,0.06)",
+                        color: "rgba(15,23,42,0.65)",
+                        border: "1px solid rgba(15,23,42,0.08)",
+                      }}
+                    >
+                      Cancel
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={saveSelectedPart}
-                    disabled={saving || uploadingLogo}
-                    className="flex-1 py-3 rounded-2xl text-sm font-black inline-flex items-center justify-center gap-2 disabled:opacity-60"
-                    style={{
-                      background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
-                      color: "#020617",
-                      boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
-                    }}
-                  >
-                    <Save className="w-4 h-4" />
-                    Save Section
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                    <button
+                      type="button"
+                      onClick={saveSelectedPart}
+                      disabled={saving || uploadingLogo}
+                      className="flex-1 py-3 rounded-2xl text-sm font-black inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                      style={{
+                        background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`,
+                        color: "#020617",
+                        boxShadow: "0 16px 38px rgba(56,189,248,0.24)",
+                      }}
+                    >
+                      <Save className="w-4 h-4" />
+                      Save Section
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-      <AnimatePresence>
-        <ConfirmDialog
-          target={confirmTarget}
-          onCancel={() => setConfirmTarget(null)}
-          onConfirm={confirmDelete}
-        />
-      </AnimatePresence>
+          <AnimatePresence>
+            <ConfirmDialog
+              target={confirmTarget}
+              onCancel={() => setConfirmTarget(null)}
+              onConfirm={confirmDelete}
+            />
+          </AnimatePresence>
+        </>,
+        document.body
+      )}
     </section>
   );
 }
-
-
-
-
