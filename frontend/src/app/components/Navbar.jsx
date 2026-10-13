@@ -502,7 +502,10 @@ export function Navbar({
         {renderEditIndicator("Edit School Branding")}
       </Link>
       <div className="mx-auto flex h-full max-w-[1120px] flex-col xl:pl-[190px]">
-        <div className="hidden h-[46px] items-center justify-end gap-5 pr-4 text-[14px] xl:flex">
+        <div
+          className="hidden h-[46px] flex-shrink-0 items-center justify-end gap-5 pr-4 text-[14px] xl:flex"
+          style={{ transform: "translateX(calc((100vw - 1120px) / 2))" }}
+        >
           <div className="flex items-center gap-2 whitespace-nowrap">
             <span className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-white text-[#666]">
               <MapPin className="h-[17px] w-[17px]" />

@@ -47,6 +47,18 @@ export function makeBlogSlug(title = "post", id = "") {
   return id ? `${base}-${id}` : base;
 }
 
+export function resolveBlogImageUrl(value = "") {
+  const source = String(value || "").trim();
+  if (!source) return "";
+  if (/^(https?:|data:|blob:)/i.test(source)) return source;
+  if (source.startsWith("//")) return `https:${source}`;
+  try {
+    return new URL(source, API_URL).toString();
+  } catch {
+    return source;
+  }
+}
+
 export function normalizeBlogPost(post = {}, index = 0) {
   const id = post.id || Date.now() + index;
   const title = post.title || "Untitled Blog Post";
@@ -104,12 +116,16 @@ function getPlainExcerpt(post = {}) {
 }
 
 function BlogImage({ post, className = "" }) {
-  if (post.imageUrl) {
+  const imageUrl = resolveBlogImageUrl(post.imageUrl);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [imageUrl]);
+  if (imageUrl && !failed) {
     return (
       <img
-        src={post.imageUrl}
+        src={imageUrl}
         alt={post.imageAlt || post.title}
         className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${className}`}
+        onError={() => setFailed(true)}
       />
     );
   }

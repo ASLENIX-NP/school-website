@@ -27,6 +27,7 @@ import {
   ArrowUp,
   Mail,
   LogOut,
+  Menu,
 } from "lucide-react";
 
 import AdminHome from "./AdminHome";
@@ -202,6 +203,7 @@ function AnalyticsRow({
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const desktopNavRef = useRef(null);
+  const mobileNavRef = useRef(null);
   const contentScrollRef = useRef(null);
   const sidebarScrollPositionRef = useRef(
     typeof window !== "undefined"
@@ -214,6 +216,7 @@ export default function AdminDashboard() {
   const [announcements, setAnnouncements] = useState([]);
   const [currentTime] = useState(getCurrentTime());
   const [activeEditor, setActiveEditor] = useState(null);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showGoTop, setShowGoTop] = useState(false);
   const [schoolBrand, setSchoolBrand] = useState({
     schoolName: "Baljagriti",
@@ -353,6 +356,7 @@ export default function AdminDashboard() {
     }
 
     setActiveEditor(editorKey);
+    setMobileSidebarOpen(false);
 
     window.requestAnimationFrame(() => {
       contentScrollRef.current?.scrollTo({
@@ -569,7 +573,7 @@ export default function AdminDashboard() {
     >
       {/* LEFT: sidebar (fixed height, its own scroll inside <nav>) */}
       <aside
-        className="flex h-full w-[248px] flex-shrink-0 flex-col overflow-hidden"
+        className="hidden h-full w-[248px] flex-shrink-0 flex-col overflow-hidden md:flex"
         style={{
           background: ui.sidebar,
           borderRight: `1px solid ${ui.border}`,
@@ -577,6 +581,34 @@ export default function AdminDashboard() {
       >
         {SidebarContent({ navRef: desktopNavRef })}
       </aside>
+
+      {mobileSidebarOpen && (
+        <>
+          <button
+            type="button"
+            aria-label="Close navigation menu"
+            className="fixed inset-0 z-40 bg-slate-950/35 md:hidden"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+          <aside
+            className="fixed inset-y-0 left-0 z-50 flex w-[min(85vw,280px)] flex-col overflow-hidden shadow-2xl md:hidden"
+            style={{
+              background: ui.sidebar,
+              borderRight: `1px solid ${ui.border}`,
+            }}
+          >
+            <button
+              type="button"
+              aria-label="Close navigation menu"
+              onClick={() => setMobileSidebarOpen(false)}
+              className="absolute right-3 top-5 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            {SidebarContent({ navRef: mobileNavRef })}
+          </aside>
+        </>
+      )}
 
       {/* RIGHT: header + independently scrolling content */}
       <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
@@ -590,6 +622,15 @@ export default function AdminDashboard() {
         >
           <div className="flex h-16 items-center justify-between gap-3">
             <div className="flex min-w-0 flex-1 items-center gap-3">
+              <button
+                type="button"
+                aria-label="Open navigation menu"
+                aria-expanded={mobileSidebarOpen}
+                onClick={() => setMobileSidebarOpen(true)}
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 md:hidden"
+              >
+                <Menu className="h-4 w-4" />
+              </button>
               <div className="min-w-0">
                 <h1 className="truncate text-sm font-extrabold text-slate-950 sm:text-base">
                   {currentEditorTitle}

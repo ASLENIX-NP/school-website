@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import AdminValidationPopup, { getFirstEmptyField } from "./AdminValidationPopup";
@@ -23,6 +24,7 @@ import {
   makeBlogSlug,
   mergeBlogContent,
   normalizeBlogPost,
+  resolveBlogImageUrl,
 } from "../pages/Blogs";
 
 const colors = {
@@ -137,8 +139,11 @@ function createEmptyPost() {
 }
 
 function BlogImagePreview({ imageUrl }) {
-  if (imageUrl) {
-    return <img src={imageUrl} alt="Blog preview" className="h-full w-full object-cover" />;
+  const [failed, setFailed] = useState(false);
+  const resolvedUrl = resolveBlogImageUrl(imageUrl);
+  useEffect(() => setFailed(false), [resolvedUrl]);
+  if (resolvedUrl && !failed) {
+    return <img src={resolvedUrl} alt="Blog preview" className="h-full w-full object-cover" onError={() => setFailed(true)} />;
   }
 
   return (
@@ -159,6 +164,8 @@ export default function AdminBlog() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [validationMessage, setValidationMessage] = useState("");
+  // Messages shown INSIDE the edit popup (the page behind it is covered by the overlay).
+  const [popupError, setPopupError] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -261,17 +268,20 @@ export default function AdminBlog() {
   const openNewPost = () => {
     setSuccess("");
     setError("");
+    setPopupError("");
     setEditingPost(createEmptyPost());
   };
 
   const openEditPost = (post) => {
     setSuccess("");
     setError("");
+    setPopupError("");
     setEditingPost({ ...post });
   };
 
   const closeEditor = () => {
     if (saving || uploading) return;
+    setPopupError("");
     setEditingPost(null);
   };
 
@@ -288,20 +298,23 @@ export default function AdminBlog() {
   const uploadImage = async (file) => {
     if (!file) return;
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedTypes = ["image/jpeg", "image/png", "image/x-png", "image/webp"];
+    const fileExtension = file.name.split(".").pop()?.toLowerCase();
+    const allowedExtensions = ["jpg", "jpeg", "png", "webp"];
     const maxSize = 6 * 1024 * 1024;
 
-    if (!allowedTypes.includes(file.type)) {
-      setError("Please upload PNG, JPG, or WebP image.");
+    if (!allowedTypes.includes(String(file.type || "").toLowerCase()) && !allowedExtensions.includes(fileExtension)) {
+      setPopupError("Please upload PNG, JPG, or WebP image.");
       return;
     }
 
     if (file.size > maxSize) {
-      setError("Image must be less than 6 MB.");
+      setPopupError("Image must be less than 6 MB.");
       return;
     }
 
     setUploading(true);
+    setPopupError("");
     setError("");
     setSuccess("");
 
@@ -320,21 +333,28 @@ export default function AdminBlog() {
       const uploadedUrl = getUploadUrl(res.data);
 
       if (!uploadedUrl) {
-        setError("Image uploaded but backend did not return URL.");
+        setPopupError("Image uploaded but backend did not return URL.");
         return;
       }
 
-      updateEditingPost("imageUrl", uploadedUrl);
-      setSuccess("Image uploaded. Save the blog post to keep it.");
+      // Set the image and auto-fill alt text from the title if it is empty.
+      setEditingPost((prev) => ({
+        ...(prev || {}),
+        imageUrl: uploadedUrl,
+        imageAlt: String(prev?.imageAlt || "").trim() || String(prev?.title || "").trim(),
+      }));
+      setSuccess("Image uploaded. Click Save Blog Post to keep it.");
     } catch (err) {
       console.error("Blog image upload error:", err);
-      setError(err.response?.data?.message || "Image upload failed.");
+      setPopupError(err.response?.data?.message || "Image upload failed.");
     } finally {
       setUploading(false);
     }
   };
 
   const savePost = async () => {
+    setPopupError("");
+
     const validationError = getFirstEmptyField([
       ["Blog title", editingPost?.title],
       ["Category", editingPost?.category],
@@ -344,14 +364,15 @@ export default function AdminBlog() {
     ]);
 
     if (validationError) {
-      setValidationMessage(validationError);
+      setPopupError(validationError);
       return;
     }
 
-    if (editingPost?.imageUrl && !String(editingPost?.imageAlt || "").trim()) {
-      setValidationMessage("Image alt text cannot be empty when a blog image is used.");
-      return;
-    }
+    // If an image is used but alt text is empty, fall back to the title
+    // instead of blocking the save.
+    const altText =
+      String(editingPost?.imageAlt || "").trim() ||
+      (editingPost?.imageUrl ? String(editingPost?.title || "").trim() : "");
 
     setSaving(true);
     setSuccess("");
@@ -366,7 +387,7 @@ export default function AdminBlog() {
           date: editingPost.date.trim(),
           excerpt: editingPost.excerpt.trim(),
           content: editingPost.content.trim(),
-          imageAlt: String(editingPost.imageAlt || "").trim(),
+          imageAlt: altText,
           slug: makeBlogSlug(editingPost.title.trim(), editingPost.id),
         },
         0
@@ -388,7 +409,12 @@ export default function AdminBlog() {
       setEditingPost(null);
     } catch (err) {
       console.error("Save blog post error:", err);
-      setError(err.response?.data?.message || "Could not save blog post.");
+      setPopupError(
+        err.response?.data?.message ||
+          (err.response?.status === 401
+            ? "Admin login expired. Please logout and login again."
+            : "Could not save blog post.")
+      );
     } finally {
       setSaving(false);
     }
@@ -470,7 +496,7 @@ export default function AdminBlog() {
           </button>
         </div>
 
-        {success && (
+        {success && !editingPost && (
           <div className="mb-3 flex items-center gap-2 rounded-xl bg-green-50 px-3.5 py-2.5 text-xs font-semibold text-green-700 border border-green-100">
             <CheckCircle2 className="h-4 w-4" /> {success}
           </div>
@@ -576,84 +602,117 @@ export default function AdminBlog() {
         </div>
       </motion.div>
 
-      <AnimatePresence>
-        {editingPost && (
-          <motion.div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5"
-            style={{ background: "rgba(2,6,23,0.55)", backdropFilter: "blur(12px)" }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeEditor}
-          >
+      {/* Popups are rendered straight into document.body so they always
+          fit the browser window, no matter what wraps this page. */}
+      {createPortal(
+        <AnimatePresence>
+          {editingPost && (
             <motion.div
-              initial={{ opacity: 0, y: 24, scale: 0.94 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 14, scale: 0.96 }}
-              className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[22px] bg-white"
-              style={{ border: "1px solid rgba(255,255,255,0.75)", boxShadow: "0 42px 110px rgba(0,0,0,0.28)" }}
-              onClick={(event) => event.stopPropagation()}
+              className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden p-3 sm:p-5"
+              style={{ background: "rgba(2,6,23,0.55)", backdropFilter: "blur(12px)" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeEditor}
             >
-              <div className="h-1" style={{ background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan}, ${colors.green})` }} />
-              <div className="p-5">
-                <div className="mb-4 flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="text-lg font-black text-slate-950">Edit Blog Post</h3>
-                    <p className="text-xs text-slate-500">Save this post to update the public Blog page.</p>
+              {/* Popup is a fixed-height column: header + footer stay put, only the body scrolls. */}
+              <motion.div
+                initial={{ opacity: 0, y: 24, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 14, scale: 0.96 }}
+                className="flex w-full max-w-2xl flex-col overflow-hidden rounded-[22px] bg-white"
+                style={{
+                  maxHeight: "calc(100vh - 24px)",
+                  border: "1px solid rgba(255,255,255,0.75)",
+                  boxShadow: "0 42px 110px rgba(0,0,0,0.28)",
+                }}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="h-1 shrink-0" style={{ background: `linear-gradient(90deg, ${colors.gold}, ${colors.cyan}, ${colors.green})` }} />
+
+                {/* Fixed header */}
+                <div className="shrink-0 px-5 pb-3 pt-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-black text-slate-950">Edit Blog Post</h3>
+                      <p className="text-xs text-slate-500">Save this post to update the public Blog page.</p>
+                    </div>
+                    <button type="button" onClick={closeEditor} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
-                  <button type="button" onClick={closeEditor} className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                    <X className="h-4 w-4" />
-                  </button>
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-[190px_1fr]">
-                  <div>
-                    <div className="h-40 overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
-                      <BlogImagePreview imageUrl={editingPost.imageUrl} />
-                    </div>
-
-                    <label className="mt-2.5 flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-black" style={{ background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`, color: colors.dark }}>
-                      <UploadCloud className="h-4 w-4" /> {uploading ? "Uploading..." : "Upload Image"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        disabled={uploading}
-                        onChange={(event) => {
-                          uploadImage(event.target.files?.[0]);
-                          event.target.value = "";
-                        }}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Field label="Title" value={editingPost.title} onChange={(value) => updateEditingPost("title", value)} />
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div>
-                        <label className="mb-1.5 block text-xs font-black text-slate-700">Category</label>
-                        <select
-                          value={editingPost.category || "Events"}
-                          onChange={(event) => updateEditingPost("category", event.target.value)}
-                          className="w-full rounded-xl px-3.5 py-2.5 text-[13px] outline-none"
-                          style={{ background: "rgba(255,255,255,0.92)", border: "1px solid rgba(75,46,131,0.16)", color: colors.dark }}
-                        >
-                          {(content.categories || ["Events"]).filter((item) => item !== "All").map((item) => (
-                            <option key={item} value={item}>{item}</option>
-                          ))}
-                        </select>
+                {/* Scrollable body */}
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4">
+                  <div className="grid gap-4 lg:grid-cols-[190px_1fr]">
+                    <div>
+                      <div className="h-40 overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
+                        <BlogImagePreview imageUrl={editingPost.imageUrl} />
                       </div>
-                      <Field label="Date" type="date" value={editingPost.date} onChange={(value) => updateEditingPost("date", value)} />
+
+                      <label className="mt-2.5 flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-black" style={{ background: `linear-gradient(135deg, ${colors.gold}, ${colors.cyan})`, color: colors.dark }}>
+                        <UploadCloud className="h-4 w-4" /> {uploading ? "Uploading..." : "Upload Image"}
+                        <input
+                          type="file"
+                          accept=".png,image/png,.jpg,.jpeg,image/jpeg,.webp,image/webp"
+                          disabled={uploading}
+                          onChange={(event) => {
+                            uploadImage(event.target.files?.[0]);
+                            event.target.value = "";
+                          }}
+                          className="hidden"
+                        />
+                      </label>
                     </div>
-                    <Field label="Excerpt / Short Summary" value={editingPost.excerpt} onChange={(value) => updateEditingPost("excerpt", value)} textarea rows={3} />
-                    <Field label="Full Content" value={editingPost.content} onChange={(value) => updateEditingPost("content", value)} textarea rows={7} />
-                    <Field label="Image Alt Text" value={editingPost.imageAlt} onChange={(value) => updateEditingPost("imageAlt", value)} />
-                    <Toggle label="Show this post on website" checked={editingPost.visible !== false} onChange={(value) => updateEditingPost("visible", value)} />
-                    <Toggle label="Pin this post to top" checked={Boolean(editingPost.pinned)} onChange={(value) => updateEditingPost("pinned", value)} />
+
+                    <div className="space-y-3">
+                      <Field label="Title" value={editingPost.title} onChange={(value) => updateEditingPost("title", value)} />
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <div>
+                          <label className="mb-1.5 block text-xs font-black text-slate-700">Category</label>
+                          <select
+                            value={editingPost.category || "Events"}
+                            onChange={(event) => updateEditingPost("category", event.target.value)}
+                            className="w-full rounded-xl px-3.5 py-2.5 text-[13px] outline-none"
+                            style={{ background: "rgba(255,255,255,0.92)", border: "1px solid rgba(75,46,131,0.16)", color: colors.dark }}
+                          >
+                            {(content.categories || ["Events"]).filter((item) => item !== "All").map((item) => (
+                              <option key={item} value={item}>{item}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <Field label="Date" type="date" value={editingPost.date} onChange={(value) => updateEditingPost("date", value)} />
+                      </div>
+                      <Field label="Excerpt / Short Summary" value={editingPost.excerpt} onChange={(value) => updateEditingPost("excerpt", value)} textarea rows={3} />
+                      <Field label="Full Content" value={editingPost.content} onChange={(value) => updateEditingPost("content", value)} textarea rows={7} />
+                      <Field label="Image Alt Text" value={editingPost.imageAlt} onChange={(value) => updateEditingPost("imageAlt", value)} placeholder="Describe the image (auto-filled from title)" />
+                      <Toggle label="Show this post on website" checked={editingPost.visible !== false} onChange={(value) => updateEditingPost("visible", value)} />
+                      <Toggle label="Pin this post to top" checked={Boolean(editingPost.pinned)} onChange={(value) => updateEditingPost("pinned", value)} />
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-5 flex flex-col gap-2.5 sm:flex-row">
+                {/* Messages shown inside the popup so they are never hidden */}
+                {(popupError || success) && (
+                  <div className="shrink-0 px-5 pb-2">
+                    {popupError ? (
+                      <div className="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-3.5 py-2.5 text-xs font-semibold text-red-700">
+                        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {popupError}
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-2 rounded-xl border border-green-100 bg-green-50 px-3.5 py-2.5 text-xs font-semibold text-green-700">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> {success}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Fixed footer buttons */}
+                <div
+                  className="shrink-0 flex flex-col gap-2.5 bg-white px-5 py-3 sm:flex-row"
+                  style={{ borderTop: "1px solid rgba(15,23,42,0.08)" }}
+                >
                   <button type="button" onClick={() => setDeleteTarget(editingPost)} disabled={saving || uploading} className="rounded-xl px-4 py-2.5 text-xs font-black disabled:opacity-60" style={{ background: "rgba(215,25,32,0.08)", color: colors.red, border: "1px solid rgba(215,25,32,0.18)" }}>
                     Delete
                   </button>
@@ -664,51 +723,56 @@ export default function AdminBlog() {
                     <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Blog Post"}
                   </button>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          )}
 
-        {deleteTarget && (
-          <motion.div
-            className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-5"
-            style={{ background: "rgba(2,6,23,0.62)", backdropFilter: "blur(14px)" }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => {
-              if (!saving) setDeleteTarget(null);
-            }}
-          >
+          {deleteTarget && (
             <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.94 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 12, scale: 0.96 }}
-              className="w-full max-w-sm overflow-hidden rounded-[22px] bg-white"
-              style={{ boxShadow: "0 42px 110px rgba(0,0,0,0.32)", border: "1px solid rgba(255,255,255,0.75)" }}
-              onClick={(event) => event.stopPropagation()}
+              className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-5"
+              style={{ background: "rgba(2,6,23,0.38)", backdropFilter: "blur(5px)" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (!saving) setDeleteTarget(null);
+              }}
             >
-              <div className="p-5">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-600">
-                  <Trash2 className="h-5 w-5" />
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 12, scale: 0.96 }}
+                className="w-full overflow-hidden rounded-[20px] bg-white"
+                style={{
+                  width: "min(100%, 420px)",
+                  boxShadow: "0 28px 72px rgba(0,0,0,0.26)",
+                  border: "1px solid rgba(255,255,255,0.75)",
+                }}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="p-4">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600">
+                    <Trash2 className="h-4 w-4" />
+                  </div>
+                  <h3 className="mb-1 text-lg font-black text-slate-950">Delete blog post?</h3>
+                  <p className="mb-4 text-xs leading-relaxed text-slate-500">
+                    This will permanently delete <b>{deleteTarget.title}</b> from the Blog page.
+                  </p>
+                  <div className="flex gap-2">
+                    <button type="button" disabled={saving} onClick={() => setDeleteTarget(null)} className="flex-1 rounded-xl py-2 text-xs font-black disabled:opacity-60" style={{ background: "rgba(15,23,42,0.06)", color: "rgba(15,23,42,0.68)", border: "1px solid rgba(15,23,42,0.08)" }}>
+                      Cancel
+                    </button>
+                    <button type="button" disabled={saving} onClick={deletePost} className="flex-1 rounded-xl py-2 text-xs font-black text-white disabled:opacity-60" style={{ background: `linear-gradient(135deg, ${colors.red}, #991B1B)` }}>
+                      {saving ? "Deleting..." : "Yes, Delete"}
+                    </button>
+                  </div>
                 </div>
-                <h3 className="mb-1.5 text-xl font-black text-slate-950">Delete blog post?</h3>
-                <p className="mb-5 text-xs leading-relaxed text-slate-500">
-                  This will permanently delete <b>{deleteTarget.title}</b> from the Blog page.
-                </p>
-                <div className="flex gap-2.5">
-                  <button type="button" disabled={saving} onClick={() => setDeleteTarget(null)} className="flex-1 rounded-xl py-2.5 text-xs font-black disabled:opacity-60" style={{ background: "rgba(15,23,42,0.06)", color: "rgba(15,23,42,0.68)", border: "1px solid rgba(15,23,42,0.08)" }}>
-                    Cancel
-                  </button>
-                  <button type="button" disabled={saving} onClick={deletePost} className="flex-1 rounded-xl py-2.5 text-xs font-black text-white disabled:opacity-60" style={{ background: `linear-gradient(135deg, ${colors.red}, #991B1B)` }}>
-                    {saving ? "Deleting..." : "Yes, Delete"}
-                  </button>
-                </div>
-              </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

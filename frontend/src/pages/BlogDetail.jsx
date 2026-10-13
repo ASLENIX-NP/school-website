@@ -1,12 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
-import { motion } from "motion/react";
-import { ArrowLeft, ArrowRight, CalendarDays, Image as ImageIcon } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  Image as ImageIcon,
+  Maximize2,
+  X,
+} from "lucide-react";
 import {
   defaultBlogContent,
   formatBlogDate,
+  makeBlogSlug,
   mergeBlogContent,
+  resolveBlogImageUrl,
 } from "./Blogs";
 
 const colors = {
@@ -22,21 +31,119 @@ const colors = {
 const API_URL =
   import.meta.env.VITE_API_URL || "https://school-website-backend-ixx2.onrender.com";
 
+/* Small image used by related-post cards (always fills the card). */
 function BlogImage({ post }) {
-  if (post?.imageUrl) {
+  const imageUrl = resolveBlogImageUrl(post?.imageUrl);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [imageUrl]);
+
+  if (imageUrl && !failed) {
     return (
       <img
-        src={post.imageUrl}
+        src={imageUrl}
         alt={post.imageAlt || post.title}
-        className="h-full w-full object-cover"
+        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        onError={() => setFailed(true)}
       />
     );
   }
 
   return (
-    <div className="flex h-full min-h-[360px] w-full items-center justify-center bg-slate-100">
-      <ImageIcon className="h-16 w-16 text-slate-300" />
+    <div className="flex h-full w-full items-center justify-center bg-slate-100">
+      <ImageIcon className="h-10 w-10 text-slate-300" />
     </div>
+  );
+}
+
+/* Hero image for the blog detail page.
+   The frame wraps the image tightly, so no grey/blurred area is ever shown. */
+function BlogHeroImage({ post }) {
+  const imageUrl = resolveBlogImageUrl(post?.imageUrl);
+  const [failed, setFailed] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [imageUrl]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
+
+  if (!imageUrl || failed) return null;
+
+  const alt = post.imageAlt || post.title;
+
+  return (
+    <>
+      <div className="flex justify-center px-4 pb-2 md:px-8 lg:px-10">
+        <div
+          className="relative inline-block max-w-full overflow-hidden rounded-[24px] leading-[0]"
+          style={{ boxShadow: "0 18px 44px rgba(15,23,42,0.14)" }}
+        >
+          <img
+            src={imageUrl}
+            alt={alt}
+            draggable={false}
+            onClick={() => setOpen(true)}
+            onError={() => setFailed(true)}
+            className="block h-auto w-auto max-w-full cursor-zoom-in"
+            style={{ maxHeight: "clamp(220px, 46vh, 460px)" }}
+          />
+
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-black/45 text-white backdrop-blur-md transition-transform hover:scale-105"
+            aria-label="View full screen"
+            title="View full screen"
+          >
+            <Maximize2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setOpen(false)}
+          >
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition-colors hover:bg-white/25"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <motion.img
+              src={imageUrl}
+              alt={alt}
+              initial={{ scale: 0.94, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.94, opacity: 0 }}
+              className="max-h-[92vh] max-w-[95vw] rounded-2xl object-contain shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+              draggable={false}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -65,6 +172,7 @@ function RelatedCard({ post }) {
 export default function BlogDetail() {
   const { slug } = useParams();
   const [content, setContent] = useState(() => mergeBlogContent(defaultBlogContent));
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -80,6 +188,8 @@ export default function BlogDetail() {
       } catch (error) {
         console.error("Blog detail load error:", error);
         if (alive) setContent(mergeBlogContent(defaultBlogContent));
+      } finally {
+        if (alive) setLoaded(true);
       }
     };
 
@@ -95,13 +205,22 @@ export default function BlogDetail() {
     [content.posts]
   );
 
-  const currentIndex = posts.findIndex((post) => post.slug === slug);
+  const currentIndex = posts.findIndex((post) => {
+    const routeSlug = decodeURIComponent(slug || "");
+    const postSlug = decodeURIComponent(String(post.slug || ""));
+    const id = String(post.id || "");
+    return postSlug === routeSlug || id === routeSlug || makeBlogSlug(post.title, id) === routeSlug;
+  });
   const post = currentIndex >= 0 ? posts[currentIndex] : null;
   const previousPost = currentIndex > 0 ? posts[currentIndex - 1] : null;
   const nextPost = currentIndex >= 0 && currentIndex < posts.length - 1 ? posts[currentIndex + 1] : null;
   const relatedPosts = post
     ? posts.filter((item) => item.id !== post.id && item.category === post.category).slice(0, 4)
     : [];
+
+  if (!loaded) {
+    return <section className="min-h-screen bg-white pt-32" aria-label="Loading blog post" />;
+  }
 
   if (!post) {
     return (
@@ -163,9 +282,7 @@ export default function BlogDetail() {
             )}
           </div>
 
-          <div className="mx-auto h-[280px] max-w-5xl overflow-hidden rounded-[28px] bg-slate-100 md:h-[440px]">
-            <BlogImage post={post} />
-          </div>
+          <BlogHeroImage post={post} />
 
           <div className="mx-auto max-w-4xl px-6 py-10 md:px-10 md:py-12">
             <div className="space-y-6 text-lg leading-[1.95] text-slate-600">

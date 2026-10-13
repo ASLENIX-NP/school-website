@@ -2568,33 +2568,6 @@ function Hero({
 
       </section>
 
-      {/* =================================================
-
-          ABOUT
-
-          \================================================= */}
-
-      <AboutSection
-
-        aboutData={
-
-          aboutData
-
-        }
-
-        editMode={
-
-          editMode
-
-        }
-
-        onEditTarget={
-
-          onEditTarget
-
-        }
-
-      />
 
     </main>
 
