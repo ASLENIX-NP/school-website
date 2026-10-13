@@ -268,11 +268,10 @@ export function Footer({
     <footer
       className={`relative overflow-hidden ${editMode ? "rounded-[32px]" : ""}`}
       style={{
-        background:
-          "linear-gradient(135deg, #020617 0%, #07111F 55%, #0F172A 100%)",
+        background: "#f4f4f4",
         borderTop: editMode
           ? "2px solid rgba(56,189,248,0.48)"
-          : "1px solid rgba(255,255,255,0.1)",
+          : "1px solid #d7d7d7",
       }}
     >
       {editMode && (
@@ -283,15 +282,14 @@ export function Footer({
           <div
             className="rounded-2xl px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
             style={{
-              background:
-                "linear-gradient(135deg, rgba(2,6,23,0.96), rgba(15,23,42,0.88))",
-              border: "1px solid rgba(56,189,248,0.28)",
-              boxShadow: "0 18px 52px rgba(0,0,0,0.22)",
+              background: "#ffffff",
+              border: "1px solid #d7d7d7",
+              boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
             }}
           >
             <div>
-              <div className="text-white font-black">Admin Footer Editor Active</div>
-              <div className="text-xs text-white/55 mt-1">
+              <div className="font-black text-slate-900">Admin Footer Editor Active</div>
+              <div className="mt-1 text-xs text-slate-500">
                 Hover footer areas to open the correct editor for logo, links, socials, contact details, and copyright.
               </div>
             </div>
@@ -312,7 +310,7 @@ export function Footer({
           className="absolute left-1/2 top-0 -translate-x-1/2 w-[900px] h-[300px]"
           style={{
             background:
-              "radial-gradient(circle, rgba(56,189,248,0.15), transparent 70%)",
+              "radial-gradient(circle, rgba(148,163,184,0.10), transparent 70%)",
             filter: "blur(100px)",
           }}
         />
@@ -321,7 +319,7 @@ export function Footer({
           className="absolute -left-24 -top-24 w-72 h-72 rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(56,189,248,0.18), transparent 70%)",
+              "radial-gradient(circle, rgba(148,163,184,0.08), transparent 70%)",
           }}
         />
 
@@ -329,18 +327,17 @@ export function Footer({
           className="absolute -right-24 -bottom-24 w-72 h-72 rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(250,204,21,0.14), transparent 70%)",
+              "radial-gradient(circle, rgba(148,163,184,0.08), transparent 70%)",
           }}
         />
       </div>
 
       <div
-        className="relative z-10 max-w-[1450px] mx-auto px-6 py-8 rounded-[40px] border border-white/10 backdrop-blur-3xl"
+        className="relative z-10 mx-auto max-w-[1450px] rounded-[40px] border px-6 py-8"
         style={{
-          background:
-            "linear-gradient(145deg, rgba(4,12,30,0.92), rgba(9,20,45,0.95))",
-          boxShadow:
-            "0 40px 100px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)",
+          background: "#f4f4f4",
+          borderColor: "#d7d7d7",
+          boxShadow: "0 8px 24px rgba(15,23,42,0.06)",
         }}
       >
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
@@ -379,7 +376,7 @@ export function Footer({
 
             <div>
               <div
-                className="text-white text-lg font-bold leading-tight"
+                className="text-slate-900 text-lg font-bold leading-tight"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 {content.schoolName}
@@ -392,7 +389,7 @@ export function Footer({
               {content.showAdmissionBadge && content.admissionBadgeText && (
                 <div className="flex items-center gap-2 mt-1">
                   <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                  <span className="text-[11px] text-green-400">
+                  <span className="text-[11px] text-green-700">
                     {content.admissionBadgeText}
                   </span>
                 </div>
@@ -423,7 +420,7 @@ export function Footer({
                 className={`group/link relative overflow-hidden text-sm px-4 py-2 rounded-xl transition-all duration-500 hover:-translate-y-1 hover:scale-105 ${
                   editMode ? "ring-1 ring-white/15" : ""
                 }`}
-                style={{ color: "rgba(226,232,240,0.72)" }}
+                style={{ color: "#4b5563" }}
               >
                 <div
                   className="absolute inset-0 opacity-0 group-hover/link:opacity-100 transition-all duration-500"
@@ -466,14 +463,13 @@ export function Footer({
                   onClick={(event) => stopEditNavigation(event, editMode)}
                   className="group/social relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 hover:scale-110 hover:-translate-y-2 hover:rotate-6"
                   style={{
-                    background:
-                      "linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))",
-                    border: "1px solid rgba(255,255,255,0.12)",
+                    background: "#ffffff",
+                    border: "1px solid #d1d5db",
                   }}
                 >
                   <Icon
                     className="w-4 h-4"
-                    style={{ color: "rgba(255,255,255,0.75)" }}
+                    style={{ color: "#4b5563" }}
                   />
                 </a>
               );
@@ -486,8 +482,8 @@ export function Footer({
             editMode ? "relative group rounded-3xl p-4 -mx-4 ring-2 ring-green-300/25" : ""
           }`}
           style={{
-            borderColor: "rgba(255,255,255,0.09)",
-            color: "rgba(226,232,240,0.58)",
+            borderColor: "#d1d5db",
+            color: "#4b5563",
           }}
         >
           {editMode && (
@@ -572,7 +568,7 @@ export function Footer({
           className={`mt-6 text-xs text-center ${
             editMode ? "relative group rounded-2xl px-4 py-3 ring-2 ring-cyan-300/20" : ""
           }`}
-          style={{ color: "rgba(226,232,240,0.38)" }}
+          style={{ color: "#6b7280" }}
         >
           {editMode && (
             <EditToolbar>
